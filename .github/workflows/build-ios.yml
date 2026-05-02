@@ -1,0 +1,79 @@
+name: Build iOS (Unsigned IPA)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Build iOS App
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Create .env file for build
+        run: |
+          echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" > .env
+          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
+
+      - name: Build Web App
+        run: npm run build
+
+      - name: TypeScript Check
+        run: npm run typecheck
+
+      - name: Add or Sync Capacitor iOS
+        run: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          else
+            npx cap sync ios
+          fi
+
+      - name: Build iOS App (Unsigned)
+        run: |
+          # Tự động tìm file .xcodeproj hoặc .xcworkspace
+          PROJECT_PATH=$(find ios -name "*.xcodeproj" -o -name "*.xcworkspace" | head -n 1)
+          echo "Found project at: $PROJECT_PATH"
+          
+          # Kiểm tra nếu là workspace thì dùng -workspace, nếu là project thì dùng -project
+          if [[ $PROJECT_PATH == *".xcworkspace" ]]; then
+            TARGET_FLAG="-workspace"
+          else
+            TARGET_FLAG="-project"
+          fi
+
+          xcodebuild $TARGET_FLAG "$PROJECT_PATH" \
+                     -scheme App \
+                     -configuration Release \
+                     -sdk iphoneos \
+                     CODE_SIGN_IDENTITY="" \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO \
+                     clean build \
+                     -derivedDataPath build_output
+
+      - name: Create IPA payload
+        run: |
+          mkdir -p Payload
+          # Tự động tìm file .app trong thư mục build_output vừa tạo
+          APP_PATH=$(find build_output -name "*.app" | grep -v "Archive" | head -n 1)
+          echo "Found app at: $APP_PATH"
+          cp -r "$APP_PATH" Payload/
+          zip -r DigiWell-iOS.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DigiWell-iOS-App
+          path: DigiWell-iOS.ipa
