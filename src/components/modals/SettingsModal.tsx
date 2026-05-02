@@ -12,6 +12,8 @@ import { useUIStore } from '../../store/useUIStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useSettings } from '../../hooks/useSettings';
 import { useBiometric } from '../../hooks/useBiometric';
+import { useDeleteAccount } from '../../hooks/useDeleteAccount';
+import type { DeleteOption } from '../../hooks/useDeleteAccount';
 import type { Profile } from '../../models';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { registerPlugin } from '@capacitor/core';
@@ -108,7 +110,6 @@ export default function SettingsModal() {
   });
 
   const [draftQuiet, setDraftQuiet] = useState({ start: '22:00', end: '07:00' });
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ================= STATES CHO CROPPER =================
@@ -116,6 +117,12 @@ export default function SettingsModal() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+  // ================= STATES XÓA TÀI KHOẢN =================
+  const [deleteStep, setDeleteStep] = useState<'select' | 'confirm' | null>(null);
+  const [selectedOption, setSelectedOption] = useState<DeleteOption>('data-only');
+  const [password, setPassword] = useState('');
+  const { performDelete, isDeleting, error: deleteError } = useDeleteAccount();
 
   // BIOMETRIC HOOK
   const { registerBiometric, disableBiometric, getBiometricStatus, isRegistering } = useBiometric();
@@ -195,23 +202,6 @@ export default function SettingsModal() {
       toast.success('Đã lên lịch thông báo sau 2 giây!');
     } else {
       toast.warning('Hãy cấp quyền thông báo trong hệ thống điện thoại.');
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    triggerHaptic();
-    if (deleteConfirmText !== 'DELETE' || !profile?.id) return;
-    const toastId = toast.loading('Đang xóa tài khoản vĩnh viễn...');
-    try {
-      const { error } = await supabase.rpc('delete_user_account');
-      if (error) throw error;
-      
-      AppStorage.clear();
-      await supabase.auth.signOut();
-      toast.success('Tài khoản đã bị xóa', { id: toastId });
-      window.location.href = '/';
-    } catch (err: any) {
-      toast.error('Lỗi xóa tài khoản: ' + err.message, { id: toastId });
     }
   };
 
@@ -412,7 +402,7 @@ export default function SettingsModal() {
 
 
 
-                <div className="w-full flex items-center justify-between p-4 bg-transparent border-b border-white/5">
+                <div className="w-full flex items-center justify-between p-4 bg-transparent">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center"><Ruler size={18} /></div>
                     <span className="text-white font-medium">Đơn vị đo</span>
@@ -420,23 +410,6 @@ export default function SettingsModal() {
                   <div className="flex bg-slate-800 rounded-lg p-1">
                     <button onClick={() => { triggerHaptic(); updateSettings({ unit: 'ml' }); }} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${settings.unit === 'ml' ? 'bg-white/10 text-white' : 'text-white/40'}`}>ml</button>
                     <button onClick={() => { triggerHaptic(); updateSettings({ unit: 'oz' }); }} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${settings.unit === 'oz' ? 'bg-white/10 text-white' : 'text-white/40'}`}>oz</button>
-                  </div>
-                </div>
-
-                <div className="w-full flex items-center justify-between p-4 bg-transparent">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center"><Palette size={18} /></div>
-                    <span className="text-white font-medium">Màu chủ đạo</span>
-                  </div>
-                  <div className="flex gap-3">
-                  {['#06b6d4', '#a855f7', '#f59e0b'].map((color, index) => (
-                  <button key={`color-${index}`} onClick={() => { 
-                    updateSettings({ themeColor: color });
-                    window.dispatchEvent(new CustomEvent('themeUpdated', { detail: { themeColor: color } }));
-                  }} className="w-6 h-6 rounded-full flex items-center justify-center border-2 border-slate-900 transition-transform active:scale-90" style={{ backgroundColor: color, boxShadow: settings.themeColor === color ? `0 0 10px ${color}` : 'none' }}>
-                      {settings.themeColor === color && <Check size={12} className="text-white" />}
-                    </button>
-                  ))}
                   </div>
                 </div>
               </div>
@@ -472,7 +445,7 @@ export default function SettingsModal() {
                   </div>
                 </button>
 
-                <button onClick={() => { triggerHaptic(); setDeleteConfirmText(''); setActiveSheet('delete'); }} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-red-50 dark:hover:bg-red-500/10 active:bg-red-100 dark:active:bg-red-500/20 transition-colors">
+                <button onClick={() => { triggerHaptic(); setPassword(''); setDeleteStep('select'); }} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-red-50 dark:hover:bg-red-500/10 active:bg-red-100 dark:active:bg-red-500/20 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-500 flex items-center justify-center"><Trash2 size={18} /></div>
                     <span className="text-red-500 font-bold">Xóa tài khoản</span>
@@ -610,22 +583,6 @@ export default function SettingsModal() {
           </BottomSheetWrapper>
         )}
 
-        {activeSheet === 'delete' && (
-          <BottomSheetWrapper key="section-delete" title="Xóa tài khoản" onClose={closeSheet}>
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 mb-6">
-              <p className="text-red-500 dark:text-red-400 font-bold mb-2 flex items-center gap-2"><Trash2 size={18} /> Cảnh báo nghiêm trọng</p>
-              <p className="text-red-600/80 dark:text-red-200/70 text-sm">Hành động này sẽ xóa vĩnh viễn toàn bộ dữ liệu, lịch sử uống nước và cấu hình của bạn. Không thể khôi phục.</p>
-            </div>
-            <label className="text-xs text-slate-500 dark:text-white/50 mb-2 block uppercase tracking-widest">Nhập "DELETE" để xác nhận</label>
-            <input type="text" value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} placeholder="DELETE" className="w-full p-4 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white font-mono outline-none focus:border-red-500 mb-6 uppercase text-center tracking-widest" />
-            
-            <div className="flex gap-3">
-              <button onClick={closeSheet} className={btnGhost}>Hủy</button>
-              <button disabled={deleteConfirmText !== 'DELETE'} onClick={handleDeleteAccount} className={`${btnDanger} flex-[2] disabled:opacity-50 disabled:grayscale`}>Xóa vĩnh viễn</button>
-            </div>
-          </BottomSheetWrapper>
-        )}
-
         {activeSheet === 'widget' && (
           <BottomSheetWrapper key="section-widget" title="Widget Màn hình chính" onClose={closeSheet}>
             <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-white/5 mb-6">
@@ -729,6 +686,96 @@ export default function SettingsModal() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {deleteStep && (
+        <div className="fixed inset-0 z-[400] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 border border-white/10">
+            {/* HEADER */}
+            <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">
+              {deleteStep === 'select' ? 'Bạn muốn làm gì?' : 'Xác nhận bảo mật'}
+            </h3>
+            <p className="text-slate-500 text-sm mb-6">
+              {deleteStep === 'select' 
+                ? 'Hành động này không thể hoàn tác. Hãy chọn kỹ.' 
+                : 'Vui lòng nhập mật khẩu để xác nhận việc xóa.'}
+            </p>
+
+            {/* BƯỚC 1: CHỌN TÙY CHỌN */}
+            {deleteStep === 'select' && (
+              <div className="space-y-3">
+                <button
+                  onClick={() => { setSelectedOption('data-only'); setDeleteStep('confirm'); }}
+                  className="w-full p-4 text-left border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-200 transition-all group"
+                >
+                  <div className="font-semibold text-slate-900 dark:text-white group-hover:text-orange-600">🗑️ Xóa dữ liệu</div>
+                  <div className="text-xs text-slate-500 mt-1">Giữ lại tài khoản, xóa sạch bài viết, lịch sử...</div>
+                </button>
+
+                <button
+                  onClick={() => { setSelectedOption('account-full'); setDeleteStep('confirm'); }}
+                  className="w-full p-4 text-left border border-red-200 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-all group"
+                >
+                  <div className="font-semibold text-red-600 dark:text-red-400">☠️ Xóa vĩnh viễn tài khoản</div>
+                  <div className="text-xs text-red-500/80 mt-1">Mất tài khoản, mất dữ liệu, không thể đăng nhập lại.</div>
+                </button>
+
+                <button 
+                  onClick={() => setDeleteStep(null)}
+                  className="w-full py-3 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium"
+                >
+                  Hủy bỏ
+                </button>
+              </div>
+            )}
+
+            {/* BƯỚC 2: NHẬP MẬT KHẨU */}
+            {deleteStep === 'confirm' && (
+              <div className="space-y-4">
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-700 dark:text-yellow-400">
+                  ⚠️ Cảnh báo: Bạn đang chọn <b>{selectedOption === 'account-full' ? 'XÓA VĨNH VIỄN TÀI KHOẢN' : 'XÓA TOÀN BỘ DỮ LIỆU'}</b>.
+                </div>
+
+                <input
+                  type="password"
+                  placeholder="Nhập mật khẩu của bạn"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
+                  autoFocus
+                />
+
+                {deleteError && (
+                  <p className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded">{deleteError}</p>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => { setDeleteStep('select'); setPassword(''); }}
+                    disabled={isDeleting}
+                    className="flex-1 py-3 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                  >
+                    Quay lại
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const result = await performDelete(password, selectedOption);
+                      if (result.success) {
+                        setDeleteStep(null);
+                        window.location.href = '/';
+                        toast.success('Đã xóa thành công.');
+                      }
+                    }}
+                    disabled={isDeleting || !password}
+                    className="flex-1 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-lg shadow-red-500/30 transition-all"
+                  >
+                    {isDeleting ? 'Đang xử lý...' : 'Xác nhận xóa'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </React.Fragment>
   );
 }
