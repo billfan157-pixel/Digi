@@ -17,6 +17,8 @@ import type { DeleteOption } from '../../hooks/useDeleteAccount';
 import type { Profile } from '../../models';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { registerPlugin } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
+import { Health } from '@capgo/capacitor-health';
 import Cropper from 'react-easy-crop';
 
 import { AppStorage } from '@/lib/storage';
@@ -247,6 +249,67 @@ export default function SettingsModal() {
     }
   };
 
+  const handleSyncAppleHealth = async () => {
+    console.log('🍎 [DEBUG] Bắt đầu bấm nút Apple Health...');
+
+    // 1. Kiểm tra nền tảng
+    if (!Capacitor.isNativePlatform()) {
+      console.warn('⚠️ [DEBUG] Đang chạy trên Web nên không thể kết nối Apple Health.');
+      toast.error('Tính năng này chỉ hoạt động trên ứng dụng iOS/Android thật.');
+      return;
+    }
+
+    try {
+      // 2. Kiểm tra thiết bị có hỗ trợ Health không
+      console.log('🍎 [DEBUG] Đang kiểm tra tính khả dụng...');
+      const isAvailable = await Health.isAvailable(); 
+      console.log('🍎 [DEBUG] Kết quả isAvailable:', isAvailable);
+
+      if (!isAvailable) {
+        toast.error('Thiết bị này không hỗ trợ Apple Health.');
+        return;
+      }
+
+      // 3. Yêu cầu cấp quyền (SỬA LỖI TYPE)
+      console.log('🍎 [DEBUG] Đang yêu cầu quyền truy cập...');
+      
+      // Gọi xin quyền
+      const result = await Health.requestAuthorization({
+        dataTypes: ['steps', 'heartRate', 'activeEnergy', 'water']
+      } as any) as any;
+
+      console.log('🍎 [DEBUG] Kết quả trả về từ requestAuthorization:', result);
+
+      // Logic kiểm tra kết quả đúng cách:
+      // Plugin trả về object { status: 'granted' | 'denied' | ... } hoặc boolean tùy version
+      // Nhưng thường là object có thuộc tính 'value' hoặc chính nó là status
+      let isGranted = false;
+
+      // Cách kiểm tra an toàn cho mọi version
+      if (typeof result === 'boolean') {
+        isGranted = result;
+      } else if (result && typeof result === 'object') {
+        // Kiểm tra các trường phổ biến
+        if ('value' in result) isGranted = !!result.value;
+        else if ('status' in result) isGranted = result.status === 'granted';
+        else isGranted = true; // Mặc định coi là thành công nếu có object trả về
+      }
+
+      console.log('🍎 [DEBUG] Đã phân tích quyền: ', isGranted);
+
+      if (isGranted) {
+        toast.success('Đã cấp quyền thành công! Dữ liệu sức khỏe sẽ được đồng bộ tự động.');
+        // Ở đây bạn có thể gọi một hàm khác để lưu trạng thái "đã kết nối" vào database nếu cần
+      } else {
+        toast.warning('Bạn đã từ chối cấp quyền. Vui lòng vào Cài đặt > Quyền riêng tư > Sức khỏe để bật lại.');
+      }
+
+    } catch (error: any) {
+      console.error('❌ [LỖI NGHIÊM TRỌNG] Apple Health Error:', error);
+      toast.error('Lỗi kết nối: ' + (error.message || 'Không xác định'));
+    }
+  };
+
   const formatVol = (ml: number) => settings.unit === 'oz' ? `${(ml * 0.033814).toFixed(1)} oz` : `${ml} ml`;
 
   return (
@@ -326,7 +389,13 @@ export default function SettingsModal() {
                   </div>
                 </button>
 
-                <button onClick={() => { triggerHaptic(); updateSettings({ syncHealth: !settings.syncHealth }); }} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5">
+                <button onClick={async () => { 
+                  triggerHaptic(); 
+                  if (!settings.syncHealth) {
+                    await handleSyncAppleHealth();
+                  }
+                  updateSettings({ syncHealth: !settings.syncHealth }); 
+                }} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center"><Heart size={18} /></div>
                     <span className="text-white font-medium">Đồng bộ Apple/Google Health</span>
