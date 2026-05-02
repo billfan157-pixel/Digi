@@ -1,18 +1,17 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
-// IP nội bộ máy tính của bạn (Đã cập nhật)
-const DEV_SERVER_URL = 'http://192.168.10.11:5173';
-
 const config: CapacitorConfig = {
   appId: 'com.vlu.digiwell',
   appName: 'DigiWell',
-  webDir: 'dist',
+  webDir: 'dist', // App sẽ load code từ thư mục dist (đã build)
   
-  // CẤU HÌNH LIVE RELOAD (Chỉ bật khi đang phát triển trên mạng LAN)
+  // ĐÃ TẮT LIVE RELOAD - Comment toàn bộ phần server lại
+  /*
   server: {
-    url: DEV_SERVER_URL, 
-    cleartext: true, // Cho phép HTTP (cần thiết cho iOS dev)
+    url: 'http://192.168.10.11:5173', 
+    cleartext: true,
   },
+  */
 
   plugins: {
     CapacitorHttp: {
