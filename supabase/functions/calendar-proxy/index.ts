@@ -1,8 +1,10 @@
+// deno-lint-ignore no-import-prefix
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 };
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -57,27 +59,6 @@ async function refreshGoogleAccessToken(refreshToken: string): Promise<string | 
 }
 
 /**
- * Extract Google identity metadata from the user's auth identities.
- * Returns { provider_token, provider_refresh_token } if available.
- */
-function extractGoogleIdentityTokens(identities: Array<Record<string, unknown>> | undefined) {
-  if (!Array.isArray(identities)) return { accessToken: null, refreshToken: null };
-
-  const googleIdentity = identities.find(
-    (id) => (id as { provider?: string }).provider === 'google',
-  ) as Record<string, unknown> | undefined;
-
-  if (!googleIdentity) return { accessToken: null, refreshToken: null };
-
-  const meta = googleIdentity.identity_data as Record<string, unknown> | undefined;
-
-  return {
-    accessToken: null, // Access tokens are short-lived, not stored here reliably
-    refreshToken: null, // Refresh tokens also not in identity_data
-  };
-}
-
-/**
  * Try to get a valid Google access token for the user.
  *
  * Strategy:
@@ -87,7 +68,8 @@ function extractGoogleIdentityTokens(identities: Array<Record<string, unknown>> 
  * 4. If all fail, return null (client must re-auth)
  */
 async function resolveGoogleAccessToken(
-  userSupabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  userSupabase: any,
   userId: string,
 ): Promise<{ token: string | null; needsReauth: boolean }> {
   // Step 1: Try the session's provider_token
@@ -135,17 +117,8 @@ async function resolveGoogleAccessToken(
       const { data: adminUser, error: adminError } = await adminClient.auth.admin.getUserById(userId);
 
       if (!adminError && adminUser?.user) {
-        const googleIdentity = adminUser.user.identities?.find(
-          (id: { provider?: string }) => id.provider === 'google',
-        );
-
-        // The refresh token might be stored in the identity's credential data
-        const identityData = googleIdentity?.identity_data as Record<string, unknown> | undefined;
-        // Supabase stores provider_refresh_token at user-level, not identity-level
-        const userMeta = adminUser.user.user_metadata as Record<string, unknown> | undefined;
-
-        // Try raw_user_meta_data for refresh token
-        const rawMeta = (adminUser.user as Record<string, unknown>).raw_app_meta_data as Record<string, unknown> | undefined;
+        // Try raw_app_meta_data for refresh token
+        const rawMeta = (adminUser.user as unknown as Record<string, unknown>).raw_app_meta_data as Record<string, unknown> | undefined;
         const refreshToken = (rawMeta?.provider_refresh_token as string) || '';
 
         if (refreshToken) {
@@ -198,9 +171,9 @@ async function fetchCalendarEvents(
   }));
 }
 
-Deno.serve(async (request) => {
+Deno.serve(async (request: Request) => {
   if (request.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders, status: 200 });
   }
 
   if (request.method !== 'POST') {
