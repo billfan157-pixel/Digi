@@ -2,105 +2,59 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
+    <!-- Đã sửa: Dùng đường dẫn tương đối ./ cho icon -->
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#06B6D4" />
+    
+    <!-- Cấu hình cho iOS/Mobile -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="DigiWell">
+    
     <meta name="description" content="DigiWell - Ứng dụng theo dõi sức khỏe và uống nước thông minh" />
     <title>DigiWell</title>
 
+    <!-- SCRIPT BẮT LỖI CRASH (THAY THẾ ĐOẠN CŨ) -->
     <script>
-      (function() {
-        const isProduction = '%PROD%' === 'true';
-        const fallbackId = 'digiwell-runtime-fallback';
+      window.addEventListener('error', function(e) {
+        console.error('GLOBAL ERROR:', e.error);
+        showDebugScreen('LỖI JAVASCRIPT', e.message + '\n\nFile: ' + e.filename + '\nDòng: ' + e.lineno, e.error ? e.error.stack : '');
+      });
 
-        function renderFallbackScreen() {
-          if (!isProduction || document.getElementById(fallbackId)) return;
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('UNHANDLED PROMISE:', e.reason);
+        showDebugScreen('LỖI PROMISE', e.reason ? (e.reason.message || String(e.reason)) : 'Unknown Promise Rejection', e.reason ? e.reason.stack : '');
+      });
 
-          const root = document.getElementById('root');
-          const fallback = document.createElement('div');
-          fallback.id = fallbackId;
-          fallback.setAttribute('role', 'alert');
-          fallback.style.cssText = [
-            'min-height:100vh',
-            'display:flex',
-            'align-items:center',
-            'justify-content:center',
-            'padding:24px',
-            'background:#020617',
-            'color:#e2e8f0',
-            'font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
-            'text-align:center'
-          ].join(';');
-          fallback.innerHTML = [
-            '<div style="max-width:420px;width:100%">',
-            '<div style="margin-bottom:12px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#67e8f9">DigiWell</div>',
-            '<h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;color:#f8fafc">Ứng dụng cần tải lại</h1>',
-            '<p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#cbd5e1">Đã xảy ra lỗi hệ thống ngoài ý muốn. Vui lòng mở lại ứng dụng để tiếp tục.</p>',
-            '<button id="digiwell-runtime-reload" style="border:0;border-radius:999px;padding:12px 20px;background:#06b6d4;color:#082f49;font-weight:700;cursor:pointer">Tải lại</button>',
-            '</div>'
-          ].join('');
+      function showDebugScreen(title, message, stack) {
+        // Chỉ hiển thị khi chưa có nội dung trong root (tránh ghi đè app đang chạy)
+        if (document.getElementById('root') && document.getElementById('root').children.length > 0) return;
 
-          if (root) {
-            root.replaceChildren(fallback);
-          } else {
-            document.body.replaceChildren(fallback);
-          }
+        document.body.style.margin = '0';
+        document.body.style.padding = '20px';
+        document.body.style.background = '#ef4444'; // Màu đỏ cảnh báo
+        document.body.style.color = '#ffffff';
+        document.body.style.fontFamily = 'monospace';
+        document.body.style.fontSize = '14px';
+        document.body.style.whiteSpace = 'pre-wrap';
+        document.body.style.overflow = 'auto';
 
-          const reloadButton = document.getElementById('digiwell-runtime-reload');
-          if (reloadButton) {
-            reloadButton.addEventListener('click', function() {
-              window.location.reload();
-            });
-          }
+        let html = '<h1 style="font-size: 24px; margin-bottom: 10px; border-bottom: 2px solid white; padding-bottom: 10px;">⚠️ ' + title + '</h1>';
+        html += '<div style="background: #7f1d1d; padding: 15px; border-radius: 8px; margin-bottom: 15px;"><strong>Lỗi:</strong> ' + message + '</div>';
+        if (stack) {
+          html += '<details style="background: #991b1b; padding: 10px; border-radius: 8px;"><summary style="cursor: pointer; font-weight: bold;">Xem chi tiết (Stack Trace)</summary><div style="margin-top: 10px; font-size: 12px; opacity: 0.9;">' + stack + '</div></details>';
         }
-
-        function logRuntimeError(kind, detail) {
-          const payload = {
-            kind,
-            timestamp: new Date().toISOString(),
-            detail: isProduction
-              ? {
-                  source: detail && detail.source ? detail.source : undefined,
-                  line: detail && detail.line ? detail.line : undefined,
-                  column: detail && detail.column ? detail.column : undefined,
-                }
-              : detail,
-          };
-
-          console.error('[DigiWell] Runtime failure', payload);
-        }
-
-        window.addEventListener('error', function(event) {
-          logRuntimeError('error', {
-            message: event.message,
-            source: event.filename,
-            line: event.lineno,
-            column: event.colno,
-            stack: event.error && event.error.stack ? event.error.stack : undefined,
-          });
-          renderFallbackScreen();
-        });
-
-        window.addEventListener('unhandledrejection', function(event) {
-          logRuntimeError('unhandledrejection', {
-            reason:
-              event.reason instanceof Error
-                ? { message: event.reason.message, stack: event.reason.stack }
-                : String(event.reason || 'unknown'),
-          });
-          if (isProduction) {
-            event.preventDefault();
-          }
-          renderFallbackScreen();
-        });
-      })();
+        html += '<button onclick="window.location.reload()" style="margin-top: 20px; padding: 15px; width: 100%; background: white; color: #ef4444; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer;">TẢI LẠI APP</button>';
+        
+        document.body.innerHTML = html;
+      }
     </script>
   </head>
   <body>
     <div id="root"></div>
-    <!-- ĐÃ SỬA: Thêm dấu chấm (.) vào trước src để thành đường dẫn tương đối -->
+    <!-- Đã sửa: Dùng đường dẫn tương đối ./ cho script chính -->
     <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>
