@@ -155,6 +155,13 @@ async function beginGoogleCalendarOAuth() {
  * The provider token never reaches the client.
  */
 async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  // Nếu chưa có phiên đăng nhập (app vừa mở lên chưa kịp tải), chặn không gọi API để tránh lỗi 401
+  if (!session?.access_token) {
+    return { events: [], needs_reauth: true };
+  }
+
   const { data, error } = await supabase.functions.invoke('calendar-proxy', {
     body: { action: 'list-events', maxResults: 10 },
   });

@@ -8,11 +8,11 @@ import {
 } from '../lib/ai';
 
 export interface UseGeminiAIProps {
-  profile: any;
+  profile: { id?: string; nickname?: string; goal?: string; activity?: string; climate?: string } | null;
   waterIntake: number;
   waterGoal: number;
-  weatherData: any;
-  watchData: any;
+  weatherData: { temp?: number; status?: string; location?: string } | null;
+  watchData: { heartRate?: number; steps?: number } | null;
   isWeatherSynced: boolean;
   isWatchConnected: boolean;
   handleAddWater: (amount: number, factor: number, name: string) => Promise<void>;
@@ -28,11 +28,7 @@ const defaultWelcomeMessage: AiChatMessage = {
 };
 
 export function useGeminiAI(props: UseGeminiAIProps) {
-  const {
-    profile, waterIntake, waterGoal, weatherData, watchData,
-    isWeatherSynced, isWatchConnected, handleAddWater, setShowAiChat,
-    handleExportPDF, toggleFastingMode, setShowHistory
-  } = props;
+  const profile = props.profile;
 
   // [BÍ QUYẾT TỐI ƯU] Dùng Ref để lưu trữ props mới nhất mà KHÔNG kích hoạt re-render
   // Giải quyết dứt điểm lỗi vòng lặp vô hạn do App.tsx re-render mỗi giây
@@ -66,13 +62,13 @@ export function useGeminiAI(props: UseGeminiAIProps) {
       waterIntake: p.waterIntake,
       waterGoal: p.waterGoal,
       weather: (p.isWeatherSynced && p.weatherData) ? { 
-        temp: p.weatherData.temp, 
+        temp: p.weatherData.temp ?? 0, 
         status: p.weatherData.status || '', 
         location: p.weatherData.location || '' 
       } : undefined,
       watch: (p.isWatchConnected && p.watchData) ? {
-        heartRate: p.watchData.heartRate,
-        steps: p.watchData.steps
+        heartRate: p.watchData.heartRate ?? 0,
+        steps: p.watchData.steps ?? 0
       } : undefined,
       profile: p.profile ? {
         nickname: p.profile.nickname,
@@ -87,7 +83,8 @@ export function useGeminiAI(props: UseGeminiAIProps) {
 
   // Lấy lời khuyên nhanh (Tab Insight)
   const fetchAIAdvice = useCallback(async () => {
-    if (!propsRef.current.profile?.id) return;
+    const profileId = propsRef.current.profile?.id;
+    if (!profileId) return;
     
     if (isFetchingAdviceRef.current || isAiLoading) {
       if (import.meta.env.DEV) console.warn("🛡️ [GUARD] API Call prevented to save quota");
@@ -101,8 +98,15 @@ export function useGeminiAI(props: UseGeminiAIProps) {
     try {
       const advice = await generateHydrationAdvice(buildContext());
       setAiAdvice(advice);
-    } catch (error) {
+      localStorage.setItem(`digiwell_ai_advice_${profileId}`, JSON.stringify({ advice, timestamp: Date.now() }));
+    } catch (error: unknown) {
       console.error("Lỗi AI Advice:", error);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      if (errMsg.includes('429') || errMsg.includes('Too Many Requests') || errMsg.includes('rate limit')) {
+        setAiAdvice('Hệ thống AI đang quá tải do có nhiều lượt truy cập. Vui lòng thử lại sau ít phút đệ nhé! 💧');
+      } else {
+        setAiAdvice('DigiCoach đang nghỉ ngơi một chút, đệ uống nước trước nhé! 💧');
+      }
     } finally {
       setIsAiLoading(false);
       setTimeout(() => { isFetchingAdviceRef.current = false; }, 2000); // Debounce 2s để tránh dính lỗi 429
@@ -114,6 +118,19 @@ export function useGeminiAI(props: UseGeminiAIProps) {
     if (!profile?.id || hasFetchedInitialAdvice.current) return;
 
     hasFetchedInitialAdvice.current = true;
+
+    const cacheKey = `digiwell_ai_advice_${profile.id}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { advice, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 4 * 60 * 60 * 1000) {
+          setAiAdvice(advice);
+          return;
+        }
+      } catch (e) {}
+    }
+
     void fetchAIAdvice();
   }, [fetchAIAdvice, profile?.id]);
 
@@ -175,8 +192,14 @@ export function useGeminiAI(props: UseGeminiAIProps) {
         p.toggleFastingMode?.();
       }
 
-    } catch (error: any) {
-      toast.error('AI đang bận hớp nước, đệ thử lại sau nhé!');
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      if (errMsg.includes('429') || errMsg.includes('Too Many Requests') || errMsg.includes('rate limit')) {
+        toast.error('Hệ thống AI đang quá tải. Vui lòng thử lại sau ít phút nhé!');
+        setChatMessages((prev: AiChatMessage[]) => [...prev, { role: 'model', content: 'Hệ thống AI đang quá tải do có nhiều lượt truy cập. Đệ chờ vài phút rồi nhắn lại cho ta nhé! ⏳' }]);
+      } else {
+        toast.error('AI đang bận hớp nước, đệ thử lại sau nhé!');
+      }
     } finally {
       setIsChatLoading(false);
       setTimeout(() => { isChattingRef.current = false; }, 1000); // 1s debounce
