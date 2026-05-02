@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UserPen, Camera, Activity, Droplets, Heart, Bell, Clock,
-  MoonStar, Send, Smartphone, Ruler, Palette, CloudUpload, Fingerprint,
+  MoonStar, Send, Smartphone, Ruler, Palette, CloudUpload, Fingerprint, CloudSun,
   FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Check
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,10 +18,10 @@ import type { Profile } from '../../models';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { registerPlugin } from '@capacitor/core';
 import { Capacitor } from '@capacitor/core';
-import { Health } from '@capgo/capacitor-health';
 import Cropper from 'react-easy-crop';
 
 import { AppStorage } from '@/lib/storage';
+import { syncWeatherAndWaterGoal } from '@/hooks/useWeatherSync';
 
 // Khai báo Plugin tự chế
 const WidgetPlugin = registerPlugin<any>('WidgetPlugin');
@@ -250,63 +250,68 @@ export default function SettingsModal() {
   };
 
   const handleSyncAppleHealth = async () => {
-    console.log('🍎 [DEBUG] Bắt đầu bấm nút Apple Health...');
+    console.log('🍎 [START] Bắt đầu kết nối Apple Health...');
 
     // 1. Kiểm tra nền tảng
     if (!Capacitor.isNativePlatform()) {
-      console.warn('⚠️ [DEBUG] Đang chạy trên Web nên không thể kết nối Apple Health.');
       toast.error('Tính năng này chỉ hoạt động trên ứng dụng iOS/Android thật.');
       return;
     }
 
     try {
-      // 2. Kiểm tra thiết bị có hỗ trợ Health không
-      console.log('🍎 [DEBUG] Đang kiểm tra tính khả dụng...');
-      const isAvailable = await Health.isAvailable(); 
-      console.log('🍎 [DEBUG] Kết quả isAvailable:', isAvailable);
+      // 2. Import động plugin để tránh lỗi lúc khởi động app
+      const { Health } = await import('@capgo/capacitor-health');
 
-      if (!isAvailable) {
-        toast.error('Thiết bị này không hỗ trợ Apple Health.');
+      // 3. Kiểm tra tính khả dụng (Dùng try-catch riêng vì hay crash ở đây)
+      let isAvailable = false;
+      try {
+        const check = await Health.isAvailable();
+        // Plugin trả về object { value: boolean } hoặc boolean trực tiếp
+        isAvailable = typeof check === 'object' ? (check as any).value : check;
+      } catch (err) {
+        console.error('❌ Lỗi khi kiểm tra isAvailable:', err);
+        toast.error('Thiết bị không hỗ trợ Apple Health hoặc chưa cấu hình đúng.');
         return;
       }
 
-      // 3. Yêu cầu cấp quyền (SỬA LỖI TYPE)
-      console.log('🍎 [DEBUG] Đang yêu cầu quyền truy cập...');
-      
-      // Gọi xin quyền
-      const result = await Health.requestAuthorization({
-        dataTypes: ['steps', 'heartRate', 'activeEnergy', 'water']
-      } as any) as any;
-
-      console.log('🍎 [DEBUG] Kết quả trả về từ requestAuthorization:', result);
-
-      // Logic kiểm tra kết quả đúng cách:
-      // Plugin trả về object { status: 'granted' | 'denied' | ... } hoặc boolean tùy version
-      // Nhưng thường là object có thuộc tính 'value' hoặc chính nó là status
-      let isGranted = false;
-
-      // Cách kiểm tra an toàn cho mọi version
-      if (typeof result === 'boolean') {
-        isGranted = result;
-      } else if (result && typeof result === 'object') {
-        // Kiểm tra các trường phổ biến
-        if ('value' in result) isGranted = !!result.value;
-        else if ('status' in result) isGranted = result.status === 'granted';
-        else isGranted = true; // Mặc định coi là thành công nếu có object trả về
+      if (!isAvailable) {
+        toast.error('Apple Health không khả dụng trên thiết bị này.');
+        return;
       }
 
-      console.log('🍎 [DEBUG] Đã phân tích quyền: ', isGranted);
+      // 4. Yêu cầu quyền truy cập (SỬA LỖI dataTypes)
+      console.log('🍎 Đang yêu cầu quyền...');
+      
+      let granted = false;
+      try {
+        // Cách 1: Thử gọi với cú pháp mới nhất (nếu plugin hỗ trợ)
+        // Nếu vẫn lỗi TypeScript, hãy dùng 'any' để bypass check type
+        const result = await Health.requestAuthorization({
+          read: ['steps', 'heartRate', 'activeEnergy', 'water'],
+          write: ['water']
+        } as any); // <-- Quan trọng: Cast 'as any' để tránh lỗi TypeScript
 
-      if (isGranted) {
-        toast.success('Đã cấp quyền thành công! Dữ liệu sức khỏe sẽ được đồng bộ tự động.');
-        // Ở đây bạn có thể gọi một hàm khác để lưu trạng thái "đã kết nối" vào database nếu cần
+        granted = typeof result === 'object' ? (result as any).value : result;
+      } catch (err) {
+        console.error('Lỗi khi requestAuthorization:', err);
+        // Fallback: Thử gọi không tham số nếu cách trên fail (một số version cũ yêu cầu cấu hình trong Info.plist trước)
+        const resultFallback = await Health.requestAuthorization({} as any);
+        granted = typeof resultFallback === 'object' ? (resultFallback as any).value : resultFallback;
+      }
+
+      console.log('🍎 Kết quả cấp quyền:', granted);
+
+      if (granted) {
+        toast.success('Đã kết nối thành công! Dữ liệu sẽ được đồng bộ.');
+        // Gọi hàm đọc dữ liệu ở đây nếu cần
       } else {
-        toast.warning('Bạn đã từ chối cấp quyền. Vui lòng vào Cài đặt > Quyền riêng tư > Sức khỏe để bật lại.');
+        toast.warning('Bạn đã từ chối cấp quyền.');
       }
 
     } catch (error: any) {
-      console.error('❌ [LỖI NGHIÊM TRỌNG] Apple Health Error:', error);
-      toast.error('Lỗi kết nối: ' + (error.message || 'Không xác định'));
+      console.error('💥 CRITICAL ERROR Apple Health:', error);
+      // Hiển thị lỗi chi tiết ra màn hình để debug
+      toast.error('Lỗi nghiêm trọng: ' + (error.message || JSON.stringify(error)));
     }
   };
 
@@ -405,6 +410,23 @@ export default function SettingsModal() {
                   </div>
                 </button>
 
+                {/* --- THÊM NÚT MỚI NÀY VÀO ĐÂY --- */}
+                <div className="mt-4">
+                  <button
+                    onClick={syncWeatherAndWaterGoal}
+                    className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🌤️</span>
+                      <div className="text-left">
+                        <p className="font-bold text-sm">Cập nhật theo thời tiết</p>
+                        <p className="text-xs opacity-80">Điều chỉnh mục tiêu nước tự động</p>
+                      </div>
+                    </div>
+                    <svg className="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                  </button>
+                </div>
+                {/* ---------------------------------- */}
 
               </div>
             </section>

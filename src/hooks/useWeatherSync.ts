@@ -1,66 +1,82 @@
-import { useState } from 'react';
+// src/hooks/useWeatherSync.ts
+import { Geolocation } from '@capacitor/geolocation';
+import { getWeatherData, calculateWeatherAdjustment } from '@/lib/weatherEngine';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { getWeatherData, type WeatherData } from '../lib/weatherEngine';
 
-type WeatherSyncOptions = {
-  useCurrentLocation?: boolean;
-};
+export const syncWeatherAndWaterGoal = async () => {
+  try {
+    toast.loading('Đang định vị vị trí của bạn...');
 
-function getCurrentPosition(): Promise<GeolocationPosition> {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('Thiết bị không hỗ trợ định vị.'));
+    // 1. Lấy vị trí hiện tại
+    const coordinates = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true, // Dùng GPS chính xác nhất
+      timeout: 10000,
+    });
+
+    const { latitude, longitude } = coordinates.coords;
+    console.log('📍 Vị trí tìm thấy:', latitude, longitude);
+
+    // 2. Gọi Weather Engine lấy dữ liệu thời tiết
+    const weather = await getWeatherData({
+      coords: { latitude, longitude }
+    });
+
+    if (!weather) {
+      toast.error('Không thể lấy dữ liệu thời tiết. Vui lòng thử lại.');
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: false,
-      timeout: 10000,
-      maximumAge: 10 * 60 * 1000,
-    });
-  });
-}
+    console.log('🌤️ Thời tiết:', weather);
 
-export function useWeatherSync() {
-  const [isWeatherSynced, setIsWeatherSynced] = useState(false);
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+    // 3. Lấy thông tin user hiện tại để tính goal cơ bản
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not logged in');
 
-  const syncWeather = async (city?: string, options: WeatherSyncOptions = {}) => {
-    const { useCurrentLocation = false } = options;
-    const tid = toast.loading("Đang đồng bộ trạm thời tiết...");
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('water_goal')
+      .eq('id', user.id)
+      .single();
 
-    try {
-      let data: WeatherData | null = null;
-      let locationLabel = city?.trim() || '';
+    if (!profile) throw new Error('Profile not found');
 
-      if (useCurrentLocation) {
-        const position = await getCurrentPosition();
-        data = await getWeatherData({
-          coords: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          },
-        });
-        locationLabel = data?.location || 'vị trí hiện tại';
-      } else if (city?.trim()) {
-        data = await getWeatherData({ city: city.trim() });
-        locationLabel = city.trim();
+    const baseGoal = profile.water_goal || 2000;
+    
+    // 4. Tính toán điều chỉnh dựa trên thời tiết
+    const adjustment = calculateWeatherAdjustment(baseGoal, weather.temp, weather.humidity);
+    const newGoal = baseGoal + adjustment;
+
+    // 5. Cập nhật lại database nếu có thay đổi đáng kể (>50ml)
+    if (Math.abs(adjustment) > 50) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ water_goal: newGoal })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      let message = `Thời tiết tại ${weather.location || 'khu vực của bạn'}: ${Math.round(weather.temp)}°C, độ ẩm ${weather.humidity}%.\n`;
+      if (adjustment > 0) {
+        message += `Trời nóng/ẩm, DigiWell đã tăng mục tiêu thêm ${adjustment}ml 💧`;
       } else {
-        throw new Error("Chưa có vị trí hoặc thành phố để lấy dữ liệu thời tiết.");
+        message += `Trời mát, mục tiêu giữ nguyên hoặc giảm nhẹ.`;
       }
-
-      if (!data) throw new Error("Không nhận được dữ liệu thời tiết.");
-
-      setWeatherData(data);
-      setIsWeatherSynced(true);
-      toast.success(`Thời tiết tại ${locationLabel} đã cập nhật: ${data.temp}°C`, { id: tid });
-    } catch (err) {
-      setIsWeatherSynced(false);
-      setWeatherData(null);
-      const message = err instanceof Error ? err.message : "Không thể kết nối trạm thời tiết!";
-      toast.error(message, { id: tid });
+      
+      toast.success(message, { duration: 5000 });
+    } else {
+      toast.info(`Thời tiết ôn hòa, không cần điều chỉnh lượng nước.`);
     }
-  };
 
-  return { isWeatherSynced, setIsWeatherSynced, weatherData, syncWeather };
-}
+  } catch (error: any) {
+    console.error('Lỗi đồng bộ thời tiết:', error);
+    
+    if (error.message?.includes('permission')) {
+      toast.error('Bạn đã từ chối cấp quyền vị trí. Vui lòng vào Cài đặt > DigiWell để bật.');
+    } else if (error.message?.includes('timeout')) {
+      toast.error('Không thể xác định vị trí. Hãy thử lại ở nơi thoáng đãng hơn.');
+    } else {
+      toast.error('Lỗi: ' + (error.message || 'Không xác định'));
+    }
+  }
+};
