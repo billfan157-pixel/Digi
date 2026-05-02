@@ -4,8 +4,6 @@ import { normalizeActivity, normalizeClimate } from '../lib/profileNormalization
 import { updateProfileFields } from '@/services/profile.service';
 import { getBiometricEnabled } from '@/lib/sessionSecurity';
 
-import { AppStorage } from '@/lib/storage';
-
 export interface AppSettings {
   displayName: string;
   avatarUrl: string;
@@ -63,7 +61,7 @@ export function useSettings(profile: any) {
 
     const loadSettings = async () => {
       const localKey = `digiwell_settings_${profile.id}`;
-      const cached = AppStorage.getItem(localKey);
+      const cached = localStorage.getItem(localKey);
       const biometricEnabled = await getBiometricEnabled(profile.id);
 
       if (isCancelled) return;
@@ -88,7 +86,7 @@ export function useSettings(profile: any) {
         };
 
         if (parsedCache.activity !== normalizedActivity || parsedCache.climate !== normalizedClimate) {
-          AppStorage.setItem(localKey, JSON.stringify(normalizedSettings));
+          localStorage.setItem(localKey, JSON.stringify(normalizedSettings));
         }
 
         setSettings({ ...normalizedSettings });
@@ -142,7 +140,7 @@ export function useSettings(profile: any) {
     setSettings(updatedSettings);
     
     // 1. Save to LocalStorage (Instant UI feedback)
-    AppStorage.setItem(`digiwell_settings_${profile.id}`, JSON.stringify(updatedSettings));
+    localStorage.setItem(`digiwell_settings_${profile.id}`, JSON.stringify(updatedSettings));
 
     // Apply Theme Color instantly
     if (newValues.themeColor) {

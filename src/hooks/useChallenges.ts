@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
-import { AppStorage } from '@/lib/storage';
-
 export interface Challenge {
   id: string;
   type: 'time_limited' | 'milestone';
@@ -41,8 +39,8 @@ export function useChallenges(userId: string) {
     
     // 1. Load từ Local Cache trước (Offline-First)
     try {
-      const cachedC = AppStorage.getItem(`digiwell_challenges_cache`);
-      const cachedUC = AppStorage.getItem(`digiwell_user_challenges_cache_${userId}`);
+      const cachedC = localStorage.getItem(`digiwell_challenges_cache`);
+      const cachedUC = localStorage.getItem(`digiwell_user_challenges_cache_${userId}`);
       if (cachedC && cachedUC) {
         setChallenges(JSON.parse(cachedC));
         setUserChallenges(JSON.parse(cachedUC));
@@ -68,8 +66,8 @@ export function useChallenges(userId: string) {
       setUserChallenges(newUserChallenges);
       
       // 2. Cập nhật lại Cache
-      AppStorage.setItem(`digiwell_challenges_cache`, JSON.stringify(newChallenges));
-      AppStorage.setItem(`digiwell_user_challenges_cache_${userId}`, JSON.stringify(newUserChallenges));
+      localStorage.setItem(`digiwell_challenges_cache`, JSON.stringify(newChallenges));
+      localStorage.setItem(`digiwell_user_challenges_cache_${userId}`, JSON.stringify(newUserChallenges));
     } catch (error: unknown) {
       console.error("Error fetching challenges:", error);
       toast.error("Không thể tải danh sách thử thách");

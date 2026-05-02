@@ -4,8 +4,6 @@ import { Browser } from '@capacitor/browser';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 
-import { AppStorage } from '@/lib/storage';
-
 export const CALENDAR_OAUTH_PENDING_KEY = 'digiwell_pending_calendar_oauth';
 export const CALENDAR_TOKEN_UPDATED_EVENT = 'digiwell:google-provider-token-updated';
 
@@ -61,18 +59,18 @@ function getOAuthRedirectTo() {
 
 function readCalendarOAuthPendingFlag() {
   return window.sessionStorage.getItem(CALENDAR_OAUTH_PENDING_KEY) === 'true'
-    || AppStorage.getItem(CALENDAR_OAUTH_PENDING_KEY) === 'true';
+    || localStorage.getItem(CALENDAR_OAUTH_PENDING_KEY) === 'true';
 }
 
 function writeCalendarOAuthPendingFlag(value: boolean) {
   if (value) {
     window.sessionStorage.setItem(CALENDAR_OAUTH_PENDING_KEY, 'true');
-    AppStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
+    localStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
     return;
   }
 
   window.sessionStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
-  AppStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
+  localStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
 }
 
 function getDisplayTime(date: GoogleEventDateTime | undefined, isEnd = false) {

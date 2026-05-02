@@ -8,8 +8,6 @@ import { expGainedForWater } from '@/config/questConfig';
 // @ts-ignore
 import confetti from 'canvas-confetti';
 
-import { AppStorage } from '@/lib/storage';
-
 // ── Constants ──────────────────────────────────────────────
 
 const OFFLINE_QUEUE_KEY = 'digiwell_offline_water_queue';
@@ -74,7 +72,7 @@ function getOfflineQueueKey(userId: string) {
 
 function readRawOfflineQueue(storageKey: string): OfflineQueueItem[] {
   try {
-    return JSON.parse(AppStorage.getItem(storageKey) ?? '[]');
+    return JSON.parse(localStorage.getItem(storageKey) ?? '[]');
   } catch {
     return [];
   }
@@ -88,17 +86,17 @@ function writeOfflineQueue(userId: string, queue: OfflineQueueItem[]) {
   const scopedKey = getOfflineQueueKey(userId);
 
   if (queue.length > 0) {
-    AppStorage.setItem(scopedKey, JSON.stringify(queue));
+    localStorage.setItem(scopedKey, JSON.stringify(queue));
   } else {
-    AppStorage.removeItem(scopedKey);
+    localStorage.removeItem(scopedKey);
   }
 
   const legacyQueue = readRawOfflineQueue(OFFLINE_QUEUE_KEY);
   const remainingLegacyItems = legacyQueue.filter(item => item.user_id !== userId);
   if (remainingLegacyItems.length > 0) {
-    AppStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(remainingLegacyItems));
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(remainingLegacyItems));
   } else {
-    AppStorage.removeItem(OFFLINE_QUEUE_KEY);
+    localStorage.removeItem(OFFLINE_QUEUE_KEY);
   }
 }
 
@@ -111,7 +109,7 @@ function readOfflineQueue(userId: string): OfflineQueueItem[] {
 function pushOfflineQueue(item: OfflineQueueItem) {
   const queue = readScopedOfflineQueue(item.user_id);
   queue.push(item);
-  AppStorage.setItem(getOfflineQueueKey(item.user_id), JSON.stringify(queue));
+  localStorage.setItem(getOfflineQueueKey(item.user_id), JSON.stringify(queue));
 }
 
 function updateOfflineQueueItem(userId: string, tempId: string, patch: Partial<OfflineQueueItem>) {

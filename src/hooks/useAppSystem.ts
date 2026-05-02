@@ -13,7 +13,6 @@ import { useDeviceHealth } from './useDeviceHealth';
 import { appQueryKeys } from '@/lib/queryKeys';
 import { queryClient } from '@/lib/queryClient';
 import { ensureProfileExists, fetchProfileById } from '@/services/profile.service';
-import { AppStorage } from '@/lib/storage';
 import {
   clearUserSessionArtifacts,
   getBiometricEnabled,
@@ -111,7 +110,7 @@ export function useAppSystem() {
           queryClient.clear();
           setProfile(null);
           window.sessionStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
-          AppStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
+          localStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
           window.dispatchEvent(new CustomEvent(CALENDAR_TOKEN_UPDATED_EVENT));
           setView('welcome');
         }

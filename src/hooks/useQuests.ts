@@ -9,8 +9,6 @@ import { claimQuestReward, provisionUserQuests, syncLevelQuestProgress } from '@
 import type { UserQuest, QuestType } from '../config/questConfig';
 import { resolveQuestProgress } from '@/lib/questProgress';
 
-import { AppStorage } from '@/lib/storage';
-
 export function useQuests(userId: string | undefined, userLevel: number = 1) {
   const [quests,  setQuests]  = useState<UserQuest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +18,7 @@ export function useQuests(userId: string | undefined, userLevel: number = 1) {
     
     // 1. Load từ Local Cache trước (Offline-First)
     try {
-      const cached = AppStorage.getItem(`digiwell_quests_cache_${userId}`);
+      const cached = localStorage.getItem(`digiwell_quests_cache_${userId}`);
       if (cached) {
         setQuests(normalizeFetchedQuests(JSON.parse(cached), userLevel));
         setLoading(false); // Có data rồi thì không block UI
@@ -58,7 +56,7 @@ export function useQuests(userId: string | undefined, userLevel: number = 1) {
       setQuests(formattedData);
       
       // 3. Cập nhật lại Cache
-      AppStorage.setItem(`digiwell_quests_cache_${userId}`, JSON.stringify(formattedData));
+      localStorage.setItem(`digiwell_quests_cache_${userId}`, JSON.stringify(formattedData));
     } catch (err) {
       console.error('[useQuests] fetch:', err);
     } finally {

@@ -7,8 +7,6 @@ export default function LockedScreen({ profile, onUnlock, onLogout }: any) {
   const { authenticateBiometric, isAuthenticating } = useBiometric();
   const [isUnlocked, setIsUnlocked] = useState(false);
   
-  useEffect(() => { handleUnlock(); }, []); // Tự động bật popup sinh trắc học khi mount
-
   const handleUnlock = async () => {
     if (!profile?.id) return;
     const success = await authenticateBiometric(profile.id);
@@ -19,6 +17,8 @@ export default function LockedScreen({ profile, onUnlock, onLogout }: any) {
       }, 300); // Chờ hiệu ứng fade out hoàn tất (300ms)
     }
   };
+
+  useEffect(() => { handleUnlock(); }, []); // Tự động bật popup sinh trắc học khi mount
 
   return (
     <AnimatePresence>
