@@ -2,50 +2,99 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- CẤU HÌNH CƠ BẢN -->
     <key>CAPACITOR_DEBUG</key>
-	<string>$(CAPACITOR_DEBUG)</string>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
-	<key>CFBundleDisplayName</key>
-        <string>DigiWell</string>
-	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>$(MARKETING_VERSION)</string>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>armv7</string>
-	</array>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<true/>
+    <string>$(CAPACITOR_DEBUG)</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>DigiWell</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+    <key>UIMainStoryboardFile</key>
+    <string>Main</string>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>armv7</string>
+    </array>
+    
+    <!-- HƯỚNG MÀN HÌNH -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <true/>
+
+    <!-- ========================================== -->
+    <!-- CÁC QUYỀN BẮT BUỘC (ĐÃ SỬA LỖI CRASH)      -->
+    <!-- ========================================== -->
+
+    <!-- 1. Face ID / Touch ID (Chống crash khi bật sinh trắc học) -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>DigiWell cần Face ID để bảo mật tài khoản và xác nhận các thay đổi quan trọng.</string>
+
+    <!-- 2. Apple Health (Chống lỗi không hiện gì khi bấm đồng bộ) -->
+    <key>NSHealthShareUsageDescription</key>
+    <string>DigiWell cần truy cập dữ liệu Sức khỏe để đọc nhịp tim và bước chân, giúp tính toán lượng nước mục tiêu chính xác hơn.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>DigiWell cần quyền ghi dữ liệu vào ứng dụng Sức khỏe để lưu lại lịch sử uống nước của bạn.</string>
+
+    <!-- 3. Lịch (Google/Apple Calendar) -->
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>DigiWell cần truy cập lịch của bạn để gợi ý thời gian uống nước phù hợp với cuộc họp và sự kiện.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>DigiWell cần truy cập lịch để đồng bộ sự kiện.</string>
+
+    <!-- 4. Vị trí (Thời tiết) -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>DigiWell cần vị trí của bạn để cập nhật thời tiết thực tế, từ đó điều chỉnh lượng nước khuyến nghị.</string>
+
+    <!-- 5. Camera & Thư viện ảnh -->
+    <key>NSCameraUsageDescription</key>
+    <string>DigiWell cần camera để quét mã vạch đồ uống hoặc chụp ảnh đại diện.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>DigiWell cần truy cập thư viện ảnh để bạn chọn ảnh đại diện hoặc ảnh đồ uống.</string>
+
+    <!-- 6. Local Notifications (Nhắc uống nước) -->
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>DigiWell cần gửi thông báo để nhắc bạn uống nước đúng giờ.</string>
+
+    <!-- CẤU HÌNH URL SCHEME (Cho Deep Linking) -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.vlu.digiwell</string>
+                <string>digiwell</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>

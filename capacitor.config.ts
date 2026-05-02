@@ -1,18 +1,23 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
+// IP nội bộ máy tính của bạn (Đã cập nhật)
+const DEV_SERVER_URL = 'http://192.168.10.11:5173';
+
 const config: CapacitorConfig = {
   appId: 'com.vlu.digiwell',
   appName: 'DigiWell',
-  webDir: 'dist', // Thư mục chứa code sau khi build (Vite mặc định là 'dist')
+  webDir: 'dist',
+  
+  // CẤU HÌNH LIVE RELOAD (Chỉ bật khi đang phát triển trên mạng LAN)
   server: {
-    // Chỉ dùng khi dev muốn test qua IP, còn khi build EAS thì không cần
-    // androidScheme: 'https' 
+    url: DEV_SERVER_URL, 
+    cleartext: true, // Cho phép HTTP (cần thiết cho iOS dev)
   },
+
   plugins: {
     CapacitorHttp: {
       enabled: true,
     },
-    // Cấu hình cho Keyboard nếu cần (tùy chọn)
     Keyboard: {
       resize: 'body',
       resizeOnFullScreen: true,
