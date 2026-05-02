@@ -1,9 +1,11 @@
+// src/hooks/useAppSystem.ts
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
-import { useWeatherSync } from './useWeatherSync';
+// ✅ Import đúng hook đã sửa
+import { useWeatherSync } from './useWeatherSync'; 
 import {
   CALENDAR_OAUTH_PENDING_KEY,
   CALENDAR_TOKEN_UPDATED_EVENT,
@@ -25,9 +27,10 @@ export function useAppSystem() {
   const [loginPrefill, setLoginPrefill] = useState('');
   const profileIdRef = useRef<string | undefined>(undefined);
 
-  const { isWeatherSynced, setIsWeatherSynced, weatherData, syncWeather } = useWeatherSync();
-  const { isCalendarSynced, setIsCalendarSynced, calendarEvents, syncCalendar } = useCalendarSync();
-  const { isWatchConnected, toggleHealthConnection, watchData, isLoading: isHealthLoading } = useDeviceHealth(profile?.id);
+  // ✅ Khởi tạo các hooks con (bao gồm useWeatherSync đã fix)
+  const weatherHook = useWeatherSync();
+  const calendarHook = useCalendarSync();
+  const healthHook = useDeviceHealth(profile?.id);
 
   useEffect(() => {
     profileIdRef.current = profile?.id;
@@ -86,8 +89,6 @@ export function useAppSystem() {
       try {
         if (session) {
           if (session.provider_token) {
-            // Provider token is handled server-side by the calendar-proxy Edge Function.
-            // Just notify the calendar hook that a token is available for sync.
             window.dispatchEvent(new CustomEvent(CALENDAR_TOKEN_UPDATED_EVENT));
           }
           if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') {
@@ -125,5 +126,20 @@ export function useAppSystem() {
     if (ok) { await supabase!.auth.signOut(); }
   };
 
-  return { view, setView, profile, setProfile, loginPrefill, setLoginPrefill, handleLogout, isWeatherSynced, setIsWeatherSynced, weatherData, syncWeather, isCalendarSynced, setIsCalendarSynced, calendarEvents, syncCalendar, isWatchConnected, toggleHealthConnection, watchData, isHealthLoading };
+  // ✅ Trả về đầy đủ các giá trị, bao gồm spread từ các hook con
+  return { 
+    view, 
+    setView, 
+    profile, 
+    setProfile, 
+    loginPrefill, 
+    setLoginPrefill, 
+    handleLogout,
+    // Weather
+    ...weatherHook, 
+    // Calendar
+    ...calendarHook,
+    // Health
+    ...healthHook
+  };
 }

@@ -80,3 +80,31 @@ export const syncWeatherAndWaterGoal = async () => {
     }
   }
 };
+// ... (Toàn bộ code cũ giữ nguyên) ...
+
+// ==========================================
+// THÊM PHẦN NÀY VÀO CUỐI FILE ĐỂ SỬA LỖI
+// ==========================================
+import { useState, useCallback } from 'react';
+import type { WeatherData } from '@/lib/weatherEngine';
+
+// Tạo một React Hook wrapper để tương thích với useAppSystem
+export function useWeatherSync() {
+  const [isWeatherSynced, setIsWeatherSynced] = useState<boolean>(false);
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+
+  const syncWeather = useCallback(async () => {
+    // Gọi hàm logic chính đã có sẵn
+    await syncWeatherAndWaterGoal();
+    // Cập nhật trạng thái local (có thể mở rộng sau)
+    setIsWeatherSynced(true); 
+    return true;
+  }, []);
+
+  return {
+    isWeatherSynced,
+    setIsWeatherSynced,
+    weatherData,
+    syncWeather,
+  };
+}
