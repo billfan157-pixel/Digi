@@ -29,7 +29,7 @@ jobs:
       - name: Build Web App
         run: npm run build
 
-      # --- BƯỚC QUAN TRỌNG NHẤT: SYNC VÀ KIỂM TRA SPM ---
+      # --- BƯỚC QUAN TRỌNG NHẤT: SYNC VÀ KIỂM TRA SPM (ĐÃ SỬA ĐƯỜNG DẪN) ---
       - name: Sync Capacitor iOS (SPM Mode)
         run: |
           echo "🔄 Starting Deep Sync for SPM..."
@@ -47,12 +47,11 @@ jobs:
           
           if [ ! -f "$PACKAGE_FILE" ]; then
             echo "❌ CRITICAL ERROR: Package.swift not found at $PACKAGE_FILE"
-            echo "Searching for Package.swift anywhere in ios/..."
-            find ios/ -name "Package.swift"
+            ls -R ios/App/
             exit 1
           fi
           
-          echo "📄 Found Package.swift at $PACKAGE_FILE. Verifying plugins..."
+          echo "📄 Found Package.swift at correct location. Verifying plugins..."
           
           # Kiểm tra Health Plugin
           if grep -q "@capgo/capacitor-health" "$PACKAGE_FILE"; then
