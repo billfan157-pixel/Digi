@@ -32,22 +32,25 @@ jobs:
       - name: Sync Capacitor iOS
         run: npx cap sync ios
 
-      - name: Fix iOS Scheme (Copy file có sẵn từ repo)
+      - name: Fix iOS Scheme
         run: |
           cd ios/App
           mkdir -p App.xcscheme/_xcshareddata
-          # Copy file scheme đã tạo ở Bước 1 vào vị trí chuẩn của Xcode
           if [ -f "App.xcscheme/App.xcscheme" ]; then
             cp App.xcscheme/App.xcscheme App.xcscheme/_xcshareddata/App.xcscheme
-            echo "✅ Scheme copied successfully from repository."
+            echo "✅ Scheme copied successfully."
           else
-            echo "❌ Error: App.xcscheme file not found in repository!"
+            echo "❌ Error: App.xcscheme not found!"
             exit 1
           fi
 
-      - name: Build iOS App (Unsigned)
+      - name: Build iOS App (Verbose Mode)
+        id: build_step
         run: |
           cd ios/App
+          echo "🚀 Starting xcodebuild..."
+          
+          # Chạy build và in log chi tiết
           xcodebuild -project App.xcodeproj \
                      -scheme App \
                      -configuration Release \
@@ -56,21 +59,41 @@ jobs:
                      CODE_SIGN_IDENTITY="" \
                      CODE_SIGNING_REQUIRED=NO \
                      CODE_SIGNING_ALLOWED=NO \
-                     clean build
+                     clean build \
+                     -verbose || {
+                       echo "❌ BUILD FAILED! Check logs above."
+                       exit 1
+                     }
+          
+          echo "✅ Build finished successfully."
+
+      - name: Debug Build Output
+        run: |
+          echo "🔍 Searching for .app file..."
+          # Tìm trong toàn bộ thư mục ios/App
+          APP_PATH=$(find ios/App -name "App.app" -type d | head -n 1)
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ CRITICAL ERROR: App.app not found anywhere!"
+            echo "Listing contents of ios/App/build_output (if exists):"
+            ls -R ios/App/build_output || echo "build_output folder does not exist."
+            exit 1
+          else
+            echo "✅ Found App at: $APP_PATH"
+            # Lưu đường dẫn vào file tạm để bước sau dùng
+            echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+          fi
 
       - name: Create IPA payload
         run: |
           mkdir -p Payload
-          APP_PATH=$(find build_output -name "App.app" -type d | head -n 1)
-          
           if [ -z "$APP_PATH" ]; then
-            echo "❌ Error: Could not find App.app in build_output"
+            echo "❌ Error: APP_PATH variable is empty."
             exit 1
           fi
-          
-          echo "✅ Found App at: $APP_PATH"
           cp -r "$APP_PATH" Payload/
           zip -qr DigiWell-iOS.ipa Payload
+          echo "✅ IPA created successfully."
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
