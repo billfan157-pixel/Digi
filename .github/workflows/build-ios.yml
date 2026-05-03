@@ -1,4 +1,4 @@
-name: Build iOS (Unsigned IPA)
+﻿name: Build iOS (Unsigned IPA)
 
 on:
   workflow_dispatch:
@@ -29,18 +29,25 @@ jobs:
       - name: Build Web App
         run: npm run build
 
-      - name: Sync Capacitor iOS (Deep Sync)
+      - name: Sync Capacitor iOS (SPM Mode)
         run: |
-          echo "🔄 Syncing iOS platform deeply..."
+          echo "🔄 Starting Deep Sync for SPM..."
+          rm -rf ios/App/.git
           npx cap sync ios
-          # Kiểm tra xem plugin Health và Geolocation có trong folder ios không
-          if [ -d "ios/App/Pods/@capgo" ] || [ -d "ios/App/App/Pods" ]; then
-            echo "✅ Pods found."
+          echo "✅ Sync finished. Checking Package.swift..."
+          if grep -q "@capgo/capacitor-health" ios/App/Package.swift; then
+            echo "✅ Health Plugin found in Package.swift"
           else
-            echo "⚠️ Pods not found, trying to install via CocoaPods manually..."
-            cd ios/App && pod install || true
-            cd ../..
+            echo "❌ Health Plugin MISSING in Package.swift!"
+            exit 1
           fi
+          if grep -q "@capacitor/geolocation" ios/App/Package.swift; then
+            echo "✅ Geolocation Plugin found in Package.swift"
+          else
+            echo "❌ Geolocation Plugin MISSING in Package.swift!"
+            exit 1
+          fi
+          echo "🎉 All plugins correctly linked via SPM!"
 
       - name: Fix iOS Scheme
         run: |
@@ -58,23 +65,10 @@ jobs:
         id: build_step
         run: |
           cd ios/App
-          echo "🚀 Starting xcodebuild with verbose logging..."
-          
-          xcodebuild -project App.xcodeproj \
-                     -scheme App \
-                     -configuration Release \
-                     -sdk iphoneos \
-                     -derivedDataPath build_output \
-                     CODE_SIGN_IDENTITY="" \
-                     CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGNING_ALLOWED=NO \
-                     ONLY_ACTIVE_ARCH=NO \
-                     -allowProvisioningUpdates \
-                     clean build \
-                     -verbose 2>&1 | tee build_log.txt
-          
+          echo "🚀 Starting xcodebuild..."
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release -sdk iphoneos -derivedDataPath build_output CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO ONLY_ACTIVE_ARCH=NO -allowProvisioningUpdates clean build 2>&1 | tee build_log.txt
           if [ ${PIPESTATUS[0]} -ne 0 ]; then
-            echo "❌ BUILD FAILED! Last 50 lines of log:"
+            echo "❌ BUILD FAILED! Last 50 lines:"
             tail -n 50 build_log.txt
             exit 1
           fi
@@ -83,32 +77,23 @@ jobs:
       - name: Find App Bundle
         id: find_app
         run: |
-          echo "🔍 Searching for App.app bundle..."
-          # Tìm chính xác trong thư mục build_output vừa tạo
+          echo "🔍 Searching for App.app..."
           APP_PATH=$(find ios/App/build_output -name "App.app" -type d | head -n 1)
-          
           if [ -z "$APP_PATH" ]; then
-            echo "❌ CRITICAL: App.app not found in build_output!"
-            echo "Contents of build_output:"
+            echo "❌ CRITICAL: App.app not found!"
             ls -R ios/App/build_output || echo "Folder empty."
             exit 1
           fi
-          
           echo "✅ Found App at: $APP_PATH"
           echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
 
       - name: Create IPA payload
         run: |
           mkdir -p Payload
-          if [ -z "$APP_PATH" ]; then
-            echo "❌ Error: APP_PATH is empty."
-            exit 1
-          fi
-          echo "Copying app to Payload..."
+          if [ -z "$APP_PATH" ]; then echo "❌ Error: APP_PATH is empty."; exit 1; fi
           cp -r "$APP_PATH" Payload/
-          echo "Zipping IPA..."
           zip -qr DigiWell-iOS.ipa Payload
-          echo "✅ IPA created: $(ls -lh DigiWell-iOS.ipa)"
+          echo "✅ IPA created."
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
