@@ -29,25 +29,25 @@ jobs:
       - name: Build Web App
         run: npm run build
 
-      # --- BƯỚC QUAN TRỌNG NHẤT: TÁI TẠO MÔI TRƯỜNG iOS SẠCH ---
-      - name: Re-create iOS Platform (Fix Scheme & Plugins)
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      - name: Fix iOS Scheme (Copy file có sẵn từ repo)
         run: |
-          # Xóa thư mục ios cũ để tránh xung đột cấu hình
-          rm -rf ios
-          
-          # Thêm lại nền tảng iOS mới hoàn toàn (Capacitor sẽ tự tạo scheme chuẩn)
-          npx cap add ios @latest
-          
-          # Đồng bộ code và plugins (Health, Geolocation...) vào project mới
-          npx cap sync ios
-          
-          echo "✅ iOS platform re-created successfully with valid schemes."
+          cd ios/App
+          mkdir -p App.xcscheme/_xcshareddata
+          # Copy file scheme đã tạo ở Bước 1 vào vị trí chuẩn của Xcode
+          if [ -f "App.xcscheme/App.xcscheme" ]; then
+            cp App.xcscheme/App.xcscheme App.xcscheme/_xcshareddata/App.xcscheme
+            echo "✅ Scheme copied successfully from repository."
+          else
+            echo "❌ Error: App.xcscheme file not found in repository!"
+            exit 1
+          fi
 
       - name: Build iOS App (Unsigned)
         run: |
           cd ios/App
-          
-          # Build bằng xcodebuild với scheme mặc định vừa được tạo
           xcodebuild -project App.xcodeproj \
                      -scheme App \
                      -configuration Release \
@@ -56,32 +56,21 @@ jobs:
                      CODE_SIGN_IDENTITY="" \
                      CODE_SIGNING_REQUIRED=NO \
                      CODE_SIGNING_ALLOWED=NO \
-                     clean build \
-                     -quiet || {
-                       echo "❌ Build failed! Showing detailed logs:"
-                       exit 1
-                     }
-          
-          echo "✅ Build completed successfully."
+                     clean build
 
       - name: Create IPA payload
         run: |
           mkdir -p Payload
-          
-          # Tìm file .app trong thư mục build_output
-          APP_PATH=$(find ios/App/build_output -name "App.app" -type d | head -n 1)
+          APP_PATH=$(find build_output -name "App.app" -type d | head -n 1)
           
           if [ -z "$APP_PATH" ]; then
             echo "❌ Error: Could not find App.app in build_output"
-            echo "Contents of build_output:"
-            ls -R ios/App/build_output || true
             exit 1
           fi
           
           echo "✅ Found App at: $APP_PATH"
           cp -r "$APP_PATH" Payload/
           zip -qr DigiWell-iOS.ipa Payload
-          echo "✅ IPA created successfully."
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
