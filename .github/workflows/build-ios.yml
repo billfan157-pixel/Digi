@@ -36,9 +36,14 @@ jobs:
         run: |
           cd ios/App
           mkdir -p App.xcscheme/_xcshareddata
-          # Copy file scheme đã tạo sẵn từ bước 1 vào đúng vị trí
-          cp App.xcscheme/App.xcscheme App.xcscheme/_xcshareddata/App.xcscheme
-          echo "Scheme copied successfully."
+          # Copy file scheme đã tạo ở Bước 1 vào vị trí cần thiết
+          if [ -f "App.xcscheme/App.xcscheme" ]; then
+            cp App.xcscheme/App.xcscheme App.xcscheme/_xcshareddata/App.xcscheme
+            echo "✅ Scheme copied successfully."
+          else
+            echo "❌ Error: Scheme file not found!"
+            exit 1
+          fi
 
       - name: Build iOS App (Unsigned)
         run: |
@@ -57,10 +62,12 @@ jobs:
         run: |
           mkdir -p Payload
           APP_PATH=$(find build_output -name "App.app" -type d | head -n 1)
+          
           if [ -z "$APP_PATH" ]; then
-            echo "Error: Could not find App.app"
+            echo "❌ Error: Could not find App.app"
             exit 1
           fi
+          
           cp -r "$APP_PATH" Payload/
           zip -qr DigiWell-iOS.ipa Payload
 
