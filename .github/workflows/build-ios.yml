@@ -32,49 +32,17 @@ jobs:
       - name: Sync Capacitor iOS
         run: npx cap sync ios
 
-      - name: Fix iOS Scheme (Quan trọng)
+      - name: Fix iOS Scheme (Copy file có sẵn)
         run: |
-          # Bước này bắt buộc: Đánh dấu scheme là "shared" để xcodebuild nhìn thấy
           cd ios/App
           mkdir -p App.xcscheme/_xcshareddata
-          cp App.xcodeproj/project.xcworkspace/xcshareddata/App.xcworkspace App.xcscheme/_xcshareddata/ 2>/dev/null || true
-          
-          # Tạo file scheme thủ công nếu chưa có
-          cat > App.xcscheme/App.xcscheme <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <Scheme LastUpgradeVersion="1500" version="1.7">
-             <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
-                <BuildActionEntries>
-                   <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
-                      <BuildableReference
-                         BuildableIdentifier="primary"
-                         BlueprintIdentifier="9E9A47F6226D86B3000C55E8"
-                         BuildableName="App.app"
-                         BlueprintName="App"
-                         ReferencedContainer="container:App.xcodeproj">
-                      </BuildableReference>
-                   </BuildActionEntry>
-                </BuildActionEntries>
-             </BuildActionAction>
-             <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES">
-                <BuildableProductRunnable runnableDebuggingMode="0">
-                   <BuildableReference
-                      BuildableIdentifier="primary"
-                      BlueprintIdentifier="9E9A47F6226D86B3000C55E8"
-                      BuildableName="App.app"
-                      BlueprintName="App"
-                      ReferencedContainer="container:App.xcodeproj">
-                   </BuildableReference>
-                </BuildableProductRunnable>
-             </LaunchAction>
-          </Scheme>
-          EOF
+          # Copy file scheme đã tạo sẵn từ bước 1 vào đúng vị trí
+          cp App.xcscheme/App.xcscheme App.xcscheme/_xcshareddata/App.xcscheme
+          echo "Scheme copied successfully."
 
       - name: Build iOS App (Unsigned)
         run: |
           cd ios/App
-          
-          # Build bằng xcodebuild
           xcodebuild -project App.xcodeproj \
                      -scheme App \
                      -configuration Release \
@@ -88,15 +56,11 @@ jobs:
       - name: Create IPA payload
         run: |
           mkdir -p Payload
-          # Tìm file .app đã build
-          APP_PATH=$(find ios/App/build_output -name "App.app" -type d | head -n 1)
-          
+          APP_PATH=$(find build_output -name "App.app" -type d | head -n 1)
           if [ -z "$APP_PATH" ]; then
             echo "Error: Could not find App.app"
             exit 1
           fi
-          
-          echo "Copying app from: $APP_PATH"
           cp -r "$APP_PATH" Payload/
           zip -qr DigiWell-iOS.ipa Payload
 
