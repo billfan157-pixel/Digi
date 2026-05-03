@@ -1,21 +1,26 @@
 // src/hooks/useWeatherSync.ts
 import { Geolocation } from '@capacitor/geolocation';
-import { getWeatherData, calculateWeatherAdjustment } from '@/lib/weatherEngine';
+import { getWeatherData, calculateWeatherAdjustment, type WeatherData } from '@/lib/weatherEngine';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useState, useCallback } from 'react';
 
+// Hàm logic chính (Đã tối ưu cho iOS thật)
 export const syncWeatherAndWaterGoal = async () => {
   try {
-    toast.loading('Đang định vị vị trí của bạn...');
+    toast.loading('📡 Đang yêu cầu quyền truy cập vị trí...', { duration: 3000 });
 
-    // 1. Lấy vị trí hiện tại
+    // 1. Lấy vị trí hiện tại với cấu hình "nồi đồng cối đá" cho iOS
     const coordinates = await Geolocation.getCurrentPosition({
-      enableHighAccuracy: true, // Dùng GPS chính xác nhất
-      timeout: 10000,
+      enableHighAccuracy: true,      // Bắt buộc dùng GPS thay vì WiFi
+      timeout: 30000,                // Tăng timeout lên 30s (iOS cần thời gian bật GPS)
+      maximumAge: 0,                 // Không lấy cache cũ, bắt buộc lấy mới
     });
 
     const { latitude, longitude } = coordinates.coords;
     console.log('📍 Vị trí tìm thấy:', latitude, longitude);
+
+    toast.loading('🌤️ Đang lấy dữ liệu thời tiết...', { duration: 2000 });
 
     // 2. Gọi Weather Engine lấy dữ liệu thời tiết
     const weather = await getWeatherData({
@@ -24,7 +29,7 @@ export const syncWeatherAndWaterGoal = async () => {
 
     if (!weather) {
       toast.error('Không thể lấy dữ liệu thời tiết. Vui lòng thử lại.');
-      return;
+      return false;
     }
 
     console.log('🌤️ Thời tiết:', weather);
@@ -60,45 +65,45 @@ export const syncWeatherAndWaterGoal = async () => {
       if (adjustment > 0) {
         message += `Trời nóng/ẩm, DigiWell đã tăng mục tiêu thêm ${adjustment}ml 💧`;
       } else {
-        message += `Trời mát, mục tiêu giữ nguyên hoặc giảm nhẹ.`;
+        message += `Trời mát, mục tiêu giữ nguyên.`;
       }
       
-      toast.success(message, { duration: 5000 });
+      toast.success(message, { duration: 6000 });
     } else {
-      toast.info(`Thời tiết ôn hòa, không cần điều chỉnh lượng nước.`);
+      toast.info(`Thời tiết ôn hòa (${Math.round(weather.temp)}°C), không cần điều chỉnh lượng nước.`);
     }
+    
+    return true;
 
   } catch (error: any) {
-    console.error('Lỗi đồng bộ thời tiết:', error);
+    console.error('❌ Lỗi đồng bộ thời tiết chi tiết:', error);
     
-    if (error.message?.includes('permission')) {
-      toast.error('Bạn đã từ chối cấp quyền vị trí. Vui lòng vào Cài đặt > DigiWell để bật.');
+    // Xử lý các lỗi đặc thù của iOS
+    if (error.message?.includes('permission') || error.code === 'UNAVAILABLE') {
+      toast.error('Bạn đã từ chối cấp quyền vị trí. Vui lòng vào Cài đặt > DigiWell > Vị trí > Chọn "Khi dùng ứng dụng".', { duration: 8000 });
     } else if (error.message?.includes('timeout')) {
-      toast.error('Không thể xác định vị trí. Hãy thử lại ở nơi thoáng đãng hơn.');
+      toast.error('Hết thời gian chờ định vị. Hãy thử lại ở nơi thoáng đãng hơn hoặc bật GPS.', { duration: 6000 });
+    } else if (error.message?.includes('network')) {
+      toast.error('Lỗi kết nối mạng khi lấy thời tiết.');
     } else {
       toast.error('Lỗi: ' + (error.message || 'Không xác định'));
     }
+    return false;
   }
 };
-// ... (Toàn bộ code cũ giữ nguyên) ...
 
-// ==========================================
-// THÊM PHẦN NÀY VÀO CUỐI FILE ĐỂ SỬA LỖI
-// ==========================================
-import { useState, useCallback } from 'react';
-import type { WeatherData } from '@/lib/weatherEngine';
-
-// Tạo một React Hook wrapper để tương thích với useAppSystem
+// React Hook wrapper để tương thích với useAppSystem
 export function useWeatherSync() {
   const [isWeatherSynced, setIsWeatherSynced] = useState<boolean>(false);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
   const syncWeather = useCallback(async () => {
-    // Gọi hàm logic chính đã có sẵn
-    await syncWeatherAndWaterGoal();
-    // Cập nhật trạng thái local (có thể mở rộng sau)
-    setIsWeatherSynced(true); 
-    return true;
+    const success = await syncWeatherAndWaterGoal();
+    if (success) {
+      setIsWeatherSynced(true);
+      // Có thể cập nhật weatherData ở đây nếu cần
+    }
+    return success;
   }, []);
 
   return {
