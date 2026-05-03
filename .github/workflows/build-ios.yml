@@ -29,8 +29,18 @@ jobs:
       - name: Build Web App
         run: npm run build
 
-      - name: Sync Capacitor iOS
-        run: npx cap sync ios
+      - name: Sync Capacitor iOS (Deep Sync)
+        run: |
+          echo "🔄 Syncing iOS platform deeply..."
+          npx cap sync ios
+          # Kiểm tra xem plugin Health và Geolocation có trong folder ios không
+          if [ -d "ios/App/Pods/@capgo" ] || [ -d "ios/App/App/Pods" ]; then
+            echo "✅ Pods found."
+          else
+            echo "⚠️ Pods not found, trying to install via CocoaPods manually..."
+            cd ios/App && pod install || true
+            cd ../..
+          fi
 
       - name: Fix iOS Scheme
         run: |
@@ -44,13 +54,12 @@ jobs:
             exit 1
           fi
 
-      - name: Build iOS App (Verbose Mode)
+      - name: Build iOS App
         id: build_step
         run: |
           cd ios/App
-          echo "🚀 Starting xcodebuild..."
+          echo "🚀 Starting xcodebuild with verbose logging..."
           
-          # Chạy build và in log chi tiết
           xcodebuild -project App.xcodeproj \
                      -scheme App \
                      -configuration Release \
@@ -59,41 +68,47 @@ jobs:
                      CODE_SIGN_IDENTITY="" \
                      CODE_SIGNING_REQUIRED=NO \
                      CODE_SIGNING_ALLOWED=NO \
+                     ONLY_ACTIVE_ARCH=NO \
+                     -allowProvisioningUpdates \
                      clean build \
-                     -verbose || {
-                       echo "❌ BUILD FAILED! Check logs above."
-                       exit 1
-                     }
+                     -verbose 2>&1 | tee build_log.txt
           
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "❌ BUILD FAILED! Last 50 lines of log:"
+            tail -n 50 build_log.txt
+            exit 1
+          fi
           echo "✅ Build finished successfully."
 
-      - name: Debug Build Output
+      - name: Find App Bundle
+        id: find_app
         run: |
-          echo "🔍 Searching for .app file..."
-          # Tìm trong toàn bộ thư mục ios/App
-          APP_PATH=$(find ios/App -name "App.app" -type d | head -n 1)
+          echo "🔍 Searching for App.app bundle..."
+          # Tìm chính xác trong thư mục build_output vừa tạo
+          APP_PATH=$(find ios/App/build_output -name "App.app" -type d | head -n 1)
           
           if [ -z "$APP_PATH" ]; then
-            echo "❌ CRITICAL ERROR: App.app not found anywhere!"
-            echo "Listing contents of ios/App/build_output (if exists):"
-            ls -R ios/App/build_output || echo "build_output folder does not exist."
+            echo "❌ CRITICAL: App.app not found in build_output!"
+            echo "Contents of build_output:"
+            ls -R ios/App/build_output || echo "Folder empty."
             exit 1
-          else
-            echo "✅ Found App at: $APP_PATH"
-            # Lưu đường dẫn vào file tạm để bước sau dùng
-            echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
           fi
+          
+          echo "✅ Found App at: $APP_PATH"
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
 
       - name: Create IPA payload
         run: |
           mkdir -p Payload
           if [ -z "$APP_PATH" ]; then
-            echo "❌ Error: APP_PATH variable is empty."
+            echo "❌ Error: APP_PATH is empty."
             exit 1
           fi
+          echo "Copying app to Payload..."
           cp -r "$APP_PATH" Payload/
+          echo "Zipping IPA..."
           zip -qr DigiWell-iOS.ipa Payload
-          echo "✅ IPA created successfully."
+          echo "✅ IPA created: $(ls -lh DigiWell-iOS.ipa)"
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
