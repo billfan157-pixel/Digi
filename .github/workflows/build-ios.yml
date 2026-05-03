@@ -42,16 +42,17 @@ jobs:
           
           echo "✅ Sync finished. Checking Package.swift location..."
           
-          # Capacitor 6+ lưu Package.swift ở thư mục ios/ (gốc), không phải ios/App/
-          PACKAGE_FILE="ios/Package.swift"
+          # Capacitor 6+ lưu Package.swift trong thư mục CapApp-SPM
+          PACKAGE_FILE="ios/App/CapApp-SPM/Package.swift"
           
           if [ ! -f "$PACKAGE_FILE" ]; then
             echo "❌ CRITICAL ERROR: Package.swift not found at $PACKAGE_FILE"
-            ls -R ios/
+            echo "Searching for Package.swift anywhere in ios/..."
+            find ios/ -name "Package.swift"
             exit 1
           fi
           
-          echo "📄 Found Package.swift. Verifying plugins..."
+          echo "📄 Found Package.swift at $PACKAGE_FILE. Verifying plugins..."
           
           # Kiểm tra Health Plugin
           if grep -q "@capgo/capacitor-health" "$PACKAGE_FILE"; then
