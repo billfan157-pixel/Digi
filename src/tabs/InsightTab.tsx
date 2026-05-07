@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, memo } from 'react';
+import React, { useMemo, useState, useEffect, memo, useCallback } from 'react';
 import { 
   BarChart2, Cpu, RefreshCw, ArrowUpRight, 
   Target, Flame, ChevronRight, Droplets,
@@ -24,6 +24,9 @@ import { useUIStore } from '../store/useUIStore';
 import { useShallow } from 'zustand/react/shallow';
 
 import { AppStorage } from '@/lib/storage';
+import { TrendsChart } from '../components/insight/TrendsChart';
+import { AdvancedStatsGrid } from '../components/insight/AdvancedStatsGrid';
+import ScheduleManager from '../components/ScheduleManager';
 
 interface InsightTabProps {
   isExportingPDF: boolean;
@@ -44,7 +47,7 @@ const InsightTab = memo(function InsightTab({
   weeklyReport, isWeeklyReportLoading, generateWeeklyReport
 }: InsightTabProps) {
   
-  const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, hydrationResult, waterIntake } = useAppStore(useShallow((state) => ({
+  const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, hydrationResult, waterIntake, waterEntries } = useAppStore(useShallow((state) => ({
     profile: state.profile,
     isPremium: state.isPremium,
     waterGoal: state.waterGoal,
@@ -52,6 +55,7 @@ const InsightTab = memo(function InsightTab({
     streak: state.streak,
     hydrationResult: state.hydrationResult,
     waterIntake: state.waterIntake,
+    waterEntries: state.waterEntries,
   })));
   const { setShowPremiumModal, setShowAiChat } = useUIStore(useShallow((state) => ({
     setShowPremiumModal: state.setShowPremiumModal,
@@ -67,6 +71,12 @@ const InsightTab = memo(function InsightTab({
   const [selectedDateModal, setSelectedDateModal] = useState<{date: string, ml: number} | null>(null);
   const [dayLogs, setDayLogs] = useState<WaterLog[]>([]);
   const [isDayLogsLoading, setIsDayLogsLoading] = useState(false);
+
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [monthlyDataMap, setMonthlyDataMap] = useState<Record<string, number>>({});
+  const [isMonthDataLoading, setIsMonthDataLoading] = useState(false);
+  const [selectedWeekDay, setSelectedWeekDay] = useState<{ d: string; ml: number } | null>(null);
+  const [selectedCalendarCell, setSelectedCalendarCell] = useState<{ dayNum: number; ml: number; fullDate: string } | null>(null);
 
   const [customSchedule, setCustomSchedule] = useState<any[]>([]);
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
@@ -162,12 +172,59 @@ const InsightTab = memo(function InsightTab({
     }
   };
 
+  const monthKey = useMemo(() => {
+    return `${calendarDate.getFullYear()}-${calendarDate.getMonth()}`;
+  }, [calendarDate]);
+
+  const waterEntriesSig = useMemo(() => waterEntries?.map(e => e.id).join(','), [waterEntries]);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchMonthData = async () => {
+      if (!profile?.id) return;
+      setIsMonthDataLoading(true);
+      try {
+        const monthStart = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
+        const monthEnd = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0);
+        const startStr = `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, '0')}-${String(monthStart.getDate()).padStart(2, '0')}`;
+        const endStr = `${monthEnd.getFullYear()}-${String(monthEnd.getMonth() + 1).padStart(2, '0')}-${String(monthEnd.getDate()).padStart(2, '0')}`;
+
+        const { data, error } = await supabase
+          .from('water_logs')
+          .select('amount, day')
+          .eq('user_id', profile.id)
+          .gte('day', startStr)
+          .lte('day', endStr);
+
+        if (error) throw error;
+        if (!mounted) return;
+
+        const dataMap: Record<string, number> = {};
+        (data || []).forEach((log: any) => {
+          if (log.day && log.amount) {
+            dataMap[log.day] = (dataMap[log.day] || 0) + log.amount;
+          }
+        });
+        setMonthlyDataMap(dataMap);
+      } catch (err) {
+        console.error('Lỗi tải dữ liệu tháng:', err);
+      } finally {
+        if (mounted) setIsMonthDataLoading(false);
+      }
+    };
+
+    fetchMonthData();
+    return () => { mounted = false; };
+  }, [profile?.id, monthKey, waterEntriesSig]);
+
   // --- THUẬT TOÁN TRUE CALENDAR: Tự động tạo lưới lịch chuẩn theo Tháng hiện tại ---
   const { calendarCells, currentMonthName } = useMemo(() => {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const todayDate = now.getDate();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDate = now.getDate();
     
     // Tìm số ngày trong tháng (tự động 28, 29, 30, 31)
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -183,22 +240,21 @@ const InsightTab = memo(function InsightTab({
       cells.push({ dayNum: null, ml: 0, isFuture: false, isToday: false, isEmptySlot: true, fullDate: '' });
     }
 
-    // Lấy data tuần ngược lại để map vào các ngày gần đây
-    const weeklyDataReversed = [...weeklyChartData].reverse();
-
     // 2. Điền các ngày trong tháng
     for (let i = 1; i <= daysInMonth; i++) {
-      const isFuture = i > todayDate;
-      const isToday = i === todayDate;
-      let ml = 0;
-
-      // Map data từ weeklyChartData vào đúng ngày (chỉ mô phỏng cho 7 ngày gần nhất)
-      const daysAgo = todayDate - i;
-      if (daysAgo >= 0 && daysAgo < weeklyDataReversed.length) {
-        ml = weeklyDataReversed[daysAgo]?.ml || 0;
-      }
+      const isToday = year === currentYear && month === currentMonth && i === currentDate;
+      const isFuture = year > currentYear || (year === currentYear && month > currentMonth) || (year === currentYear && month === currentMonth && i > currentDate);
 
       const fullDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      
+      const entriesForDay = waterEntries?.filter(e => e.day === fullDateStr) || [];
+      let ml = Number(monthlyDataMap[fullDateStr] || 0);
+      if (entriesForDay.length > 0) {
+        ml = entriesForDay.reduce((sum, e) => sum + (e.amount || 0), 0);
+      } else if (isToday) {
+        ml = waterIntake;
+      }
+
       cells.push({ dayNum: i, ml, isFuture, isToday, isEmptySlot: false, fullDate: fullDateStr });
     }
 
@@ -208,12 +264,31 @@ const InsightTab = memo(function InsightTab({
       calendarCells: cells, 
       currentMonthName: `${monthNames[month]} / ${year}` 
     };
-  }, [weeklyChartData]);
+  }, [monthlyDataMap, waterIntake, calendarDate, waterEntries]);
+
+  const handlePrevMonth = useCallback(() => {
+    setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  }, []);
+
+  const handleNextMonth = useCallback(() => {
+    setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  }, []);
 
   // --- HÀM LẤY CHI TIẾT LỊCH SỬ NGÀY KHI BẤM VÀO LỊCH ---
   const handleDayClick = async (dateStr: string, totalMl: number) => {
     if (!profile?.id) return;
     setSelectedDateModal({ date: dateStr, ml: totalMl });
+
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    const entriesInStore = waterEntries?.filter(e => e.day === dateStr) || [];
+    if (entriesInStore.length > 0 || dateStr === todayStr || totalMl === 0) {
+      if (totalMl === 0) setDayLogs([]);
+      setIsDayLogsLoading(false);
+      return;
+    }
+
     setIsDayLogsLoading(true);
     try {
       const { data, error } = await supabase
@@ -240,6 +315,9 @@ const InsightTab = memo(function InsightTab({
   }, [weeklyChartData, waterGoal]);
 
   const completionRate = weeklyChartData.length === 0 ? 0 : Math.round((stats.completed / weeklyChartData.length) * 100);
+  
+  const weeklyTotal = useMemo(() => weeklyChartData.reduce((sum, d) => sum + d.ml, 0), [weeklyChartData]);
+  const monthlyTotal = useMemo(() => Object.values(monthlyDataMap).reduce((sum, ml) => sum + ml, 0), [monthlyDataMap]);
 
   const breakdownData = hydrationResult?.breakdown ?? null;
 
@@ -267,182 +345,32 @@ const InsightTab = memo(function InsightTab({
       </div>
 
       {/* --- BIỂU ĐỒ TRUNG TÂM --- */}
-      <div className={`${glassCard} p-6 relative overflow-hidden`}>
-        <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-          <TrendingUp size={150} className="text-cyan-500" />
-        </div>
-        
-        <div className="flex justify-between items-center mb-8 relative z-10">
-          <div className="relative flex bg-slate-950/50 p-1.5 rounded-2xl border border-white/5">
-            {(['week', 'month'] as const).map((t) => {
-              const isActive = timeRange === t;
-              return (
-                <button 
-                  key={t}
-                  onClick={() => setTimeRange(t)}
-                  className={`relative px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-colors duration-300 z-10 ${isActive ? 'text-slate-950' : 'text-slate-400 hover:text-slate-200'}`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="insightTabIndicator"
-                      className="absolute inset-0 bg-cyan-400 rounded-xl shadow-[0_0_15px_rgba(34,211,238,0.3)] -z-10"
-                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    />
-                  )}
-                  {t === 'week' ? 'Tuần' : 'Tháng'}
-                </button>
-              );
-            })}
-          </div>
-          <div className="text-right">
-            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Mục tiêu</p>
-            <p className="text-white font-black text-lg font-mono-tech">{waterGoal.toLocaleString('vi-VN')} ml</p>
-          </div>
-        </div>
-        
-        {timeRange === 'week' ? (
-          /* BIỂU ĐỒ CỘT CHO TUẦN */
-          <div className="relative h-44 w-full mt-4 z-10">
-            <div className="absolute top-[20%] left-0 w-full flex items-center gap-2 z-0 opacity-50">
-              <div className="w-full border-t border-dashed border-cyan-500/30"></div>
-              <span className="text-[8px] font-mono text-cyan-500 font-bold">100%</span>
-            </div>
-            
-            <div className="absolute bottom-6 left-0 w-full border-t border-slate-700/50 z-0"></div>
-
-            <div className="flex items-end justify-between w-full h-full gap-2 pb-6 relative z-10 px-1">
-              {weeklyChartData.map((day, index) => {
-                const isOver100 = day.ml >= waterGoal;
-                const heightPct = Math.min((day.ml / (waterGoal || 1)) * 80, 100);
-
-                return (
-                  <div key={index} className="flex flex-col items-center justify-end flex-1 h-full relative group">
-                    <div className="w-full h-full relative flex items-end justify-center">
-                      <motion.div 
-                        initial={{ height: 0 }}
-                        animate={{ height: `${heightPct}%` }}
-                        transition={{ duration: 0.5, delay: index * 0.05, type: "spring" }}
-                        className={`w-full max-w-[20px] rounded-t-md transition-colors duration-300 ${
-                          day.isToday 
-                            ? 'bg-gradient-to-t from-cyan-600 to-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]' 
-                            : isOver100 
-                              ? 'bg-cyan-800' 
-                              : 'bg-slate-700/60 group-hover:bg-slate-600'
-                        }`}
-                      />
-                      <div className="absolute bottom-[calc(100%+5px)] left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 border border-white/10 text-[10px] text-white font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg">
-                        {day.ml.toLocaleString('vi-VN')} ml
-                      </div>
-                    </div>
-                    <div className="absolute -bottom-6 mt-2 flex items-center justify-center">
-                      <span className={`text-[10px] font-mono tracking-tighter whitespace-nowrap ${day.isToday ? 'text-cyan-400 font-black' : 'text-slate-500 font-semibold'}`}>
-                        {day.d}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          /* MA TRẬN TRUE CALENDAR (CÓ SỐ NGÀY, TỰ CHỈNH 28-31 NGÀY) */
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mt-4 relative z-10 w-full"
-          >
-            {/* Header Lịch & Chú thích */}
-            <div className="flex justify-between items-end mb-4">
-              <p className="text-xs text-cyan-400 font-black uppercase tracking-wider">{currentMonthName}</p>
-              <div className="flex items-center gap-2 text-[8px] font-mono text-slate-500 uppercase">
-                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-[2px] bg-cyan-900/50"></div> Thiếu</div>
-                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-[2px] bg-cyan-400 shadow-[0_0_5px_cyan]"></div> Đạt</div>
-              </div>
-            </div>
-
-            {/* Khung Ngày Trong Tuần (T2 -> CN) */}
-            <div className="grid grid-cols-7 gap-1.5 sm:gap-2 mb-2">
-              {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => (
-                <div key={d} className="text-center text-[10px] text-slate-500 font-bold">{d}</div>
-              ))}
-            </div>
-
-            {/* Grid 35-42 ô của lịch */}
-            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-              {calendarCells.map((cell, index) => {
-                // Ô đầu tháng rỗng để khớp thứ
-                if (cell.isEmptySlot) {
-                  return (
-                    <motion.div 
-                      key={`empty-${index}`} 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2, delay: index * 0.015 }}
-                      className="aspect-square bg-transparent" 
-                    />
-                  );
-                }
-
-                const pct = (cell.ml / (waterGoal || 1)) * 100;
-                
-                // Logic màu sắc cực mượt
-                let cellClass = "bg-slate-800/30 border border-slate-700/30"; // Quá khứ trống
-                
-                if (cell.isFuture) {
-                  cellClass = "bg-white/5 border border-white/5 opacity-30"; // Tương lai chưa tới
-                } else if (pct >= 100) {
-                  cellClass = "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]";
-                } else if (pct >= 50) {
-                  cellClass = "bg-cyan-700 border border-cyan-500/30";
-                } else if (pct > 0) {
-                  cellClass = "bg-cyan-950 border border-cyan-900/50";
-                }
-
-                return (
-                  <motion.div 
-                    key={`day-${cell.dayNum}`} 
-                    initial={{ opacity: 0, scale: 0.3 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4, delay: index * 0.015, type: 'spring', bounce: 0.5 }}
-                    onClick={() => {
-                      if (!cell.isFuture && !cell.isEmptySlot && cell.fullDate) {
-                        handleDayClick(cell.fullDate, cell.ml);
-                      }
-                    }}
-                    className={`aspect-square rounded-[6px] sm:rounded-lg flex flex-col items-center justify-center transition-all duration-300 relative group ${cellClass} ${!cell.isFuture ? 'hover:scale-110 cursor-pointer' : ''}`}
-                  >
-                     {/* ĐÂY LÀ CHỖ HIỂN THỊ SỐ NGÀY: 1, 2, 3... 31 */}
-                     <span className={`absolute top-0.5 left-1 text-[8px] sm:text-[9px] font-mono leading-none ${cell.isToday ? 'text-cyan-100 font-black' : 'text-slate-400/80 font-semibold'}`}>
-                       {cell.dayNum}
-                     </span>
-
-                     {/* Icon thả giọt nước nếu hoàn thành 100% */}
-                     {!cell.isFuture && pct >= 100 && (
-                       <Droplets size={10} className="text-cyan-950 opacity-90 mt-2 sm:mt-3" />
-                     )}
-                     
-                     {/* Tooltip báo cáo ML khi chạm vào */}
-                     {!cell.isFuture && (
-                       <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-[10px] text-white font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-all transform translate-y-1 group-hover:translate-y-0 border border-white/10 shadow-xl">
-                         Ngày {cell.dayNum}: {cell.ml.toLocaleString('vi-VN')} ml
-                       </div>
-                     )}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </div>
+      <TrendsChart 
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        weeklyChartData={weeklyChartData}
+        waterGoal={waterGoal}
+        selectedWeekDay={selectedWeekDay}
+        onSelectDay={setSelectedWeekDay}
+        calendarCells={calendarCells}
+        currentMonthName={currentMonthName}
+        selectedCalendarCell={selectedCalendarCell}
+        onSelectCell={setSelectedCalendarCell}
+        onDayClick={handleDayClick}
+        isMonthDataLoading={isMonthDataLoading}
+        hasAnyInsightData={weeklyChartData.length > 0}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+      />
 
       {/* Water Breakdown */}
       {breakdownData && (
-        <div className="mt-8">
+        <div className="mt-8 px-6">
           <WaterBreakdown breakdown={breakdownData} />
         </div>
       )}
 
-      <div className="mt-8 px-2">
+      <div className="mt-8 px-6">
         <div 
           onClick={() => setIsScheduleOpen(!isScheduleOpen)}
           className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/40 border border-white/5 cursor-pointer hover:bg-slate-900/60 active:scale-[0.98] transition-all"
@@ -532,43 +460,22 @@ const InsightTab = memo(function InsightTab({
             </motion.div>
           )}
         </AnimatePresence>
+      <div className="px-4">
+        <ScheduleManager profile={profile} />
       </div>
 
       {/* --- CÁC THÀNH PHẦN BÊN DƯỚI GIỮ NGUYÊN (STATS, WORKOUT, AI COACH) --- */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className={`${glassCard} p-6 flex flex-col justify-between h-44 group hover:border-cyan-500/30 transition-colors`}>
-          <div className="flex justify-between items-start">
-            <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
-              <Zap size={18} className="text-cyan-400" />
-            </div>
-            <ArrowUpRight size={14} className="text-slate-600 group-hover:text-cyan-400 transition-colors" />
-          </div>
-          <div>
-            <p className="text-3xl font-black text-white tracking-tighter font-mono-tech">{stats.avg.toLocaleString('vi-VN')}</p>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1">Trung bình ML</p>
-            <div className="w-full h-1 bg-white/5 rounded-full mt-3 overflow-hidden">
-              <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${Math.min((stats.avg / waterGoal) * 100, 100)}%` }} />
-            </div>
-          </div>
-        </div>
+      <AdvancedStatsGrid 
+        weeklyTotal={weeklyTotal}
+        monthlyTotal={monthlyTotal}
+        stats={stats}
+        weeklyChartData={weeklyChartData}
+      />
 
-        <div className={`${glassCard} p-6 flex flex-col justify-between h-44 group hover:border-emerald-500/30 transition-colors`}>
-          <div className="flex justify-between items-start">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-              <Target size={18} className="text-emerald-400" />
-            </div>
-            <Calendar size={14} className="text-slate-600" />
-          </div>
-          <div>
-            <p className="text-3xl font-black text-white tracking-tighter font-mono-tech">{stats.completed}</p>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1">Ngày đạt chuẩn</p>
-            <p className="text-[9px] text-emerald-500 font-black mt-2 font-mono-tech">+{completionRate}% hiệu suất</p>
-          </div>
-        </div>
-
+      <div className="px-6 mt-4">
         <div 
           onClick={() => setIsStreakModalOpen(true)}
-          className={`${glassCard} col-span-2 p-6 flex items-center justify-between group hover:bg-slate-800/80 cursor-pointer active:scale-[0.98] transition-all duration-200 ease-out`}
+          className={`${glassCard} p-6 flex items-center justify-between group hover:bg-slate-800/80 cursor-pointer active:scale-[0.98] transition-all duration-200 ease-out`}
         >
           <div className="flex items-center gap-5">
             <div className="relative">
@@ -587,8 +494,9 @@ const InsightTab = memo(function InsightTab({
           </div>
         </div>
       </div>
+      </div>
 
-      <div className="bg-gradient-to-br from-slate-900/80 to-orange-950/30 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-6 shadow-[0_0_20px_rgba(249,115,22,0.1)] relative overflow-hidden">
+      <div className="mx-6 bg-gradient-to-br from-slate-900/80 to-orange-950/30 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-6 shadow-[0_0_20px_rgba(249,115,22,0.1)] relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
           <Flame size={100} className="text-orange-500" />
         </div>
@@ -634,7 +542,7 @@ const InsightTab = memo(function InsightTab({
 
       <div 
         onClick={() => isPremium ? setShowAiChat(true) : setShowPremiumModal(true)}
-        className="relative group cursor-pointer active:scale-[0.98] transition-all duration-200 ease-out"
+        className="mx-6 relative group cursor-pointer active:scale-[0.98] transition-all duration-200 ease-out"
       >
         <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 via-purple-500/30 to-blue-500/30 rounded-[2.5rem] blur-2xl opacity-40 group-hover:opacity-70 transition duration-1000"></div>
         <div className={`${glassCard} p-8 bg-slate-900/80 border-white/10 relative overflow-hidden`}>
@@ -740,65 +648,87 @@ const InsightTab = memo(function InsightTab({
                 </button>
               </div>
 
-              {isDayLogsLoading ? (
-                <div className="flex flex-col items-center justify-center py-16 flex-1">
-                  <Loader2 size={32} className="text-cyan-400 animate-spin mb-3" />
-                  <p className="text-slate-400 text-sm font-medium">Đang tải lịch sử...</p>
-                </div>
-              ) : dayLogs.length === 0 ? (
-                <div className="text-center py-16 flex-1">
-                  <div className="w-16 h-16 bg-slate-800/80 border border-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-                    <Droplets size={30} className="text-slate-600" />
-                  </div>
-                  <p className="text-slate-400 font-medium">
-                    Ngày này đệ chưa uống giọt nào...
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3 overflow-y-auto pr-2 scrollbar-hide flex-1">
-                  {dayLogs.map((entry, index) => {
-                    const timeStr = new Date(entry.created_at || entry.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                    const amount = entry.amount || 0;
-
-                    return (
-                      <div key={entry.id || index} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
-                          <Droplets size={18} className="text-cyan-400" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-black text-white text-lg">
-                            {amount}<span className="text-xs text-slate-500 ml-1">ml</span>
-                          </p>
-                          <div className="flex items-center gap-2 text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
-                            <Clock size={10} />
-                            {timeStr} •
-                            {entry.name === 'DigiBottle' ? (
-                              <span className="text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded flex items-center gap-1 border border-cyan-500/20">
-                                <Bluetooth size={10} /> Từ DigiBottle
-                              </span>
-                            ) : (
-                              <span>{entry.name || 'Nước lọc'}</span>
-                            )}
-                          </div>
-                        </div>
+              {(() => {
+                const now = new Date();
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const isSelectedToday = selectedDateModal.date === todayStr;
+                
+                const entriesInStore = waterEntries?.filter(e => e.day === selectedDateModal.date) || [];
+                const hasStoreData = entriesInStore.length > 0 || isSelectedToday;
+                
+                const displayLogs = hasStoreData ? entriesInStore : dayLogs;
+                const displayTotalMl = hasStoreData ? entriesInStore.reduce((sum, e) => sum + (e.amount || 0), 0) : selectedDateModal.ml;
+                
+                if (isDayLogsLoading) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-16 flex-1">
+                      <Loader2 size={32} className="text-cyan-400 animate-spin mb-3" />
+                      <p className="text-slate-400 text-sm font-medium">Đang tải lịch sử...</p>
+                    </div>
+                  );
+                }
+                
+                if (displayLogs.length === 0) {
+                  return (
+                    <div className="text-center py-16 flex-1">
+                      <div className="w-16 h-16 bg-slate-800/80 border border-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                        <Droplets size={30} className="text-slate-600" />
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      <p className="text-slate-400 font-medium">
+                        Ngày này đệ chưa uống giọt nào...
+                      </p>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <>
+                    <div className="space-y-3 overflow-y-auto pr-2 scrollbar-hide flex-1">
+                      {displayLogs.map((entry, index) => {
+                        const timeStr = new Date(entry.created_at || entry.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                        const amount = entry.amount || 0;
 
-              <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-end shrink-0">
-                <div>
-                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Tổng nạp</p>
-                  <p className="text-3xl font-black text-white">
-                    {selectedDateModal.ml}
-                    <span className="text-sm text-cyan-500 ml-1">ml</span>
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{dayLogs.length} lần uống</p>
-                </div>
-              </div>
+                        return (
+                          <div key={entry.id || index} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
+                              <Droplets size={18} className="text-cyan-400" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-black text-white text-lg">
+                                {amount}<span className="text-xs text-slate-500 ml-1">ml</span>
+                              </p>
+                              <div className="flex items-center gap-2 text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                                <Clock size={10} />
+                                {timeStr} •
+                                {entry.name === 'DigiBottle' ? (
+                                  <span className="text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded flex items-center gap-1 border border-cyan-500/20">
+                                    <Bluetooth size={10} /> Từ DigiBottle
+                                  </span>
+                                ) : (
+                                  <span>{entry.name || 'Nước lọc'}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-end shrink-0">
+                      <div>
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Tổng nạp</p>
+                        <p className="text-3xl font-black text-white">
+                          {displayTotalMl}
+                          <span className="text-sm text-cyan-500 ml-1">ml</span>
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{displayLogs.length} lần uống</p>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </motion.div>
           </div>
         )}
