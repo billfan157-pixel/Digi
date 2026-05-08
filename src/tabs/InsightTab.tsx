@@ -13,6 +13,7 @@ import type { WaterLog } from '../models';
 import { useAppStore } from '../store/useAppStore';
 import { useUIStore } from '../store/useUIStore';
 import { useShallow } from 'zustand/react/shallow';
+import { useInsightData } from '../hooks/useInsightData';
 
 import { AdvancedStatsGrid } from './AdvancedStatsGrid';
 import ScheduleManager from '../components/ScheduleManager';
@@ -74,7 +75,9 @@ const InsightTab = memo(function InsightTab({
     return `${calendarDate.getFullYear()}-${calendarDate.getMonth()}`;
   }, [calendarDate]);
 
-  const waterEntriesSig = useMemo(() => waterEntries?.map((e: any) => e.id).join(','), [waterEntries]);
+  const waterEntriesSig = useMemo(() => 
+    waterEntries?.map((e: any) => `${e.id}-${e.amount}`).join(',') ?? '', 
+    [waterEntries]);
 
   useEffect(() => {
     let mounted = true;
@@ -253,11 +256,11 @@ const InsightTab = memo(function InsightTab({
           <p className="text-[10px] font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase mb-1">PHÂN TÍCH CHUYÊN SÂU</p>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Insight</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => {}} className="active:scale-95 transition-all rounded-full shadow-lg shadow-black/20 dark:shadow-white/10 hover:shadow-cyan-500/20">
-            <AvatarFrame size="sm" level={profile?.level || 1} avatarUrl={profile?.avatar_url ?? null} nickname={profile?.nickname} showBadge={false} />
-          </button>
-        </div>
+<div className="flex items-center gap-3">
+           <div className="active:scale-95 transition-all rounded-full shadow-lg shadow-black/20 dark:shadow-white/10 hover:shadow-cyan-500/20">
+             <AvatarFrame size="sm" level={profile?.level || 1} avatarUrl={profile?.avatar_url ?? null} nickname={profile?.nickname} showBadge={false} />
+           </div>
+         </div>
       </div>
 
       {/* --- LAYER 1: THE NARRATIVE (HERO SECTION) --- */}
@@ -295,9 +298,8 @@ const InsightTab = memo(function InsightTab({
 
       {/* --- LAYER 3: HEALTH INTELLIGENCE LAYER (PROACTIVE AI) --- */}
       <div className="px-6 mb-8">
-        <div className="relative overflow-hidden rounded-[2rem] p-[1px] bg-gradient-to-b from-indigo-500/30 via-slate-800/50 to-transparent shadow-lg shadow-indigo-500/5">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 mix-blend-overlay pointer-events-none" />
-          <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-[calc(2rem-1px)] p-5">
+<div className="relative bg-slate-900/60 backdrop-blur-xl rounded-[2rem] p-[1px] shadow-lg shadow-indigo-500/5">
+           <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-[calc(2rem-1px)] p-5">
             <div className="flex items-start gap-4">
               <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-indigo-500/30 shrink-0 shadow-inner">
                 <Cpu size={20} className={isAiLoading ? 'animate-spin text-indigo-400' : 'text-indigo-400'} />
@@ -459,9 +461,10 @@ const InsightTab = memo(function InsightTab({
              </div>
           </div>
 
-          <div 
+          <button 
             onClick={() => isPremium ? handleExportPDF() : setShowPremiumModal(true)}
-            className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-4 flex flex-col justify-center gap-3 group cursor-pointer hover:bg-slate-800/60 transition-all"
+            disabled={isExportingPDF}
+            className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-4 flex flex-col justify-center gap-3 group cursor-pointer hover:bg-slate-800/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
               {isExportingPDF ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
@@ -470,7 +473,7 @@ const InsightTab = memo(function InsightTab({
               <h4 className="text-white font-bold text-xs">Xuất File PDF</h4>
               <p className="text-slate-500 text-[10px] mt-0.5">Báo cáo Y khoa</p>
             </div>
-          </div>
+          </button>
 
         </div>
       </div>
@@ -511,10 +514,11 @@ const InsightTab = memo(function InsightTab({
                 const isSelectedToday = selectedDateModal.date === todayStr;
                 
                 const entriesInStore = waterEntries?.filter((e: any) => e.day === selectedDateModal.date) || [];
-                const hasStoreData = entriesInStore.length > 0 || isSelectedToday;
+                const hasEntriesInStore = entriesInStore.length > 0;
+                const hasStoreData = hasEntriesInStore || isSelectedToday;
                 
-                const displayLogs = hasStoreData ? entriesInStore : dayLogs;
-                const displayTotalMl = hasStoreData ? entriesInStore.reduce((sum: number, e: any) => sum + (e.amount || 0), 0) : selectedDateModal.ml;
+                const displayLogs = hasEntriesInStore ? entriesInStore : dayLogs;
+                const displayTotalMl = hasEntriesInStore ? entriesInStore.reduce((sum: number, e: any) => sum + (e.amount || 0), 0) : (isSelectedToday ? waterIntake : selectedDateModal.ml);
                 
                 if (isDayLogsLoading) {
                   return (
@@ -531,9 +535,9 @@ const InsightTab = memo(function InsightTab({
                       <div className="w-16 h-16 bg-slate-800/80 border border-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                         <Droplets size={30} className="text-slate-600" />
                       </div>
-                      <p className="text-slate-400 font-medium">
-                        Ngày này đệ chưa uống giọt nào...
-                      </p>
+<p className="text-slate-400 font-medium">
+                         Chưa có dữ liệu uống nước trong ngày này.
+                       </p>
                     </div>
                   );
                 }

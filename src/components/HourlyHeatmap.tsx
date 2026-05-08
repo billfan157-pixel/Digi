@@ -40,11 +40,13 @@ export default function HourlyHeatmap({ userId }: HourlyHeatmapProps) {
       setIsLoading(true);
       try {
         const startDate = last7Days[0].dateStr;
+        const endDate = last7Days[last7Days.length - 1].dateStr;
         const { data, error } = await supabase
           .from('water_logs')
-          .select('amount, created_at')
+          .select('amount, created_at, day')
           .eq('user_id', userId)
-          .gte('created_at', `${startDate}T00:00:00.000Z`);
+          .gte('day', startDate)
+          .lte('day', endDate);
 
         if (error) throw error;
         if (mounted) setLogs(data || []);
@@ -66,7 +68,7 @@ export default function HourlyHeatmap({ userId }: HourlyHeatmapProps) {
 
     logs.forEach(log => {
       const dateObj = new Date(log.created_at);
-      const localDateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+      const localDateStr = log.day || `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
       
       const dayIndex = last7Days.findIndex(d => d.dateStr === localDateStr);
       if (dayIndex !== -1) {

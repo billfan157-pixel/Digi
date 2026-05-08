@@ -88,9 +88,9 @@ export default function CalendarView({
         <div className="flex items-start justify-between mb-6">
 
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-cyan-400 font-black">
-              MONTHLY OVERVIEW
-            </p>
+<p className="text-[10px] uppercase tracking-[0.25em] text-cyan-400 font-black">
+               TỔNG QUAN THÁNG
+             </p>
 
             <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
               {currentMonthName}
@@ -102,9 +102,9 @@ export default function CalendarView({
           </div>
 
           <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-right">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-cyan-300 font-black">
-              CONSISTENCY
-            </p>
+<p className="text-[9px] uppercase tracking-[0.2em] text-cyan-300 font-black">
+               ĐỘ NHẠY BỊ
+             </p>
 
             <p className="mt-1 text-lg font-black text-white">
               {consistency}%
@@ -373,9 +373,9 @@ export default function CalendarView({
                 </div>
 
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">
-                    Selected Day
-                  </p>
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">
+                     Ngày Được Chọn
+                   </p>
 
                   <p className="mt-1 text-lg font-black text-white">
                     {selectedCell.ml.toLocaleString('vi-VN')} ml

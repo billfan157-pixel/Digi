@@ -52,9 +52,9 @@ export default function WeeklyChart({
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-cyan-400 font-black">
-              HYDRATION ANALYTICS
-            </p>
+<p className="text-[10px] uppercase tracking-[0.25em] text-cyan-400 font-black">
+               PHÂN TÍCH NHIỆT
+             </p>
 
             <h3 className="mt-2 text-xl font-black text-white tracking-tight">
               Hiệu suất tuần
@@ -66,9 +66,9 @@ export default function WeeklyChart({
           </div>
 
           <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-right">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-cyan-300 font-black">
-              AVG
-            </p>
+<p className="text-[9px] uppercase tracking-[0.2em] text-cyan-300 font-black">
+               TRUNG BÌNH
+             </p>
 
             <p className="mt-1 text-lg font-black text-white">
               {weeklyAverage.toLocaleString('vi-VN')}
@@ -100,12 +100,12 @@ export default function WeeklyChart({
           </div>
 
           <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="flex items-center gap-1 text-emerald-400 mb-1">
-              <TrendingUp size={12} />
-              <span className="text-[9px] font-black uppercase tracking-wider">
-                Best
-              </span>
-            </div>
+<div className="flex items-center gap-1 text-emerald-400 mb-1">
+                   <TrendingUp size={12} />
+                   <span className="text-[9px] font-black uppercase tracking-wider">
+                     TỐT NHẤT
+                   </span>
+                 </div>
 
             <p className="text-lg font-black text-white">
               {bestDay?.d || '--'}
@@ -117,12 +117,12 @@ export default function WeeklyChart({
           </div>
 
           <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="flex items-center gap-1 text-orange-400 mb-1">
-              <Droplets size={12} />
-              <span className="text-[9px] font-black uppercase tracking-wider">
-                Peak
-              </span>
-            </div>
+<div className="flex items-center gap-1 text-orange-400 mb-1">
+                   <Droplets size={12} />
+                   <span className="text-[9px] font-black uppercase tracking-wider">
+                     ĐỈNH
+                   </span>
+                 </div>
 
             <p className="text-lg font-black text-white">
               {bestDay?.ml
