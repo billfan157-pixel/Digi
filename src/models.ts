@@ -42,6 +42,7 @@ export interface DrinkPreset {
   factor: number;
   icon: string;
   color: string;
+  bg?: string;
 }
 
 export interface SearchResult {

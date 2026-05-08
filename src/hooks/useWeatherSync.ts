@@ -4,20 +4,77 @@ import { getWeatherData, calculateWeatherAdjustment, type WeatherData } from '@/
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useState, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 // Hàm logic chính (Đã tối ưu cho iOS thật)
 export const syncWeatherAndWaterGoal = async () => {
   try {
-    toast.loading('📡 Đang yêu cầu quyền truy cập vị trí...', { duration: 3000 });
+    toast.loading('📡 Đang kiểm tra quyền vị trí...', { duration: 2000 });
 
-    // 1. Lấy vị trí hiện tại với cấu hình "nồi đồng cối đá" cho iOS
-    const coordinates = await Geolocation.getCurrentPosition({
-      enableHighAccuracy: true,      // Bắt buộc dùng GPS thay vì WiFi
-      timeout: 30000,                // Tăng timeout lên 30s (iOS cần thời gian bật GPS)
-      maximumAge: 0,                 // Không lấy cache cũ, bắt buộc lấy mới
-    });
+    // 0. Kiểm tra và yêu cầu permission trước (quan trọng cho web)
+    const isNative = Capacitor.isNativePlatform();
+    let latitude: number | null = null;
+    let longitude: number | null = null;
 
-    const { latitude, longitude } = coordinates.coords;
+    if (!isNative) {
+      // Trên web, dùng Web Geolocation API
+      if (!navigator.geolocation) {
+        toast.error('Trình duyệt không hỗ trợ định vị. Vui lòng dùng ứng dụng di động.');
+        return false;
+      }
+      
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
+          });
+        });
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+      } catch (geoError: any) {
+        const errCode = geoError.code || geoError.PERMISSION_DENIED;
+        if (errCode === 1 || errCode === geoError.PERMISSION_DENIED) {
+          toast.error('Bạn đã từ chối cấp quyền vị trí. Vui lòng cho phép truy cập vị trí trong trình duyệt.');
+        } else if (errCode === 3 || errCode === geoError.TIMEOUT) {
+          toast.error('Hết thời gian định vị. Hãy thử lại ở nơi có GPS tốt hơn.');
+        } else {
+          toast.error('Không thể lấy vị trí: ' + (geoError.message || 'Lỗi không xác định'));
+        }
+        return false;
+      }
+    } else {
+      // Trên native (iOS/Android), kiểm tra permission
+      try {
+        const permStatus = await Geolocation.checkPermissions();
+        if (permStatus.location !== 'granted') {
+          const request = await Geolocation.requestPermissions();
+          if (request.location !== 'granted') {
+            toast.error('Bạn đã từ chối cấp quyền vị trí. Vào Cài đặt > DigiWell > Vị trí để cho phép.');
+            return false;
+          }
+        }
+
+        const coordinates = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 30000,
+          maximumAge: 0,
+        });
+        latitude = coordinates.coords.latitude;
+        longitude = coordinates.coords.longitude;
+      } catch (nativeError: any) {
+        console.error('❌ Lỗi native geolocation:', nativeError);
+        toast.error('Không thể lấy vị trí: ' + (nativeError.message || 'Lỗi không xác định'));
+        return false;
+      }
+    }
+
+    if (latitude === null || longitude === null) {
+      toast.error('Không lấy được tọa độ vị trí.');
+      return false;
+    }
+    
     console.log('📍 Vị trí tìm thấy:', latitude, longitude);
 
     toast.loading('🌤️ Đang lấy dữ liệu thời tiết...', { duration: 2000 });

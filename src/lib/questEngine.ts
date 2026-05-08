@@ -87,11 +87,14 @@ export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
         ctx
       );
 
+      // Đảm bảo progress là số hợp lệ (tránh null/NaN vi phạm NOT NULL constraint)
+      const safeProgress = Math.max(0, Math.floor(progress || 0));
+
       // Chỉ update nếu có thay đổi
-      if (progress !== uq.progress || (completed && uq.status === 'active')) {
+      if (safeProgress !== uq.progress || (completed && uq.status === 'active')) {
         updates.push({
           id:           uq.id,
-          progress,
+          progress:     safeProgress,
           status:       completed ? 'completed' : 'active',
           completed_at: completed ? new Date().toISOString() : null,
         });
@@ -287,10 +290,13 @@ async function updateMilestoneChallenge(
     });
 
     if (m.badge_id) {
-      await supabase
+      const { error: badgeError } = await supabase
         .from('user_badges')
-        .insert({ user_id: ctx.userId, badge_id: m.badge_id })
-        .on('conflict', 'ignore');
+        .insert({ user_id: ctx.userId, badge_id: m.badge_id });
+      
+      if (badgeError && badgeError.code !== '23505') {
+        console.error('[ChallengeEngine] Lỗi cấp huy hiệu:', badgeError);
+      }
     }
 
     toast.success(`🏔️ Mốc ${m.label}: ⚡ +${m.exp} EXP · 💰 +${m.coins} xu!`, { duration: 4000 });

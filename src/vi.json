@@ -50,6 +50,17 @@
     "view_all": "Xem tất cả",
     "no_activity_today": "Chưa có hoạt động nào hôm nay",
     "pure_water": "Nước lọc",
-    "logout_confirm": "Đệ muốn đăng xuất thật à?"
+    "logout_confirm": "Đệ muốn đăng xuất thật à?",
+    "turning_on_demo": "Đang bật demo...",
+    "turn_on_demo": "Bật DigiBottle Demo",
+    "quick_amounts_updated": "✅ Đã cập nhật mức nạp nhanh!",
+    "quick_amounts_invalid": "⚠️ Vui lòng nhập 3 mức từ 50-2000ml",
+    "enter_drink_name": "Vui lòng nhập tên đồ uống!",
+    "drink_updated": "Đã cập nhật!",
+    "delete_drink": "Xóa đồ uống",
+    "delete_drink_confirm": "Xóa đồ uống {{name}}?",
+    "delete": "Xóa",
+    "added_drink": "Đã thêm {{amount}}ml {{name}}",
+    "done": "Xong"
   }
 }
