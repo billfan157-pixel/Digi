@@ -501,6 +501,7 @@ const InsightTab = memo(function InsightTab({
                     {new Date(selectedDateModal.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                   </h3>
                 </div>
+                <button onClick={() => setSelectedDateModal(null)} className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors">
                 <button onClick={() => setSelectedDateModal(null)} aria-label="Đóng nhật ký" title="Đóng" className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors">
                   <X size={20} />
                 </button>
