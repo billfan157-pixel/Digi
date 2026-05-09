@@ -10,6 +10,8 @@ interface AiCoachSectionProps {
   setShowAiChat: (show: boolean) => void;
   isAiLoading: boolean;
   aiAdvice: string;
+  tacticalAlert?: string;
+  urgency?: 'low' | 'medium' | 'high';
   fetchAIAdvice: () => void;
   streak: number;
   waterIntake: number;
@@ -32,6 +34,8 @@ export default function AiCoachSection({
   setShowAiChat,
   isAiLoading,
   aiAdvice,
+  tacticalAlert,
+  urgency = 'low',
   fetchAIAdvice,
   streak,
   waterIntake,
@@ -46,24 +50,43 @@ export default function AiCoachSection({
     return 'Cần uống 💧';
   };
 
+  const getUrgencyStyles = () => {
+    switch (urgency) {
+      case 'high': return 'shadow-[0_0_20px_rgba(239,68,68,0.2)] border-red-500/50';
+      case 'medium': return 'shadow-[0_0_20px_rgba(245,158,11,0.2)] border-amber-500/50';
+      default: return 'shadow-[0_0_20px_rgba(6,182,212,0.1)] border-cyan-500/30';
+    }
+  };
+
+  const getUrgencyBg = () => {
+    switch (urgency) {
+      case 'high': return 'bg-red-500/20';
+      case 'medium': return 'bg-amber-500/20';
+      default: return 'bg-cyan-500/20';
+    }
+  };
+
   return (
     <>
       <div className="px-6">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-[1px] shadow-lg shadow-cyan-500/5"
+          className={`bg-slate-900/60 backdrop-blur-xl rounded-2xl p-[1px] transition-all duration-500 ${getUrgencyStyles()}`}
         >
-          <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-[calc(1rem-1px)] p-5">
+          <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-[calc(1rem-1px)] p-5 overflow-hidden">
+            {/* Urgency background glow */}
+            <div className={`absolute -top-10 -right-10 w-32 h-32 blur-3xl opacity-20 pointer-events-none ${getUrgencyBg()}`} />
+            
             <div className="flex items-start gap-4 mb-4">
-              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 flex items-center justify-center border border-cyan-500/30 shrink-0 shadow-inner">
-                <Cpu size={20} className={isAiLoading ? 'animate-spin text-cyan-400' : 'text-cyan-400'} />
+              <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0 shadow-inner transition-all ${urgency === 'high' ? 'bg-red-500/20 border-red-500/40' : urgency === 'medium' ? 'bg-amber-500/20 border-amber-500/40' : 'bg-cyan-500/20 border-cyan-500/30'}`}>
+                <Cpu size={20} className={isAiLoading ? 'animate-spin text-cyan-400' : urgency === 'high' ? 'text-red-400' : urgency === 'medium' ? 'text-amber-400' : 'text-cyan-400'} />
                 {isAiLoading && <div className="absolute inset-0 rounded-2xl bg-cyan-400/20 animate-ping" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1.5">
                   <h3 className="text-sm font-black text-white flex items-center gap-1.5">
-                    DigiCoach <span className="text-cyan-400 text-[9px] font-black uppercase tracking-widest bg-cyan-500/15 px-1.5 py-0.5 rounded border border-cyan-500/20">AI</span>
+                    DigiCoach <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border transition-all ${urgency === 'high' ? 'text-red-400 bg-red-500/15 border-red-500/20' : urgency === 'medium' ? 'text-amber-400 bg-amber-500/15 border-amber-500/20' : 'text-cyan-400 bg-cyan-500/15 border-cyan-500/20'}`}>AI</span>
                   </h3>
                   <button 
                     onClick={() => isPremium ? fetchAIAdvice() : setShowPremiumModal(true)}
@@ -79,9 +102,17 @@ export default function AiCoachSection({
                     <Skeleton className="h-3 w-4/5 bg-slate-800" />
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-300 leading-relaxed font-medium">
-                    {aiAdvice || 'Đang tổng hợp dữ liệu sinh học và thói quen của bạn...'}
-                  </p>
+                  <div className="space-y-3">
+                    {tacticalAlert && (
+                      <div className={`p-3 rounded-xl border border-white/5 text-xs font-bold leading-relaxed flex items-start gap-2 ${urgency === 'high' ? 'bg-red-500/10 text-red-300' : urgency === 'medium' ? 'bg-amber-500/10 text-amber-300' : 'bg-white/5 text-cyan-300'}`}>
+                        <span className="mt-0.5">⚠️</span>
+                        {tacticalAlert}
+                      </div>
+                    )}
+                    <p className="text-sm text-slate-300 leading-relaxed font-medium">
+                      {aiAdvice || 'Đang tổng hợp dữ liệu sinh học và thói quen của bạn...'}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
@@ -122,7 +153,7 @@ export default function AiCoachSection({
               onClick={() => isPremium ? setShowAiChat(true) : setShowPremiumModal(true)}
               className="w-full py-3 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 font-bold text-xs uppercase tracking-wider hover:from-cyan-500/30 hover:to-blue-500/30 transition-all"
             >
-              Mở Chat AI Coach
+              Mở Chat DigiCoach
             </button>
           </div>
         </motion.div>

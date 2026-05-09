@@ -10,6 +10,12 @@ export interface AppProfile extends Profile {
   password?: string;
   total_water?: number;
   wakeUp?: string;
+  // Wellness fields
+  sleep_hours?: number;
+  sleep_quality?: number;
+  mood_tracking?: boolean;
+  sync_wellness_data?: boolean;
+  energy_tracking?: boolean;
 }
 
 const isValidProfileId = (profileId: string | undefined) =>
@@ -51,6 +57,12 @@ function toAppProfile(profileRow: any): AppProfile {
     equipped_notification_sound: normalizedProfile.equipped_notification_sound ?? null,
     created_at: normalizedProfile.created_at,
     updated_at: normalizedProfile.updated_at,
+    // Wellness fields
+    sleep_hours: normalizedProfile.sleep_hours,
+    sleep_quality: normalizedProfile.sleep_quality,
+    mood_tracking: normalizedProfile.mood_tracking,
+    sync_wellness_data: normalizedProfile.sync_wellness_data,
+    energy_tracking: normalizedProfile.energy_tracking,
   };
 }
 

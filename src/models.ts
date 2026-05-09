@@ -20,6 +20,12 @@ export interface Profile {
   equipped_notification_sound?: string | null;
   created_at?: string;
   updated_at?: string;
+  // Wellness tracking fields
+  sleep_hours?: number;
+  sleep_quality?: number;
+  mood_tracking?: boolean;
+  sync_wellness_data?: boolean;
+  energy_tracking?: boolean;
 }
 
 export interface WaterLog {

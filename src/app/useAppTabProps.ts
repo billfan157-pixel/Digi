@@ -4,8 +4,6 @@ import type InsightTab from '@/tabs/InsightTab';
 import type FeedTab from '@/tabs/FeedTab';
 import type ProfileTab from '@/tabs/ProfileTab';
 import type LeagueTab from '@/tabs/LeagueTab';
-import type BottleTab from '@/components/BottleTab';
-
 interface UseAppTabPropsOptions {
   profile: any;
   smartBottle: any;
@@ -32,7 +30,7 @@ interface UseAppTabPropsOptions {
   needsFreeze: boolean;
   useStreakFreeze: () => Promise<boolean>;
   posts: any[];
-  setActiveTab: (tab: 'home' | 'insight' | 'league' | 'feed' | 'profile' | 'bottle') => void;
+  setActiveTab: (tab: 'home' | 'insight' | 'league' | 'feed' | 'profile') => void;
 }
 
 export function useAppTabProps({
@@ -77,12 +75,16 @@ export function useAppTabProps({
     handleExportCSV,
     isAiLoading: geminiProps.isAiLoading || false,
     aiAdvice: geminiProps.aiAdvice || '',
+    tacticalAlert: geminiProps.tacticalAlert,
+    urgency: geminiProps.urgency,
     fetchAIAdvice: geminiProps.fetchAIAdvice || (() => {}),
     weeklyReport,
     isWeeklyReportLoading,
     generateWeeklyReport: handleGenerateWeeklyReport,
   }) satisfies React.ComponentProps<typeof InsightTab>, [
     geminiProps.aiAdvice,
+    geminiProps.tacticalAlert,
+    geminiProps.urgency,
     geminiProps.fetchAIAdvice,
     geminiProps.isAiLoading,
     handleExportPDF,
@@ -93,20 +95,7 @@ export function useAppTabProps({
     weeklyReport,
   ]);
 
-  const bottleTabProps = useMemo(() => {
-    if (!profile?.id || profile.id === 'undefined') return null;
-
-    return {
-      profile,
-      weatherData,
-      isWeatherSynced,
-      watchData,
-      isWatchConnected,
-      smartBottle,
-      onBack: () => setActiveTab('home'),
-    } satisfies React.ComponentProps<typeof BottleTab>;
-  }, [isWatchConnected, isWeatherSynced, profile, smartBottle, watchData, weatherData, setActiveTab]);
-
+  const bottleTabProps = null;
   const leagueTabProps = useMemo(() => ({
     leagueMode,
     setLeagueMode,

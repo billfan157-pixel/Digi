@@ -2,10 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { X, Loader2, Send, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useComments } from '../../hooks/useComments';
-import { toast } from 'sonner';
-import { supabase } from '../../lib/supabase';
 import { getRelativeTimeLabel } from '../../lib/social';
 import type { SocialFeedPost, SocialComment } from '../../models';
+
 interface CommentsViewProps {
   post: SocialFeedPost;
   currentUserId: string | undefined;
@@ -13,9 +12,8 @@ interface CommentsViewProps {
 }
 
 export const CommentsView = ({ post, currentUserId, onClose }: CommentsViewProps) => {
-  const { comments, isLoading, addComment } = useComments(post.id, currentUserId);
+  const { comments, isLoading, addComment, deleteComment } = useComments(post.id, currentUserId);
   const [text, setText] = useState('');
-  const [hiddenComments, setHiddenComments] = useState<Set<string>>(new Set());
   const [replyTo, setReplyTo] = useState<{id: string, name: string} | null>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -39,20 +37,11 @@ export const CommentsView = ({ post, currentUserId, onClose }: CommentsViewProps
     setReplyTo(null);
   };
 
-  const handleDeleteComment = async (commentId: string) => {
+const handleDeleteComment = async (commentId: string) => {
     const { confirmDialog } = await import('@/store/useConfirmDialog');
-    const ok = await confirmDialog({ title: 'Xóa bình luận', message: 'Bạn có chắc chắn muốn xóa bình luận này?', confirmLabel: 'Xóa', variant: 'danger' });
+    const ok = await confirmDialog({ title: 'Xóa bình luận', message: 'Bạn có chắn chắn muốn xóa bình luận này?', confirmLabel: 'Xóa', variant: 'danger' });
     if (!ok) return;
-    const tid = toast.loading('Đang xóa bình luận...');
-    try {
-      // Giả định bảng bình luận là 'social_comments'. Hãy điều chỉnh nếu tên bảng trong DB của sếp khác nhé.
-      const { error } = await supabase.from('social_comments').delete().eq('id', commentId);
-      if (error) throw error;
-      setHiddenComments(prev => new Set(prev).add(commentId));
-      toast.success('Đã xóa bình luận', { id: tid });
-    } catch (err: any) {
-      toast.error('Lỗi khi xóa bình luận', { id: tid });
-    }
+    await deleteComment(commentId);
   };
 
   return (
@@ -68,7 +57,7 @@ export const CommentsView = ({ post, currentUserId, onClose }: CommentsViewProps
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {isLoading ? <p className="text-slate-400 text-center text-sm py-8"><Loader2 size={24} className="animate-spin mx-auto mb-2"/> Đang tải bình luận...</p> :
             comments.length === 0 ? <p className="text-slate-400 text-center text-sm py-8">Chưa có bình luận nào. Hãy là người đầu tiên!</p> :
-            comments.filter((c: SocialComment) => !hiddenComments.has(c.id)).map((c: SocialComment, index: number) => {
+            comments.map((c: SocialComment, index: number) => {
               const isReply = c.content.trim().startsWith('@');
               const contentParts = c.content.split(' ');
               const mentionedUser = isReply ? contentParts[0].substring(1) : null;

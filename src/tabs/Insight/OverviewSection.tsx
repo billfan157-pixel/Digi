@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import BasicTodayRingUpgraded from '../../components/BasicTodayRingUpgraded';
+import WellnessDashboard from '../../components/Wellness/WellnessDashboard';
 import type { WaterLog } from '../../models';
 
 interface OverviewSectionProps {
@@ -37,6 +38,10 @@ export default function OverviewSection({
   nextBestAction,
   actions,
 }: OverviewSectionProps) {
+  // Pass profile from props, not from hook's internal store
+  // This ensures the component uses the same profile reference
+  const wellnessData = {}; // Placeholder - hook internally reads from store
+
   if (waterGoal === 0) {
     return (
       <div className="px-6 py-12">
@@ -53,61 +58,36 @@ export default function OverviewSection({
   return (
     <>
       <div className="px-6 mb-3 mt-4">
-        <motion.h1 
-          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+        <motion.h1
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
           className="text-xl font-black tracking-tight text-white"
         >
           {greeting}
         </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
           className="mt-1 text-xs text-slate-400 leading-relaxed"
         >
           {primaryStory}
         </motion.p>
       </div>
 
-      <div className="mt-2 mb-4">
-        <BasicTodayRingUpgraded 
+      {/* Wellness Dashboard - new multipurpose health overview */}
+      {profile && <WellnessDashboard />}
+
+      <div className="mt-4 mb-4">
+        <BasicTodayRingUpgraded
           waterIntake={waterIntake}
           waterGoal={waterGoal}
           streak={streak}
           completionRate={completionRate}
           yesterdayIntake={yesterdayIntake}
         />
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mx-6 mt-3 relative overflow-hidden bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-4 shadow-lg group"
-        >
-          <div className={`absolute top-0 right-0 w-32 h-32 ${nextBestAction.bg.replace('/20', '/10')} blur-3xl rounded-full pointer-events-none transition-colors duration-500`} />
-          
-          <div className="flex items-center gap-4 relative z-10">
-            <div className={`w-12 h-12 rounded-2xl ${nextBestAction.bg} flex items-center justify-center shrink-0 border border-white/5 shadow-inner`}>
-              <nextBestAction.icon size={22} className={nextBestAction.color} strokeWidth={2.5} />
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <p className={`text-[10px] font-black uppercase tracking-widest ${nextBestAction.color} mb-0.5`}>
-                {nextBestAction.title}
-              </p>
-              <p className="text-sm font-semibold text-white leading-snug truncate">
-                {nextBestAction.action}
-              </p>
-            </div>
-
-            {nextBestAction.ml > 0 && (
-              <button
-                onClick={() => actions?.handleAddWater?.(nextBestAction.ml, 1, 'Nước đề xuất')}
-                className={`shrink-0 px-4 py-3 bg-white text-slate-950 text-xs font-black rounded-xl active:scale-95 transition-all shadow-[0_4px_12px_rgba(255,255,255,0.15)] hover:shadow-[0_4px_16px_rgba(255,255,255,0.25)]`}>
-                +{nextBestAction.ml}ml
-              </button>
-            )}
-          </div>
-        </motion.div>
-      </div>
-    </>
-  );
+       </div>
+     </>
+   );
 }

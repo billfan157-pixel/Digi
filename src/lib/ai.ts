@@ -22,8 +22,17 @@ type WaterAction = {
   name: string;
 };
 
-const FRIENDLY_FALLBACK_ADVICE =
-  'Hệ thống AI đang bận một chút. Tạm thời hãy uống thêm vài ngụm nước nhỏ và nghỉ 1-2 phút nhé!';
+export type AiAdviceResponse = {
+  text: string;
+  tactical_alert?: string;
+  goal_adjustment_ml?: number;
+  urgency: 'low' | 'medium' | 'high';
+};
+
+const FRIENDLY_FALLBACK_ADVICE: AiAdviceResponse = {
+  text: 'Hệ thống AI đang bận một chút. Tạm thời hãy uống thêm vài ngụm nước nhỏ và nghỉ 1-2 phút nhé!',
+  urgency: 'low'
+};
 
 function getAiErrorMessage(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error);
@@ -54,14 +63,24 @@ export function isAiConfigured(): boolean {
   return isSupabaseConfigured;
 }
 
-export async function generateHydrationAdvice(context: DigiwellAiContext): Promise<string> {
+export async function generateHydrationAdvice(context: DigiwellAiContext): Promise<AiAdviceResponse> {
   try {
-    const response = await invokeAiGateway<{ text?: string }>('advice', { context });
-    return response.text?.trim() || FRIENDLY_FALLBACK_ADVICE;
+    const response = await invokeAiGateway<AiAdviceResponse>('advice', { context });
+    
+    // Đảm bảo trả về đúng cấu trúc kể cả khi backend thiếu field
+    return {
+      text: response.text || FRIENDLY_FALLBACK_ADVICE.text,
+      tactical_alert: response.tactical_alert,
+      goal_adjustment_ml: response.goal_adjustment_ml,
+      urgency: response.urgency || 'low'
+    };
   } catch (error) {
     const message = getAiErrorMessage(error);
     if (message.toLowerCase().includes('rate limit')) {
-      return 'AI đang bận, tạm thời hãy uống thêm nước đều trong ngày nhé!';
+      return {
+        text: 'AI đang bận, tạm thời hãy uống thêm nước đều trong ngày nhé!',
+        urgency: 'low'
+      };
     }
     return FRIENDLY_FALLBACK_ADVICE;
   }

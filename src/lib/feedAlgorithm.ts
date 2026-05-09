@@ -13,7 +13,7 @@ export function rankFeedPosts(posts: any[], followingIds: string[], currentUser?
     let score = 0;
 
     // 1. Theo dõi (Following) - Tín hiệu cơ bản mạnh nhất
-    const isFollowing = followingIds?.includes(post.user_id);
+    const isFollowing = followingIds?.includes(post.author_id);
     if (isFollowing) score += 500;
 
     // 2. Độ mới (Recency) - Giảm điểm dần theo thời gian (Time Decay)

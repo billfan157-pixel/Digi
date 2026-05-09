@@ -27,6 +27,8 @@ interface InsightTabProps {
    handleExportCSV: () => void;
    isAiLoading: boolean;
    aiAdvice: string;
+   tacticalAlert?: string;
+   urgency?: 'low' | 'medium' | 'high';
    fetchAIAdvice: () => void;
    weeklyReport?: any;
    isWeeklyReportLoading?: boolean;
@@ -35,7 +37,7 @@ interface InsightTabProps {
 
 const InsightTab = memo(function InsightTab({
    isExportingPDF, handleExportPDF, handleExportCSV,
-   isAiLoading, aiAdvice, fetchAIAdvice,
+   isAiLoading, aiAdvice, tacticalAlert, urgency, fetchAIAdvice,
    weeklyReport, isWeeklyReportLoading, generateWeeklyReport
  }: InsightTabProps) {
   
@@ -278,9 +280,9 @@ const InsightTab = memo(function InsightTab({
       {/* --- PHẦN TIÊU ĐỀ (HEADER) --- */}
       <div className="flex justify-between items-start pt-6 pb-4 px-6">
         <div onClick={handleSecretClick} className="cursor-pointer select-none touch-manipulation">
-          <p className="section-title text-meta mb-1">Phân tích chuyên sâu</p>
+          <p className="section-title text-meta mb-1">Huấn luyện thông minh</p>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white active:scale-95 transition-transform origin-left">
-            Insight
+            DigiCoach
           </h1>
         </div>
         <div className="flex items-center gap-3">
@@ -295,7 +297,7 @@ const InsightTab = memo(function InsightTab({
         <div className="glass-control flex items-center p-1.5 shadow-inner overflow-x-auto scrollbar-hide">
           {[
             { id: 'overview', label: 'Tổng quan', icon: Target },
-            { id: 'ai', label: 'AI Coach', icon: Cpu },
+            { id: 'ai', label: 'Trợ lý AI', icon: Cpu },
             { id: 'analytics', label: 'Phân tích', icon: TrendingUp },
             { id: 'system', label: 'Hệ thống', icon: Settings2 }
           ].map(tab => {
@@ -363,6 +365,8 @@ const InsightTab = memo(function InsightTab({
               setShowAiChat={setShowAiChat}
               isAiLoading={isAiLoading}
               aiAdvice={aiAdvice}
+              tacticalAlert={tacticalAlert}
+              urgency={urgency}
               fetchAIAdvice={fetchAIAdvice}
               streak={streak}
               waterIntake={waterIntake}

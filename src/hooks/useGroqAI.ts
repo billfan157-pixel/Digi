@@ -4,8 +4,10 @@ import {
   generateHydrationAdvice, 
   sendAiChatMessage, 
   type AiChatMessage, 
-  type DigiwellAiContext 
+  type DigiwellAiContext,
+  type AiAdviceResponse 
 } from '../lib/ai';
+import { useAppStore } from '../store/useAppStore';
 
 export interface UseGeminiAIProps {
   profile: { id?: string; nickname?: string; goal?: string; activity?: string; climate?: string } | null;
@@ -31,12 +33,11 @@ export function useGeminiAI(props: UseGeminiAIProps) {
   const profile = props.profile;
 
   // [BÍ QUYẾT TỐI ƯU] Dùng Ref để lưu trữ props mới nhất mà KHÔNG kích hoạt re-render
-  // Giải quyết dứt điểm lỗi vòng lặp vô hạn do App.tsx re-render mỗi giây
   const propsRef = useRef(props);
   useEffect(() => { propsRef.current = props; });
 
   // --- [1] STATES ---
-  const [aiAdvice, setAiAdvice] = useState('');
+  const [aiResponse, setAiResponse] = useState<AiAdviceResponse | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState<AiChatMessage[]>([defaultWelcomeMessage]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -49,12 +50,12 @@ export function useGeminiAI(props: UseGeminiAIProps) {
   useEffect(() => {
     if (!profile?.id) {
       setChatMessages([defaultWelcomeMessage]);
-      setAiAdvice('');
-      hasFetchedInitialAdvice.current = false; // Reset cờ để user mới đăng nhập vẫn nhận được lời khuyên
+      setAiResponse(null);
+      hasFetchedInitialAdvice.current = false;
     }
   }, [profile?.id]);
 
-  // --- [2] BUILD CONTEXT (Gom dữ liệu gửi cho AI) ---
+  // --- [2] BUILD CONTEXT ---
   const buildContext = useCallback((): DigiwellAiContext => {
     const p = propsRef.current;
     return {
@@ -77,55 +78,63 @@ export function useGeminiAI(props: UseGeminiAIProps) {
         climate: p.profile.climate
       } : undefined
     };
-  }, []); // Ngắt hoàn toàn vòng lặp do loại bỏ dependencies cập nhật thường xuyên
+  }, []);
 
   // --- [3] ACTIONS ---
 
-  // Lấy lời khuyên nhanh (Tab Insight)
+  const handleGoalAdjustment = useCallback((adjustment?: number) => {
+    if (!adjustment || adjustment === 0) return;
+    
+    // Chỉ thực hiện nếu mức chênh lệch đủ lớn hoặc quan trọng
+    const currentGoal = useAppStore.getState().waterGoal;
+    const newGoal = currentGoal + adjustment;
+    
+    // Cập nhật Store
+    useAppStore.getState().setAppState({ waterGoal: newGoal });
+    
+    toast.info(`AI đã điều chỉnh mục tiêu: ${adjustment > 0 ? '+' : ''}${adjustment}ml`, {
+      description: 'Dựa trên điều kiện môi trường & hoạt động của bạn.'
+    });
+  }, []);
+
   const fetchAIAdvice = useCallback(async () => {
     const profileId = propsRef.current.profile?.id;
     if (!profileId) return;
     
-    if (isFetchingAdviceRef.current || isAiLoading) {
-      if (import.meta.env.DEV) console.warn("🛡️ [GUARD] API Call prevented to save quota");
-      return;
-    }
+    if (isFetchingAdviceRef.current || isAiLoading) return;
 
     isFetchingAdviceRef.current = true;
     setIsAiLoading(true);
-    if (import.meta.env.DEV) console.warn("🚀 [API CALL] Sending to Gemini...");
     
     try {
-      const advice = await generateHydrationAdvice(buildContext());
-      setAiAdvice(advice);
-      localStorage.setItem(`digiwell_ai_advice_${profileId}`, JSON.stringify({ advice, timestamp: Date.now() }));
+      const response = await generateHydrationAdvice(buildContext());
+      setAiResponse(response);
+      
+      // Auto-adjust goal if AI suggests
+      if (response.goal_adjustment_ml) {
+        handleGoalAdjustment(response.goal_adjustment_ml);
+      }
+
+      localStorage.setItem(`digiwell_ai_advice_v2_${profileId}`, JSON.stringify({ response, timestamp: Date.now() }));
     } catch (error: unknown) {
       console.error("Lỗi AI Advice:", error);
-      const errMsg = error instanceof Error ? error.message : String(error);
-      if (errMsg.includes('429') || errMsg.includes('Too Many Requests') || errMsg.includes('rate limit')) {
-        setAiAdvice('Hệ thống AI đang quá tải do có nhiều lượt truy cập. Vui lòng thử lại sau ít phút đệ nhé! 💧');
-      } else {
-        setAiAdvice('DigiCoach đang nghỉ ngơi một chút, đệ uống nước trước nhé! 💧');
-      }
     } finally {
       setIsAiLoading(false);
-      setTimeout(() => { isFetchingAdviceRef.current = false; }, 2000); // Debounce 2s để tránh dính lỗi 429
+      setTimeout(() => { isFetchingAdviceRef.current = false; }, 2000);
     }
-  }, [buildContext, isAiLoading]);
+  }, [buildContext, isAiLoading, handleGoalAdjustment]);
 
-  // Tự động gọi lời khuyên khi user đã đăng nhập và chưa từng fetch trong session hiện tại
   useEffect(() => {
     if (!profile?.id || hasFetchedInitialAdvice.current) return;
-
     hasFetchedInitialAdvice.current = true;
 
-    const cacheKey = `digiwell_ai_advice_${profile.id}`;
+    const cacheKey = `digiwell_ai_advice_v2_${profile.id}`;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {
-        const { advice, timestamp } = JSON.parse(cached);
+        const { response, timestamp } = JSON.parse(cached);
         if (Date.now() - timestamp < 4 * 60 * 60 * 1000) {
-          setAiAdvice(advice);
+          setAiResponse(response);
           return;
         }
       } catch (e) {}
@@ -134,54 +143,32 @@ export function useGeminiAI(props: UseGeminiAIProps) {
     void fetchAIAdvice();
   }, [fetchAIAdvice, profile?.id]);
 
-  // Chat và điều khiển hệ thống
   const handleSendChatMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
-    if (!chatInput.trim()) return;
-    
-    if (isChatLoading || isChattingRef.current) {
-      if (import.meta.env.DEV) console.warn("🛡️ [GUARD] API Call prevented to save quota");
-      return;
-    }
+    if (!chatInput.trim() || isChatLoading || isChattingRef.current) return;
 
     isChattingRef.current = true;
     const userText = chatInput.trim();
-    const userMsg: AiChatMessage = { role: 'user', content: userText };
-    
-    // Đẩy tin nhắn của mình lên trước cho thật (UI/UX)
-    setChatMessages((prev: AiChatMessage[]) => [...prev, userMsg]);
+    setChatMessages((prev) => [...prev, { role: 'user', content: userText }]);
     setChatInput('');
     setIsChatLoading(true);
     
-    if (import.meta.env.DEV) console.warn("🚀 [API CALL] Sending to Gemini...");
-
     try {
       const { reply, waterAction } = await sendAiChatMessage(userText, buildContext());
-      
-      const assistantMsg: AiChatMessage = { role: 'model', content: reply };
-      setChatMessages((prev: AiChatMessage[]) => [...prev, assistantMsg]);
+      setChatMessages((prev) => [...prev, { role: 'model', content: reply }]);
 
-      // --- [PHẪU THUẬT LOGIC: AI ĐIỀU KHIỂN APP] ---
       const p = propsRef.current;
-      
-      // 1. Nếu AI nhận diện hành động uống nước
       if (waterAction && p.handleAddWater) {
         await p.handleAddWater(waterAction.amount, waterAction.factor, waterAction.name);
-        toast.success(`AI đã ghi nhận: ${waterAction.amount}ml ${waterAction.name}`);
+        toast.success(`Ghi nhận: ${waterAction.amount}ml ${waterAction.name}`);
       }
       
-      // 2. Phân tích ý định (Intent Parsing) để đóng modal và mở tính năng tương ứng
       const lowerReply = reply.toLowerCase();
-      
-      // Tránh việc AI chỉ đang "nói về" báo cáo mà mình đã xuất. 
-      // Chỉ kích hoạt nếu có các từ khóa mang tính hành động.
       const shouldTriggerAction = (keywords: string[]) => keywords.some(kw => lowerReply.includes(kw));
 
       if (shouldTriggerAction(['báo cáo', 'xuất pdf', 'tạo file']) && p.handleExportPDF) {
-        toast.info("Đang tạo báo cáo sức khỏe...");
         p.setShowAiChat?.(false);
-        setTimeout(p.handleExportPDF, 500); // Delay nhẹ để UI đóng mượt
+        setTimeout(p.handleExportPDF, 500);
       } 
       else if (shouldTriggerAction(['lịch sử', 'uống khi nào', 'xem lại']) && p.setShowHistory) {
         p.setShowAiChat?.(false);
@@ -191,23 +178,18 @@ export function useGeminiAI(props: UseGeminiAIProps) {
         p.setShowAiChat?.(false);
         p.toggleFastingMode?.();
       }
-
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      if (errMsg.includes('429') || errMsg.includes('Too Many Requests') || errMsg.includes('rate limit')) {
-        toast.error('Hệ thống AI đang quá tải. Vui lòng thử lại sau ít phút nhé!');
-        setChatMessages((prev: AiChatMessage[]) => [...prev, { role: 'model', content: 'Hệ thống AI đang quá tải do có nhiều lượt truy cập. Đệ chờ vài phút rồi nhắn lại cho ta nhé! ⏳' }]);
-      } else {
-        toast.error('AI đang bận hớp nước, đệ thử lại sau nhé!');
-      }
+      toast.error('AI đang bận hớp nước, đệ thử lại sau nhé!');
     } finally {
       setIsChatLoading(false);
-      setTimeout(() => { isChattingRef.current = false; }, 1000); // 1s debounce
+      setTimeout(() => { isChattingRef.current = false; }, 1000);
     }
   };
 
   return {
-    aiAdvice, 
+    aiAdvice: aiResponse?.text || '',
+    tacticalAlert: aiResponse?.tactical_alert,
+    urgency: aiResponse?.urgency || 'low',
     isAiLoading, 
     chatMessages, 
     setChatMessages,
