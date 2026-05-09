@@ -104,9 +104,8 @@ export default function AppShell({
 
       <div className="flex-1 overflow-y-auto px-5 pt-6 pb-28">
         <Suspense fallback={tabFallback}>
-          {(activeTab === 'home' || (activeTab === 'bottle' && !bottleDemoEnabled)) && <HomeTab {...homeTabProps} />}
+          {(activeTab === 'home') && <HomeTab {...homeTabProps} />}
           {activeTab === 'insight' && <InsightTab {...insightTabProps} />}
-          {activeTab === 'bottle' && bottleDemoEnabled && bottleTabProps && <BottleTab {...bottleTabProps} />}
           {activeTab === 'league' && <LeagueTab {...leagueTabProps} />}
           {activeTab === 'feed' && <FeedTab {...feedTabProps} />}
           {activeTab === 'profile' && <ProfileTab {...profileTabProps} />}

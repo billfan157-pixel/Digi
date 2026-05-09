@@ -153,8 +153,8 @@ const LeagueTab = memo(function LeagueTab({
           {/* Header section - optimized touch target */}
           <div className="flex justify-between items-start pt-6 pb-4 px-6">
             <div>
-              <p className="text-[10px] font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase mb-1">
-                BẢNG VINH DANH
+              <p className="section-title text-slate-400 mb-1">
+                Bảng vinh danh
               </p>
               <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
                 Xếp hạng <Trophy size={30} className="text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]" />
@@ -272,19 +272,19 @@ const LeagueTab = memo(function LeagueTab({
                   <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                     <button 
                       onClick={() => setLeagueView('all')} 
-                      className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-all shrink-0 ${leagueView === 'all' ? 'bg-white text-slate-900' : 'bg-white/5 text-slate-400 border border-white/10'}`}
+                      className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-all shrink-0 ${leagueView === 'all' ? 'bg-white/15 text-white border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'bg-white/5 text-slate-400 border border-white/10'}`}
                     >
                       Tất cả
                     </button>
                     <button 
                       onClick={() => setLeagueView('top10')} 
-                      className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-all shrink-0 ${leagueView === 'top10' ? 'bg-amber-500 text-white' : 'bg-white/5 text-slate-400 border border-white/10'}`}
+                      className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-all shrink-0 ${leagueView === 'top10' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.15)]' : 'bg-white/5 text-slate-400 border border-white/10'}`}
                     >
                       Top 10
                     </button>
                     <button 
                       onClick={() => setLeagueView('around')} 
-                      className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-all shrink-0 ${leagueView === 'around' ? 'bg-cyan-500 text-white' : 'bg-white/5 text-slate-400 border border-white/10'}`}
+                      className={`rounded-xl px-4 py-2.5 text-sm font-bold transition-all shrink-0 ${leagueView === 'around' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-white/5 text-slate-400 border border-white/10'}`}
                     >
                       Gần bạn
                     </button>
@@ -297,7 +297,7 @@ const LeagueTab = memo(function LeagueTab({
 
                 {searchedData.length === 0 ? renderEmptyState() : (
                   <>
-                    {/* Podium - optimized spacing for mobile */}
+                    {/* Podium - redesigned with metallic gradients */}
                     {top3.length > 0 && leagueView !== 'around' && (
                       <div className="flex items-end justify-center gap-3 pt-2">
                         {[1, 0, 2].map((podiumIndex) => {
@@ -306,6 +306,14 @@ const LeagueTab = memo(function LeagueTab({
 
                           const isChampion = podiumIndex === 0;
                           const cardHeight = podiumHeights[podiumIndex];
+
+                          // Metallic gradients for gold/silver/bronze
+                          const metallicStyles = [
+                            { border: 'border-yellow-400/70', bg: 'from-amber-400/30 via-yellow-500/15 to-amber-600/20', glow: 'shadow-[0_-8px_30px_rgba(250,204,21,0.25)]', rankBg: 'from-yellow-300 to-amber-500', rankText: 'text-amber-950', nameColor: 'text-yellow-400', wpColor: 'text-yellow-400' },
+                            { border: 'border-slate-300/50', bg: 'from-slate-300/20 via-slate-400/10 to-slate-500/15', glow: 'shadow-[0_-5px_20px_rgba(203,213,225,0.15)]', rankBg: 'from-slate-200 to-slate-400', rankText: 'text-slate-800', nameColor: 'text-slate-300', wpColor: 'text-slate-300' },
+                            { border: 'border-orange-400/50', bg: 'from-orange-400/25 via-orange-500/10 to-orange-600/15', glow: 'shadow-[0_-5px_20px_rgba(251,146,60,0.15)]', rankBg: 'from-orange-300 to-orange-500', rankText: 'text-orange-950', nameColor: 'text-orange-400', wpColor: 'text-orange-400' }
+                          ];
+                          const metal = metallicStyles[podiumIndex];
 
                           return (
                             <motion.div
@@ -316,26 +324,34 @@ const LeagueTab = memo(function LeagueTab({
                               className={`flex-1 flex flex-col items-center relative ${isChampion ? 'z-20 -mx-2' : 'z-10'}`}
                             >
                               {isChampion ? (
-                                <Crown size={36} className="text-yellow-400 mb-2 drop-shadow-[0_0_20px_rgba(250,204,21,0.9)] animate-pulse" />
+                                <Crown size={32} className="text-yellow-400 mb-2 drop-shadow-[0_0_20px_rgba(250,204,21,0.9)]" />
                               ) : (
                                 <div className="mb-6" />
                               )}
-                              <div className="relative mb-4">
-                                <div className={`rounded-full bg-slate-800 flex items-center justify-center font-black border-[3px] z-10 relative ${isChampion ? 'w-20 h-20 text-4xl border-[5px] border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)]' : 'w-14 h-14 text-xl shadow-[0_0_15px_rgba(255,255,255,0.1)]'} ${podiumIndex === 1 ? 'border-slate-300' : podiumIndex === 2 ? 'border-orange-400' : ''}`}>
-                                  <span className={`${isChampion ? 'text-yellow-400' : podiumIndex === 1 ? 'text-slate-200' : 'text-orange-400'}`}>
-                                    {item.name.charAt(0).toUpperCase()}
-                                  </span>
+
+                              {/* Avatar */}
+                              <div className="relative mb-3">
+                                <div className={`rounded-full overflow-hidden flex items-center justify-center font-black z-10 relative ${isChampion ? 'w-[72px] h-[72px]' : 'w-14 h-14'}`}>
+                                  <div className={`w-full h-full rounded-full bg-gradient-to-br ${metal.bg} border-[3px] ${metal.border} flex items-center justify-center backdrop-blur-sm ${isChampion ? 'text-3xl shadow-[0_0_30px_rgba(250,204,21,0.35)]' : 'text-xl shadow-[0_0_15px_rgba(255,255,255,0.08)]'}`}>
+                                    <span className={metal.nameColor}>
+                                      {item.name.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className={`absolute left-1/2 -translate-x-1/2 rounded-full flex items-center justify-center font-black z-20 border border-slate-800 ${isChampion ? 'w-8 h-8 -bottom-2 text-xs bg-gradient-to-br from-yellow-300 to-amber-500 text-amber-950' : 'w-6 h-6 -bottom-1.5 text-[10px]'} ${podiumIndex === 1 ? 'bg-slate-200 text-slate-900' : podiumIndex === 2 ? 'bg-orange-400 text-orange-950' : ''}`}>
+                                {/* Rank badge */}
+                                <div className={`absolute left-1/2 -translate-x-1/2 rounded-full flex items-center justify-center font-black z-20 border-2 border-slate-900 bg-gradient-to-br ${metal.rankBg} ${metal.rankText} ${isChampion ? 'w-8 h-8 -bottom-2 text-xs' : 'w-6 h-6 -bottom-1.5 text-[10px]'}`}>
                                   {podiumIndex + 1}
                                 </div>
                               </div>
-                              <div className={`w-full rounded-t-2xl border-t-[3px] px-2 pt-4 relative overflow-hidden backdrop-blur-xl flex flex-col items-center ${podiumBorders[podiumIndex]} ${podiumShadows[podiumIndex]} ${isChampion ? 'bg-gradient-to-t from-amber-500/20 to-yellow-500/5' : 'bg-gradient-to-t from-slate-800/40 to-slate-700/20'}`} style={{ height: `${cardHeight}px` }}>
-                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 mix-blend-overlay" />
+
+                              {/* Pedestal */}
+                              <div className={`w-full rounded-t-2xl border-t-[3px] ${metal.border} ${metal.glow} px-2 pt-4 relative overflow-hidden backdrop-blur-xl flex flex-col items-center bg-gradient-to-t ${metal.bg}`} style={{ height: `${cardHeight}px` }}>
+                                {/* Metallic shimmer layer */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-transparent pointer-events-none" />
                                 <p className={`text-center font-bold truncate relative z-10 max-w-full px-1 ${isChampion ? 'text-base' : 'text-sm'} ${item.isMe ? 'text-cyan-300' : 'text-white'}`}>
                                   {item.name}
                                 </p>
-                                <p className={`mt-1.5 text-center font-black relative z-10 ${isChampion ? 'text-sm text-yellow-400' : podiumIndex === 1 ? 'text-xs text-slate-300' : 'text-xs text-orange-400'}`}>
+                                <p className={`mt-1.5 text-center font-black relative z-10 ${isChampion ? 'text-sm' : 'text-xs'} ${metal.wpColor}`}>
                                   {item.wp.toLocaleString()} WP
                                 </p>
                                 <div className="mt-2 flex items-center justify-center gap-1 text-[10px] font-black text-orange-400 relative z-10">
@@ -363,7 +379,7 @@ const LeagueTab = memo(function LeagueTab({
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: Math.min(actualRank * 0.03, 0.25) }}
                             key={item.id && item.id !== '' ? item.id : `fallback-league-${actualRank}`}
-                            className={`group relative flex items-center p-4 rounded-2xl backdrop-blur-md border transition-all duration-300 overflow-hidden min-h-[80px] ${item.isMe ? 'bg-gradient-to-r from-cyan-900/40 to-blue-900/20 border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.2)] ring-1 ring-cyan-400/50 scale-[1.01] z-10' : 'bg-slate-800/60 border-white/5 hover:bg-slate-700/60 hover:border-white/10'}`}
+                            className={`group relative flex items-center p-4 rounded-2xl backdrop-blur-md border transition-all duration-300 overflow-hidden min-h-[80px] ${item.isMe ? 'bg-gradient-to-r from-cyan-900/40 to-blue-900/20 border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.2)] ring-1 ring-cyan-400/50 scale-[1.01] z-10' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'}`}
                           >
                             <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-6xl font-black text-white/[0.03] italic pointer-events-none select-none">
                               {actualRank}

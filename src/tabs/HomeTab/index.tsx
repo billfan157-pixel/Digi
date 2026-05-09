@@ -176,13 +176,13 @@ const HomeTab = React.memo((props: HomeTabProps) => {
         <div className="relative my-8 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform px-6" onClick={() => setShowGoalDetail(true)}>
           <LiquidProgress percentage={progress} />
           <div className="absolute text-center z-10 drop-shadow-xl pointer-events-none flex flex-col items-center">
-            <h2 className="text-5xl font-black text-slate-800 dark:text-white flex items-baseline justify-center">
+            <h2 className="text-5xl font-black text-white flex items-baseline justify-center">
               <AnimatedCounter value={waterIntake} /> 
-              <span className="text-2xl ml-2 text-slate-500 dark:text-slate-300 font-bold">ml</span>
+              <span className="text-2xl ml-2 text-slate-300 font-bold">ml</span>
             </h2>
-            <div className="mt-3 px-4 py-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg rounded-full border border-slate-200/50 dark:border-white/15 flex items-center gap-2 shadow-lg">
-              <span className="text-[10px] text-slate-700 dark:text-slate-300 font-bold uppercase tracking-widest">
-                {t('home.goal')}: <span className="text-slate-900 dark:text-white font-black">{waterGoal} ml</span>
+            <div className="mt-3 px-4 py-2 bg-slate-900/70 backdrop-blur-lg rounded-full border border-white/15 flex items-center gap-2 shadow-lg">
+              <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">
+                {t('home.goal')}: <span className="text-white font-black">{waterGoal} ml</span>
               </span>
             </div>
             {progress >= 100 && (
@@ -192,7 +192,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
                 transition={{ delay: 0.2 }}
                 className="mt-3 px-3 py-1.5 bg-gradient-to-r from-emerald-500/30 to-emerald-600/20 border border-emerald-500/60 rounded-full shadow-lg shadow-emerald-500/20"
               >
-                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{t('home.goal_reached')}</span>
+                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{t('home.goal_reached')}</span>
               </motion.div>
             )}
           </div>
@@ -232,25 +232,25 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       <TelemetryGrid weatherData={weatherData} watchData={watchData} />
 
       {bottleDemoEnabled && (
-        <div className="bg-gradient-to-r from-slate-200/60 to-slate-100/40 dark:from-slate-900/60 dark:to-slate-800/40 backdrop-blur-xl border border-slate-300/50 dark:border-white/10 rounded-[2rem] px-6 py-4 flex items-center justify-between mb-6 shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500/40 dark:hover:border-cyan-500/30 transition-all group">
+        <div className="glass-card px-6 py-4 flex items-center justify-between mb-6 hover:shadow-[0_6px_16px_rgba(6,182,212,0.15)] hover:border-cyan-500/30 transition-all group">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all ${effectiveIsConnected ? 'bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)]' : 'bg-slate-200/60 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-700/50 text-slate-400 dark:text-slate-500'}`}>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all ${effectiveIsConnected ? 'bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border-cyan-500/40 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)]' : 'bg-slate-800/50 border-slate-700/50 text-slate-500'}`}>
                 <Bluetooth size={22} className={`${isConnecting ? 'animate-pulse' : ''} group-hover:scale-110 transition-transform`} />
               </div>
-              {effectiveIsConnected && <motion.div className="absolute -top-2 -right-2 w-4 h-4 bg-emerald-400 rounded-full border-3 border-white dark:border-slate-900 shadow-lg" animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2 }} />}
+              {effectiveIsConnected && <motion.div className="absolute -top-2 -right-2 w-4 h-4 bg-emerald-400 rounded-full border-3 border-slate-900 shadow-lg" animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2 }} />}
             </div>
             <div>
-              <h3 className="text-slate-900 dark:text-white font-black text-sm">DigiBottle Demo</h3>
+              <h3 className="text-white font-black text-sm">DigiBottle Demo</h3>
               {effectiveIsConnected ? (
                 <div className="flex items-center gap-2.5 mt-1.5">
-                  <span className="text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-emerald-500/15 px-2 py-1 rounded-lg border border-emerald-500/30">
+                  <span className="text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-emerald-500/15 px-2 py-1 rounded-lg border border-emerald-500/30">
                     <BatteryFull size={11} /> {batteryLevel}%
                   </span>
-                  <span className="text-slate-500 dark:text-slate-400 text-[9px] uppercase font-bold tracking-widest border-l border-slate-400/50 dark:border-slate-700 pl-2.5">Live</span>
+                  <span className="text-slate-400 text-[9px] uppercase font-bold tracking-widest border-l border-slate-700 pl-2.5">Live</span>
                 </div>
               ) : (
-                <p className="text-slate-600 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest mt-1.5">
+                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mt-1.5">
                   {isConnecting ? t('home.finding_device') : t('home.offline')}
                 </p>
               )}

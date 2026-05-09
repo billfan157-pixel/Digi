@@ -52,22 +52,22 @@ export default function AiCoachSection({
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-900/60 backdrop-blur-xl rounded-[2rem] p-[1px] shadow-lg shadow-indigo-500/5"
+          className="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-[1px] shadow-lg shadow-cyan-500/5"
         >
-          <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-[calc(2rem-1px)] p-5">
+          <div className="relative bg-slate-900/90 backdrop-blur-xl rounded-[calc(1rem-1px)] p-5">
             <div className="flex items-start gap-4 mb-4">
-              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-indigo-500/30 shrink-0 shadow-inner">
-                <Cpu size={20} className={isAiLoading ? 'animate-spin text-indigo-400' : 'text-indigo-400'} />
-                {isAiLoading && <div className="absolute inset-0 rounded-2xl bg-indigo-400/20 animate-ping" />}
+              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 flex items-center justify-center border border-cyan-500/30 shrink-0 shadow-inner">
+                <Cpu size={20} className={isAiLoading ? 'animate-spin text-cyan-400' : 'text-cyan-400'} />
+                {isAiLoading && <div className="absolute inset-0 rounded-2xl bg-cyan-400/20 animate-ping" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1.5">
                   <h3 className="text-sm font-black text-white flex items-center gap-1.5">
-                    DigiCoach <span className="text-indigo-400 text-[9px] font-black uppercase tracking-widest bg-indigo-500/15 px-1.5 py-0.5 rounded border border-indigo-500/20">AI</span>
+                    DigiCoach <span className="text-cyan-400 text-[9px] font-black uppercase tracking-widest bg-cyan-500/15 px-1.5 py-0.5 rounded border border-cyan-500/20">AI</span>
                   </h3>
                   <button 
                     onClick={() => isPremium ? fetchAIAdvice() : setShowPremiumModal(true)}
-                    className="text-slate-500 hover:text-indigo-400 transition-colors p-1.5 bg-white/5 rounded-lg active:scale-95"
+                    className="text-slate-500 hover:text-cyan-400 transition-colors p-1.5 bg-white/5 rounded-lg active:scale-95"
                   >
                     <RefreshCw size={14} className={isAiLoading ? 'animate-spin' : ''} />
                   </button>

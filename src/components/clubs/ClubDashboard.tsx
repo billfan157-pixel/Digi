@@ -685,7 +685,7 @@ export default function ClubDashboard({
                   />
                 </div>
               </div>
-              <button type="submit" disabled={isUpdating} className="w-full py-4 rounded-2xl bg-cyan-500 text-black font-black text-sm shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform disabled:opacity-50">
+              <button type="submit" disabled={isUpdating} className="w-full py-4 rounded-xl bg-cyan-500 text-black font-black text-sm shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform disabled:opacity-50">
                 {isUpdating ? <Loader2 className="animate-spin mx-auto" /> : "LƯU THAY ĐỔI"}
               </button>
             </motion.form>

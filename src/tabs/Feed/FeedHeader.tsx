@@ -35,7 +35,7 @@ export const FeedHeader = ({
   <div className="sticky top-0 z-30 flex flex-col pt-6 pb-4 px-6 bg-slate-950/90 backdrop-blur-xl border-b border-white/5">
     <div className="flex justify-between items-start mb-4">
       <div>
-        <p className="text-[10px] font-bold tracking-widest text-meta uppercase mb-1">TRẠM PHÁT TIN</p>
+        <p className="section-title text-meta mb-1">Trạm phát tin</p>
         <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
           Cộng đồng
         </h1>

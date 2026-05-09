@@ -514,12 +514,12 @@ export function DeviceHero({
 
         <div className="mt-5 flex flex-col items-stretch gap-3">
           {!isConnected ? (
-            <button onClick={onConnect} disabled={isSyncing} className="px-5 py-3 rounded-2xl bg-cyan-400 text-slate-950 font-black shadow-[0_0_25px_rgba(34,211,238,0.35)] active:scale-95 transition-all disabled:opacity-60 flex items-center gap-2">
+            <button onClick={onConnect} disabled={isSyncing} className="px-5 py-3 rounded-xl bg-cyan-400 text-slate-950 font-black shadow-[0_0_25px_rgba(34,211,238,0.35)] active:scale-95 transition-all disabled:opacity-60 flex items-center gap-2">
               {isSyncing ? <RefreshCw size={18} className="animate-spin" /> : <Bluetooth size={18} />}
               {isSyncing ? 'Đang khởi tạo demo...' : 'Start Demo'}
             </button>
           ) : (
-            <button onClick={onDisconnect} className="px-5 py-3 rounded-2xl bg-rose-500/10 border border-rose-400/20 text-rose-300 font-black active:scale-95 transition-all flex items-center gap-2">
+            <button onClick={onDisconnect} className="px-5 py-3 rounded-xl bg-rose-500/10 border border-rose-400/20 text-rose-300 font-black active:scale-95 transition-all flex items-center gap-2">
               <LogOut size={18} /> Disconnect
             </button>
           )}

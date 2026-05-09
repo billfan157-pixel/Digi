@@ -155,7 +155,7 @@ export default function ClubCoopModal() {
 
         {/* Nút Góp Sát Thương */}
         <div className="p-4 bg-slate-950 border-t border-white/5 shrink-0">
-          <button onClick={handleContribute} disabled={hasContributed} className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-sm active:scale-95 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] disabled:opacity-50 disabled:grayscale disabled:scale-100 flex items-center justify-center gap-2">
+          <button onClick={handleContribute} disabled={hasContributed} className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-sm active:scale-95 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] disabled:opacity-50 disabled:grayscale disabled:scale-100 flex items-center justify-center gap-2">
             {hasContributed ? <><Target size={18} /> Đã góp sát thương hôm nay</> : <><Droplet size={18} /> Góp {waterIntake}ml sát thương <ArrowRight size={16} /></>}
           </button>
         </div>

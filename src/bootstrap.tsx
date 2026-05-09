@@ -5,11 +5,7 @@ import App from './App.tsx'
 import { ThemeProvider } from './context/ThemeProvider'
 import './i18n'; // Khởi tạo đa ngôn ngữ
 
-if (import.meta.env.DEV) {
-  void import('vconsole').then(({ default: VConsole }) => {
-    new VConsole();
-  });
-}
+// vConsole has been removed to preserve the premium UI without floating debug elements.
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -142,7 +142,7 @@ export const CommentsView = ({ post, currentUserId, onClose }: CommentsViewProps
               className="flex-1 bg-slate-800/80 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500/50 resize-none h-[44px] min-h-[44px] max-h-[100px]"
               rows={1}
             />
-            <button type="submit" disabled={!text.trim()} className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 p-3 rounded-2xl disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 transition-all active:scale-95 shrink-0">
+            <button type="submit" disabled={!text.trim()} className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 p-3 rounded-xl disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 transition-all active:scale-95 shrink-0">
               <Send size={20} className="ml-1" />
             </button>
           </form>

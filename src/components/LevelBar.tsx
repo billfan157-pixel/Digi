@@ -85,13 +85,16 @@ const LevelBar = ({
         </span>
       </div>
 
-      <div className="relative h-2 w-full bg-slate-800/50 rounded-full overflow-hidden border border-white/5">
+      <div className="relative h-2.5 w-full bg-slate-800/50 rounded-full overflow-hidden border border-white/5">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 1.2, ease: "easeOut" }}
-          className="h-full rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.4)]"
-        />
+          className="relative h-full rounded-full bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]"
+        >
+          {/* Glowing leading edge */}
+          <div className="absolute top-0 right-0 h-full w-4 bg-white/60 blur-[2px] rounded-full" />
+        </motion.div>
       </div>
 
       <div className="mt-3 flex justify-between items-center text-[10px] text-slate-500 font-medium">

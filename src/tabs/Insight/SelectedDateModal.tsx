@@ -76,7 +76,7 @@ export default function SelectedDateModal({
                     </div>
                     <p className="text-slate-300 font-bold mb-1">Chưa có dữ liệu</p>
                     <p className="text-meta text-sm mb-6">Bạn chưa ghi nhận lần uống nước nào cho ngày này.</p>
-                    <button onClick={onClose} className="px-6 py-3 rounded-2xl bg-cyan-500/10 text-cyan-300 font-bold text-sm active:scale-95 transition-transform border border-cyan-500/20 hover:bg-cyan-500/20">
+                    <button onClick={onClose} className="px-6 py-3 rounded-xl bg-cyan-500/10 text-cyan-300 font-bold text-sm active:scale-95 transition-transform border border-cyan-500/20 hover:bg-cyan-500/20">
                       Đóng
                     </button>
                   </div>

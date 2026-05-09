@@ -306,7 +306,7 @@ const InsightTab = memo(function InsightTab({
       {/* --- PHẦN TIÊU ĐỀ (HEADER) --- */}
       <div className="flex justify-between items-start pt-6 pb-4 px-6">
         <div onClick={handleSecretClick} className="cursor-pointer select-none touch-manipulation">
-          <p className="text-[10px] font-bold tracking-widest text-meta uppercase mb-1">PHÂN TÍCH CHUYÊN SÂU</p>
+          <p className="section-title text-meta mb-1">Phân tích chuyên sâu</p>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white active:scale-95 transition-transform origin-left">
             Insight
           </h1>
@@ -320,12 +320,12 @@ const InsightTab = memo(function InsightTab({
 
       {/* --- ĐIỀU HƯỚNG SUB-TABS --- */}
       <div className="px-5 mb-6 mt-1">
-        <div className="glass-control flex items-center p-1.5 shadow-inner">
+        <div className="glass-control flex items-center p-1.5 shadow-inner overflow-x-auto scrollbar-hide">
           {[
-            { id: 'overview', label: 'TỔNG QUAN', icon: Target },
-            { id: 'ai', label: 'AI COACH', icon: Cpu },
-            { id: 'analytics', label: 'PHÂN TÍCH', icon: TrendingUp },
-            { id: 'system', label: 'HỆ THỐNG', icon: Settings2 }
+            { id: 'overview', label: 'Tổng quan', icon: Target },
+            { id: 'ai', label: 'AI Coach', icon: Cpu },
+            { id: 'analytics', label: 'Phân tích', icon: TrendingUp },
+            { id: 'system', label: 'Hệ thống', icon: Settings2 }
           ].map(tab => {
             const isActive = activeView === tab.id;
             const Icon = tab.icon;
@@ -333,7 +333,7 @@ const InsightTab = memo(function InsightTab({
               <button
                 key={tab.id}
                 onClick={() => setActiveView(tab.id as any)}
-                className={`flex-1 relative flex flex-col items-center justify-center py-2.5 transition-colors duration-200 z-10 rounded-xl ${
+                className={`flex-1 min-w-[72px] relative flex flex-col items-center justify-center py-2.5 transition-colors duration-200 z-10 rounded-xl ${
                   isActive ? 'text-cyan-300' : 'text-meta hover:text-slate-300'
                 }`}
               >
@@ -344,8 +344,8 @@ const InsightTab = memo(function InsightTab({
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
-                <Icon size={16} className={`mb-1.5 ${isActive ? '' : 'opacity-80'}`} />
-                <span className="text-[9px] font-black uppercase tracking-wider">{tab.label}</span>
+                <Icon size={16} className={`mb-1 ${isActive ? '' : 'opacity-80'}`} />
+                <span className="text-[9px] font-bold tracking-wide whitespace-nowrap">{tab.label}</span>
               </button>
             );
           })}

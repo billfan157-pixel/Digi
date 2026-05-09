@@ -176,8 +176,8 @@ export default function BasicTodayRingUpgraded({
           filter: drop-shadow(0 0 ${glowIntensity * 12}px rgba(56, 189, 248, ${glowIntensity * 0.5}));
         }
         
-        .gradient-text {
-          background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+        .streak-gradient-text {
+          background: linear-gradient(135deg, #fb923c 0%, #fcd34d 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -224,7 +224,7 @@ export default function BasicTodayRingUpgraded({
             style={streak >= 7 ? { animation: 'float 3s ease-in-out infinite' } : {}}
           >
             <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">STREAK</p>
-            <p className="text-white font-black text-lg gradient-text">
+            <p className="text-white font-black text-lg streak-gradient-text">
               {streak} ngày
             </p>
             {streak >= 7 && (

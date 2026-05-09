@@ -219,7 +219,7 @@ export default function BottleTab({
             <div className="shrink-0">
               <button
                 onClick={handleFirmwareTap}
-                className="px-3 py-2 rounded-2xl bg-white/5 border border-white/10 text-[11px] font-black tracking-[0.18em] text-slate-300 hover:border-cyan-400/40 transition-colors"
+                className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black tracking-[0.18em] text-slate-300 hover:border-cyan-400/40 transition-colors"
               >
                 {FIRMWARE_VERSION}
               </button>

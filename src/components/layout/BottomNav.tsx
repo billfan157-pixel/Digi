@@ -1,7 +1,7 @@
-import { Home, BarChart2, Trophy, FlaskConical, Rss, User, Settings } from 'lucide-react';
+import { Home, BarChart2, Trophy, Rss, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export type TabType = 'home' | 'insight' | 'league' | 'bottle' | 'feed' | 'profile';
+export type TabType = 'home' | 'insight' | 'league' | 'feed' | 'profile';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -9,7 +9,6 @@ interface BottomNavProps {
 }
 
 const BottomNav = (props: BottomNavProps) => {
-  const bottleDemoEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_BOTTLE_DEMO === 'true';
   const navItems: { id: TabType; icon: any; label: string }[] = [
     { id: 'home', icon: Home, label: 'Nhà' },
     { id: 'insight', icon: BarChart2, label: 'Phân tích' },
@@ -17,10 +16,6 @@ const BottomNav = (props: BottomNavProps) => {
     { id: 'feed', icon: Rss, label: 'Tin' },
     { id: 'profile', icon: User, label: 'Hồ sơ' },
   ];
-
-  if (bottleDemoEnabled) {
-    navItems.splice(3, 0, { id: 'bottle', icon: FlaskConical, label: 'Bình' });
-  }
 
   return (
     <nav aria-label="Điều hướng chính" className="absolute bottom-0 left-0 right-0 px-4 pt-10 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none pb-[calc(env(safe-area-inset-bottom,1.5rem)+0.5rem)]">

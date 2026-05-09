@@ -75,7 +75,7 @@ export default function FirstSessionChecklistModal() {
             <button
               type="button"
               onClick={openGoal}
-              className="w-full flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4 hover:bg-slate-100 dark:hover:bg-white/5 active:scale-[0.99] transition-all"
+              className="w-full flex items-center justify-between gap-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4 hover:bg-slate-100 dark:hover:bg-white/5 active:scale-[0.99] transition-all"
             >
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 dark:text-cyan-300 flex items-center justify-center">
@@ -92,7 +92,7 @@ export default function FirstSessionChecklistModal() {
             <button
               type="button"
               onClick={openAddWater}
-              className="w-full flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4 hover:bg-slate-100 dark:hover:bg-white/5 active:scale-[0.99] transition-all"
+              className="w-full flex items-center justify-between gap-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4 hover:bg-slate-100 dark:hover:bg-white/5 active:scale-[0.99] transition-all"
             >
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
@@ -109,7 +109,7 @@ export default function FirstSessionChecklistModal() {
             <button
               type="button"
               onClick={openReminderSettings}
-              className="w-full flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4 hover:bg-slate-100 dark:hover:bg-white/5 active:scale-[0.99] transition-all"
+              className="w-full flex items-center justify-between gap-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4 hover:bg-slate-100 dark:hover:bg-white/5 active:scale-[0.99] transition-all"
             >
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-300 flex items-center justify-center">

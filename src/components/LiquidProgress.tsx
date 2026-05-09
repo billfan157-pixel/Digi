@@ -10,7 +10,14 @@ export const LiquidProgress: React.FC<LiquidProgressProps> = ({ percentage }) =>
   const clamped = Math.min(Math.max(percentage, 0), 100);
   
   return (
-    <div className="relative w-56 h-56 rounded-full border-[6px] border-slate-700 dark:border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 overflow-hidden shadow-2xl shadow-cyan-900/40 mx-auto hover:shadow-cyan-900/60 transition-all ring-2 ring-cyan-500/20">
+    <div 
+      className="relative w-56 h-56 rounded-full border-[6px] border-slate-700 dark:border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 overflow-hidden shadow-2xl shadow-cyan-900/40 mx-auto hover:shadow-cyan-900/60 transition-all ring-2 ring-cyan-500/20"
+      role="progressbar"
+      aria-label="Tiến độ nước"
+      aria-valuenow={clamped}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       {/* Vùng sóng nước sẽ dâng lên từ dưới đáy */}
       <motion.div
         className="absolute inset-0 bg-gradient-to-t from-cyan-600 to-cyan-500 origin-bottom"

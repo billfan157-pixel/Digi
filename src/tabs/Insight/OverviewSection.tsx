@@ -52,7 +52,7 @@ export default function OverviewSection({
 
   return (
     <>
-      <div className="px-6 mb-3">
+      <div className="px-6 mb-3 mt-4">
         <motion.h1 
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           className="text-xl font-black tracking-tight text-white"

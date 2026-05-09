@@ -29,10 +29,10 @@ export default function HomeHeader({ profile, isScanning, handleScan, onMenuOpen
   return (
     <div className="flex justify-between items-center pt-2 pb-3 px-6 relative z-20">
       <div className="flex-1 pr-4">
-        <p className="text-[10px] font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase mb-1.5 opacity-85">
+        <p className="section-title text-slate-400 mb-1.5">
           {nowText.date}
         </p>
-        <h1 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-tight">
+        <h1 className="text-3xl font-black tracking-tighter text-white leading-tight">
           {t('home.greeting')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
             {profile?.nickname || t('home.you')}
           </span> 👋
@@ -42,7 +42,7 @@ export default function HomeHeader({ profile, isScanning, handleScan, onMenuOpen
         <button 
           onClick={handleScan} 
           disabled={isScanning} 
-          className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-200/60 to-slate-100/40 dark:from-slate-800/60 dark:to-slate-900/40 backdrop-blur-md border border-slate-300/50 dark:border-white/10 flex items-center justify-center text-cyan-500 dark:text-cyan-400 hover:bg-cyan-500/20 dark:hover:bg-cyan-500/15 active:scale-90 transition-all duration-200 ease-out disabled:opacity-50 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.2)] group"
+          className="w-11 h-11 rounded-xl bg-slate-800/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-cyan-400 hover:bg-cyan-500/15 active:scale-90 transition-all duration-200 ease-out disabled:opacity-50 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.2)] group"
         >
           <Camera size={18} className="group-hover:scale-110 transition-transform" />
         </button>

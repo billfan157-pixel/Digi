@@ -92,7 +92,7 @@ export default function LoginScreen({ onBack, initialEmail = '' }: LoginScreenPr
               <Lock className="w-4 h-4 absolute left-4 top-4 text-slate-500" />
             </div>
           </div>
-          <button type="submit" disabled={isSubmittingLogin} className="w-full py-4 rounded-2xl font-semibold text-slate-950 text-sm mt-2 disabled:opacity-50 active:scale-95 transition-all duration-200 ease-out shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]" style={{ background: isSubmittingLogin ? '#334155' : '#06b6d4' }}>
+          <button type="submit" disabled={isSubmittingLogin} className="w-full py-4 rounded-xl font-semibold text-slate-950 text-sm mt-2 disabled:opacity-50 active:scale-95 transition-all duration-200 ease-out shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]" style={{ background: isSubmittingLogin ? '#334155' : '#06b6d4' }}>
             {isSubmittingLogin ? <span className="animate-pulse">Đang xác thực...</span> : "Đăng nhập →"}
           </button>
         </form>
@@ -101,12 +101,12 @@ export default function LoginScreen({ onBack, initialEmail = '' }: LoginScreenPr
           <hr className="w-full border-slate-700" /><span className="px-3 font-bold tracking-widest">HOẶC</span><hr className="w-full border-slate-700" />
         </div>
 
-        <button onClick={handleGoogleLogin} className="w-full py-4 rounded-2xl font-bold text-white text-sm mt-6 border border-white/5 bg-slate-900/60 backdrop-blur-xl hover:bg-slate-800/80 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2">
+        <button onClick={handleGoogleLogin} className="w-full py-4 rounded-xl font-bold text-white text-sm mt-6 border border-white/5 bg-slate-900/60 backdrop-blur-xl hover:bg-slate-800/80 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2">
           <img src="/google-icon.svg" alt="Google" className="w-5 h-5" />
           Đăng nhập bằng Google
         </button>
         
-        <button onClick={handleAppleLogin} className="w-full py-4 rounded-2xl font-bold text-white text-sm mt-3 border border-white/5 bg-slate-900/60 backdrop-blur-xl hover:bg-slate-800/80 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2">
+        <button onClick={handleAppleLogin} className="w-full py-4 rounded-xl font-bold text-white text-sm mt-3 border border-white/5 bg-slate-900/60 backdrop-blur-xl hover:bg-slate-800/80 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2">
           <img src="/apple-icon.svg" alt="Apple" className="w-5 h-5" style={{ filter: 'invert(1)' }} />
           Đăng nhập bằng Apple
         </button>

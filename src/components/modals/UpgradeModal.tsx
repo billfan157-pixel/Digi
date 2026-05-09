@@ -68,7 +68,7 @@ export default function UpgradeModal() {
 
           <button
             onClick={onClose}
-            className="w-full mt-6 py-4 rounded-2xl bg-slate-800 text-white font-black text-sm active:scale-95 transition-transform border border-slate-700"
+            className="w-full mt-6 py-4 rounded-xl bg-slate-800 text-white font-black text-sm active:scale-95 transition-transform border border-slate-700"
           >
             Đóng
           </button>
