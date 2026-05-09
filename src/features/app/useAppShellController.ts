@@ -17,17 +17,17 @@ import { getRankInfo } from '@/utils/healthMath';
 export function useAppShellController(): AppShellProps {
   const {
     view = 'welcome',
-    setView = () => {},
+    setView = () => { },
     profile = null,
-    setProfile = () => {},
+    setProfile = () => { },
     loginPrefill = '',
-    setLoginPrefill = () => {},
-    handleLogout = async () => {},
+    setLoginPrefill = () => { },
+    handleLogout = async () => { },
     isWeatherSynced = false,
-    setIsWeatherSynced = () => {},
+    setIsWeatherSynced = () => { },
     weatherData,
     isCalendarSynced = false,
-    setIsCalendarSynced = () => {},
+    setIsCalendarSynced = () => { },
     isWatchConnected = false,
     watchData,
   } = useAppSystem() || {};
@@ -147,7 +147,15 @@ export function useAppShellController(): AppShellProps {
     setAppActions,
   ]);
 
-  // ── Tab props (most tabs still receive some props) ──
+  // ── Auto-navigate to home if bottle disconnects while on bottle tab ──
+  useEffect(() => {
+    const { isConnected, isSyncing } = hydration.smartBottle || {};
+    if (activeTab === 'bottle' && !isConnected && !isSyncing) {
+      setActiveTab('home');
+    }
+  }, [activeTab, hydration.smartBottle?.isConnected, hydration.smartBottle?.isSyncing, setActiveTab]);
+
+  // ── Sync tab props ──
   const tabProps = useAppTabProps({
     profile,
     smartBottle: hydration.smartBottle,
@@ -174,6 +182,7 @@ export function useAppShellController(): AppShellProps {
     needsFreeze: hydration.needsFreeze,
     useStreakFreeze: hydration.useStreakFreeze,
     posts,
+    setActiveTab,
   });
 
   return {

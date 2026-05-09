@@ -109,6 +109,7 @@ export default function AppShell({
           {activeTab === 'league' && <LeagueTab {...leagueTabProps} />}
           {activeTab === 'feed' && <FeedTab {...feedTabProps} />}
           {activeTab === 'profile' && <ProfileTab {...profileTabProps} />}
+          {activeTab === 'bottle' && bottleTabProps && <BottleTab {...bottleTabProps} />}
         </Suspense>
       </div>
 

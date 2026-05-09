@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { GlassWater, ChevronLeft } from 'lucide-react';
+import { GlassWater } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import ArenaTab from '../tabs/ArenaTab';
@@ -18,7 +18,6 @@ export default function BottleTab({
   watchData,
   isWatchConnected,
   smartBottle,
-  onBack,
 }: {
   profile?: Profile | null;
   weatherData?: { temp: number; status?: string; location?: string } | null;
@@ -26,7 +25,6 @@ export default function BottleTab({
   watchData?: { heartRate: number; steps: number } | null;
   isWatchConnected?: boolean;
   smartBottle: any;
-  onBack?: () => void;
 }) {
   const [activeView, setActiveView] = useState<ActiveView>('lab');
   const [ledColor, setLedColor] = useState(ledColors[0].value);
@@ -193,16 +191,9 @@ export default function BottleTab({
     <div className="animate-in fade-in zoom-in duration-300 pb-10 space-y-4">
       {/* Header & Avatar */}
       <div className="flex justify-between items-start pt-6 pb-4 px-6">
-        <div className="flex items-center gap-3">
-          {onBack && (
-            <button onClick={onBack} className="p-2 rounded-xl bg-white/5 text-slate-300 hover:text-white active:scale-95 transition-all">
-              <ChevronLeft size={20} />
-            </button>
-          )}
-          <div>
-            <p className="text-[10px] font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase mb-1">KẾT NỐI THIẾT BỊ</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Thiết bị</h1>
-          </div>
+        <div>
+          <p className="text-[10px] font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase mb-1">KẾT NỐI THIẾT BỊ</p>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Thiết bị</h1>
         </div>
         <div className="flex items-center gap-3">
           <button className="active:scale-95 transition-all rounded-full shadow-lg shadow-black/20 dark:shadow-white/10 hover:shadow-cyan-500/20">

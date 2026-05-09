@@ -10,7 +10,7 @@ interface AppState {
   streak: number;
   waterEntries: WaterLog[];
   weeklyHistory: { d: string; ml: number; isToday: boolean }[];
-  
+
   // ── Integrations ──
   weatherData: { temp: number; status?: string; location?: string } | null;
   watchData: { heartRate: number; steps: number } | null;
@@ -18,11 +18,11 @@ interface AppState {
   isWatchConnected: boolean;
   isSyncing: boolean;
   hasPendingCloudSync: boolean;
-  
+
   // ── Calculated/Derived ──
   hydrationResult: WaterIntakeResult | null;
   isPremium: boolean;
-  
+
   // ── Fasting State ──
   fastingState: {
     isFastingMode: boolean;
@@ -30,7 +30,7 @@ interface AppState {
     fastingTotalMs: number;
     fastingStartTime: number | null;
   };
-  
+
   // ── App Actions ──
   actions: {
     handleAddWater: (amount: number, factor: number, name: string) => Promise<void>;
@@ -42,7 +42,7 @@ interface AppState {
     startFasting: (hours: number) => void;
     stopFasting: () => void;
   };
-  
+
   // ── Setters ──
   setAppState: (state: Partial<AppState>) => void;
   setActions: (actions: Partial<AppState['actions']>) => void;
@@ -54,13 +54,13 @@ export const useAppStore = create<AppState>((set) => ({
   isSyncing: false, hasPendingCloudSync: false,
   hydrationResult: null, isPremium: false,
   fastingState: { isFastingMode: false, fastingPlanHours: 16, fastingTotalMs: 16 * 60 * 60 * 1000, fastingStartTime: null },
-  
+
   actions: {
-    handleAddWater: async () => {}, handleDeleteEntry: async () => {}, handleEditEntry: async () => {}, 
-    handleScan: () => {}, handleLogout: () => {}, openSocialComposer: () => {},
-    startFasting: () => {}, stopFasting: () => {}
+    handleAddWater: async () => { }, handleDeleteEntry: async () => { }, handleEditEntry: async () => { },
+    handleScan: () => { }, handleLogout: () => { }, openSocialComposer: () => { },
+    startFasting: () => { }, stopFasting: () => { }
   },
-  
+
   setAppState: (newState) => set((state) => ({ ...state, ...newState })),
   setActions: (newActions) => set((state) => ({ actions: { ...state.actions, ...newActions } })),
 }));

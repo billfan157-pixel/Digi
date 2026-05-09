@@ -5,7 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 // ✅ Import đúng hook đã sửa
-import { useWeatherSync } from './useWeatherSync'; 
+import { useWeatherSync } from './useWeatherSync';
 import {
   CALENDAR_OAUTH_PENDING_KEY,
   CALENDAR_TOKEN_UPDATED_EVENT,
@@ -57,12 +57,12 @@ export function useAppSystem() {
           event.url.includes('access_token') ||
           event.url.includes('code=')
         ) {
-          Browser.close().catch(() => {});
+          Browser.close().catch(() => { });
           const urlStr = event.url;
           if (urlStr.includes('#') || urlStr.includes('?')) {
             const fragment = urlStr.substring(urlStr.indexOf(urlStr.includes('?') ? '?' : '#'));
             window.location.href = `${window.location.origin}${window.location.pathname}${fragment}`;
-            
+
             setTimeout(async () => {
               const { data } = await supabase!.auth.getSession();
               if (data?.session) {
@@ -83,7 +83,7 @@ export function useAppSystem() {
   useEffect(() => {
     let isMounted = true;
     let timeoutId: ReturnType<typeof setTimeout>;
-    
+
     const { data: sub } = supabase!.auth.onAuthStateChange(async (event: string, session: any) => {
       if (!isMounted) return;
       try {
@@ -99,14 +99,14 @@ export function useAppSystem() {
                 const defaultName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
                 p = await ensureProfileExists(session.user.id, defaultName);
               }
-              if (p && isMounted) { 
+              if (p && isMounted) {
                 setProfile(p);
                 const isBiometricEnabled = await getBiometricEnabled(p.id);
-                setView(isBiometricEnabled ? 'locked' : 'app'); 
+                setView(isBiometricEnabled ? 'locked' : 'app');
               }
             }, 500);
           }
-        } else if (event === 'SIGNED_OUT' || !session) { 
+        } else if (event === 'SIGNED_OUT' || !session) {
           await clearUserSessionArtifacts(profileIdRef.current);
           queryClient.clear();
           setProfile(null);
@@ -127,16 +127,16 @@ export function useAppSystem() {
   };
 
   // ✅ Trả về đầy đủ các giá trị, bao gồm spread từ các hook con
-  return { 
-    view, 
-    setView, 
-    profile, 
-    setProfile, 
-    loginPrefill, 
-    setLoginPrefill, 
+  return {
+    view,
+    setView,
+    profile,
+    setProfile,
+    loginPrefill,
+    setLoginPrefill,
     handleLogout,
     // Weather
-    ...weatherHook, 
+    ...weatherHook,
     // Calendar
     ...calendarHook,
     // Health

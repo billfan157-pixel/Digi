@@ -26,6 +26,7 @@ interface HomeHydrationHeroProps {
   bottleCapacity: number;
   onConnectBottle: () => void | Promise<void>;
   onOpenGoalDetail?: () => void;
+  onOpenBottleDetail?: () => void;
 }
 
 
@@ -40,6 +41,7 @@ export default function HomeHydrationHero({
   bottleCapacity,
   onConnectBottle,
   onOpenGoalDetail,
+  onOpenBottleDetail,
 }: HomeHydrationHeroProps) {
   const bottleFillPercentage = (metrics?.currentVolume ?? 0) / bottleCapacity * 100;
 
@@ -59,7 +61,7 @@ export default function HomeHydrationHero({
       >
         {isConnected ? (
           <button
-            onClick={onOpenGoalDetail}
+            onClick={onOpenBottleDetail || onOpenGoalDetail}
             className="w-full h-full flex items-center justify-center active:scale-[1.08] transition-transform duration-150"
           >
             <div className="scale-110">

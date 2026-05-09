@@ -32,6 +32,7 @@ interface UseAppTabPropsOptions {
   needsFreeze: boolean;
   useStreakFreeze: () => Promise<boolean>;
   posts: any[];
+  setActiveTab: (tab: 'home' | 'insight' | 'league' | 'feed' | 'profile' | 'bottle') => void;
 }
 
 export function useAppTabProps({
@@ -60,6 +61,7 @@ export function useAppTabProps({
   needsFreeze,
   useStreakFreeze,
   posts,
+  setActiveTab,
 }: UseAppTabPropsOptions) {
   // HomeTab now reads most data from stores (useAppStore, useUIStore)
   // Only smartBottle (hardware hook) is still passed as prop
@@ -101,8 +103,9 @@ export function useAppTabProps({
       watchData,
       isWatchConnected,
       smartBottle,
+      onBack: () => setActiveTab('home'),
     } satisfies React.ComponentProps<typeof BottleTab>;
-  }, [isWatchConnected, isWeatherSynced, profile, smartBottle, watchData, weatherData]);
+  }, [isWatchConnected, isWeatherSynced, profile, smartBottle, watchData, weatherData, setActiveTab]);
 
   const leagueTabProps = useMemo(() => ({
     leagueMode,

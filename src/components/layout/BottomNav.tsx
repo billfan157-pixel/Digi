@@ -1,7 +1,7 @@
 import { Home, BarChart2, Trophy, Rss, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export type TabType = 'home' | 'insight' | 'league' | 'feed' | 'profile';
+export type TabType = 'home' | 'insight' | 'league' | 'feed' | 'profile' | 'bottle';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -40,17 +40,16 @@ const BottomNav = (props: BottomNavProps) => {
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 />
               )}
-              
-              <Icon 
-                size={20} 
+
+              <Icon
+                size={20}
                 strokeWidth={isActive ? 2.4 : 2}
-                className={`transition-colors duration-200 ${isActive ? 'text-cyan-300' : 'text-meta group-hover:text-slate-300'}`} 
+                className={`transition-colors duration-200 ${isActive ? 'text-cyan-300' : 'text-meta group-hover:text-slate-300'}`}
               />
-              
+
               <span
-                className={`mt-1 text-[9px] font-black leading-none transition-colors duration-200 ${
-                  isActive ? 'text-cyan-300' : 'text-meta'
-                }`}
+                className={`mt-1 text-[9px] font-black leading-none transition-colors duration-200 ${isActive ? 'text-cyan-300' : 'text-meta'
+                  }`}
               >
                 {label}
               </span>
