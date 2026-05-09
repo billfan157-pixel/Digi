@@ -48,8 +48,11 @@ export default function HydrationContextCard({
     const climate = profile?.climate || 'moderate';
     const weatherAdjusted = Math.round(activityAdjusted * (weatherImpact[climate as keyof typeof weatherImpact] || 1.0));
 
-    // Sleep quality impact (simulated - would come from HealthKit)
-    const sleepQuality = Math.random() > 0.7 ? 'poor' : Math.random() > 0.4 ? 'fair' : 'good';
+    // Sleep quality impact (deterministic placeholder until HealthKit data is available)
+    const sleepSignal = String(profile?.id || profile?.nickname || 'digiwell')
+      .split('')
+      .reduce((sum, char) => sum + char.charCodeAt(0), 0) % 10;
+    const sleepQuality = sleepSignal > 7 ? 'poor' : sleepSignal > 4 ? 'fair' : 'good';
     const sleepMultiplier = {
       'poor': 0.9, // -10% if poor sleep
       'fair': 0.95,

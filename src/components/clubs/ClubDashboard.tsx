@@ -132,7 +132,7 @@ export default function ClubDashboard({
       }
 
       if (results[2].status === 'fulfilled' && results[2].value.data) {
-        setActivities(results[2].value.data || []);
+        setActivities(results[2].value.data as Activity[] || []);
       } else {
         console.error("Error fetching activities:", results[2].status === 'rejected' && results[2].reason);
         setActivities([]); // Fallback

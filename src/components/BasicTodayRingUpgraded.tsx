@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Droplets, CheckCircle2, TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react';
+import { Droplets, CheckCircle2, TrendingUp, TrendingDown, Minus, Sparkles, Target, Flame } from 'lucide-react';
 
 interface BasicTodayRingProps {
   waterIntake: number;
@@ -84,18 +84,24 @@ export default function BasicTodayRingUpgraded({
   // Comparison with yesterday
   const comparison = yesterdayIntake > 0 ? waterIntake - yesterdayIntake : 0;
   
-  // SVG calculations
-  const outerRadius = 80;
-  const innerRadius = 60;
-  const outerCircumference = 2 * Math.PI * outerRadius;
-  const innerCircumference = 2 * Math.PI * innerRadius;
+  // Apple Fitness 3 Rings Setup
+  const rVol = 100;
+  const rCons = 80;
+  const rStreak = 60;
+  const cVol = 2 * Math.PI * rVol;
+  const cCons = 2 * Math.PI * rCons;
+  const cStreak = 2 * Math.PI * rStreak;
+  
+  const streakPercent = Math.min(Math.max((streak / 7) * 100, 0), 100);
   
   // Animate from 0 on mount
   const displayDaily = hasAnimatedIn ? dailyPercent : 0;
   const displayWeekly = hasAnimatedIn ? weeklyPercent : 0;
+  const displayStreak = hasAnimatedIn ? streakPercent : 0;
   
-  const outerOffset = outerCircumference - (displayWeekly / 100) * outerCircumference;
-  const innerOffset = innerCircumference - (displayDaily / 100) * innerCircumference;
+  const offVol = cVol - (displayDaily / 100) * cVol;
+  const offCons = cCons - (displayWeekly / 100) * cCons;
+  const offStreak = cStreak - (displayStreak / 100) * cStreak;
   
   // Add glow intensity based on progress
   const glowIntensity = Math.min(dailyPercent / 100, 1);
@@ -124,7 +130,7 @@ export default function BasicTodayRingUpgraded({
   };
   
   const milestone = getMilestone(dailyPercent);
-
+  
   return (
     <div className="px-6">
       <style>{`
@@ -182,7 +188,7 @@ export default function BasicTodayRingUpgraded({
         }
       `}</style>
       
-      <div className="bg-slate-900/55 backdrop-blur-xl border border-white/10 rounded-3xl shadow-xl p-6 relative overflow-hidden">
+      <div className="bg-slate-900/55 backdrop-blur-xl border border-white/10 rounded-3xl shadow-xl p-5 pb-4 relative overflow-hidden">
         {/* Background gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none" />
         
@@ -196,7 +202,7 @@ export default function BasicTodayRingUpgraded({
         )}
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-5 relative z-10">
+        <div className="flex items-center justify-between mb-1 relative z-10">
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-black">
@@ -226,27 +232,31 @@ export default function BasicTodayRingUpgraded({
             )}
           </button>
         </div>
-
+        
         {/* Ring visualization */}
         <div 
-          className="flex justify-center py-2 cursor-pointer"
+          className="flex justify-center cursor-pointer -my-2 relative z-0"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <div className="relative w-48 h-48">
+          <div className="relative w-64 h-64">
             <svg 
               className="rotate-[-90deg] ring-glow" 
-              width="192" 
-              height="192" 
-              viewBox="0 0 192 192"
+              width="256" 
+              height="256" 
+              viewBox="0 0 256 256"
             >
               <defs>
-                <linearGradient id="weeklyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#2dd4bf" />
-                  <stop offset="100%" stopColor="#0d9488" />
+                <linearGradient id="volGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#06b6d4" />
+                  <stop offset="100%" stopColor="#3b82f6" />
                 </linearGradient>
-                <linearGradient id="dailyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#38bdf8" />
-                  <stop offset="100%" stopColor="#818cf8" />
+                <linearGradient id="consGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="100%" stopColor="#059669" />
+                </linearGradient>
+                <linearGradient id="streakGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#f97316" />
+                  <stop offset="100%" stopColor="#ef4444" />
                 </linearGradient>
                 <filter id="glow">
                   <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
@@ -257,199 +267,79 @@ export default function BasicTodayRingUpgraded({
                 </filter>
               </defs>
               
-              {/* Outer ring (weekly) */}
-              <circle
-                cx="96"
-                cy="96"
-                r={outerRadius}
-                fill="none"
-                stroke="rgba(148,163,184,0.12)"
-                strokeWidth="14"
-              />
-              <circle
-                cx="96"
-                cy="96"
-                r={outerRadius}
-                fill="none"
-                stroke="url(#weeklyGradient)"
-                strokeWidth="14"
-                strokeLinecap="round"
-                strokeDasharray={outerCircumference}
-                strokeDashoffset={outerOffset}
-                style={{ 
-                  transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                }}
-                filter="url(#glow)"
-              />
+              {/* Volume ring (Outer) */}
+              <circle cx="128" cy="128" r={rVol} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="16" />
+              <circle cx="128" cy="128" r={rVol} fill="none" stroke="url(#volGradient)" strokeWidth="16" strokeLinecap="round" strokeDasharray={cVol} strokeDashoffset={offVol} style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }} filter="url(#glow)" />
               
-              {/* Inner ring (daily) */}
-              <circle
-                cx="96"
-                cy="96"
-                r={innerRadius}
-                fill="none"
-                stroke="rgba(148,163,184,0.12)"
-                strokeWidth="12"
-              />
-              <circle
-                cx="96"
-                cy="96"
-                r={innerRadius}
-                fill="none"
-                stroke="url(#dailyGradient)"
-                strokeWidth="12"
-                strokeLinecap="round"
-                strokeDasharray={innerCircumference}
-                strokeDashoffset={innerOffset}
-                style={{ 
-                  transition: 'stroke-dashoffset 1s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                }}
-                filter="url(#glow)"
-              />
+              {/* Consistency ring (Middle) */}
+              <circle cx="128" cy="128" r={rCons} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="16" />
+              <circle cx="128" cy="128" r={rCons} fill="none" stroke="url(#consGradient)" strokeWidth="16" strokeLinecap="round" strokeDasharray={cCons} strokeDashoffset={offCons} style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }} filter="url(#glow)" />
               
-              {/* Milestone markers */}
-              {[25, 50, 75, 100].map((milestone) => {
-                const angle = (milestone / 100) * 2 * Math.PI;
-                const x = 96 + innerRadius * Math.cos(angle - Math.PI / 2);
-                const y = 96 + innerRadius * Math.sin(angle - Math.PI / 2);
-                return (
-                  <circle
-                    key={milestone}
-                    cx={x}
-                    cy={y}
-                    r="2"
-                    fill={dailyPercent >= milestone ? "#38bdf8" : "rgba(148,163,184,0.2)"}
-                    className="transition-all duration-300"
-                  />
-                );
-              })}
+              {/* Streak ring (Inner) */}
+              <circle cx="128" cy="128" r={rStreak} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="16" />
+              <circle cx="128" cy="128" r={rStreak} fill="none" stroke="url(#streakGradient)" strokeWidth="16" strokeLinecap="round" strokeDasharray={cStreak} strokeDashoffset={offStreak} style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }} filter="url(#glow)" />
             </svg>
             
             {/* Center content */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-              {isCompleted ? (
-                <>
-                  <CheckCircle2 size={32} className="text-emerald-400 mb-2 animate-pulse" />
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-400 font-black mb-1">
-                    Hoàn thành
-                  </p>
-                </>
-              ) : (
-                <Droplets size={28} className="text-cyan-400 mb-1" />
-              )}
-              <p className="text-4xl font-black text-white number-glow gradient-text">
+              <Droplets size={32} className="text-cyan-400 mb-1" />
+              <p className="text-5xl leading-none tracking-tight font-black text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-blue-500 number-glow mb-0.5">
                 {animatedPercent}%
               </p>
-              <p className="mt-1 text-[10px] text-slate-400">
-                {isCompleted 
-                  ? `${waterIntake.toLocaleString('vi-VN')} ml` 
-                  : `${Math.max(waterGoal - waterIntake, 0).toLocaleString('vi-VN')} ml còn lại`}
+              <p className="mt-0.5 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                {isCompleted ? 'Hoàn thành' : 'Hôm nay'}
               </p>
             </div>
-          </div>
-        </div>
-
-        {/* Stats grid with hover effects */}
-        <div className="grid gap-3 sm:grid-cols-2 mt-2 relative z-10">
-          {/* Current goal card */}
-          <div className="stat-card-hover rounded-2xl bg-gradient-to-br from-slate-900/60 to-slate-900/30 backdrop-blur-md border border-white/8 p-3 flex flex-col justify-center items-center text-center shadow-lg">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-1">
-              Mục tiêu hiện tại
-            </p>
-            <p className="text-lg font-black text-white">
-              {isCompleted ? (
-                <span className="text-emerald-400">✓ Hoàn thành</span>
-              ) : (
-                <>
-                  {Math.max(waterGoal - waterIntake, 0).toLocaleString('vi-VN')}
-                  <span className="text-[10px] text-slate-500 font-medium ml-1">ml</span>
-                </>
-              )}
-            </p>
-            
-            {/* Comparison with yesterday */}
-            {comparison !== 0 && (
-              <div className="flex items-center gap-1 mt-1">
-                {comparison > 0 ? (
-                  <>
-                    <TrendingUp size={10} className="text-emerald-400" />
-                    <span className="text-[9px] text-emerald-400">
-                      +{Math.abs(comparison).toLocaleString('vi-VN')} ml so với hôm qua
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <TrendingDown size={10} className="text-orange-400" />
-                    <span className="text-[9px] text-orange-400">
-                      {comparison.toLocaleString('vi-VN')} ml so với hôm qua
-                    </span>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-          
-          {/* Weekly performance card */}
-          <div className="stat-card-hover rounded-2xl bg-gradient-to-br from-slate-900/60 to-slate-900/30 backdrop-blur-md border border-white/8 p-3 flex flex-col justify-center items-center text-center shadow-lg">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-1">
-              Hiệu suất tuần
-            </p>
-            <p className="text-lg font-black text-white">
-              {Math.round(weeklyPercent)}
-              <span className="text-[10px] text-slate-500 font-medium ml-0.5">%</span>
-            </p>
-            
-            {/* Mini sparkline trend */}
-            {weeklyTrend.length > 0 && (
-              <div className="flex items-center gap-0.5 mt-1">
-                {weeklyTrend.slice(-7).map((value, i) => {
-                  const height = Math.max((value / 100) * 16, 2);
-                  return (
-                    <div
-                      key={i}
-                      className="w-1 bg-cyan-400/40 rounded-full"
-                      style={{ height: `${height}px` }}
-                    />
-                  );
-                })}
-              </div>
-            )}
           </div>
         </div>
         
-        {/* Expanded details */}
-        {isExpanded && (
-          <div className="mt-4 p-4 rounded-2xl bg-slate-950/40 border border-white/5 animate-in fade-in slide-in-from-top-2 duration-300">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-black mb-3">
-              Chi tiết tiến độ
-            </p>
-            
-            <div className="space-y-2 text-sm text-slate-300">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Đã uống hôm nay:</span>
-                <span className="font-bold">{waterIntake.toLocaleString('vi-VN')} ml</span>
+        {/* Apple Fitness Style Legend */}
+        <div className="mt-5 flex flex-col gap-2.5 relative z-10">
+          <div className="bg-slate-900/40 backdrop-blur-xl rounded-2xl p-3 border border-white/5 flex items-center justify-between hover:bg-slate-800/60 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
+                <Droplets size={18} className="text-cyan-400" />
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Mục tiêu:</span>
-                <span className="font-bold">{waterGoal.toLocaleString('vi-VN')} ml</span>
+              <div>
+                <p className="text-white font-black text-sm">Nạp nước</p>
+                <p className="text-cyan-400/80 text-[10px] uppercase tracking-widest font-bold">Volume</p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Trung bình 7 ngày:</span>
-                <span className="font-bold">
-                  {weeklyTrend.length > 0 
-                    ? `${Math.round(weeklyTrend.reduce((a, b) => a + b, 0) / weeklyTrend.length)}%`
-                    : 'N/A'}
-                </span>
-              </div>
-              {yesterdayIntake > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Hôm qua:</span>
-                  <span className="font-bold">{yesterdayIntake.toLocaleString('vi-VN')} ml</span>
-                </div>
-              )}
+            </div>
+            <div className="text-right">
+              <p className="text-white font-black text-lg">{waterIntake.toLocaleString('vi-VN')}<span className="text-slate-500 text-xs ml-1">/ {waterGoal.toLocaleString('vi-VN')}ml</span></p>
             </div>
           </div>
-        )}
+          
+          <div className="bg-slate-900/40 backdrop-blur-xl rounded-2xl p-3 border border-white/5 flex items-center justify-between hover:bg-slate-800/60 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                <Target size={18} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-white font-black text-sm">Mục tiêu tuần</p>
+                <p className="text-emerald-400/80 text-[10px] uppercase tracking-widest font-bold">Consistency</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-white font-black text-lg">{Math.round(weeklyPercent)}<span className="text-slate-500 text-xs ml-1">%</span></p>
+            </div>
+          </div>
+          
+          <div className="bg-slate-900/40 backdrop-blur-xl rounded-2xl p-3 border border-white/5 flex items-center justify-between hover:bg-slate-800/60 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                <Flame size={18} className="text-orange-400" />
+              </div>
+              <div>
+                <p className="text-white font-black text-sm">Độ kiên trì</p>
+                <p className="text-orange-400/80 text-[10px] uppercase tracking-widest font-bold">Streak</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-white font-black text-lg">{streak}<span className="text-slate-500 text-xs ml-1">ngày</span></p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

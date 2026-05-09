@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <!-- Đã sửa: Dùng đường dẫn tương đối ./ cho icon -->
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#06B6D4" />
+    
+    <!-- Cấu hình cho iOS/Mobile -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="DigiWell">
+    
+    <meta name="description" content="DigiWell - Ứng dụng theo dõi sức khỏe và uống nước thông minh" />
+    <title>DigiWell</title>
+
+    <!-- SCRIPT BẮT LỖI CRASH (THAY THẾ ĐOẠN CŨ) -->
+    <script>
+      window.addEventListener('error', function(e) {
+        console.error('GLOBAL ERROR:', e.error);
+        showDebugScreen('LỖI JAVASCRIPT', e.message + '\n\nFile: ' + e.filename + '\nDòng: ' + e.lineno, e.error ? e.error.stack : '');
+      });
+
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('UNHANDLED PROMISE:', e.reason);
+        showDebugScreen('LỖI PROMISE', e.reason ? (e.reason.message || String(e.reason)) : 'Unknown Promise Rejection', e.reason ? e.reason.stack : '');
+      });
+
+      function showDebugScreen(title, message, stack) {
+        // Chỉ hiển thị khi chưa có nội dung trong root (tránh ghi đè app đang chạy)
+        if (document.getElementById('root') && document.getElementById('root').children.length > 0) return;
+
+        document.body.style.margin = '0';
+        document.body.style.padding = '20px';
+        document.body.style.background = '#ef4444'; // Màu đỏ cảnh báo
+        document.body.style.color = '#ffffff';
+        document.body.style.fontFamily = 'monospace';
+        document.body.style.fontSize = '14px';
+        document.body.style.whiteSpace = 'pre-wrap';
+        document.body.style.overflow = 'auto';
+
+        let html = '<h1 style="font-size: 24px; margin-bottom: 10px; border-bottom: 2px solid white; padding-bottom: 10px;">⚠️ ' + title + '</h1>';
+        html += '<div style="background: #7f1d1d; padding: 15px; border-radius: 8px; margin-bottom: 15px;"><strong>Lỗi:</strong> ' + message + '</div>';
+        if (stack) {
+          html += '<details style="background: #991b1b; padding: 10px; border-radius: 8px;"><summary style="cursor: pointer; font-weight: bold;">Xem chi tiết (Stack Trace)</summary><div style="margin-top: 10px; font-size: 12px; opacity: 0.9;">' + stack + '</div></details>';
+        }
+        html += '<button onclick="window.location.reload()" style="margin-top: 20px; padding: 15px; width: 100%; background: white; color: #ef4444; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer;">TẢI LẠI APP</button>';
+        
+        document.body.innerHTML = html;
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Đã sửa: Dùng đường dẫn tương đối ./ cho script chính -->
+    <script type="module" src="./src/main.tsx?t=1778261787692"></script>
+  </body>
+</html>

@@ -8,6 +8,25 @@ import { Preferences } from '@capacitor/preferences';
 class StorageManager {
   private static cache: Record<string, string> = {};
   private static initialized = false;
+  private static readonly initTimeoutMs = 1200;
+
+  private static async withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        window.setTimeout(() => reject(new Error('Preferences init timeout')), timeoutMs);
+      }),
+    ]);
+  }
+
+  private static hydrateFromLocalStorage() {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        this.cache[key] = localStorage.getItem(key) || '';
+      }
+    }
+  }
 
   /**
    * MUST be called at the root level (e.g. main.tsx) before any React render.
@@ -17,9 +36,9 @@ class StorageManager {
     if (this.initialized) return;
     
     try {
-      const { keys } = await Preferences.keys();
+      const { keys } = await this.withTimeout(Preferences.keys(), this.initTimeoutMs);
       for (const key of keys) {
-        const { value } = await Preferences.get({ key });
+        const { value } = await this.withTimeout(Preferences.get({ key }), this.initTimeoutMs);
         if (value !== null) {
           this.cache[key] = value;
         }
@@ -30,12 +49,7 @@ class StorageManager {
       console.error('[AppStorage] Failed to init Preferences', err);
       // Fallback to localstorage if capacitor plugin fails (e.g., SSR or weird web environments)
       this.initialized = true;
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          this.cache[key] = localStorage.getItem(key) || '';
-        }
-      }
+      this.hydrateFromLocalStorage();
     }
   }
 

@@ -44,18 +44,33 @@ export default function HomeHydrationHero({
   const bottleFillPercentage = (metrics?.currentVolume ?? 0) / bottleCapacity * 100;
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-80 -mt-4 pb-6">
+    <div
+      className={[
+        'relative flex flex-col items-center justify-center -mt-4 pb-6',
+        isConnected ? 'h-[22rem]' : 'h-80',
+      ].join(' ')}
+    >
       {/* Visualizer Layer */}
-      <div className="relative w-64 h-64 flex items-center justify-center">
+      <div
+        className={[
+          'relative flex items-center justify-center',
+          isConnected ? 'w-80 h-80' : 'w-64 h-64',
+        ].join(' ')}
+      >
         {isConnected ? (
-          <button onClick={onOpenGoalDetail} className="w-full h-full flex items-center justify-center active:scale-95 transition-transform duration-150">
-            <BottleVisualizer
-              isConnected={true}
-              currentVolume={metrics?.currentVolume || 0}
-              capacity={bottleCapacity}
-              fillPercentage={bottleFillPercentage}
-              equippedBottle={equippedBottleSkin}
-            />
+          <button
+            onClick={onOpenGoalDetail}
+            className="w-full h-full flex items-center justify-center active:scale-[1.08] transition-transform duration-150"
+          >
+            <div className="scale-110">
+              <BottleVisualizer
+                isConnected={true}
+                currentVolume={metrics?.currentVolume || 0}
+                capacity={bottleCapacity}
+                fillPercentage={bottleFillPercentage}
+                equippedBottle={equippedBottleSkin}
+              />
+            </div>
           </button>
         ) : (
           <button onClick={onOpenGoalDetail} className="relative w-52 h-52 active:scale-95 transition-transform duration-150">

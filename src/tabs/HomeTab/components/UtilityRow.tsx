@@ -1,6 +1,7 @@
-import { LayoutGrid, Clock } from 'lucide-react';
+import { LayoutGrid, Clock, CloudOff } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAppStore } from '@/store/useAppStore';
 
 interface UtilityRowProps {
   onHistory: () => void;
@@ -9,6 +10,7 @@ interface UtilityRowProps {
 
 const UtilityRow = React.memo(function UtilityRow({ onHistory, onDrinkMenu }: UtilityRowProps) {
   const { t } = useTranslation();
+  const hasPendingCloudSync = useAppStore((s) => s.hasPendingCloudSync);
 
   return (
     <div className="flex justify-between items-center bg-gradient-to-r from-slate-200/50 to-slate-100/30 dark:from-slate-900/60 dark:to-slate-800/40 backdrop-blur-xl border border-slate-300/50 dark:border-white/10 rounded-[2rem] p-1.5 shadow-sm hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all mx-6 mb-6">
@@ -31,6 +33,17 @@ const UtilityRow = React.memo(function UtilityRow({ onHistory, onDrinkMenu }: Ut
           {t('home.menu')}
         </span>
       </button>
+
+      {hasPendingCloudSync && (
+        <div className="ml-2 mr-1 shrink-0">
+          <div className="flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-500/10 px-2.5 py-1">
+            <CloudOff size={14} className="text-amber-300" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-amber-200">
+              Chờ đồng bộ
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

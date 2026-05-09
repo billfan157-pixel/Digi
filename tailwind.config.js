@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,11 +8,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Cấu hình màu primary chạy bằng "động cơ" CSS Variable
         primary: {
           DEFAULT: 'rgb(var(--color-primary-rgb) / <alpha-value>)',
-        }
-      }
+        },
+        dw: {
+          bg: 'var(--dw-bg)',
+          accent: 'var(--dw-accent)',
+        },
+      },
+      borderRadius: {
+        'card': 'var(--dw-radius-card)',
+        'control': 'var(--dw-radius-control)',
+      },
     },
   },
   plugins: [],

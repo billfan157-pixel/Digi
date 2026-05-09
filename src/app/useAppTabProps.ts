@@ -11,6 +11,7 @@ interface UseAppTabPropsOptions {
   smartBottle: any;
   isExportingPDF: boolean;
   handleExportPDF: () => Promise<void>;
+  handleExportCSV: () => void;
   geminiProps: Record<string, any>;
   weeklyReport: any;
   isWeeklyReportLoading: boolean;
@@ -38,6 +39,7 @@ export function useAppTabProps({
   smartBottle,
   isExportingPDF,
   handleExportPDF,
+  handleExportCSV,
   geminiProps,
   weeklyReport,
   isWeeklyReportLoading,
@@ -70,6 +72,7 @@ export function useAppTabProps({
   const insightTabProps = useMemo(() => ({
     isExportingPDF,
     handleExportPDF,
+    handleExportCSV,
     isAiLoading: geminiProps.isAiLoading || false,
     aiAdvice: geminiProps.aiAdvice || '',
     fetchAIAdvice: geminiProps.fetchAIAdvice || (() => {}),
@@ -81,6 +84,7 @@ export function useAppTabProps({
     geminiProps.fetchAIAdvice,
     geminiProps.isAiLoading,
     handleExportPDF,
+    handleExportCSV,
     handleGenerateWeeklyReport,
     isExportingPDF,
     isWeeklyReportLoading,

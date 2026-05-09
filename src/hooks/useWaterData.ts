@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import type { QuestEngineContext } from '@/lib/questEngine';
 import { playWaterDropSound } from '@/lib/audio';
 import type { Profile } from '@/models';
 import { expGainedForWater } from '@/config/questConfig';
 // @ts-ignore
-import confetti from 'canvas-confetti';
+// import confetti from 'canvas-confetti';
 
 // ── Constants ──────────────────────────────────────────────
 
@@ -276,7 +275,7 @@ export function useWaterData(
 
       // 2. Demo mode
       if (!isRealUser(profile.id)) {
-        toast.success(`💧 +${actualAmount}ml nước!`);
+        toast.success(`Đã ghi nhận +${actualAmount}ml.`);
         return;
       }
 
@@ -306,17 +305,9 @@ export function useWaterData(
           prev.map(e => e.id === tempId ? { ...e, id: String(data.id) } : e),
         );
 
-        toast.success(`💧 +${actualAmount}ml · ⚡ +${exp} EXP!`);
+        toast.success(`Đã ghi nhận +${actualAmount}ml.`);
 
-        // Hiệu ứng văng tiền vàng/điểm kinh nghiệm (Coin burst)
-        confetti({
-          particleCount: 40,
-          spread: 70,
-          origin: { y: 0.8 },
-          colors: ['#fbbf24', '#f59e0b', '#d97706', '#60a5fa'],
-          shapes: ['circle'],
-          scalar: 1.2
-        });
+        // Confetti (milestones only) handled elsewhere to keep routine logs calm.
 
         // [FIX] Truyền actualAmount và exp để handleWaterSync cập nhật profile
         // (coins, EXP, level, water_today) ngay lập tức thay vì chờ refetch DB
@@ -327,7 +318,7 @@ export function useWaterData(
 
       } catch (err) {
         console.error('[useWaterData] addWater:', err);
-        toast.error('⚠️ Không thể ghi nhận uống nước. Đã lưu offline để đồng bộ sau.');
+        toast.error('Không thể ghi nhận lúc này. Đã lưu offline để đồng bộ sau.');
 
         // Rollback optimistic entry
         setWaterEntries(prev => prev.filter(e => e.id !== tempId));
@@ -355,7 +346,7 @@ export function useWaterData(
       setWaterEntries(prev => prev.filter(e => e.id !== id));
 
       if (id.startsWith('temp') || !isRealUser(profile?.id)) {
-        toast.success('🗑️ Đã xóa thành công!');
+        toast.success('Đã xóa.');
         return;
       }
 
@@ -374,11 +365,11 @@ export function useWaterData(
         // Force refetch to ensure data consistency
         setTimeout(() => fetchAllWater(), 500);
 
-        toast.success('🗑️ Đã xóa thành công!');
+        toast.success('Đã xóa.');
       } catch (err) {
         console.error('[useWaterData] Delete failed:', err);
         setWaterEntries(snapshot);
-        toast.error('❌ Không thể xóa. Thử lại sau!');
+        toast.error('Không thể xóa. Thử lại sau.');
       }
     },
     [profile?.id, onWaterLogged, fetchAllWater],
@@ -440,7 +431,7 @@ export function useWaterData(
     } catch (err) {
       console.error('[useWaterData] edit failed:', err);
       setWaterEntries(snapshot);
-      toast.error('❌ Không thể cập nhật. Kiểm tra kết nối!');
+      toast.error('Không thể cập nhật. Kiểm tra kết nối.');
     }
   }, [profile?.id, onWaterLogged]);
 
@@ -511,14 +502,14 @@ export function useWaterData(
       clearOfflineQueue(profile.id);
       setHasPendingCloudSync(false);
       if (syncedCount > 0) {
-        toast.success(`🔄 Đã đồng bộ ${syncedCount} mục offline thành công!`);
+        toast.success(`Đã đồng bộ ${syncedCount} mục offline.`);
         await onWaterLogged?.();
         fetchAllWater();
       }
     } catch (err) {
       console.error('[useWaterData] syncOfflineLogs:', err);
       setHasPendingCloudSync(readOfflineQueue(profile.id).length > 0);
-      toast.error('📶 Không thể đồng bộ dữ liệu offline. Kiểm tra kết nối mạng!');
+      toast.error('Không thể đồng bộ dữ liệu offline. Kiểm tra mạng.');
     }
   }, [profile?.id, onWaterLogged]);
 

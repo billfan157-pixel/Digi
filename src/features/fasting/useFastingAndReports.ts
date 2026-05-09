@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
 import { exportHealthReportPDF } from '@/lib/pdfExport';
+import { exportToCSV, exportDetailedPDF } from '@/lib/exportUtils';
 import { useUIStore } from '@/store/useUIStore';
 
 import { AppStorage } from '@/lib/storage';
@@ -20,6 +21,19 @@ interface ExportPdfOptions {
   progress: number;
   isWatchConnected: boolean;
   watchData: any;
+  weeklyChartData?: any[];
+  waterEntries?: any[];
+  avgWeekly?: number;
+  completionRate?: number;
+}
+
+interface ExportCsvOptions {
+  profile: any;
+  waterIntake: number;
+  waterGoal: number;
+  streak: number;
+  weeklyChartData: { d: string; ml: number }[];
+  waterEntries: any[];
 }
 
 const FASTING_PLAN_PREFIX = 'digiwell_fasting_plan_';
@@ -103,41 +117,86 @@ export function useFastingAndReports({
     } catch {}
   }, []);
 
-  const exportReportPdf = useCallback(async ({
-    profile,
-    waterIntake,
-    waterGoal,
-    streak,
-    progress,
-    isWatchConnected,
-    watchData,
-  }: ExportPdfOptions) => {
-    if (!isPremium) {
-      setShowPremiumModal(true);
-      return;
-    }
+const exportReportPdf = useCallback(async ({
+     profile,
+     waterIntake,
+     waterGoal,
+     streak,
+     progress,
+     isWatchConnected,
+     watchData,
+     weeklyChartData,
+     waterEntries,
+     avgWeekly,
+     completionRate,
+   }: ExportPdfOptions) => {
+     if (!isPremium) {
+       setShowPremiumModal(true);
+       return;
+     }
 
-    setIsExportingPDF(true);
-    const toastId = toast.loading('Đang tạo báo cáo Y khoa PDF...');
+     setIsExportingPDF(true);
+     const toastId = toast.loading('Đang tạo báo cáo Y khoa PDF...');
 
-    try {
-      await exportHealthReportPDF({
-        profile,
-        waterIntake,
-        waterGoal,
-        streak,
-        progress,
-        isWatchConnected,
-        watchData,
-      });
+     try {
+       if (weeklyChartData && waterEntries) {
+         await exportDetailedPDF({
+           profile,
+           waterIntake,
+           waterGoal,
+           streak,
+           weeklyChartData,
+           waterEntries,
+           avgWeekly: avgWeekly || 0,
+           completionRate: completionRate || 0,
+         });
+       } else {
+         await exportHealthReportPDF({
+           profile,
+           waterIntake,
+           waterGoal,
+           streak,
+           progress,
+           isWatchConnected,
+           watchData,
+         });
+       }
 
-      toast.success('Da mo giao dien in. Chon Save as PDF de luu bao cao.', { id: toastId });
-    } catch {
-      toast.error('Khong the tao bao cao PDF luc nay.', { id: toastId });
-    } finally {
-      setIsExportingPDF(false);
-    }
-  }, [isPremium, setShowPremiumModal]);
+       toast.success('Da mo giao dien in. Chon Save as PDF de luu bao cao.', { id: toastId });
+     } catch {
+       toast.error('Khong the tao bao cao PDF luc nay.', { id: toastId });
+     } finally {
+       setIsExportingPDF(false);
+     }
+   }, [isPremium, setShowPremiumModal]);
+
+   const exportReportCsv = useCallback(({
+     profile,
+     waterIntake,
+     waterGoal,
+     streak,
+     weeklyChartData,
+     waterEntries,
+   }: ExportCsvOptions) => {
+     if (!isPremium) {
+       setShowPremiumModal(true);
+       return;
+     }
+
+     try {
+       exportToCSV({
+         profile,
+         waterIntake,
+         waterGoal,
+         streak,
+         weeklyChartData,
+         waterEntries,
+       });
+       toast.success('Đã xuất file CSV thành công!');
+     } catch {
+       toast.error('Không thể xuất file CSV lúc này.');
+     }
+   }, [isPremium, setShowPremiumModal]);
 
   const toggleFastingMode = useCallback(() => {
     if (!isPremium) {
@@ -220,6 +279,7 @@ export function useFastingAndReports({
     fastingTotalMs,
     setShowFastingModal,
     exportReportPdf,
+    exportReportCsv,
     toggleFastingMode,
     startFasting,
     stopFasting,

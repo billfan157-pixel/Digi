@@ -59,6 +59,7 @@ export function useHydrationController({
     fastingTotalMs,
     setShowFastingModal,
     exportReportPdf,
+    exportReportCsv,
     toggleFastingMode,
     startFasting,
     stopFasting,
@@ -205,8 +206,27 @@ export function useHydrationController({
       progress,
       isWatchConnected,
       watchData,
+      weeklyChartData: weeklyHistory,
+      waterEntries,
+      avgWeekly: weeklyHistory.length > 0 
+        ? Math.round(weeklyHistory.reduce((s: number, d: any) => s + d.ml, 0) / weeklyHistory.length) 
+        : 0,
+      completionRate: weeklyHistory.length > 0 
+        ? Math.round((weeklyHistory.filter((d: any) => d.ml >= waterGoal).length / weeklyHistory.length) * 100) 
+        : 0,
     });
-  }, [exportReportPdf, isWatchConnected, profile, progress, streak, watchData, waterGoal, waterIntake]);
+  }, [exportReportPdf, isWatchConnected, profile, progress, streak, watchData, waterGoal, waterIntake, weeklyHistory, waterEntries]);
+
+  const handleExportCSV = useCallback(() => {
+    exportReportCsv({
+      profile,
+      waterIntake,
+      waterGoal,
+      streak,
+      weeklyChartData: weeklyHistory,
+      waterEntries,
+    });
+  }, [exportReportCsv, profile, waterIntake, waterGoal, streak, weeklyHistory, waterEntries]);
 
   return {
     isPremium,
@@ -246,5 +266,6 @@ export function useHydrationController({
     startFasting,
     stopFasting,
     handleExportPDF,
+    handleExportCSV,
   };
 }

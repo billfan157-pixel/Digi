@@ -153,6 +153,7 @@ export function useAppShellController(): AppShellProps {
     smartBottle: hydration.smartBottle,
     isExportingPDF: hydration.isExportingPDF,
     handleExportPDF: hydration.handleExportPDF,
+    handleExportCSV: hydration.handleExportCSV,
     geminiProps,
     weeklyReport: hydration.weeklyReport,
     isWeeklyReportLoading: hydration.isWeeklyReportLoading,

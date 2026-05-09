@@ -103,6 +103,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
   const [customVolume, setCustomVolume] = useState(250);
   const [customFactor, setCustomFactor] = useState(1.0);
   const [editingDrinkId, setEditingDrinkId] = useState<string | null>(null);
+  const [shouldLogOnSave, setShouldLogOnSave] = useState(true);
   const [quickAmounts, setQuickAmounts] = useState<number[]>([100, 250, 500]);
   const [isEditingQuickAmounts, setIsEditingQuickAmounts] = useState(false);
   const [draftAmounts, setDraftAmounts] = useState<[number, number, number]>([100, 250, 500]);
@@ -369,16 +370,29 @@ const HomeTab = React.memo((props: HomeTabProps) => {
                             toast.success(t('home.drink_updated'));
                           } else {
                             addDrink(newDrink);
-                            handleAddWater(customVolume, customFactor, customName.trim());
+                            if (shouldLogOnSave) {
+                              handleAddWater(customVolume, customFactor, customName.trim());
+                            } else {
+                              toast.success('Đã lưu vào menu đồ uống.');
+                            }
                           }
                           setIsCustomMode(false);
                           setIsDrinkMenuOpen(false);
                         }} 
                         className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-bold hover:from-cyan-400 hover:to-blue-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]"
                       >
-                        {editingDrinkId ? t('home.save_changes') : t('home.save_and_add')}
+                        {editingDrinkId ? t('home.save_changes') : (shouldLogOnSave ? t('home.save_and_add') : 'Lưu vào menu')}
                       </button>
                     </div>
+                    {!editingDrinkId && (
+                      <button
+                        type="button"
+                        onClick={() => setShouldLogOnSave((v) => !v)}
+                        className="mt-1 w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-slate-300 text-xs font-bold active:scale-95 transition-all hover:bg-white/10"
+                      >
+                        {shouldLogOnSave ? 'Đang: Lưu & ghi nhận ngay' : 'Đang: Chỉ lưu preset'}
+                      </button>
+                    )}
                   </motion.div>
                 ) : (
                   <motion.div key="grid-view" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.25 }} className="grid grid-cols-3 gap-3 mb-3 max-h-[50vh] overflow-y-auto scrollbar-hide pb-4 pt-1 px-0.5">
@@ -388,7 +402,6 @@ const HomeTab = React.memo((props: HomeTabProps) => {
                           onClick={() => {
                             handleAddWater(drink.amount || 250, drink.factor, drink.name);
                             setIsDrinkMenuOpen(false);
-                            toast.success(t('home.added_drink', { amount: drink.amount || 250, name: drink.name }));
                           }}
                           className={`w-full h-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 ease-out active:scale-95 hover:scale-105 ${drink.bg} shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.2)]`}
                         >
@@ -423,7 +436,7 @@ const { confirmDialog } = await import('@/store/useConfirmDialog');
                       </div>
                     ))}
                     <button 
-                      onClick={() => { setEditingDrinkId(null); setCustomName(''); setCustomVolume(250); setCustomFactor(1.0); setIsCustomMode(true); }}
+                      onClick={() => { setEditingDrinkId(null); setCustomName(''); setCustomVolume(250); setCustomFactor(1.0); setShouldLogOnSave(true); setIsCustomMode(true); }}
                       className="flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-800/40 border-2 border-white/20 border-dashed hover:bg-slate-800/60 hover:border-cyan-500/50 transition-all active:scale-95 h-full group"
                     >
                       <Plus size={26} className="text-slate-400 group-hover:text-cyan-400 mb-2.5 transition-colors group-hover:scale-110" />

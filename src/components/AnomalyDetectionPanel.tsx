@@ -196,7 +196,7 @@ export default function AnomalyDetectionPanel({
     };
   }, [weeklyChartData, waterGoal, waterIntake, streak]);
 
-  const habitStrengthConfig = {
+  const habitStrengthConfig: Record<string, { color: string; bgColor: string; label: string }> = {
     excellent: { color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', label: 'Xuất sắc' },
     strong: { color: 'text-cyan-400', bgColor: 'bg-cyan-500/10', label: 'Mạnh' },
     developing: { color: 'text-amber-400', bgColor: 'bg-amber-500/10', label: 'Đang phát triển' },
@@ -204,7 +204,7 @@ export default function AnomalyDetectionPanel({
     unknown: { color: 'text-slate-400', bgColor: 'bg-slate-500/10', label: 'Chưa xác định' }
   };
 
-  const habitConfig = habitStrengthConfig[anomalyAnalysis.habitStrength];
+  const habitConfig = habitStrengthConfig[anomalyAnalysis.habitStrength as keyof typeof habitStrengthConfig];
 
   return (
     <motion.div

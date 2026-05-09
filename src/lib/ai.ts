@@ -81,8 +81,9 @@ export async function sendAiChatMessage(
       reply: response.reply?.trim() || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.',
       waterAction: response.waterAction,
     };
-  } catch {
-    return { reply: 'Hệ thống AI đang bận một chút, bạn thử lại sau nhé.' };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : '';
+    return { reply: msg || 'Hệ thống AI đang bận một chút, bạn thử lại sau nhé.' };
   }
 }
 

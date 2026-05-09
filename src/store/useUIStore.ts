@@ -51,6 +51,8 @@ interface UIState {
   setShowFastingModal: (show: boolean) => void;
   isScanning: boolean;
   setIsScanning: (scanning: boolean) => void;
+  showFirstSessionChecklist: boolean;
+  setShowFirstSessionChecklist: (show: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()((set) => ({
@@ -76,6 +78,7 @@ export const useUIStore = create<UIState>()((set) => ({
   editAmount: '',                      setEditAmount: (amount) => set({ editAmount: amount }),
   showLevelUp: false,                  setShowLevelUp: (show) => set({ showLevelUp: show }),
   levelUpInfo: null,                   setLevelUpInfo: (info) => set({ levelUpInfo: info }),
-  showFastingModal: false,             setShowFastingModal: (show) => set({ showFastingModal: show }),
-  isScanning: false,                   setIsScanning: (scanning) => set({ isScanning: scanning }),
+showFastingModal: false,             setShowFastingModal: (show) => set({ showFastingModal: show }),
+  isScanning: false,                       setIsScanning: (scanning) => set({ isScanning: scanning }),
+  showFirstSessionChecklist: false,        setShowFirstSessionChecklist: (show) => set({ showFirstSessionChecklist: show }),
 }));
