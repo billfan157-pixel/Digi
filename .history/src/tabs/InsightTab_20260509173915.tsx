@@ -304,7 +304,7 @@ const InsightTab = memo(function InsightTab({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveView(tab.id as 'overview' | 'ai' | 'analytics' | 'system')}
+                onClick={() => setActiveView(tab.id as any)}
                 className={`flex-1 min-w-[72px] relative flex flex-col items-center justify-center py-2.5 transition-colors duration-200 z-10 rounded-xl ${
                   isActive ? 'text-cyan-300' : 'text-meta hover:text-slate-300'
                 }`}

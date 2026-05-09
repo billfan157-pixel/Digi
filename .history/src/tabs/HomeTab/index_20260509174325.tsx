@@ -18,6 +18,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { HomeHeader, QuickAddSection, UtilityRow, TelemetryGrid } from './components';
 import { MainMenuSidebar, QuickAmountsEditor, DrinkMenuModal } from './modals';
+import { useDrinkGrid } from './hooks/useDrinkGrid';
 
 interface SmartBottleProps {
   isSyncing: boolean;
@@ -90,11 +91,19 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     actions: state.actions,
   })));
 
+  const { drinkGridList, addDrink, updateDrink, deleteDrink } = useDrinkGrid();
+
   const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
   const isGoalReached = waterIntake >= waterGoal && waterGoal > 0;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDrinkMenuOpen, setIsDrinkMenuOpen] = useState(false);
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customVolume, setCustomVolume] = useState(250);
+  const [customFactor, setCustomFactor] = useState(1.0);
+  const [editingDrinkId, setEditingDrinkId] = useState<string | null>(null);
+  const [shouldLogOnSave, setShouldLogOnSave] = useState(true);
   const [quickAmounts, setQuickAmounts] = useState<number[]>([100, 250, 500]);
   const [isEditingQuickAmounts, setIsEditingQuickAmounts] = useState(false);
   const [draftAmounts, setDraftAmounts] = useState<[number, number, number]>([100, 250, 500]);

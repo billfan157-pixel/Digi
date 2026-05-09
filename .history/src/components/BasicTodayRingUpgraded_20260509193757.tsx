@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Droplets, Sparkles, Target, Flame } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Droplets, CheckCircle2, TrendingUp, TrendingDown, Minus, Sparkles, Target, Flame } from 'lucide-react';
 
 interface BasicTodayRingProps {
   waterIntake: number;
@@ -42,14 +42,10 @@ function useAnimatedCounter(target: number, duration: number = 800) {
 
 // Confetti particle component
 function ConfettiParticle({ delay }: { delay: number }) {
-  const { color, x, rotation } = useMemo(() => {
-    const colors = ['#38bdf8', '#2dd4bf', '#818cf8', '#34d399'];
-    return {
-      color: colors[Math.floor(Math.random() * colors.length)],
-      x: Math.random() * 200 - 100,
-      rotation: Math.random() * 720 - 360,
-    };
-  }, []);
+  const colors = ['#38bdf8', '#2dd4bf', '#818cf8', '#34d399'];
+  const color = colors[Math.floor(Math.random() * colors.length)];
+  const x = Math.random() * 200 - 100;
+  const rotation = Math.random() * 720 - 360;
   
   return (
     <div
@@ -69,8 +65,11 @@ export default function BasicTodayRingUpgraded({
   waterGoal,
   streak,
   completionRate,
+  yesterdayIntake = 0,
+  weeklyTrend = []
 }: BasicTodayRingProps) {
   const [showCelebration, setShowCelebration] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false);
   const prevCompletedRef = useRef(false);
   
@@ -81,6 +80,9 @@ export default function BasicTodayRingUpgraded({
   
   // Animated percentage
   const animatedPercent = useAnimatedCounter(dailyPercent);
+  
+  // Comparison with yesterday
+  const comparison = yesterdayIntake > 0 ? waterIntake - yesterdayIntake : 0;
   
   // Apple Fitness 3 Rings Setup
   const rVol = 100;
@@ -217,6 +219,7 @@ export default function BasicTodayRingUpgraded({
           
           {/* Streak badge with hover animation */}
           <button
+            onClick={() => setIsExpanded(!isExpanded)}
             className="rounded-3xl bg-slate-950/60 border border-white/10 px-4 py-2 text-right hover:bg-slate-950/80 hover:border-cyan-400/30 transition-all duration-300 hover:scale-105"
             style={streak >= 7 ? { animation: 'float 3s ease-in-out infinite' } : {}}
           >
@@ -232,7 +235,8 @@ export default function BasicTodayRingUpgraded({
         
         {/* Ring visualization */}
         <div 
-          className="flex justify-center -my-2 relative z-0"
+          className="flex justify-center cursor-pointer -my-2 relative z-0"
+          onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="relative w-64 h-64">
             <svg 

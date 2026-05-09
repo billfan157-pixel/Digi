@@ -25,14 +25,6 @@
     --dw-border-subtle: rgba(255, 255, 255, 0.05);
     --dw-border-glass: rgba(255, 255, 255, 0.08);
     --dw-border-active: rgba(255, 255, 255, 0.15);
-
-    /* ── Text ── */
-    --dw-text-primary: #f8fafc;
-    --dw-text-secondary: #cbd5e1;
-    --dw-text-muted: #94a3b8;
-
-    /* ── Accent ── */
-    --dw-accent: #22d3ee;
     --dw-accent-contrast: #06121a;
 
     /* ── Semantic ── */

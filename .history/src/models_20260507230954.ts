@@ -9,12 +9,12 @@ export interface Profile {
   wp: number;
   water_today: number;
   water_goal: number;
-  gender: 'Nam' | 'Nữ' | 'Khác';
+  gender: 'Nam' | 'Nữ' | 'Khác' | string;
   age: number;
   height: number;
   weight: number;
-  activity: 'sedentary' | 'light' | 'moderate' | 'high' | 'athlete';
-  climate: 'temperate' | 'warm' | 'hot' | 'tropical' | 'cold';
+  activity: 'sedentary' | 'light' | 'moderate' | 'high' | 'athlete' | string;
+  climate: 'temperate' | 'warm' | 'hot' | 'tropical' | 'cold' | string;
   goal: string;
   equipped_bottle_id: string | null;
   equipped_notification_sound?: string | null;

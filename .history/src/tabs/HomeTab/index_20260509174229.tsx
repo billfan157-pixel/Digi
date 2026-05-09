@@ -18,6 +18,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { HomeHeader, QuickAddSection, UtilityRow, TelemetryGrid } from './components';
 import { MainMenuSidebar, QuickAmountsEditor, DrinkMenuModal } from './modals';
+import { useDrinkGrid } from './hooks/useDrinkGrid';
 
 interface SmartBottleProps {
   isSyncing: boolean;
@@ -90,11 +91,19 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     actions: state.actions,
   })));
 
+  const { drinkGridList, addDrink, updateDrink, deleteDrink } = useDrinkGrid();
+
   const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
   const isGoalReached = waterIntake >= waterGoal && waterGoal > 0;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDrinkMenuOpen, setIsDrinkMenuOpen] = useState(false);
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customVolume, setCustomVolume] = useState(250);
+  const [customFactor, setCustomFactor] = useState(1.0);
+  const [editingDrinkId, setEditingDrinkId] = useState<string | null>(null);
+  const [shouldLogOnSave, setShouldLogOnSave] = useState(true);
   const [quickAmounts, setQuickAmounts] = useState<number[]>([100, 250, 500]);
   const [isEditingQuickAmounts, setIsEditingQuickAmounts] = useState(false);
   const [draftAmounts, setDraftAmounts] = useState<[number, number, number]>([100, 250, 500]);
@@ -291,11 +300,161 @@ const HomeTab = React.memo((props: HomeTabProps) => {
         }}
       />
 
-      <DrinkMenuModal
-        isOpen={isDrinkMenuOpen}
-        onClose={() => setIsDrinkMenuOpen(false)}
-        handleAddWater={handleAddWater}
-      />
+      <AnimatePresence>
+        {isDrinkMenuOpen && (
+          <div key="drink-menu-modal" className="fixed inset-0 z-[100] flex flex-col justify-end">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/70 backdrop-blur-md" onClick={() => setIsDrinkMenuOpen(false)} />
+            <motion.div 
+              initial={{ y: '100%' }} 
+              animate={{ y: 0 }} 
+              exit={{ y: '100%' }} 
+              transition={{ type: "spring", damping: 24, stiffness: 220 }} 
+              drag="y" 
+              dragConstraints={{ top: 0 }} 
+              dragElastic={0.2}
+              onDragEnd={(e, { offset, velocity }) => {
+                if (offset.y > 100 || velocity.y > 500) { setIsDrinkMenuOpen(false); setIsCustomMode(false); }
+              }}
+              className="relative w-full bg-gradient-to-br from-slate-900 to-slate-950 backdrop-blur-2xl border-t border-white/15 rounded-t-[2rem] shadow-2xl p-6 pt-5"
+            >
+              <div className="w-12 h-1.5 bg-white/30 rounded-full mx-auto mb-5 shrink-0" />
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-white font-black text-lg">{isCustomMode ? t('home.create_new_drink') : t('home.add_drink')}</h2>
+                  <p className="text-slate-400 text-xs mt-2 opacity-75">{isCustomMode ? t('home.save_for_quick_use') : t('home.choose_drink_type')}</p>
+                </div>
+                <button onClick={() => { setIsDrinkMenuOpen(false); setIsCustomMode(false); }} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-slate-300 hover:text-white active:scale-90 transition-all border border-white/10">
+                  <X size={18} />
+                </button>
+              </div>
+              
+              <AnimatePresence mode="wait">
+                {isCustomMode ? (
+                  <motion.div key="custom-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }} className="flex flex-col gap-4 mb-2">
+                    <input 
+                      type="text" 
+                      value={customName} 
+                      onChange={(e) => setCustomName(e.target.value)} 
+                      placeholder={t('home.drink_name_placeholder')} 
+                      className="w-full bg-slate-800/60 backdrop-blur-md border border-white/15 rounded-2xl p-4 text-white font-bold outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 transition-all" 
+                    />
+                    <div className="bg-slate-800/60 backdrop-blur-md border border-white/15 rounded-2xl p-4.5">
+                      <div className="flex justify-between items-center mb-4">
+                        <label className="text-xs font-bold text-slate-300 uppercase tracking-widest">{t('volume')}</label>
+                        <span className="text-2xl font-black text-cyan-400 bg-cyan-500/15 px-3 py-1 rounded-lg">{customVolume}ml</span>
+                      </div>
+                      <input type="range" min="50" max="1000" step="10" value={customVolume} onChange={(e) => setCustomVolume(Number(e.target.value))} className="w-full accent-cyan-500 h-2.5 bg-slate-900/60 rounded-full appearance-none cursor-pointer" />
+                    </div>
+                    <div className="bg-slate-800/60 backdrop-blur-md border border-white/15 rounded-2xl p-4.5">
+                      <div className="flex justify-between items-center mb-4">
+                        <label className="text-xs font-bold text-slate-300 uppercase tracking-widest">{t('home.hydration_factor')}</label>
+                        <span className="text-lg font-black text-white bg-cyan-500/15 px-3 py-1 rounded-lg">{customFactor.toFixed(1)}x</span>
+                      </div>
+                      <input type="range" min="-1.0" max="2.0" step="0.1" value={customFactor} onChange={(e) => setCustomFactor(Number(e.target.value))} className="w-full accent-cyan-500 h-2.5 bg-slate-900/60 rounded-full appearance-none cursor-pointer" />
+                    </div>
+                    <div className="flex gap-3 mt-3">
+                      <button onClick={() => setIsCustomMode(false)} className="flex-1 py-4 rounded-2xl bg-white/10 border border-white/20 text-slate-200 font-semibold hover:bg-white/15 active:scale-95 transition-all">{t('home.back')}</button>
+                      <button 
+                        onClick={() => {
+                          if(!customName.trim()) { toast.error(t('home.enter_drink_name')); return; }
+                          const newDrink = {
+                            id: `custom-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+                            name: customName.trim(),
+                            amount: customVolume,
+                            factor: customFactor,
+                            icon: 'Droplet',
+                            bg: 'bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20',
+                            color: 'text-indigo-400'
+                          };
+                          if (editingDrinkId) {
+                            updateDrink(editingDrinkId, { name: customName.trim(), amount: customVolume, factor: customFactor });
+                            toast.success(t('home.drink_updated'));
+                          } else {
+                            addDrink(newDrink);
+                            if (shouldLogOnSave) {
+                              handleAddWater(customVolume, customFactor, customName.trim());
+                            } else {
+                              toast.success('Đã lưu vào menu đồ uống.');
+                            }
+                          }
+                          setIsCustomMode(false);
+                          setIsDrinkMenuOpen(false);
+                        }} 
+                        className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-bold hover:from-cyan-400 hover:to-blue-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]"
+                      >
+                        {editingDrinkId ? t('home.save_changes') : (shouldLogOnSave ? t('home.save_and_add') : 'Lưu vào menu')}
+                      </button>
+                    </div>
+                    {!editingDrinkId && (
+                      <button
+                        type="button"
+                        onClick={() => setShouldLogOnSave((v) => !v)}
+                        className="mt-1 w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-slate-300 text-xs font-bold active:scale-95 transition-all hover:bg-white/10"
+                      >
+                        {shouldLogOnSave ? 'Đang: Lưu & ghi nhận ngay' : 'Đang: Chỉ lưu preset'}
+                      </button>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.div key="grid-view" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.25 }} className="grid grid-cols-3 gap-3 mb-3 max-h-[50vh] overflow-y-auto scrollbar-hide pb-4 pt-1 px-0.5">
+                    {(drinkGridList.length > 0 ? drinkGridList : DEFAULT_GRID_DRINKS).map((drink, index) => (
+                      <div key={drink.id || `fallback-drink-grid-${index}`} className="relative h-full group">
+                        <button
+                          onClick={() => {
+                            handleAddWater(drink.amount || 250, drink.factor, drink.name);
+                            setIsDrinkMenuOpen(false);
+                          }}
+                          className={`w-full h-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 ease-out active:scale-95 hover:scale-105 ${drink.bg} shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.2)]`}
+                        >
+                          <div className="mb-2.5 group-hover:scale-120 transition-transform">{renderIcon(drink.icon, { size: 26, className: drink.color })}</div>
+                          <span className="text-white text-xs font-bold w-full text-center truncate leading-tight">{drink.name}</span>
+                          <span className="text-slate-300 text-[9px] mt-1 font-semibold opacity-75">{(drink.factor > 0 ? '+' : '') + drink.factor.toFixed(1)}x</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingDrinkId(drink.id);
+                            setCustomName(drink.name);
+                            setCustomVolume(drink.amount || 250);
+                            setCustomFactor(drink.factor);
+                            setIsCustomMode(true);
+                          }}
+                          className="absolute -top-2 right-6 w-7 h-7 rounded-full bg-slate-800/80 border border-slate-600 flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all z-10 shadow-lg active:scale-90"
+                        >
+                          <Edit2 size={11} />
+                        </button>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+const { confirmDialog } = await import('@/store/useConfirmDialog');
+                             const ok = await confirmDialog({ title: t('home.delete_drink'), message: t('home.delete_drink_confirm', { name: drink.name }), confirmLabel: t('home.delete'), variant: 'danger' });
+                            if (ok) deleteDrink(drink.id);
+                          }}
+                          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-slate-800/80 border border-slate-600 flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/50 transition-all z-10 shadow-lg active:scale-90"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    <button 
+                      onClick={() => { setEditingDrinkId(null); setCustomName(''); setCustomVolume(250); setCustomFactor(1.0); setShouldLogOnSave(true); setIsCustomMode(true); }}
+                      className="flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-800/40 border-2 border-white/20 border-dashed hover:bg-slate-800/60 hover:border-cyan-500/50 transition-all active:scale-95 h-full group"
+                    >
+                      <Plus size={26} className="text-slate-400 group-hover:text-cyan-400 mb-2.5 transition-colors group-hover:scale-110" />
+                      <span className="text-sm font-semibold text-slate-300 group-hover:text-cyan-400 transition-colors">{t('home.custom')}</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+                <div className="pt-4 mt-auto border-t border-white/10">
+                  <button onClick={() => setIsDrinkMenuOpen(false)} className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-bold hover:from-cyan-400 hover:to-blue-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]">
+                    {t('home.done')}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
       {profile && (
         <LevelDetailModal isOpen={showLevelDetail} onClose={() => setShowLevelDetail(false)} level={profile.level || 1} exp={profile.total_exp || 0} />

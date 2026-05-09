@@ -69,6 +69,7 @@ const InsightTab = memo(function InsightTab({
   const [isDayLogsLoading, setIsDayLogsLoading] = useState(false);
 
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [monthlyDataMap, setMonthlyDataMap] = useState<Record<string, number>>({});
   const [selectedWeekDay, setSelectedWeekDay] = useState<{ d: string; ml: number } | null>(null);
   const [selectedCalendarCell, setSelectedCalendarCell] = useState<{ dayNum: number; ml: number; fullDate: string } | null>(null);
 
@@ -79,12 +80,42 @@ const InsightTab = memo(function InsightTab({
     refetchMonthly,
   } = useInsightData(profile?.id, calendarDate);
 
-  // Keep monthly data in sync with water entries
+  // Keep calendarDate + monthlyDataMap in sync with water entries
   useEffect(() => {
     if (profile?.id && waterEntries.length > 0) {
       refetchMonthly();
     }
   }, [waterEntries?.length, profile?.id, refetchMonthly]);
+        const monthStart = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
+        const monthEnd = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0);
+        const startStr = `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, '0')}-${String(monthStart.getDate()).padStart(2, '0')}`;
+        const endStr = `${monthEnd.getFullYear()}-${String(monthEnd.getMonth() + 1).padStart(2, '0')}-${String(monthEnd.getDate()).padStart(2, '0')}`;
+
+        const { data, error } = await supabase
+          .from('water_logs')
+          .select('amount, day')
+          .eq('user_id', profile.id)
+          .gte('day', startStr)
+          .lte('day', endStr);
+
+        if (error) throw error;
+        if (!mounted) return;
+
+        const dataMap: Record<string, number> = {};
+        (data || []).forEach((log: any) => {
+          if (log.day && log.amount) {
+            dataMap[log.day] = (dataMap[log.day] || 0) + log.amount;
+          }
+        });
+        setMonthlyDataMap(dataMap);
+      } catch (err) {
+        console.error('Lỗi tải dữ liệu tháng:', err);
+      }
+    };
+
+    fetchMonthData();
+    return () => { mounted = false; };
+  }, [profile?.id, monthKey, waterEntriesSig]);
 
   // --- THUẬT TOÁN TRUE CALENDAR: Tự động tạo lưới lịch chuẩn theo Tháng hiện tại ---
   const { calendarCells, currentMonthName } = useMemo(() => {
@@ -304,7 +335,7 @@ const InsightTab = memo(function InsightTab({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveView(tab.id as 'overview' | 'ai' | 'analytics' | 'system')}
+                onClick={() => setActiveView(tab.id as any)}
                 className={`flex-1 min-w-[72px] relative flex flex-col items-center justify-center py-2.5 transition-colors duration-200 z-10 rounded-xl ${
                   isActive ? 'text-cyan-300' : 'text-meta hover:text-slate-300'
                 }`}

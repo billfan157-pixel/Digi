@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Droplets, Sparkles, CalendarDays, TrendingUp } from 'lucide-react';
 

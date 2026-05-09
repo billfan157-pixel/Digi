@@ -69,6 +69,7 @@ const InsightTab = memo(function InsightTab({
   const [isDayLogsLoading, setIsDayLogsLoading] = useState(false);
 
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [monthlyDataMap, setMonthlyDataMap] = useState<Record<string, number>>({});
   const [selectedWeekDay, setSelectedWeekDay] = useState<{ d: string; ml: number } | null>(null);
   const [selectedCalendarCell, setSelectedCalendarCell] = useState<{ dayNum: number; ml: number; fullDate: string } | null>(null);
 
@@ -79,7 +80,7 @@ const InsightTab = memo(function InsightTab({
     refetchMonthly,
   } = useInsightData(profile?.id, calendarDate);
 
-  // Keep monthly data in sync with water entries
+  // Keep calendarDate + monthlyDataMap in sync with water entries
   useEffect(() => {
     if (profile?.id && waterEntries.length > 0) {
       refetchMonthly();
@@ -304,7 +305,7 @@ const InsightTab = memo(function InsightTab({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveView(tab.id as 'overview' | 'ai' | 'analytics' | 'system')}
+                onClick={() => setActiveView(tab.id as any)}
                 className={`flex-1 min-w-[72px] relative flex flex-col items-center justify-center py-2.5 transition-colors duration-200 z-10 rounded-xl ${
                   isActive ? 'text-cyan-300' : 'text-meta hover:text-slate-300'
                 }`}

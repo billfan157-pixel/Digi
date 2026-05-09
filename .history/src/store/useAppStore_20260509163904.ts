@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Profile, WaterLog } from '../models';
 import type { WaterIntakeResult } from '../lib/HydrationEngine';
 
-export interface AppState {
+interface AppState {
   // ── Core Data ──
   profile: Profile | null;
   waterIntake: number;
@@ -15,7 +15,6 @@ export interface AppState {
   weatherData: { temp: number; status?: string; location?: string } | null;
   watchData: { heartRate: number; steps: number } | null;
   isWeatherSynced: boolean;
-  isCalendarSynced: boolean;
   isWatchConnected: boolean;
   isSyncing: boolean;
   hasPendingCloudSync: boolean;
@@ -51,7 +50,7 @@ export interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   profile: null, waterIntake: 0, waterGoal: 2000, streak: 0, waterEntries: [], weeklyHistory: [],
-  weatherData: null, watchData: null, isWeatherSynced: false, isCalendarSynced: false, isWatchConnected: false,
+  weatherData: null, watchData: null, isWeatherSynced: false, isWatchConnected: false,
   isSyncing: false, hasPendingCloudSync: false,
   hydrationResult: null, isPremium: false,
   fastingState: { isFastingMode: false, fastingPlanHours: 16, fastingTotalMs: 16 * 60 * 60 * 1000, fastingStartTime: null },

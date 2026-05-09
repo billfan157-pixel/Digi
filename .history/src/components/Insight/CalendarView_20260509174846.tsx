@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Droplets, Sparkles, CalendarDays, TrendingUp } from 'lucide-react';
+import { useMemo } from 'react';
 
 interface CalendarCell {
   dayNum: number | null;
@@ -285,17 +285,181 @@ export default function CalendarView({
 
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-2">
-          {calendarCells.map((cell, index) => (
-            <CalendarCell
-              key={cell.isEmptySlot ? `empty-${index}` : `day-${cell.dayNum}`}
-              cell={cell}
-              waterGoal={waterGoal}
-              index={index}
-              isSelected={selectedCell?.fullDate === cell.fullDate}
-              onSelectCell={onSelectCell}
-              onDayClick={onDayClick}
-            />
-          ))}
+
+          {calendarCells.map((cell, index) => {
+
+            if (cell.isEmptySlot) {
+              return (
+                <div
+                  key={`empty-${index}`}
+                  className="aspect-square"
+                />
+              );
+            }
+
+            const pct =
+              (cell.ml / (waterGoal || 1)) * 100;
+
+            const isCompleted = pct >= 100;
+            const isHalf = pct >= 50;
+
+            const isSelected =
+              selectedCell?.fullDate === cell.fullDate;
+
+            let cellClass =
+              'bg-slate-800/30 border border-slate-700/20';
+
+            if (cell.isFuture) {
+              cellClass =
+                'bg-white/[0.03] border border-white/[0.03] opacity-30';
+            } else if (isCompleted) {
+              cellClass =
+                'bg-gradient-to-br from-cyan-300 to-cyan-500 shadow-[0_0_20px_rgba(34,211,238,0.35)]';
+            } else if (isHalf) {
+              cellClass =
+                'bg-gradient-to-br from-cyan-900 to-cyan-700 border border-cyan-500/20';
+            } else if (pct > 0) {
+              cellClass =
+                'bg-cyan-950 border border-cyan-900/40';
+            }
+
+            return (
+              <motion.button
+                key={`day-${cell.dayNum}`}
+                type="button"
+                initial={{
+                  opacity: 0,
+                  scale: 0.4,
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 120,
+                  damping: 14,
+                  delay: index * 0.01,
+                }}
+                whileTap={{
+                  scale: 0.94,
+                }}
+                onClick={() => {
+                  if (
+                    !cell.isFuture &&
+                    !cell.isEmptySlot &&
+                    cell.fullDate
+                  ) {
+                    onSelectCell({
+                      dayNum: cell.dayNum || 0,
+                      ml: cell.ml,
+                      fullDate: cell.fullDate,
+                    });
+
+                    onDayClick(
+                      cell.fullDate,
+                      cell.ml
+                    );
+                  }
+                }}
+                className={`
+                  relative aspect-square overflow-hidden
+                  rounded-xl
+                  transition-all duration-300
+                  ${cellClass}
+                  ${
+                    isSelected
+                      ? 'ring-2 ring-cyan-300/80 ring-offset-2 ring-offset-slate-950 scale-[1.05]'
+                      : ''
+                  }
+                  ${
+                    !cell.isFuture
+                      ? 'cursor-pointer'
+                      : ''
+                  }
+                `}
+              >
+
+                {/* Glow Overlay */}
+                {isCompleted && (
+                  <motion.div
+                    animate={{
+                      opacity: [0.25, 0.55, 0.25],
+                    }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 2.5,
+                    }}
+                    className="absolute inset-0 bg-cyan-200/10"
+                  />
+                )}
+
+                {/* Today Pulse */}
+                {cell.isToday && (
+                  <motion.div
+                    animate={{
+                      opacity: [0.3, 0.8, 0.3],
+                      scale: [1, 1.2, 1],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                    }}
+                    className="absolute inset-0 rounded-xl border border-cyan-300"
+                  />
+                )}
+
+                {/* Day Number */}
+                <div className="absolute top-1 left-1.5 z-10">
+                  <span
+                    className={`
+                      text-[10px]
+                      font-black
+                      ${
+                        cell.isToday
+                          ? 'text-white'
+                          : isCompleted
+                          ? 'text-cyan-950'
+                          : 'text-slate-300'
+                      }
+                    `}
+                  >
+                    {cell.dayNum}
+                  </span>
+                </div>
+
+                {/* Water Icon */}
+                {!cell.isFuture && isCompleted && (
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      scale: 0,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                    }}
+                    transition={{
+                      delay: 0.15,
+                    }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <Droplets
+                      size={13}
+                      className="text-cyan-950 drop-shadow-sm"
+                    />
+                  </motion.div>
+                )}
+
+                {/* Today Indicator */}
+                {cell.isToday && (
+                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-200 shadow-[0_0_10px_rgba(103,232,249,0.8)]" />
+                  </div>
+                )}
+              </motion.button>
+            );
+          })}
         </div>
 
         {/* Legend */}

@@ -18,6 +18,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { HomeHeader, QuickAddSection, UtilityRow, TelemetryGrid } from './components';
 import { MainMenuSidebar, QuickAmountsEditor, DrinkMenuModal } from './modals';
+import { useDrinkGrid } from './hooks/useDrinkGrid';
 
 interface SmartBottleProps {
   isSyncing: boolean;
@@ -89,6 +90,8 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     hydrationResult: state.hydrationResult,
     actions: state.actions,
   })));
+
+  const { drinkGridList, addDrink, updateDrink, deleteDrink } = useDrinkGrid();
 
   const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
   const isGoalReached = waterIntake >= waterGoal && waterGoal > 0;

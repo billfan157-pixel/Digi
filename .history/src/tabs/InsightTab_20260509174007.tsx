@@ -3,7 +3,6 @@ import {
   Cpu, Droplets, Activity, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../lib/supabase';
 import AvatarFrame from '../components/AvatarFrame';
 import type { WaterLog } from '../models';
 import { useAppStore } from '../store/useAppStore';

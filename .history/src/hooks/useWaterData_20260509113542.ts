@@ -7,18 +7,6 @@ import { expGainedForWater } from '@/config/questConfig';
 // @ts-ignore
 // import confetti from 'canvas-confetti';
 
-// ── Dev-only logger ────────────────────────────────────────
-const devLog = (...args: unknown[]) => {
-  if (import.meta.env.DEV) {
-    console.log('[useWaterData]', ...args);
-  }
-};
-const devError = (...args: unknown[]) => {
-  if (import.meta.env.DEV) {
-    console.error('[useWaterData]', ...args);
-  }
-};
-
 // ── Constants ──────────────────────────────────────────────
 
 const OFFLINE_QUEUE_KEY = 'digiwell_offline_water_queue';
@@ -184,14 +172,14 @@ export function useWaterData(
   // ── Fetch ──────────────────────────────────────────────
 
   const fetchAllWater = useCallback(async () => {
-    devLog('fetchAllWater called, profile.id:', profile?.id);
+    console.log('[useWaterData] fetchAllWater called, profile.id:', profile?.id);
     if (!isRealUser(profile?.id)) {
-      devLog('Not real user, skipping');
+      console.log('[useWaterData] Not real user, skipping');
       return;
     }
 
     const today = toDateStr();
-    devLog('Fetching water for today:', today);
+    console.log('[useWaterData] Fetching water for today:', today);
 
     setIsSyncing(true);
     try {
@@ -203,18 +191,18 @@ export function useWaterData(
         .order('created_at', { ascending: false });
 
       if (error) {
-        devError('fetchAllWater error:', error);
+        console.error('[useWaterData] fetchAllWater error:', error);
         throw error;
       }
 
-      devLog('Fetched raw data:', data?.length || 0, 'records for today');
+      console.log('[useWaterData] Fetched raw data:', data?.length || 0, 'records for today');
       const normalized = (data ?? []).map(normalizeRow);
-      devLog('Normalized entries:', normalized.length, normalized.slice(0, 3).map((e: WaterLog) => ({ amount: e.amount, name: e.name })));
+      console.log('[useWaterData] Normalized entries:', normalized.length, normalized.slice(0, 3).map((e: WaterLog) => ({ amount: e.amount, name: e.name })));
 
       setWaterEntries(normalized);
-      devLog('Updated waterEntries state with', normalized.length, 'entries');
+      console.log('[useWaterData] Updated waterEntries state with', normalized.length, 'entries');
     } catch (err) {
-      devError('fetchAllWater exception:', err);
+      console.error('[useWaterData] fetchAllWater exception:', err);
       toast.error('Không thể tải nhật ký nước. Kiểm tra kết nối.');
       setWaterEntries([]);
     } finally {
@@ -225,7 +213,7 @@ export function useWaterData(
   // Auto fetch water data on mount/profile change
   useEffect(() => {
     if (profile?.id) {
-      devLog('Profile changed, fetching water data');
+      console.log('[useWaterData] Profile changed, fetching water data');
       fetchAllWater();
     }
   }, [profile?.id, fetchAllWater]);
@@ -309,7 +297,7 @@ export function useWaterData(
           p_is_fasting: isFasting || false
         });
         if (rpcRes.error) {
-          devError('RPC process_hydration_event error:', rpcRes.error);
+          console.error('[useWaterData] RPC process_hydration_event error:', rpcRes.error);
         }
 
         // Swap tempId -> real ID, không cần refetch toàn bộ
@@ -326,10 +314,10 @@ export function useWaterData(
         await onWaterLogged?.(actualAmount, exp);
 
         // Clubs sync: fire & forget, không block UI
-        syncToClubs(profile.id, actualAmount).catch(devError);
+        syncToClubs(profile.id, actualAmount).catch(console.error);
 
       } catch (err) {
-        devError('addWater:', err);
+        console.error('[useWaterData] addWater:', err);
         toast.error('Không thể ghi nhận lúc này. Đã lưu offline để đồng bộ sau.');
 
         // Rollback optimistic entry
@@ -363,14 +351,14 @@ export function useWaterData(
       }
 
       try {
-        devLog('Deleting entry from DB:', id);
+        console.log('[useWaterData] Deleting entry from DB:', id);
         const { error } = await supabase.from('water_logs').delete().eq('id', id);
         if (error) {
-          devError('Delete error:', error);
+          console.error('[useWaterData] Delete error:', error);
           throw error;
         }
 
-        devLog('Delete successful, notifying parent');
+        console.log('[useWaterData] Delete successful, notifying parent');
         // Notify với số âm để parent trừ đúng delta
         await onWaterLogged?.(-entry.amount, -entry.exp);
 
@@ -379,7 +367,7 @@ export function useWaterData(
 
         toast.success('Đã xóa.');
       } catch (err) {
-        devError('Delete failed:', err);
+        console.error('[useWaterData] Delete failed:', err);
         setWaterEntries(snapshot);
         toast.error('Không thể xóa. Thử lại sau.');
       }
@@ -441,7 +429,7 @@ export function useWaterData(
       toast.success('Đã cập nhật lượng nước!');
       if (deltaAmount !== 0) await onWaterLogged?.(deltaAmount, deltaExp);
     } catch (err) {
-      devError('edit failed:', err);
+      console.error('[useWaterData] edit failed:', err);
       setWaterEntries(snapshot);
       toast.error('Không thể cập nhật. Kiểm tra kết nối.');
     }
@@ -455,7 +443,7 @@ export function useWaterData(
     const queue = readOfflineQueue(profile.id);
     if (!queue.length) return;
 
-    devLog('Syncing offline queue:', queue.length, 'items');
+    console.log('[useWaterData] Syncing offline queue:', queue.length, 'items');
 
     try {
       let syncedCount = 0;
@@ -473,7 +461,7 @@ export function useWaterData(
             .maybeSingle();
 
           if (existingLogError) {
-            devError('Existing log lookup error:', existingLogError);
+            console.error('[useWaterData] Existing log lookup error:', existingLogError);
             throw existingLogError;
           }
 
@@ -482,7 +470,7 @@ export function useWaterData(
             const { tempId: _t, factor: _f, tempC: _tc, exerciseMins: _em, isFasting: _if, logSynced: _ls, progressionSynced: _ps, ...payload } = item;
             const { error: insertError } = await supabase.from('water_logs').insert(payload);
             if (insertError) {
-              devError('Insert error:', insertError);
+              console.error('[useWaterData] Insert error:', insertError);
               throw insertError;
             }
           }
@@ -500,7 +488,7 @@ export function useWaterData(
           });
 
           if (rpcError) {
-            devError('RPC process_hydration_event error:', rpcError);
+            console.error('[useWaterData] RPC process_hydration_event error:', rpcError);
             throw rpcError;
           }
 
@@ -519,7 +507,7 @@ export function useWaterData(
         fetchAllWater();
       }
     } catch (err) {
-      devError('syncOfflineLogs:', err);
+      console.error('[useWaterData] syncOfflineLogs:', err);
       setHasPendingCloudSync(readOfflineQueue(profile.id).length > 0);
       toast.error('Không thể đồng bộ dữ liệu offline. Kiểm tra mạng.');
     }

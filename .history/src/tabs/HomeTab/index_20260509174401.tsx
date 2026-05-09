@@ -90,6 +90,8 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     actions: state.actions,
   })));
 
+  const { drinkGridList, addDrink, updateDrink, deleteDrink } = useDrinkGrid();
+
   const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
   const isGoalReached = waterIntake >= waterGoal && waterGoal > 0;
 

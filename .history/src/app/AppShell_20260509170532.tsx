@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import WelcomeScreen from '@/screens/Auth/WelcomeScreen';
 import LoginScreen from '@/screens/Auth/LoginScreen';
 import RegisterScreen from '@/screens/Auth/RegisterScreen';
@@ -92,8 +91,8 @@ export default function AppShell({
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto relative overflow-hidden font-sans scanline-overlay bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top)]">
       <ThemeEngine profile={profile} />
-      <div className="absolute top-[-15%] left-[-20%] w-[70%] h-[50%] bg-cyan-500/15 blur-[60px] pointer-events-none rounded-full transition-colors duration-500" />
-      <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[40%] bg-indigo-500/10 blur-[60px] pointer-events-none rounded-full transition-colors duration-500" />
+      <div className="absolute top-[-15%] left-[-20%] w-[70%] h-[50%] bg-cyan-500/15 blur-[120px] pointer-events-none rounded-full transition-colors duration-500" />
+      <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[40%] bg-indigo-500/10 blur-[100px] pointer-events-none rounded-full transition-colors duration-500" />
       <input {...fileInputProps} />
 
       {onboardingProps && (
@@ -105,36 +104,12 @@ export default function AppShell({
 
       <div className="flex-1 overflow-y-auto px-5 pt-6 pb-28">
         <Suspense fallback={tabFallback}>
-          {activeTab === 'home' && (
-            <ErrorBoundary key="home-tab">
-              <HomeTab {...homeTabProps} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'insight' && (
-            <ErrorBoundary key="insight-tab">
-              <InsightTab {...insightTabProps} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'league' && (
-            <ErrorBoundary key="league-tab">
-              <LeagueTab {...leagueTabProps} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'feed' && (
-            <ErrorBoundary key="feed-tab">
-              <FeedTab {...feedTabProps} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'profile' && (
-            <ErrorBoundary key="profile-tab">
-              <ProfileTab {...profileTabProps} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'bottle' && bottleTabProps && (
-            <ErrorBoundary key="bottle-tab">
-              <BottleTab {...bottleTabProps} />
-            </ErrorBoundary>
-          )}
+          {(activeTab === 'home') && <HomeTab {...homeTabProps} />}
+          {activeTab === 'insight' && <InsightTab {...insightTabProps} />}
+          {activeTab === 'league' && <LeagueTab {...leagueTabProps} />}
+          {activeTab === 'feed' && <FeedTab {...feedTabProps} />}
+          {activeTab === 'profile' && <ProfileTab {...profileTabProps} />}
+          {activeTab === 'bottle' && bottleTabProps && <BottleTab {...bottleTabProps} />}
         </Suspense>
       </div>
 

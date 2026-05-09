@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import WelcomeScreen from '@/screens/Auth/WelcomeScreen';
 import LoginScreen from '@/screens/Auth/LoginScreen';
 import RegisterScreen from '@/screens/Auth/RegisterScreen';
@@ -92,8 +91,8 @@ export default function AppShell({
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto relative overflow-hidden font-sans scanline-overlay bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top)]">
       <ThemeEngine profile={profile} />
-      <div className="absolute top-[-15%] left-[-20%] w-[70%] h-[50%] bg-cyan-500/15 blur-[60px] pointer-events-none rounded-full transition-colors duration-500" />
-      <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[40%] bg-indigo-500/10 blur-[60px] pointer-events-none rounded-full transition-colors duration-500" />
+      <div className="absolute top-[-15%] left-[-20%] w-[70%] h-[50%] bg-cyan-500/15 blur-[120px] pointer-events-none rounded-full transition-colors duration-500" />
+      <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[40%] bg-indigo-500/10 blur-[100px] pointer-events-none rounded-full transition-colors duration-500" />
       <input {...fileInputProps} />
 
       {onboardingProps && (
@@ -137,23 +136,3 @@ export default function AppShell({
           )}
         </Suspense>
       </div>
-
-      <div className="relative z-50">
-        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-      </div>
-
-      {/* All modals are now managed internally via Zustand stores */}
-      <GlobalModalManager />
-
-      {devSyncProps?.visible && (
-        <button
-          onClick={devSyncProps.onClick}
-          className="absolute bottom-24 right-4 z-50 bg-indigo-600 text-white p-3 rounded-full shadow-lg opacity-50 hover:opacity-100 transition-opacity"
-          title="Sync Profile Data"
-        >
-          <RefreshCw size={20} />
-        </button>
-      )}
-    </div>
-  );
-}
