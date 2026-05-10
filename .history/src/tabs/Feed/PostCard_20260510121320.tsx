@@ -1,0 +1,228 @@
+import { useState, memo } from 'react';
+import { Droplets, Lightbulb, BarChart3 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { useFeedInteractions } from '../../hooks/useFeedInteractions';
+import { usePostActions } from '../../hooks/usePostActions';
+import { PostCardHeader } from './PostCardHeader';
+import { PostCardContent } from './PostCardContent';
+import { PostMenuDropdown } from './PostMenuDropdown';
+import { PostActionBar } from './PostActionBar';
+import type { SocialFeedPost } from '../../models';
+
+interface PostCardProps {
+  post: SocialFeedPost;
+  currentUserId: string | undefined;
+  handleToggleLikePost: (post: SocialFeedPost) => void;
+  onOpenComments: (post: SocialFeedPost) => void;
+}
+
+export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardProps) => {
+  // New interaction system: Cheers + Drop + Freeze replace Likes
+  const {
+    cheersCount,
+    dropsCount,
+    hasCheered,
+    cheers,
+    drop,
+    donateFreeze,
+  } = useFeedInteractions({
+    currentUserId,
+    postId: post.id,
+    postAuthorId: post.author_id,
+    initialCheersCount: post.cheers_count || 0,
+    initialDropsCount: post.drops_count || 0,
+    initialCheered: post.cheeredByMe || false,
+  });
+
+  const {
+    savedPosts,
+    toggleSavePost,
+    deletePost,
+    reportPost,
+    editPost,
+    joinChallenge,
+  } = usePostActions({ currentUserId });
+
+  const [showMenu, setShowMenu] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [postContent, setPostContent] = useState(post.content);
+
+  const isMyPost = currentUserId === post.author_id;
+  const isSaved = savedPosts.has(post.id);
+
+  const isChallenge = post.type === 'challenge';
+  const isMilestone = post.type === 'milestone';
+  const isWaterLog = post.type === 'water_log' || post.type === 'daily_goal';
+  const isAchievement = post.type === 'achievement';
+  const isCompare = post.type === 'compare';
+  const isTip = post.type === 'tip';
+  const isPoll = post.type === 'poll';
+
+  if (isDeleted) return null;
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({ title: 'DigiWell', text: postContent, url: window.location.href }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Đã sao chép link chia sẻ');
+    }
+  };
+
+  const handleSaveClick = async () => {
+    if (savedPosts.has(post.id)) return;
+    await toggleSavePost(post.id);
+  };
+
+  const handleDeleteClick = async () => {
+    const success = await deletePost(post.id);
+    if (success) {
+      setShowMenu(false);
+      setIsDeleted(true);
+    }
+  };
+
+  const handleReportClick = async () => {
+    const success = await reportPost(post.id);
+    if (success) {
+      setShowMenu(false);
+      setIsDeleted(true);
+    }
+  };
+
+  const handleEditClick = async () => {
+    setShowMenu(false);
+    const newContent = await editPost(post.id, postContent);
+    if (newContent) setPostContent(newContent);
+  };
+
+  // Border style based on post type
+  const borderClass = isAchievement
+    ? 'border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-slate-900/80 shadow-[0_0_20px_rgba(245,158,11,0.1)]'
+    : isCompare
+      ? 'border-emerald-500/30 bg-gradient-to-b from-emerald-500/5 to-slate-900/80 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
+      : isChallenge
+        ? 'border-purple-500/30'
+        : isMilestone
+          ? 'border-orange-500/30'
+          : isTip
+            ? 'border-emerald-500/25'
+            : isPoll
+              ? 'border-amber-500/25'
+              : 'border-white/5';
+
+  return (
+    <motion.div
+      id={`post-${post.id}`}
+      initial={{ opacity: 0, y: 25, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, type: 'spring', bounce: 0.3 } as any}
+      className={`transition-all duration-500 bg-slate-900/50 rounded-3xl shadow-lg p-5 border backdrop-blur-sm relative overflow-hidden ${borderClass}`}
+    >
+      {/* Ambient glow decorations */}
+      {isChallenge && <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl rounded-full" />}
+      {isMilestone && <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full" />}
+      {isAchievement && <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-500/20 blur-3xl rounded-full" />}
+      {isCompare && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-32 bg-cyan-500/10 blur-3xl rounded-full" />}
+      {isTip && <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />}
+
+      {/* Header */}
+      <PostCardHeader
+        post={post}
+        isChallenge={isChallenge}
+        isAchievement={isAchievement}
+        isCompare={isCompare}
+        onShare={handleShare}
+        onOpenMenu={() => setShowMenu(true)}
+      />
+
+      {/* Menu Dropdown */}
+      <div className="relative">
+        <PostMenuDropdown
+          show={showMenu}
+          isMyPost={isMyPost}
+          onClose={() => setShowMenu(false)}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+          onReport={handleReportClick}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 mb-4">
+        <PostCardContent
+          post={post}
+          postContent={postContent}
+          isAchievement={isAchievement}
+          isCompare={isCompare}
+          isChallenge={isChallenge}
+          isMilestone={isMilestone}
+          isWaterLog={isWaterLog}
+          handleJoinChallenge={() => joinChallenge(post.author_id)}
+        />
+      </div>
+
+      {/* Contextual Badges */}
+      <div className="flex items-center gap-2 mb-4 relative z-10 flex-wrap">
+        {!isMilestone && !isWaterLog && !isChallenge && !isTip && !isPoll && (post.hydration_ml || 0) > 0 && (
+          <motion.span
+            animate={{ boxShadow: ['0 0 0px rgba(6,182,212,0)', '0 0 15px rgba(6,182,212,0.6)', '0 0 0px rgba(6,182,212,0)'] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold"
+          >
+            +{post.hydration_ml}ml
+          </motion.span>
+        )}
+        {!isMilestone && !isWaterLog && !isChallenge && !isTip && !isPoll && (post.streak_snapshot || 0) > 0 && (
+          <motion.span
+            animate={{ boxShadow: ['0 0 0px rgba(249,115,22,0)', '0 0 15px rgba(249,115,22,0.6)', '0 0 0px rgba(249,115,22,0)'] }}
+            transition={{ duration: 2, delay: 1, repeat: Infinity, ease: 'easeInOut' }}
+            className="px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold"
+          >
+            Chuỗi {post.streak_snapshot}
+          </motion.span>
+        )}
+        {isTip && post.tip_category && (
+          <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+            <Lightbulb size={10} />
+            {post.tip_category === 'science' ? '🔬 Khoa học' : post.tip_category === 'recipe' ? '🍹 Công thức' : '💡 Mẹo vặt'}
+          </span>
+        )}
+        {isPoll && (
+          <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold flex items-center gap-1">
+            <BarChart3 size={10} />Khảo sát
+          </span>
+        )}
+        {post.temperature && (
+          <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold">
+            {post.temperature}°C
+          </span>
+        )}
+        {post.heart_rate && (
+          <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold">
+            {post.heart_rate} nhịp/phút
+          </span>
+        )}
+        {post.drink_type && (
+          <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+            {post.drink_type}
+          </span>
+        )}
+      </div>
+
+      {/* Social Hydration Pulse */}
+      {(post.pulse_count || 0) > 0 && (
+        <motion.div
+          initial={{ opacity: 0.8 }}
+          whileHover={{ opacity: 1, scale: 1.01 }}
+          className="flex items-center gap-2.5 mb-4 relative z-10 px-3 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent border border-blue-500/20 overflow-hidden"
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-l-xl shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
+        onCheers={handleCheersClick}
+        onComment={() => onOpenComments(post)}
+        onSave={handleSaveClick}
+      />
+    </motion.div>
+  );
+});
