@@ -1,0 +1,240 @@
+import {
+  User,
+  Settings,
+  LogOut,
+  X,
+  Swords,
+  ScrollText,
+  Coins,
+  Store,
+  ShieldCheck,
+  Sparkles,
+  Activity,
+} from 'lucide-react';
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { useAppStore } from '@/store/useAppStore';
+import { useUIStore } from '@/store/useUIStore';
+import CountUp from '@/components/CountUp';
+import AvatarFrame from '@/components/AvatarFrame';
+
+interface MainMenuSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onProfile: () => void;
+  onSettings: () => void;
+  onLogout: () => void;
+}
+
+export default function MainMenuSidebar({
+  isOpen,
+  onClose,
+  onProfile,
+  onSettings,
+  onLogout,
+}: MainMenuSidebarProps) {
+  const { t } = useTranslation();
+  const profile = useAppStore((state: any) => state.profile);
+  const { setShowShopModal, setShowBattleArena, setShowQuestModal } =
+    useUIStore();
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div key="main-menu-sidebar" className="fixed inset-0 z-[100] flex justify-end">
+          {/* Backdrop nền tối + hiệu ứng blur mạnh */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
+            onClick={onClose}
+          />
+
+          {/* Panel sidebar */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
+            className="relative w-72 h-full bg-slate-900/80 backdrop-blur-2xl border-l border-white/[0.06] shadow-[-8px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
+          >
+            {/* ── Header ── */}
+            <div className="relative px-5 pt-6 pb-4 border-b border-white/[0.04]">
+              {/* Decoration glow */}
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/10 blur-[60px] rounded-full pointer-events-none" />
+
+              <div className="flex items-center justify-between">
+                <h2 className="text-white font-black text-lg tracking-tight">
+                  {t('home.menu_title')}
+                </h2>
+                <button
+                  onClick={onClose}
+                  className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.06] flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/[0.10] active:scale-90 transition-all duration-150"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* ── Scrollable body ── */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pt-5 pb-3 space-y-6">
+              {/* ── USER CARD ── */}
+              {profile && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 }}
+                >
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onProfile();
+                    }}
+                    className="w-full flex items-center gap-3.5 bg-gradient-to-br from-slate-800/60 to-slate-800/30 p-4 rounded-2xl border border-white/[0.06] hover:border-white/[0.12] active:scale-[0.97] transition-all duration-150 text-left shadow-sm"
+                  >
+                    <AvatarFrame
+                      size="md"
+                      level={profile.level || 1}
+                      avatarUrl={profile?.avatar_url ?? null}
+                      nickname={profile.nickname}
+                      showBadge={false}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-bold text-base leading-tight truncate">
+                        {profile.nickname || t('home.you')}
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <Sparkles size={11} className="text-cyan-400 shrink-0" />
+                        <p className="text-cyan-400 text-[10px] font-bold uppercase tracking-wider">
+                          Cấp {profile.level || 1}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0">
+                      <User size={12} className="text-slate-400" />
+                    </div>
+                  </button>
+                </motion.div>
+              )}
+
+              {/* ── STATS ROW ── */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="grid grid-cols-2 gap-2.5"
+              >
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/15 p-3.5">
+                  <div className="absolute -top-4 -right-4 w-16 h-16 bg-emerald-400/10 blur-[30px] rounded-full" />
+                  <ShieldCheck size={16} className="text-emerald-400 mb-1.5" />
+                  <span className="text-emerald-400 font-black text-lg block leading-none">
+                    <CountUp value={profile?.wp || 0} />
+                  </span>
+                  <span className="text-[9px] text-emerald-400/60 font-bold uppercase tracking-widest mt-1 block">
+                    Điểm SK
+                  </span>
+                </div>
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/15 p-3.5">
+                  <div className="absolute -top-4 -right-4 w-16 h-16 bg-amber-400/10 blur-[30px] rounded-full" />
+                  <Coins size={16} className="text-amber-400 mb-1.5" />
+                  <span className="text-amber-400 font-black text-lg block leading-none">
+                    <CountUp value={profile?.coins || 0} />
+                  </span>
+                  <span className="text-[9px] text-amber-400/60 font-bold uppercase tracking-widest mt-1 block">
+                    Điểm thưởng
+                  </span>
+                </div>
+              </motion.div>
+
+              {/* ── DIVIDER ── */}
+              <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
+              {/* ── NAV GROUP: Hành trình & Thi đua ── */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="space-y-1"
+              >
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2.5 px-1">
+                  Hành trình & Thi đua
+                </p>
+
+                <SidebarButton
+                  icon={<Swords size={16} className="text-rose-400" />}
+                  label="Thử thách đối kháng"
+                  highlight="Thi đấu"
+                  onClick={() => {
+                    onClose();
+                    setShowBattleArena(true);
+                  }}
+                />
+                <SidebarButton
+                  icon={<ScrollText size={16} className="text-purple-400" />}
+                  label="Lộ trình nhiệm vụ"
+                  highlight="Quest"
+                  onClick={() => {
+                    onClose();
+                    setShowQuestModal(true);
+                  }}
+                />
+                <SidebarButton
+                  icon={<Store size={16} className="text-amber-400" />}
+                  label="Cửa hàng sức khỏe"
+                  highlight="Shop"
+                  onClick={() => {
+                    onClose();
+                    setShowShopModal(true);
+                  }}
+                />
+              </motion.div>
+
+              {/* ── NAV GROUP: Hệ thống ── */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="space-y-1"
+              >
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2.5 px-1">
+                  Hệ thống
+                </p>
+
+                <SidebarButton
+                  icon={<Activity size={16} className="text-sky-400" />}
+                  label={t('home.settings')}
+                  highlight="Cài đặt"
+                  onClick={() => {
+                    onClose();
+                    onSettings();
+                  }}
+                />
+              </motion.div>
+            </div>
+
+            {/* ── Footer ── */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.25 }}
+              className="px-4 pb-5 pt-3 border-t border-white/[0.04]"
+            >
+              <button
+                onClick={onLogout}
+                className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-rose-300 bg-rose-500/8 border border-rose-500/15 hover:bg-rose-500/15 hover:border-rose-500/25 active:scale-[0.97] transition-all duration-150 font-bold text-sm"
+              >
+                <LogOut size={16} />
+                {t('home.logout')}
+              </button>
+            </motion.div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ── Reusable sidebar nav button ── */
