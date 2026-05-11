@@ -250,63 +250,44 @@ export function useCalendarSync() {
   const scheduleRetry = useCallback(() => {
     clearRetry();
     setIsSyncing(true);
-    const tid = toast.loading('⏳ Đang đồng bộ Google Calendar sau khi xác thực...', { duration: Infinity });
-    // Helper to update toast text
-    const updateToast = (msg: string) => toast.loading(msg, { id: tid, duration: Infinity });
+    const tid = toast.loading('Đang đồng bộ Google Calendar...');
     const retry = async () => {
       retryCountRef.current++;
-      const attempt = retryCountRef.current;
-      console.log(`[Calendar] Retry #${attempt}...`);
-      updateToast(`⏳ Đang thử kết nối Google Calendar (lần ${attempt}/8)...`);
+      console.log(`[Calendar] Retry #${retryCountRef.current}...`);
       const result = await syncCalendar({ silent: true, startOAuthIfNeeded: false });
       if (result !== false) {
         toast.dismiss(tid);
         setIsSyncing(false);
         if (result > 0) {
-          toast.success(`✅ Đã đồng bộ ${result} sự kiện từ Google Calendar!`, { duration: 5000 });
+          toast.success(`✅ Đã đồng bộ ${result} sự kiện từ Google Calendar!`, { duration: 4000 });
         } else {
-          toast.success('✅ Đã kết nối Google Calendar. Không có sự kiện trong tuần này.', { duration: 4000 });
+          toast.success('✅ Đã kết nối Google Calendar. Không có sự kiện trong tuần này.');
         }
         return;
       }
-      if (attempt < 8) {
-        const delayMs = Math.min(1500 * attempt, 8000);
-        console.log(`[Calendar] Retry #${attempt} failed, next in ${delayMs}ms`);
-        updateToast(`⏳ Đồng bộ chưa sẵn sàng, thử lại sau ${Math.round(delayMs/1000)}s...`);
-        retryTimerRef.current = setTimeout(retry, delayMs);
+      if (retryCountRef.current < 8) {
+        retryTimerRef.current = setTimeout(retry, Math.min(2000 * retryCountRef.current, 10000));
       } else {
         toast.dismiss(tid);
         setIsSyncing(false);
         writeCalendarOAuthPendingFlag(false);
         clearRetry();
-        toast.error('Không thể đồng bộ Google Calendar. Bạn có thể thử lại bằng nút "Kết nối".', { duration: 6000 });
+        toast.error('Không thể đồng bộ Google Calendar sau nhiều lần thử. Vui lòng thử lại sau.');
       }
     };
-    retryTimerRef.current = setTimeout(retry, 1000); // Start faster: 1s
+    retryTimerRef.current = setTimeout(retry, 2000);
   }, [syncCalendar, clearRetry]);
 
   useEffect(() => {
     const shouldResumeCalendarSync = async () => {
-      // If pending flag OR no flag but we should try sync silently
-      // to detect if user already has a Google session
-      const isPending = readCalendarOAuthPendingFlag();
-
-      if (isPending) {
-        console.log('[Calendar] OAuth pending flag detected, starting retry...');
-        scheduleRetry();
-        return;
-      }
-
-      // No pending flag — try a silent sync to check if Google is already linked
-      // This handles the case where the flag was lost during redirect
-      console.log('[Calendar] No pending flag, trying silent sync...');
-      await syncCalendar({ silent: true, startOAuthIfNeeded: false });
+      if (!readCalendarOAuthPendingFlag()) return;
+      // User just came back from Google OAuth — retry with delay
+      scheduleRetry();
     };
 
     void shouldResumeCalendarSync();
 
     const handleTokenUpdated = () => {
-      console.log('[Calendar] Token updated event received');
       scheduleRetry();
     };
 

@@ -24,15 +24,11 @@ interface ScheduleManagerProps {
   waterGoal?: number;
   calendarEvents?: CalendarEventItem[];
 }
-
-export default function ScheduleManager({ 
-  profile, 
   isOpen = false, 
   onOpenChange,
   alwaysExpanded = false,
   aiSchedule = null,
   waterGoal = 2000,
-  calendarEvents = [],
 }: ScheduleManagerProps) {
   const [isScheduleOpen, setIsScheduleOpen] = useState(alwaysExpanded || isOpen);
   const [customSchedule, setCustomSchedule] = useState<ScheduleItem[]>([]);
@@ -60,35 +56,16 @@ export default function ScheduleManager({
     return { pct, status: 'ok' as const };
   }, [totalMl, waterGoal]);
 
-  // Smart schedule khi có calendar events — tính 1 lần ở component level
-  const smartScheduleResult = useMemo(
-    () => (calendarEvents.length > 0 && aiSchedule && aiSchedule.length > 0
-      ? useSmartSchedule(aiSchedule, calendarEvents, waterGoal)
-      : null),
-    [aiSchedule, calendarEvents, waterGoal],
-  );
-
   const applyAiSchedule = () => {
     if (!aiSchedule || aiSchedule.length === 0) return;
-
-    const source = smartScheduleResult
-      ? smartScheduleResult.schedule
-      : aiSchedule.map(s => ({ time: s.time, amount: s.amount, note: s.note || '', isAdjusted: false }));
-
-    const mapped: ScheduleItem[] = source.map(s => ({
+    const mapped: ScheduleItem[] = aiSchedule.map(s => ({
       time: s.time,
       amount: s.amount,
       note: s.note || '',
     }));
     setCustomSchedule(mapped);
     setIsEditingSchedule(true);
-    if (smartScheduleResult && smartScheduleResult.totalAdjustedCount > 0) {
-      toast.success(`Đã tải lịch tối ưu — ${smartScheduleResult.totalAdjustedCount} mốc được điều chỉnh theo lịch họp.`);
-    } else if (smartScheduleResult) {
-      toast.success('Đã tải lịch đề xuất từ AI — các mốc trùng lịch đã được cảnh báo.');
-    } else {
-      toast.success('Đã tải lịch đề xuất từ AI. Bạn có thể chỉnh sửa trước khi lưu.');
-    }
+    toast.success('Đã tải lịch đề xuất từ AI. Bạn có thể chỉnh sửa trước khi lưu.');
   };
 
   const handleUpdateScheduleItem = (index: number, field: string, value: any) => {

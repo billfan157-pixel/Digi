@@ -287,20 +287,9 @@ export function useCalendarSync() {
 
   useEffect(() => {
     const shouldResumeCalendarSync = async () => {
-      // If pending flag OR no flag but we should try sync silently
-      // to detect if user already has a Google session
-      const isPending = readCalendarOAuthPendingFlag();
-
-      if (isPending) {
-        console.log('[Calendar] OAuth pending flag detected, starting retry...');
-        scheduleRetry();
-        return;
-      }
-
-      // No pending flag — try a silent sync to check if Google is already linked
-      // This handles the case where the flag was lost during redirect
-      console.log('[Calendar] No pending flag, trying silent sync...');
-      await syncCalendar({ silent: true, startOAuthIfNeeded: false });
+      if (!readCalendarOAuthPendingFlag()) return;
+      console.log('[Calendar] OAuth pending flag detected, starting retry...');
+      scheduleRetry();
     };
 
     void shouldResumeCalendarSync();

@@ -125,7 +125,7 @@ function MetricRow({
         <div className="text-right">
           <span className="text-lg font-black text-white">{value}</span>
           {secondaryInfo && (
-            <span className="text-[10px] text-slate-400 mt-0.5 block">{secondaryInfo}</span>
+            <p className="text-[10px] text-slate-400 mt-0.5">{secondaryInfo}</p>
           )}
         </div>
         {isExpandable && (

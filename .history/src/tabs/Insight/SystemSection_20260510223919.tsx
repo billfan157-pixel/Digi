@@ -20,15 +20,15 @@ export default function SystemSection({
   isWeatherSynced,
   isCalendarSynced,
 }: SystemSectionProps) {
+  const hasAnySyncSource = isWatchConnected || isWeatherSynced || isCalendarSynced;
+
   // Lấy lịch đề xuất từ AI & mục tiêu nước
   const hydrationResult = useAppStore(s => s.hydrationResult);
   const waterGoal = useAppStore(s => s.waterGoal);
   const aiSchedule: HydrationSchedule[] | null = hydrationResult?.schedule ?? null;
 
-  // Calendar — dùng state từ hook (real-time), không dùng prop (stale sau OAuth reload)
-  const { calendarEvents, syncCalendar, isCalendarSynced: calendarSynced } = useCalendarSync();
-
-  const hasAnySyncSource = isWatchConnected || isWeatherSynced || calendarSynced || isCalendarSynced;
+  // Calendar
+  const { calendarEvents, syncCalendar } = useCalendarSync();
 
   // Lọc events hôm nay
   const todayEvents = useMemo(() => {
@@ -45,7 +45,7 @@ export default function SystemSection({
       {/* Calendar Events Section */}
       <div className="px-6">
         {/* Connect button when not synced */}
-        {!calendarSynced && (
+        {!isCalendarSynced && (
           <button
             onClick={handleCalendarSync}
             className="w-full p-4 rounded-2xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20 text-white flex items-center justify-between hover:from-violet-500/20 hover:to-purple-500/20 transition-all active:scale-[0.98] mb-4"
@@ -64,7 +64,7 @@ export default function SystemSection({
         )}
 
         {/* Events today */}
-        {calendarSynced && (
+        {isCalendarSynced && (
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2">
@@ -105,7 +105,7 @@ export default function SystemSection({
           alwaysExpanded={true}
           aiSchedule={aiSchedule}
           waterGoal={waterGoal}
-          calendarEvents={calendarSynced ? calendarEvents : []}
+          calendarEvents={isCalendarSynced ? calendarEvents : []}
         />
       </div>
 
@@ -125,7 +125,7 @@ export default function SystemSection({
           <div className="flex -space-x-2">
             {isWatchConnected && <div className="w-8 h-8 rounded-full bg-rose-500/20 border-2 border-slate-950 flex items-center justify-center"><Activity size={12} className="text-rose-400"/></div>}
             {isWeatherSynced && <div className="w-8 h-8 rounded-full bg-sky-500/20 border-2 border-slate-950 flex items-center justify-center"><CloudSun size={12} className="text-sky-400"/></div>}
-            {(isCalendarSynced || calendarSynced) && <div className="w-8 h-8 rounded-full bg-violet-500/20 border-2 border-slate-950 flex items-center justify-center"><Calendar size={12} className="text-violet-400"/></div>}
+            {isCalendarSynced && <div className="w-8 h-8 rounded-full bg-violet-500/20 border-2 border-slate-950 flex items-center justify-center"><Calendar size={12} className="text-violet-400"/></div>}
             {!hasAnySyncSource && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-white/5">
                 <Wifi size={14} className="text-slate-600 animate-pulse" />
