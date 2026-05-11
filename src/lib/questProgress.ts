@@ -99,9 +99,9 @@ export function resolveQuestProgress(quest: QuestLike, ctx: QuestProgressContext
 
   return {
     normalizedType,
-    target,
+    target: target || 0,
     current,
-    progress: Math.min(current, target),
-    completed: target > 0 && current >= target,
+    progress: Math.max(0, Math.min(current, target || 0)),
+    completed: (target || 0) > 0 && current >= (target || 0),
   };
 }

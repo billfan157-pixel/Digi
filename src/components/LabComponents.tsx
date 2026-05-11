@@ -207,7 +207,7 @@ export function AutomationCenter({
                   <span className="font-black uppercase tracking-[0.24em] text-[11px] text-cyan-300">Preview</span>
                   <p className="mt-2">{buildRuleDescription(ruleTrigger, ruleAction, ruleTime, ruleThreshold)}</p>
                 </div>
-                <button onClick={addAutomationRule} className="mt-4 w-full py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black active:scale-95 transition-all shadow-[0_0_25px_rgba(34,211,238,0.2)]">
+                <button onClick={addAutomationRule} className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black active:scale-95 transition-all shadow-[0_0_25px_rgba(34,211,238,0.2)]">
                   Thêm luật vào Automation Engine
                 </button>
               </div>

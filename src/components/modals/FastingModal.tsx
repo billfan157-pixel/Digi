@@ -144,7 +144,7 @@ export default function FastingModal() {
                 <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4 text-center"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Mục tiêu</p><p className="text-xl font-bold text-white">{fastingPlanHours}h</p></div>
               </div>
 
-              <button onClick={stopFasting} className="w-full py-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 font-black text-sm active:scale-95 transition-all hover:bg-rose-500/20">Kết thúc Fasting</button>
+              <button onClick={stopFasting} className="w-full py-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 font-black text-sm active:scale-95 transition-all hover:bg-rose-500/20">Kết thúc Fasting</button>
             </div>
           )}
         </div>

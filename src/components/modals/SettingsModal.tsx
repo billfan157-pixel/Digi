@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   UserPen, Camera, Activity, Droplets, Heart, Bell, Clock,
   MoonStar, Send, Smartphone, Ruler, Palette, CloudUpload, Fingerprint, CloudSun,
-  FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Check
+  FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Check, Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
@@ -17,11 +17,11 @@ import type { DeleteOption } from '../../hooks/useDeleteAccount';
 import type { Profile } from '../../models';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { registerPlugin } from '@capacitor/core';
-import { Capacitor } from '@capacitor/core';
 import Cropper from 'react-easy-crop';
 
 import { AppStorage } from '@/lib/storage';
 import { syncWeatherAndWaterGoal } from '@/hooks/useWeatherSync';
+import { requestHealthReadStepsAndHeartRate } from '@/lib/healthIntegration';
 
 // Khai báo Plugin tự chế
 const WidgetPlugin = registerPlugin<any>('WidgetPlugin');
@@ -103,7 +103,7 @@ export default function SettingsModal() {
   const handleLogout = useAppStore(s => s.actions.handleLogout);
 
   const { settings, updateSettings, isSaving, lastSync, triggerHaptic } = useSettings(profile);
-  const [activeSheet, setActiveSheet] = useState<'none' | 'personal' | 'frequency' | 'quiet' | 'privacy' | 'delete' | 'name' | 'widget'>('none');
+  const [activeSheet, setActiveSheet] = useState<'none' | 'personal' | 'quiet' | 'privacy' | 'delete' | 'name' | 'widget' | 'wellness'>('none');
   
   // ================= ĐÃ ĐỒNG BỘ TOÀN BỘ BIẾN VÀO ĐÂY =================
   // FIX: Khởi tạo state với giá trị mặc định hợp lệ (chuẩn tiếng Anh)
@@ -250,69 +250,11 @@ export default function SettingsModal() {
   };
 
   const handleSyncAppleHealth = async () => {
-    console.log('🍎 [START] Bắt đầu kết nối Apple Health...');
-
-    // 1. Kiểm tra nền tảng
-    if (!Capacitor.isNativePlatform()) {
-      toast.error('Tính năng này chỉ hoạt động trên ứng dụng iOS/Android thật.');
-      return;
+    const granted = await requestHealthReadStepsAndHeartRate();
+    if (granted) {
+      toast.success('Đã kết nối Apple Health / Health Connect.');
     }
-
-    try {
-      // 2. Import động plugin để tránh lỗi lúc khởi động app
-      const { Health } = await import('@capgo/capacitor-health');
-
-      // 3. Kiểm tra tính khả dụng (Dùng try-catch riêng vì hay crash ở đây)
-      let isAvailable = false;
-      try {
-        const check = await Health.isAvailable();
-        // Plugin trả về object { value: boolean } hoặc boolean trực tiếp
-        isAvailable = typeof check === 'object' ? (check as any).value : check;
-      } catch (err) {
-        console.error('❌ Lỗi khi kiểm tra isAvailable:', err);
-        toast.error('Thiết bị không hỗ trợ Apple Health hoặc chưa cấu hình đúng.');
-        return;
-      }
-
-      if (!isAvailable) {
-        toast.error('Apple Health không khả dụng trên thiết bị này.');
-        return;
-      }
-
-      // 4. Yêu cầu quyền truy cập (SỬA LỖI dataTypes)
-      console.log('🍎 Đang yêu cầu quyền...');
-      
-      let granted = false;
-      try {
-        // Cách 1: Thử gọi với cú pháp mới nhất (nếu plugin hỗ trợ)
-        // Nếu vẫn lỗi TypeScript, hãy dùng 'any' để bypass check type
-        const result = await Health.requestAuthorization({
-          read: ['steps', 'heartRate', 'activeEnergy', 'water'],
-          write: ['water']
-        } as any); // <-- Quan trọng: Cast 'as any' để tránh lỗi TypeScript
-
-        granted = typeof result === 'object' ? (result as any).value : result;
-      } catch (err) {
-        console.error('Lỗi khi requestAuthorization:', err);
-        // Fallback: Thử gọi không tham số nếu cách trên fail (một số version cũ yêu cầu cấu hình trong Info.plist trước)
-        const resultFallback = await Health.requestAuthorization({} as any);
-        granted = typeof resultFallback === 'object' ? (resultFallback as any).value : resultFallback;
-      }
-
-      console.log('🍎 Kết quả cấp quyền:', granted);
-
-      if (granted) {
-        toast.success('Đã kết nối thành công! Dữ liệu sẽ được đồng bộ.');
-        // Gọi hàm đọc dữ liệu ở đây nếu cần
-      } else {
-        toast.warning('Bạn đã từ chối cấp quyền.');
-      }
-
-    } catch (error: any) {
-      console.error('💥 CRITICAL ERROR Apple Health:', error);
-      // Hiển thị lỗi chi tiết ra màn hình để debug
-      toast.error('Lỗi nghiêm trọng: ' + (error.message || JSON.stringify(error)));
-    }
+    return granted;
   };
 
   const formatVol = (ml: number) => settings.unit === 'oz' ? `${(ml * 0.033814).toFixed(1)} oz` : `${ml} ml`;
@@ -396,10 +338,16 @@ export default function SettingsModal() {
 
                 <button onClick={async () => { 
                   triggerHaptic(); 
-                  if (!settings.syncHealth) {
-                    await handleSyncAppleHealth();
+                  if (settings.syncHealth) {
+                    updateSettings({ syncHealth: false });
+                    return;
                   }
-                  updateSettings({ syncHealth: !settings.syncHealth }); 
+
+                  if (!settings.syncHealth) {
+                    const granted = await handleSyncAppleHealth();
+                    if (!granted) return;
+                  }
+                  updateSettings({ syncHealth: true });
                 }} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center"><Heart size={18} /></div>
@@ -407,10 +355,35 @@ export default function SettingsModal() {
                   </div>
                   <div className={`w-10 h-6 rounded-full p-1 transition-colors ${settings.syncHealth ? 'bg-cyan-500' : 'bg-slate-700'}`}>
                     <div className={`w-4 h-4 bg-white rounded-full transition-transform ${settings.syncHealth ? 'translate-x-4' : ''}`} />
-                  </div>
-                </button>
+                   </div>
+                 </button>
 
-                {/* --- THÊM NÚT MỚI NÀY VÀO ĐÂY --- */}
+                 {/* WELLNESS SETTINGS BUTTON */}
+                 <button
+                   onClick={() => {
+                     triggerHaptic();
+                     setActiveSheet('wellness');
+                   }}
+                   className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5"
+                 >
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-400 flex items-center justify-center">
+                       <Sparkles size={18} />
+                     </div>
+                     <div className="text-left">
+                       <span className="text-white font-medium block">Sức khỏe tổng hợp</span>
+                       <span className="text-[10px] text-slate-500">Sleep, Mood, Activity insights</span>
+                     </div>
+                   </div>
+                   <div className="flex items-center gap-2 text-white/40">
+                     <span className="text-xs font-bold uppercase tracking-wider text-emerald-400/70">
+                       {settings.syncWellnessData ? 'Đã bật' : 'Thiết lập'}
+                     </span>
+                     <ChevronRight size={18} />
+                   </div>
+                 </button>
+
+                 {/* --- THÊM NÚT MỚI NÀY VÀO ĐÂY --- */}
                 <div className="mt-4">
                   <button
                     onClick={syncWeatherAndWaterGoal}
@@ -445,16 +418,6 @@ export default function SettingsModal() {
                   </div>
                 </button>
 
-                <button disabled={!settings.smartReminders} onClick={() => { triggerHaptic(); setActiveSheet('frequency'); }} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5 disabled:opacity-50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center"><Clock size={18} /></div>
-                    <span className="text-white font-medium">Tần suất nhắc</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-white/40">
-                    <span className="text-sm">{settings.reminderFrequency}</span>
-                    <ChevronRight size={18} />
-                  </div>
-                </button>
 
                 <button disabled={!settings.smartReminders} onClick={() => { triggerHaptic(); setDraftQuiet({ start: settings.quietHoursStart, end: settings.quietHoursEnd }); setActiveSheet('quiet'); }} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5 disabled:opacity-50">
                   <div className="flex items-center gap-3">
@@ -630,23 +593,6 @@ export default function SettingsModal() {
         )}
 
 
-
-        {activeSheet === 'frequency' && (
-          <BottomSheetWrapper key="section-frequency" title="Tần suất nhắc" onClose={closeSheet}>
-            <div className="space-y-3 mb-6">
-              {(['30 phút', '1 giờ', '2 giờ'] as const).map((freq) => (
-                <button 
-                  key={`freq-${freq}`}
-                  onClick={() => { updateSettings({ reminderFrequency: freq }); closeSheet(); }} 
-                  className={`w-full p-4 rounded-xl font-bold flex justify-between items-center transition-all ${settings.reminderFrequency === freq ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-600 dark:text-cyan-400' : 'bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10'}`}
-                >
-                  {freq} {settings.reminderFrequency === freq && <Check size={18} />}
-                </button>
-              ))}
-            </div>
-          </BottomSheetWrapper>
-        )}
-
         {activeSheet === 'quiet' && (
           <BottomSheetWrapper key="section-quiet" title="Giờ yên tĩnh" onClose={closeSheet}>
             <div className="grid grid-cols-2 gap-4 mb-8">
@@ -732,14 +678,177 @@ export default function SettingsModal() {
                   });
                 } catch (e) { console.log('Bỏ qua vì không chạy trên iOS Native'); }
 
-                toast.success('Đã đồng bộ giao diện và dữ liệu ra Widget!'); 
-                closeSheet(); 
-              }} className={btnPrimary} style={{ backgroundColor: settings.themeColor }}>
-                Đồng bộ ngay ra Widget
-              </button>
-            </div>
-          </BottomSheetWrapper>
-        )}
+                 toast.success('Đã đồng bộ giao diện và dữ liệu ra Widget!'); 
+                 closeSheet(); 
+               }} className={btnPrimary} style={{ backgroundColor: settings.themeColor }}>
+                 Đồng bộ ngay ra Widget
+               </button>
+             </div>
+           </BottomSheetWrapper>
+         )}
+
+         {/* WELLNESS SETTINGS BOTTOM SHEET */}
+         {activeSheet === 'wellness' && (
+           <BottomSheetWrapper key="section-wellness" title="Sức khỏe tổng hợp" onClose={closeSheet}>
+             <div className="space-y-6">
+               {/* Sleep Section */}
+               <div className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5">
+                 <div className="flex items-center gap-3 mb-4">
+                   <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                     <MoonStar size={20} />
+                   </div>
+                   <div>
+                     <h4 className="text-slate-900 dark:text-white font-bold">Giấc ngủ</h4>
+                     <p className="text-xs text-slate-500">Mục tiêu giấc ngủ hàng đêm</p>
+                   </div>
+                 </div>
+
+                 <div className="space-y-4">
+                   <div>
+                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 block mb-2">
+                       Mục tiêu giấc ngủ: {settings.sleepHours} giờ
+                     </label>
+                     <input
+                       type="range"
+                       min="5"
+                       max="12"
+                       value={settings.sleepHours}
+                       onChange={(e) => {
+                         triggerHaptic();
+                         updateSettings({ sleepHours: Number(e.target.value) });
+                       }}
+                       className="w-full h-2 bg-slate-300 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                     />
+                     <div className="flex justify-between text-xs text-slate-500 mt-1">
+                       <span>5h</span>
+                       <span>8h</span>
+                       <span>12h</span>
+                     </div>
+                   </div>
+
+                   <div>
+                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 block mb-2">
+                       Chất lượng giấc ngủ: {settings.sleepQuality}/10
+                     </label>
+                     <input
+                       type="range"
+                       min="1"
+                       max="10"
+                       value={settings.sleepQuality}
+                       onChange={(e) => {
+                         triggerHaptic();
+                         updateSettings({ sleepQuality: Number(e.target.value) });
+                       }}
+                       className="w-full h-2 bg-slate-300 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                     />
+                     <div className="flex justify-between text-xs text-slate-500 mt-1">
+                       <span>Rất kém</span>
+                       <span>Tốt</span>
+                       <span>Xuất sắc</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Mood & Energy Tracking */}
+               <div className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5">
+                 <div className="flex items-center gap-3 mb-4">
+                   <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                     <Sparkles size={20} />
+                   </div>
+                   <div>
+                     <h4 className="text-slate-900 dark:text-white font-bold">Theo dõi tâm trạng</h4>
+                     <p className="text-xs text-slate-500">Cải thiện nhận thức về cảm xúc</p>
+                   </div>
+                 </div>
+
+                 <div className="space-y-3">
+                   <label className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors">
+                     <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                         😊
+                       </div>
+                       <div>
+                         <p className="text-slate-900 dark:text-white font-medium text-sm">Kiểm tra tâm trạng hàng ngày</p>
+                         <p className="text-xs text-slate-500">Đánh giá tâm trạng mỗi buổi tối</p>
+                       </div>
+                     </div>
+                     <input
+                       type="checkbox"
+                       checked={settings.moodTracking}
+                       onChange={(e) => {
+                         triggerHaptic();
+                         updateSettings({ moodTracking: e.target.checked });
+                       }}
+                       className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                     />
+                   </label>
+
+                   <label className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors">
+                     <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                         ⚡
+                       </div>
+                       <div>
+                         <p className="text-slate-900 dark:text-white font-medium text-sm">Theo dõi mức năng lượng</p>
+                         <p className="text-xs text-slate-500">Ghi nhận năng lượng hàng ngày (1-10)</p>
+                       </div>
+                     </div>
+                     <input
+                       type="checkbox"
+                       checked={settings.energyTracking}
+                       onChange={(e) => {
+                         triggerHaptic();
+                         updateSettings({ energyTracking: e.target.checked });
+                       }}
+                       className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                     />
+                   </label>
+                 </div>
+               </div>
+
+               {/* Health Sync */}
+               <div className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                       📊
+                     </div>
+                     <div>
+                       <h4 className="text-slate-900 dark:text-white font-bold">Đồng bộ dữ liệu sức khỏe</h4>
+                       <p className="text-xs text-slate-500">Kết nối Apple Health / Google Fit</p>
+                     </div>
+                   </div>
+                   <div
+                     className={`w-12 h-7 rounded-full p-1 transition-colors cursor-pointer ${
+                       settings.syncWellnessData ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'
+                     }`}
+                     onClick={() => {
+                       triggerHaptic();
+                       updateSettings({ syncWellnessData: !settings.syncWellnessData });
+                     }}
+                   >
+                     <div
+                       className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                         settings.syncWellnessData ? 'translate-x-5' : 'translate-x-1'
+                       }`}
+                     />
+                   </div>
+                 </div>
+                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
+                   Kết nối để tự động lấy dữ liệu giấc ngủ, bước chân và nhịp tim. Dữ liệu được xử lý cục bộ và không được chia sẻ.
+                 </p>
+               </div>
+
+               {/* Info Card */}
+               <div className="p-4 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-2xl">
+                 <p className="text-xs text-emerald-300 leading-relaxed">
+                   <strong>Wellness Score</strong> sẽ kết hợp Hydration + Sleep + Activity + Mood để tạo điểm số sức khỏe tổng hợp. Xem biểu đồ chi tiết ở tab Huấn luyện thông minh.
+                 </p>
+               </div>
+             </div>
+           </BottomSheetWrapper>
+         )}
       </AnimatePresence>
 
       {/* ================= MODAL CROP ẢNH (CROPPER) ================= */}

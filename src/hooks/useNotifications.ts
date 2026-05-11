@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 // Hàm tổng hợp âm thanh "Ting" bằng Web Audio API (không cần file mp3)
@@ -29,6 +29,7 @@ const playTingSound = () => {
 export function useNotifications(currentUserId: string | undefined) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!currentUserId) return;
@@ -48,10 +49,17 @@ export function useNotifications(currentUserId: string | undefined) {
   useEffect(() => {
     setTimeout(() => fetchNotifications(), 0);
     if (!currentUserId) return;
-    
-    const channelId = `notifications-${currentUserId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    // Cleanup previous channel before creating new one
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channelId = `notifications-${currentUserId}`;
     const channel = supabase.channel(channelId);
-    
+    channelRef.current = channel;
+
     channel
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${currentUserId}` }, () => {
         if (navigator.vibrate) {
@@ -61,8 +69,13 @@ export function useNotifications(currentUserId: string | undefined) {
         fetchNotifications();
       })
       .subscribe();
-      
-    return () => { supabase.removeChannel(channel); };
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [currentUserId, fetchNotifications]);
 
   const markAllRead = async () => {

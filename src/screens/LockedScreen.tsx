@@ -36,7 +36,7 @@ export default function LockedScreen({ profile, onUnlock, onLogout }: any) {
           </div>
           <h2 className="text-2xl font-black mb-2">Đã khóa ứng dụng</h2>
           <p className="text-slate-500 dark:text-slate-400 mb-8 text-center text-sm">DigiWell được bảo vệ bằng Sinh trắc học.<br/>Vui lòng xác thực để tiếp tục.</p>
-          <button onClick={handleUnlock} disabled={isAuthenticating} className="w-full max-w-xs py-4 rounded-2xl bg-cyan-500 text-white dark:text-black font-bold mb-4 shadow-[0_0_20px_rgba(6,182,212,0.4)] disabled:opacity-50 active:scale-95 transition-all">
+          <button onClick={handleUnlock} disabled={isAuthenticating} className="w-full max-w-xs py-4 rounded-xl bg-cyan-500 text-white dark:text-black font-bold mb-4 shadow-[0_0_20px_rgba(6,182,212,0.4)] disabled:opacity-50 active:scale-95 transition-all">
             {isAuthenticating ? 'Đang xác thực...' : 'Mở khóa bằng Sinh trắc học'}
           </button>
           <button onClick={onLogout} className="text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors text-sm font-medium">Đăng nhập bằng tài khoản khác</button>

@@ -176,7 +176,7 @@ export default function GachaMachine({ profile }: GachaProps) {
         <button
           onClick={handleSpin}
           disabled={!canSpin || isSpinning}
-          className={`w-full py-4 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 ${
+          className={`w-full py-4 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 ${
             canSpin 
               ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_0_20px_rgba(245,158,11,0.4)] active:scale-95' 
               : 'bg-slate-800 text-slate-500 border border-slate-700'

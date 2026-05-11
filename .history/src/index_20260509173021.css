@@ -1,0 +1,164 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer base {
+  :root {
+    /* ── Backgrounds ── */
+    --dw-bg: #020617;
+    --dw-surface-1: rgba(255, 255, 255, 0.03);
+    --dw-surface-2: rgba(255, 255, 255, 0.05);
+    --dw-surface-3: rgba(255, 255, 255, 0.08);
+    --dw-surface-solid: rgba(15, 23, 42, 0.68);
+
+    /* ── Glass Surface (for .glass-card, .glass-card-strong, .glass-control) ── */
+    --dw-surface-glass: rgba(255, 255, 255, 0.04);
+    --dw-surface-glass-strong: rgba(255, 255, 255, 0.08);
+    --dw-surface-control: rgba(255, 255, 255, 0.06);
+
+    /* ── Glass Borders ── */
+    --dw-border-glass-strong: rgba(255, 255, 255, 0.15);
+
+    /* ── Borders ── */
+    --dw-border-subtle: rgba(255, 255, 255, 0.05);
+    --dw-border-glass: rgba(255, 255, 255, 0.08);
+    --dw-border-active: rgba(255, 255, 255, 0.15);
+
+    /* ── Text ── */
+    --dw-text-primary: #f8fafc;
+    --dw-text-secondary: #cbd5e1;
+    --dw-text-muted: #94a3b8;
+
+    /* ── Accent ── */
+    --dw-accent: #22d3ee;
+    --dw-accent-contrast: #06121a;
+
+    /* ── Semantic ── */
+    --dw-success: #34d399;
+    --dw-warning: #fbbf24;
+    --dw-danger: #ef4444;
+    --dw-info: #38bdf8;
+
+    /* ── Shadows ── */
+    --dw-shadow-glass: 0 18px 50px rgba(0, 0, 0, 0.34);
+    --dw-shadow-glass-soft: 0 10px 28px rgba(0, 0, 0, 0.24);
+
+    /* ── Radius ── */
+    --dw-radius-card: 1rem;
+    --dw-radius-button: 0.75rem;
+    --dw-radius-modal: 1.5rem;
+    --dw-radius-control: 0.75rem;
+
+    /* ── Motion ── */
+    --dw-motion-ease: 180ms cubic-bezier(0.2, 0, 0, 1);
+    --dw-motion-spring: 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--dw-bg);
+    color: var(--dw-text-primary);
+    overscroll-behavior-y: none;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: var(--dw-surface-glass);
+    border: 1px solid var(--dw-border-glass);
+    border-radius: var(--dw-radius-card);
+    box-shadow: var(--dw-shadow-glass-soft);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .glass-card-strong {
+    background: var(--dw-surface-glass-strong);
+    border: 1px solid var(--dw-border-glass-strong);
+    border-radius: var(--dw-radius-card);
+    box-shadow: var(--dw-shadow-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .glass-control {
+    background: var(--dw-surface-control);
+    border: 1px solid var(--dw-border-glass);
+    border-radius: var(--dw-radius-control);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .glass-stat {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--dw-radius-control);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.05); /* Giảm độ sáng xuống mức Surface-2 */
+    border: 1px solid rgba(255, 255, 255, 0.12); /* Viền mỏng, tinh tế hơn */
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+  }
+
+  .section-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dw-text-muted);
+  }
+
+  .section-title {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--dw-text-muted);
+  }
+
+  .text-readable {
+    color: var(--dw-text-secondary);
+  }
+
+  .text-meta {
+    color: var(--dw-text-muted);
+  }
+
+  .active-treatment {
+    background: rgba(34, 211, 238, 0.16);
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    color: #67e8f9;
+  }
+}
+
+@layer utilities {
+  .motion-ease {
+    transition-duration: var(--dw-motion-ease);
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .motion-spring {
+    transition-duration: var(--dw-motion-spring);
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

@@ -24,6 +24,12 @@ export interface AppSettings {
   unit: 'ml' | 'oz';
   themeColor: string;
   biometricEnabled: boolean;
+  // Wellness fields
+  sleepHours: number;           // Target sleep hours
+  sleepQuality: number;         // Average quality (1-10)
+  moodTracking: boolean;        // Enable mood check-ins
+  syncWellnessData: boolean;    // Sync with Apple Health/Google Fit
+  energyTracking: boolean;      // Track daily energy levels
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -46,6 +52,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   unit: 'ml',
   themeColor: '#06b6d4', // Cyan
   biometricEnabled: false,
+  // Wellness defaults
+  sleepHours: 8,
+  sleepQuality: 7,
+  moodTracking: true,
+  syncWellnessData: false,
+  energyTracking: true,
 };
 
 export function useSettings(profile: any) {
@@ -93,19 +105,25 @@ export function useSettings(profile: any) {
         return;
       }
 
-      setSettings(prev => ({
-        ...prev,
-        displayName: profile.nickname || profile.name || '',
-        avatarUrl: profile.avatar_url || '',
-        weight: profile.weight || 60,
-        height: profile.height || 170,
-        age: profile.age || 20,
-        gender: profile.gender || 'Nam',
-        activity: normalizeActivity(profile.activity || DEFAULT_SETTINGS.activity),
-        climate: normalizeClimate(profile.climate || DEFAULT_SETTINGS.climate),
-        biometricEnabled,
-        waterGoal: profile.water_goal || 2000
-      }));
+       setSettings(prev => ({
+         ...prev,
+         displayName: profile.nickname || profile.name || '',
+         avatarUrl: profile.avatar_url || '',
+         weight: profile.weight || 60,
+         height: profile.height || 170,
+         age: profile.age || 20,
+         gender: profile.gender || 'Nam',
+         activity: normalizeActivity(profile.activity || DEFAULT_SETTINGS.activity),
+         climate: normalizeClimate(profile.climate || DEFAULT_SETTINGS.climate),
+         biometricEnabled,
+         waterGoal: profile.water_goal || 2000,
+         // Wellness fields (with defaults if missing)
+         sleepHours: (profile as any)?.sleep_hours || DEFAULT_SETTINGS.sleepHours,
+         sleepQuality: (profile as any)?.sleep_quality || DEFAULT_SETTINGS.sleepQuality,
+         moodTracking: (profile as any)?.mood_tracking ?? DEFAULT_SETTINGS.moodTracking,
+         syncWellnessData: (profile as any)?.sync_wellness_data || DEFAULT_SETTINGS.syncWellnessData,
+         energyTracking: (profile as any)?.energy_tracking ?? DEFAULT_SETTINGS.energyTracking,
+       }));
     };
 
     void loadSettings();
@@ -147,23 +165,29 @@ export function useSettings(profile: any) {
       document.documentElement.style.setProperty('--color-primary', newValues.themeColor);
     }
 
-    // 2. Sync to Supabase in background
-    try {
-      // Đẩy đầy đủ các field quan trọng lên database
-      if (options?.syncProfile !== false) {
-        await updateProfileFields(profile.id, {
-          avatar_url: updatedSettings.avatarUrl,
-          nickname: updatedSettings.displayName,
-          weight: updatedSettings.weight,
-          height: updatedSettings.height,
-          age: updatedSettings.age,
-          gender: updatedSettings.gender,
-          activity: updatedSettings.activity,
-          climate: updatedSettings.climate,
-          water_goal: updatedSettings.waterGoal,
-          updated_at: new Date().toISOString()
-        });
-      }
+       // 2. Sync to Supabase in background
+       try {
+         // Đẩy đầy đủ các field quan trọng lên database
+         if (options?.syncProfile !== false) {
+           await updateProfileFields(profile.id, {
+             avatar_url: updatedSettings.avatarUrl,
+             nickname: updatedSettings.displayName,
+             weight: updatedSettings.weight,
+             height: updatedSettings.height,
+             age: updatedSettings.age,
+             gender: updatedSettings.gender,
+             activity: updatedSettings.activity,
+             climate: updatedSettings.climate,
+             water_goal: updatedSettings.waterGoal,
+             // Wellness fields
+             sleep_hours: updatedSettings.sleepHours,
+             sleep_quality: updatedSettings.sleepQuality,
+             mood_tracking: updatedSettings.moodTracking,
+             sync_wellness_data: updatedSettings.syncWellnessData,
+             energy_tracking: updatedSettings.energyTracking,
+             updated_at: new Date().toISOString()
+           });
+         }
       setLastSync(new Date());
     } catch (error) {
       console.error('Lỗi đồng bộ Settings:', error);

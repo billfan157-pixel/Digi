@@ -50,6 +50,17 @@
     "view_all": "View All",
     "no_activity_today": "No activity today",
     "pure_water": "Pure Water",
-    "logout_confirm": "Are you sure you want to logout?"
+    "logout_confirm": "Are you sure you want to logout?",
+    "turning_on_demo": "Turning on demo...",
+    "turn_on_demo": "Turn on DigiBottle Demo",
+    "quick_amounts_updated": "✅ Quick amounts updated!",
+    "quick_amounts_invalid": "⚠️ Please enter 3 values from 50-2000ml",
+    "enter_drink_name": "Please enter drink name!",
+    "drink_updated": "Updated!",
+    "delete_drink": "Delete Drink",
+    "delete_drink_confirm": "Delete {{name}}?",
+    "delete": "Delete",
+    "added_drink": "Added {{amount}}ml {{name}}",
+    "done": "Done"
   }
 }

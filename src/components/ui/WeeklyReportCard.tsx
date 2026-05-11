@@ -85,7 +85,7 @@ export default function WeeklyReportCard({
           type="button"
           onClick={onGenerate}
           disabled={isLoading}
-          className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm font-black text-white transition-all hover:bg-white/10 disabled:cursor-wait disabled:opacity-60"
+          className="flex h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-black text-white transition-all hover:bg-white/10 disabled:cursor-wait disabled:opacity-60"
         >
           <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
           {report ? 'Làm mới' : 'Tạo ngay'}

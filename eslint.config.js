@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', '.kilo/**', 'android/**', 'ios/**', '.eslint-report.json']),
+  globalIgnores(['dist', '.history/**', '.kilo/**', 'android/**', 'ios/**', '.eslint-report.json']),
   {
     files: ['**/*.{ts,tsx}'],
     linterOptions: {

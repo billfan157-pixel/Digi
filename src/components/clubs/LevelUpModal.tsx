@@ -40,7 +40,7 @@ export default function LevelUpModal() {
 
           <p className="text-slate-600 dark:text-slate-400 text-sm mb-8">Phần thưởng và thử thách mới đã được mở khóa. Hãy tiếp tục cố gắng nhé!</p>
 
-          <button onClick={onClose} className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white font-bold active:scale-95 transition-all hover:bg-slate-200 dark:hover:bg-white/20">
+          <button onClick={onClose} className="w-full py-4 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white font-bold active:scale-95 transition-all hover:bg-slate-200 dark:hover:bg-white/20">
             Tuyệt vời!
           </button>
         </div>

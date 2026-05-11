@@ -19,6 +19,13 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 type CalendarProxyAction = 'list-events';
 
+type CalendarProxyRequestBody = {
+  action?: CalendarProxyAction;
+  maxResults?: number;
+  providerToken?: string;
+  providerRefreshToken?: string;
+};
+
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -72,8 +79,36 @@ async function resolveGoogleAccessToken(
   // deno-lint-ignore no-explicit-any
   userSupabase: any,
   userId: string,
+  providerToken = '',
+  providerRefreshToken = '',
 ): Promise<{ token: string | null; needsReauth: boolean }> {
-  // Step 1: Try the session's provider_token
+  // Step 1: Try the provider token passed by the authenticated client.
+  if (providerToken) {
+    const testResponse = await fetch(
+      `${CALENDAR_API_BASE}/calendars/primary?fields=id`,
+      { headers: { Authorization: `Bearer ${providerToken}` } },
+    );
+
+    if (testResponse.ok) {
+      return { token: providerToken, needsReauth: false };
+    }
+
+    if ((testResponse.status === 401 || testResponse.status === 403) && providerRefreshToken) {
+      const refreshed = await refreshGoogleAccessToken(providerRefreshToken);
+      if (refreshed) {
+        return { token: refreshed, needsReauth: false };
+      }
+    }
+  }
+
+  if (providerRefreshToken) {
+    const refreshed = await refreshGoogleAccessToken(providerRefreshToken);
+    if (refreshed) {
+      return { token: refreshed, needsReauth: false };
+    }
+  }
+
+  // Step 2: Try the session's provider_token when available.
   try {
     const { data: sessionData } = await userSupabase.auth.getSession();
     const session = sessionData?.session;
@@ -100,7 +135,7 @@ async function resolveGoogleAccessToken(
       }
     }
 
-    // Step 2: Try refresh token from session even if provider_token was missing
+    // Step 3: Try refresh token from session even if provider_token was missing
     if (session?.provider_refresh_token) {
       const refreshed = await refreshGoogleAccessToken(session.provider_refresh_token);
       if (refreshed) {
@@ -111,7 +146,7 @@ async function resolveGoogleAccessToken(
     console.error('Error resolving session token:', error);
   }
 
-  // Step 3: Try admin API to get the refresh token from auth.users
+  // Step 4: Try admin API to get the refresh token from auth.users
   if (SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -205,17 +240,24 @@ Deno.serve(async (request: Request) => {
   }
 
   try {
-    const body = (await request.json()) as Record<string, unknown>;
-    const action = body.action as CalendarProxyAction;
+    const body = (await request.json()) as CalendarProxyRequestBody;
+    const action = body.action;
 
     if (action !== 'list-events') {
       return json({ error: `Unsupported action "${action}".` }, 400);
     }
 
     const maxResults = typeof body.maxResults === 'number' ? body.maxResults : 10;
+    const providerToken = typeof body.providerToken === 'string' ? body.providerToken : '';
+    const providerRefreshToken = typeof body.providerRefreshToken === 'string' ? body.providerRefreshToken : '';
 
     // Resolve a valid Google access token
-    const { token, needsReauth } = await resolveGoogleAccessToken(userSupabase, user.id);
+    const { token, needsReauth } = await resolveGoogleAccessToken(
+      userSupabase,
+      user.id,
+      providerToken,
+      providerRefreshToken,
+    );
 
     if (needsReauth || !token) {
       return json({ needs_reauth: true, events: [] });

@@ -1,0 +1,1 @@
+-- Baseline: đã có trong lịch sử remote. File stub để đồng bộ thư mục migration với DB.

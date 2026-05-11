@@ -280,7 +280,7 @@ export default function ClubsView({ userId }: { userId: string }) {
 
             <button
               onClick={handleOpenCreateModal}
-              className="bg-gradient-to-r from-cyan-400 to-blue-600 text-white px-4 py-2 rounded-2xl text-xs font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform"
+              className="bg-gradient-to-r from-cyan-400 to-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform"
             >
               + Tạo Bang
             </button>
@@ -473,7 +473,7 @@ export default function ClubsView({ userId }: { userId: string }) {
               <button
                 type="submit"
                 disabled={isCreating}
-                className="w-full py-4 rounded-2xl bg-cyan-500 text-black font-black text-sm shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform disabled:opacity-50"
+                className="w-full py-4 rounded-xl bg-cyan-500 text-black font-black text-sm shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform disabled:opacity-50"
               >
                 {isCreating ? "ĐANG TRIỆU TẬP..." : "XÁC NHẬN LẬP BANG"}
               </button>

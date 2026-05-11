@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
+import { useAppStore } from '../store/useAppStore';
 
 export const CALENDAR_OAUTH_PENDING_KEY = 'digiwell_pending_calendar_oauth';
 export const CALENDAR_TOKEN_UPDATED_EVENT = 'digiwell:google-provider-token-updated';
@@ -65,10 +66,9 @@ function readCalendarOAuthPendingFlag() {
 function writeCalendarOAuthPendingFlag(value: boolean) {
   if (value) {
     window.sessionStorage.setItem(CALENDAR_OAUTH_PENDING_KEY, 'true');
-    localStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
+    localStorage.setItem(CALENDAR_OAUTH_PENDING_KEY, 'true'); // persist qua redirect
     return;
   }
-
   window.sessionStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
   localStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
 }
@@ -161,7 +161,12 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
   }
 
   const { data, error } = await supabase.functions.invoke('calendar-proxy', {
-    body: { action: 'list-events', maxResults: 10 },
+    body: {
+      action: 'list-events',
+      maxResults: 10,
+      providerToken: session.provider_token,
+      providerRefreshToken: session.provider_refresh_token,
+    },
   });
 
   if (error) {
@@ -179,10 +184,26 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
 export function useCalendarSync() {
   const [isCalendarSynced, setIsCalendarSynced] = useState(false);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountRef = useRef(0);
+
+  // Sync local state to global store so parent components see it
+  const syncToStore = useCallback(() => {
+    useAppStore.getState().setAppState({ isCalendarSynced: true });
+  }, []);
+
+  const clearRetry = useCallback(() => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+    retryCountRef.current = 0;
+  }, []);
 
   const syncCalendar = useCallback(async (
     options: { silent?: boolean; startOAuthIfNeeded?: boolean } = {},
-  ) => {
+  ): Promise<number | false> => {
     const { silent = false, startOAuthIfNeeded = true } = options;
     const tid = silent ? '' : toast.loading('Dang quet lich trinh Google Calendar...');
 
@@ -191,13 +212,13 @@ export function useCalendarSync() {
 
       // Server says the token is expired or missing — start OAuth
       if (proxyResponse.needs_reauth) {
-        if (!startOAuthIfNeeded) return;
+        if (!startOAuthIfNeeded) return false;
 
         await beginGoogleCalendarOAuth();
         if (!silent) {
           toast.success('Dang mo Google de ket noi Calendar. Hoan tat OAuth de app tiep tuc dong bo.', { id: tid });
         }
-        return;
+        return false;
       }
 
       const events = (proxyResponse.events || [])
@@ -206,6 +227,8 @@ export function useCalendarSync() {
 
       setCalendarEvents(events);
       setIsCalendarSynced(true);
+      syncToStore();
+      clearRetry();
       writeCalendarOAuthPendingFlag(false);
 
       if (!silent) {
@@ -216,6 +239,7 @@ export function useCalendarSync() {
           { id: tid },
         );
       }
+      return events.length;
     } catch (error) {
       setIsCalendarSynced(false);
       setCalendarEvents([]);
@@ -223,27 +247,81 @@ export function useCalendarSync() {
         const message = error instanceof Error ? error.message : 'Loi dong bo lich trinh.';
         toast.error(message, { id: tid });
       }
+      return false;
     }
-  }, []);
+  }, [syncToStore, clearRetry]);
+
+  // After OAuth redirect, retry sync with backoff until token is ready
+  const scheduleRetry = useCallback(() => {
+    clearRetry();
+    setIsSyncing(true);
+    const tid = toast.loading('⏳ Đang đồng bộ Google Calendar sau khi xác thực...', { duration: Infinity });
+    // Helper to update toast text
+    const updateToast = (msg: string) => toast.loading(msg, { id: tid, duration: Infinity });
+    const retry = async () => {
+      retryCountRef.current++;
+      const attempt = retryCountRef.current;
+      console.log(`[Calendar] Retry #${attempt}...`);
+      updateToast(`⏳ Đang thử kết nối Google Calendar (lần ${attempt}/8)...`);
+      const result = await syncCalendar({ silent: true, startOAuthIfNeeded: false });
+      if (result !== false) {
+        toast.dismiss(tid);
+        setIsSyncing(false);
+        if (result > 0) {
+          toast.success(`✅ Đã đồng bộ ${result} sự kiện từ Google Calendar!`, { duration: 5000 });
+        } else {
+          toast.success('✅ Đã kết nối Google Calendar. Không có sự kiện trong tuần này.', { duration: 4000 });
+        }
+        return;
+      }
+      if (attempt < 8) {
+        const delayMs = Math.min(1500 * attempt, 8000);
+        console.log(`[Calendar] Retry #${attempt} failed, next in ${delayMs}ms`);
+        updateToast(`⏳ Đồng bộ chưa sẵn sàng, thử lại sau ${Math.round(delayMs/1000)}s...`);
+        retryTimerRef.current = setTimeout(retry, delayMs);
+      } else {
+        toast.dismiss(tid);
+        setIsSyncing(false);
+        writeCalendarOAuthPendingFlag(false);
+        clearRetry();
+        toast.error('Không thể đồng bộ Google Calendar. Bạn có thể thử lại bằng nút "Kết nối".', { duration: 6000 });
+      }
+    };
+    retryTimerRef.current = setTimeout(retry, 1000); // Start faster: 1s
+  }, [syncCalendar, clearRetry]);
 
   useEffect(() => {
-      const shouldResumeCalendarSync = async () => {
-      if (!readCalendarOAuthPendingFlag()) return;
+    const shouldResumeCalendarSync = async () => {
+      // If pending flag OR no flag but we should try sync silently
+      // to detect if user already has a Google session
+      const isPending = readCalendarOAuthPendingFlag();
+
+      if (isPending) {
+        console.log('[Calendar] OAuth pending flag detected, starting retry...');
+        scheduleRetry();
+        return;
+      }
+
+      // No pending flag — try a silent sync to check if Google is already linked
+      // This handles the case where the flag was lost during redirect
+      console.log('[Calendar] No pending flag, trying silent sync...');
       await syncCalendar({ silent: true, startOAuthIfNeeded: false });
     };
 
     void shouldResumeCalendarSync();
 
     const handleTokenUpdated = () => {
-      void syncCalendar({ silent: true, startOAuthIfNeeded: false });
+      console.log('[Calendar] Token updated event received');
+      scheduleRetry();
     };
 
     window.addEventListener(CALENDAR_TOKEN_UPDATED_EVENT, handleTokenUpdated);
 
     return () => {
       window.removeEventListener(CALENDAR_TOKEN_UPDATED_EVENT, handleTokenUpdated);
+      clearRetry();
     };
-  }, [syncCalendar]);
+  }, [syncCalendar, scheduleRetry, clearRetry]);
 
-  return { isCalendarSynced, setIsCalendarSynced, calendarEvents, syncCalendar };
+  return { isCalendarSynced, setIsCalendarSynced, calendarEvents, syncCalendar, isSyncing };
 }

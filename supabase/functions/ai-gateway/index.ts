@@ -172,6 +172,14 @@ function getErrorMessage(error: unknown): string {
   return raw;
 }
 
+function getErrorStatus(error: unknown): number {
+  const raw = error instanceof Error ? error.message : String(error);
+  if (raw.includes('429') || raw.toLowerCase().includes('rate limit')) return 429;
+  if (raw.includes('401') || raw.toLowerCase().includes('invalid api key')) return 401;
+  if (raw.includes('503') || raw.toLowerCase().includes('unavailable')) return 503;
+  return 500;
+}
+
 async function enforceRateLimit(
   supabase: ReturnType<typeof createClient>,
   action: AiGatewayAction,
@@ -181,8 +189,8 @@ async function enforceRateLimit(
   });
 
   if (error) {
-    console.error('AI usage limit check failed:', error.message);
-    return json({ error: 'Không thể kiểm tra giới hạn AI.' }, 500);
+    console.error('AI usage limit check failed:', error.message, JSON.stringify(error));
+    return json({ error: `Không thể kiểm tra giới hạn AI: ${error.message}` }, 500);
   }
 
   const usage = data as AiUsageResult | null;
@@ -477,6 +485,8 @@ Trả về JSON thuần:
 
     return json({ error: `Unsupported action "${action}".` }, 400);
   } catch (error) {
-    return json({ error: getErrorMessage(error) }, 500);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('[ai-gateway] Unhandled error:', msg);
+    return json({ error: getErrorMessage(error) }, getErrorStatus(error));
   }
 });
