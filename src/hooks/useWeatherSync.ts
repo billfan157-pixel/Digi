@@ -6,10 +6,17 @@ import { toast } from 'sonner';
 import { useState, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 
+const WEATHER_SYNC_TOAST_ID = 'weather-sync';
+const WEATHER_SYNC_LOADING_DURATION = 4000;
+const WEATHER_SYNC_RESULT_DURATION = 5000;
+
 // Hàm logic chính (Đã tối ưu cho iOS thật)
 export const syncWeatherAndWaterGoal = async () => {
   try {
-    toast.loading('📡 Đang kiểm tra quyền vị trí...', { duration: 2000 });
+    toast.loading('Đang kiểm tra quyền vị trí...', {
+      id: WEATHER_SYNC_TOAST_ID,
+      duration: WEATHER_SYNC_LOADING_DURATION,
+    });
 
     // 0. Kiểm tra và yêu cầu permission trước (quan trọng cho web)
     const isNative = Capacitor.isNativePlatform();
@@ -19,7 +26,10 @@ export const syncWeatherAndWaterGoal = async () => {
     if (!isNative) {
       // Trên web, dùng Web Geolocation API
       if (!navigator.geolocation) {
-        toast.error('Trình duyệt không hỗ trợ định vị. Vui lòng dùng ứng dụng di động.');
+        toast.error('Trình duyệt không hỗ trợ định vị. Vui lòng dùng ứng dụng di động.', {
+          id: WEATHER_SYNC_TOAST_ID,
+          duration: WEATHER_SYNC_RESULT_DURATION,
+        });
         return false;
       }
       
@@ -36,11 +46,20 @@ export const syncWeatherAndWaterGoal = async () => {
       } catch (geoError: any) {
         const errCode = geoError.code || geoError.PERMISSION_DENIED;
         if (errCode === 1 || errCode === geoError.PERMISSION_DENIED) {
-          toast.error('Bạn đã từ chối cấp quyền vị trí. Vui lòng cho phép truy cập vị trí trong trình duyệt.');
+          toast.error('Bạn đã từ chối cấp quyền vị trí. Vui lòng cho phép truy cập vị trí trong trình duyệt.', {
+            id: WEATHER_SYNC_TOAST_ID,
+            duration: WEATHER_SYNC_RESULT_DURATION,
+          });
         } else if (errCode === 3 || errCode === geoError.TIMEOUT) {
-          toast.error('Hết thời gian định vị. Hãy thử lại ở nơi có GPS tốt hơn.');
+          toast.error('Hết thời gian định vị. Hãy thử lại ở nơi có GPS tốt hơn.', {
+            id: WEATHER_SYNC_TOAST_ID,
+            duration: WEATHER_SYNC_RESULT_DURATION,
+          });
         } else {
-          toast.error('Không thể lấy vị trí: ' + (geoError.message || 'Lỗi không xác định'));
+          toast.error('Không thể lấy vị trí: ' + (geoError.message || 'Lỗi không xác định'), {
+            id: WEATHER_SYNC_TOAST_ID,
+            duration: WEATHER_SYNC_RESULT_DURATION,
+          });
         }
         return false;
       }
@@ -51,7 +70,10 @@ export const syncWeatherAndWaterGoal = async () => {
         if (permStatus.location !== 'granted') {
           const request = await Geolocation.requestPermissions();
           if (request.location !== 'granted') {
-            toast.error('Bạn đã từ chối cấp quyền vị trí. Vào Cài đặt > DigiWell > Vị trí để cho phép.');
+            toast.error('Bạn đã từ chối cấp quyền vị trí. Vào Cài đặt > DigiWell > Vị trí để cho phép.', {
+              id: WEATHER_SYNC_TOAST_ID,
+              duration: WEATHER_SYNC_RESULT_DURATION,
+            });
             return false;
           }
         }
@@ -65,19 +87,28 @@ export const syncWeatherAndWaterGoal = async () => {
         longitude = coordinates.coords.longitude;
       } catch (nativeError: any) {
         console.error('❌ Lỗi native geolocation:', nativeError);
-        toast.error('Không thể lấy vị trí: ' + (nativeError.message || 'Lỗi không xác định'));
+        toast.error('Không thể lấy vị trí: ' + (nativeError.message || 'Lỗi không xác định'), {
+          id: WEATHER_SYNC_TOAST_ID,
+          duration: WEATHER_SYNC_RESULT_DURATION,
+        });
         return false;
       }
     }
 
     if (latitude === null || longitude === null) {
-      toast.error('Không lấy được tọa độ vị trí.');
+      toast.error('Không lấy được tọa độ vị trí.', {
+        id: WEATHER_SYNC_TOAST_ID,
+        duration: WEATHER_SYNC_RESULT_DURATION,
+      });
       return false;
     }
     
     console.log('📍 Vị trí tìm thấy:', latitude, longitude);
 
-    toast.loading('🌤️ Đang lấy dữ liệu thời tiết...', { duration: 2000 });
+    toast.loading('Đang lấy dữ liệu thời tiết...', {
+      id: WEATHER_SYNC_TOAST_ID,
+      duration: WEATHER_SYNC_LOADING_DURATION,
+    });
 
     // 2. Gọi Weather Engine lấy dữ liệu thời tiết
     const weather = await getWeatherData({
@@ -85,7 +116,10 @@ export const syncWeatherAndWaterGoal = async () => {
     });
 
     if (!weather) {
-      toast.error('Không thể lấy dữ liệu thời tiết. Vui lòng thử lại.');
+      toast.error('Không thể lấy dữ liệu thời tiết. Vui lòng thử lại.', {
+        id: WEATHER_SYNC_TOAST_ID,
+        duration: WEATHER_SYNC_RESULT_DURATION,
+      });
       return false;
     }
 
@@ -125,9 +159,12 @@ export const syncWeatherAndWaterGoal = async () => {
         message += `Trời mát, mục tiêu giữ nguyên.`;
       }
       
-      toast.success(message, { duration: 6000 });
+      toast.success(message, { id: WEATHER_SYNC_TOAST_ID, duration: 6000 });
     } else {
-      toast.info(`Thời tiết ôn hòa (${Math.round(weather.temp)}°C), không cần điều chỉnh lượng nước.`);
+      toast.info(`Thời tiết ôn hòa (${Math.round(weather.temp)}°C), không cần điều chỉnh lượng nước.`, {
+        id: WEATHER_SYNC_TOAST_ID,
+        duration: WEATHER_SYNC_RESULT_DURATION,
+      });
     }
     
     return true;
@@ -137,13 +174,25 @@ export const syncWeatherAndWaterGoal = async () => {
     
     // Xử lý các lỗi đặc thù của iOS
     if (error.message?.includes('permission') || error.code === 'UNAVAILABLE') {
-      toast.error('Bạn đã từ chối cấp quyền vị trí. Vui lòng vào Cài đặt > DigiWell > Vị trí > Chọn "Khi dùng ứng dụng".', { duration: 8000 });
+      toast.error('Bạn đã từ chối cấp quyền vị trí. Vui lòng vào Cài đặt > DigiWell > Vị trí > Chọn "Khi dùng ứng dụng".', {
+        id: WEATHER_SYNC_TOAST_ID,
+        duration: 8000,
+      });
     } else if (error.message?.includes('timeout')) {
-      toast.error('Hết thời gian chờ định vị. Hãy thử lại ở nơi thoáng đãng hơn hoặc bật GPS.', { duration: 6000 });
+      toast.error('Hết thời gian chờ định vị. Hãy thử lại ở nơi thoáng đãng hơn hoặc bật GPS.', {
+        id: WEATHER_SYNC_TOAST_ID,
+        duration: 6000,
+      });
     } else if (error.message?.includes('network')) {
-      toast.error('Lỗi kết nối mạng khi lấy thời tiết.');
+      toast.error('Lỗi kết nối mạng khi lấy thời tiết.', {
+        id: WEATHER_SYNC_TOAST_ID,
+        duration: WEATHER_SYNC_RESULT_DURATION,
+      });
     } else {
-      toast.error('Lỗi: ' + (error.message || 'Không xác định'));
+      toast.error('Lỗi: ' + (error.message || 'Không xác định'), {
+        id: WEATHER_SYNC_TOAST_ID,
+        duration: WEATHER_SYNC_RESULT_DURATION,
+      });
     }
     return false;
   }

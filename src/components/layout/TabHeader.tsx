@@ -7,6 +7,8 @@ interface TabHeaderProps {
   title: React.ReactNode;
   profile?: Profile | null;
   actionIcon?: React.ReactNode;
+  actionDisabled?: boolean;
+  actionLabel?: string;
   onActionClick?: () => void;
   onAvatarClick?: () => void;
 }
@@ -17,6 +19,8 @@ export default function TabHeader({
   title,
   profile,
   actionIcon,
+  actionDisabled = false,
+  actionLabel,
   onActionClick,
   onAvatarClick,
 }: TabHeaderProps) {
@@ -32,7 +36,9 @@ export default function TabHeader({
         {actionIcon && (
           <button
             onClick={onActionClick}
-            className="w-11 h-11 rounded-xl bg-slate-800/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-cyan-400 hover:bg-cyan-500/15 active:scale-90 transition-all duration-200 ease-out shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.2)] group"
+            disabled={actionDisabled}
+            aria-label={actionLabel}
+            className="w-11 h-11 rounded-xl bg-slate-800/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-cyan-400 hover:bg-cyan-500/15 active:scale-90 transition-all duration-200 ease-out disabled:opacity-50 shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.2)] group"
           >
             <span className="group-hover:scale-110 transition-transform flex items-center justify-center">
               {actionIcon}

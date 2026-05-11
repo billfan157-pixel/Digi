@@ -52,24 +52,45 @@ export function useAppSystem() {
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       const sub = CapacitorApp.addListener('appUrlOpen', async (event) => {
-        if (
-          event.url.includes('login-callback') ||
-          event.url.includes('access_token') ||
-          event.url.includes('code=')
-        ) {
-          Browser.close().catch(() => { });
-          const urlStr = event.url;
-          if (urlStr.includes('#') || urlStr.includes('?')) {
-            const fragment = urlStr.substring(urlStr.indexOf(urlStr.includes('?') ? '?' : '#'));
-            window.location.href = `${window.location.origin}${window.location.pathname}${fragment}`;
+        try {
+          if (
+            event.url.includes('login-callback') ||
+            event.url.includes('access_token') ||
+            event.url.includes('code=')
+          ) {
+            Browser.close().catch(() => { });
+            const urlStr = event.url;
+            const callbackUrl = new URL(urlStr);
+            const hashParams = new URLSearchParams(callbackUrl.hash.replace(/^#/, ''));
+            const code = callbackUrl.searchParams.get('code') || hashParams.get('code');
+            const accessToken = hashParams.get('access_token') || callbackUrl.searchParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token') || callbackUrl.searchParams.get('refresh_token');
 
-            setTimeout(async () => {
-              const { data } = await supabase!.auth.getSession();
+            if (code) {
+              const { data, error } = await supabase!.auth.exchangeCodeForSession(code);
+              if (error) throw error;
               if (data?.session) {
                 setView('app');
+                window.dispatchEvent(new CustomEvent(CALENDAR_TOKEN_UPDATED_EVENT));
               }
-            }, 500);
+              return;
+            }
+
+            if (accessToken && refreshToken) {
+              const { data, error } = await supabase!.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (error) throw error;
+              if (data?.session) {
+                setView('app');
+                window.dispatchEvent(new CustomEvent(CALENDAR_TOKEN_UPDATED_EVENT));
+              }
+              return;
+            }
           }
+        } catch (error) {
+          console.error('[OAuth callback]', error);
         }
       });
       return () => { sub.then(s => s.remove()); };

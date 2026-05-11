@@ -161,7 +161,12 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
   }
 
   const { data, error } = await supabase.functions.invoke('calendar-proxy', {
-    body: { action: 'list-events', maxResults: 10 },
+    body: {
+      action: 'list-events',
+      maxResults: 10,
+      providerToken: session.provider_token,
+      providerRefreshToken: session.provider_refresh_token,
+    },
   });
 
   if (error) {

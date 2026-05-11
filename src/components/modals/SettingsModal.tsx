@@ -17,11 +17,11 @@ import type { DeleteOption } from '../../hooks/useDeleteAccount';
 import type { Profile } from '../../models';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { registerPlugin } from '@capacitor/core';
-import { Capacitor } from '@capacitor/core';
 import Cropper from 'react-easy-crop';
 
 import { AppStorage } from '@/lib/storage';
 import { syncWeatherAndWaterGoal } from '@/hooks/useWeatherSync';
+import { requestHealthReadStepsAndHeartRate } from '@/lib/healthIntegration';
 
 // Khai báo Plugin tự chế
 const WidgetPlugin = registerPlugin<any>('WidgetPlugin');
@@ -250,69 +250,11 @@ export default function SettingsModal() {
   };
 
   const handleSyncAppleHealth = async () => {
-    console.log('🍎 [START] Bắt đầu kết nối Apple Health...');
-
-    // 1. Kiểm tra nền tảng
-    if (!Capacitor.isNativePlatform()) {
-      toast.error('Tính năng này chỉ hoạt động trên ứng dụng iOS/Android thật.');
-      return;
+    const granted = await requestHealthReadStepsAndHeartRate();
+    if (granted) {
+      toast.success('Đã kết nối Apple Health / Health Connect.');
     }
-
-    try {
-      // 2. Import động plugin để tránh lỗi lúc khởi động app
-      const { Health } = await import('@capgo/capacitor-health');
-
-      // 3. Kiểm tra tính khả dụng (Dùng try-catch riêng vì hay crash ở đây)
-      let isAvailable = false;
-      try {
-        const check = await Health.isAvailable();
-        // Plugin trả về object { value: boolean } hoặc boolean trực tiếp
-        isAvailable = typeof check === 'object' ? (check as any).value : check;
-      } catch (err) {
-        console.error('❌ Lỗi khi kiểm tra isAvailable:', err);
-        toast.error('Thiết bị không hỗ trợ Apple Health hoặc chưa cấu hình đúng.');
-        return;
-      }
-
-      if (!isAvailable) {
-        toast.error('Apple Health không khả dụng trên thiết bị này.');
-        return;
-      }
-
-      // 4. Yêu cầu quyền truy cập (SỬA LỖI dataTypes)
-      console.log('🍎 Đang yêu cầu quyền...');
-      
-      let granted = false;
-      try {
-        // Cách 1: Thử gọi với cú pháp mới nhất (nếu plugin hỗ trợ)
-        // Nếu vẫn lỗi TypeScript, hãy dùng 'any' để bypass check type
-        const result = await Health.requestAuthorization({
-          read: ['steps', 'heartRate', 'activeEnergy', 'water'],
-          write: ['water']
-        } as any); // <-- Quan trọng: Cast 'as any' để tránh lỗi TypeScript
-
-        granted = typeof result === 'object' ? (result as any).value : result;
-      } catch (err) {
-        console.error('Lỗi khi requestAuthorization:', err);
-        // Fallback: Thử gọi không tham số nếu cách trên fail (một số version cũ yêu cầu cấu hình trong Info.plist trước)
-        const resultFallback = await Health.requestAuthorization({} as any);
-        granted = typeof resultFallback === 'object' ? (resultFallback as any).value : resultFallback;
-      }
-
-      console.log('🍎 Kết quả cấp quyền:', granted);
-
-      if (granted) {
-        toast.success('Đã kết nối thành công! Dữ liệu sẽ được đồng bộ.');
-        // Gọi hàm đọc dữ liệu ở đây nếu cần
-      } else {
-        toast.warning('Bạn đã từ chối cấp quyền.');
-      }
-
-    } catch (error: any) {
-      console.error('💥 CRITICAL ERROR Apple Health:', error);
-      // Hiển thị lỗi chi tiết ra màn hình để debug
-      toast.error('Lỗi nghiêm trọng: ' + (error.message || JSON.stringify(error)));
-    }
+    return granted;
   };
 
   const formatVol = (ml: number) => settings.unit === 'oz' ? `${(ml * 0.033814).toFixed(1)} oz` : `${ml} ml`;
@@ -396,10 +338,16 @@ export default function SettingsModal() {
 
                 <button onClick={async () => { 
                   triggerHaptic(); 
-                  if (!settings.syncHealth) {
-                    await handleSyncAppleHealth();
+                  if (settings.syncHealth) {
+                    updateSettings({ syncHealth: false });
+                    return;
                   }
-                  updateSettings({ syncHealth: !settings.syncHealth }); 
+
+                  if (!settings.syncHealth) {
+                    const granted = await handleSyncAppleHealth();
+                    if (!granted) return;
+                  }
+                  updateSettings({ syncHealth: true });
                 }} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center"><Heart size={18} /></div>
