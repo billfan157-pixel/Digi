@@ -4,7 +4,7 @@ import type { FeedFilter, FeedMode } from './types';
 interface EmptyFeedStateProps {
   feedSearch: string;
   feedFilter: FeedFilter;
-  closeCircleCount: number;
+  friendCount: number;
   onFilterChange: (filter: FeedFilter) => void;
   onModeChange: (mode: FeedMode) => void;
   onOpenDiscoverPeople: () => void;
@@ -36,13 +36,13 @@ const EMPTY_STATE_BY_FILTER: Record<FeedFilter, { title: string; description: st
 export const EmptyFeedState = ({
   feedSearch,
   feedFilter,
-  closeCircleCount,
+  friendCount,
   onFilterChange,
   onModeChange,
   onOpenDiscoverPeople,
 }: EmptyFeedStateProps) => {
-  const state = !feedSearch && closeCircleCount === 0
-    ? { title: 'Close Circle đang trống', description: 'Thêm 3 bạn thân để Pulse, Drop và Duel có người phản hồi thật.' }
+  const state = !feedSearch && friendCount === 0
+    ? { title: 'Chưa có bạn bè', description: 'Thêm bạn để xem Drop, nhận Duel và giữ nhịp uống nước cùng nhau.' }
     : feedSearch
     ? { title: 'Không tìm thấy bài phù hợp', description: 'Thử đổi từ khóa hoặc chuyển chế độ xem khác.' }
     : EMPTY_STATE_BY_FILTER[feedFilter];

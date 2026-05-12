@@ -13,7 +13,8 @@ interface SocialProfileModalProps {
   streak: number;
   socialError: string;
   socialProfileStats: SocialProfileStats;
-  openSocialComposer: (kind: 'status' | 'story') => void;
+  openSocialComposer: (kind: 'status') => void;
+  openQuickDropCamera: () => void;
   setShowDiscoverPeople: (show: boolean) => void;
   completionPercent: number;
   remainingWater: number;
@@ -30,6 +31,7 @@ export default function SocialProfileModal({
   socialError,
   socialProfileStats,
   openSocialComposer,
+  openQuickDropCamera,
   setShowDiscoverPeople,
   completionPercent,
   remainingWater
@@ -126,7 +128,7 @@ export default function SocialProfileModal({
                 <button
                   onClick={() => {
                     setShowSocialProfile(false);
-                    openSocialComposer('story');
+                    openQuickDropCamera();
                   }}
                   className="py-3 rounded-xl bg-fuchsia-500/12 border border-fuchsia-500/25 text-fuchsia-300 text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all"
                 >

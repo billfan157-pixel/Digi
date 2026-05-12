@@ -1,5 +1,5 @@
 import { useState, memo } from 'react';
-import { Camera, Swords, BookOpen } from 'lucide-react';
+import { Activity, Droplets, Swords } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
@@ -12,29 +12,31 @@ import { QuickChallengeComposer } from './QuickChallengeComposer';
 
 interface FeedComposerProps {
   profile: Profile | null;
-  onCreateStory: () => void;
+  onCreateDrop: () => void;
 }
 
 interface QuickAction {
   kind: Exclude<SignaturePostKind, 'peak' | 'proof'>;
   label: string;
-  icon: typeof Camera;
-  gradient: string;
+  helper: string;
+  icon: typeof Activity;
+  className: string;
   borderColor: string;
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { kind: 'pulse', label: 'Pulse', icon: Camera, gradient: 'from-cyan-500/20 to-blue-500/20', borderColor: 'border-cyan-500/30' },
-  { kind: 'drop', label: 'Drop', icon: BookOpen, gradient: 'from-sky-500/20 to-cyan-500/20', borderColor: 'border-sky-500/30' },
-  { kind: 'duel', label: 'Duel', icon: Swords, gradient: 'from-purple-500/20 to-fuchsia-500/20', borderColor: 'border-purple-500/30' },
+  { kind: 'pulse', label: 'Pulse', helper: 'Bài viết nhanh', icon: Activity, className: 'bg-cyan-500/10 text-cyan-200', borderColor: 'border-cyan-500/30' },
+  { kind: 'drop', label: 'Drop', helper: 'Chụp & đăng', icon: Droplets, className: 'bg-emerald-500/10 text-emerald-200', borderColor: 'border-emerald-500/30' },
+  { kind: 'duel', label: 'Duel', helper: 'Rủ bạn đua', icon: Swords, className: 'bg-purple-500/10 text-purple-200', borderColor: 'border-purple-500/30' },
 ];
 
-export const FeedComposer = memo(function FeedComposer({ profile, onCreateStory }: FeedComposerProps) {
+export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }: FeedComposerProps) {
   const { waterIntake, waterGoal, streak } = useAppStore(useShallow(s => ({
     waterIntake: s.waterIntake,
     waterGoal: s.waterGoal,
     streak: s.streak,
   })));
+  const progressPercent = Math.min(100, Math.round((waterIntake / Math.max(waterGoal, 1)) * 100));
 
   const [activeComposer, setActiveComposer] = useState<Extract<SignaturePostKind, 'pulse' | 'duel'> | null>(null);
 
@@ -45,6 +47,7 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateStory 
     content: string;
     imageUrl?: string;
     postKind: 'pulse' | 'duel';
+    visibility?: 'public' | 'followers';
     extra?: Record<string, any>;
   }) => {
     if (!profile?.id) {
@@ -80,7 +83,7 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateStory 
         post_kind: persistedPostKind,
         hydration_ml: waterIntake,
         streak_snapshot: streak,
-        visibility: 'followers',
+        visibility: postData.postKind === 'duel' ? 'followers' : postData.visibility || 'followers',
         ...postData.extra,
       }).select('id').single();
       if (error) throw error;
@@ -111,10 +114,10 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateStory 
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-slate-200">{name}</p>
-            <p className="truncate text-xs text-slate-400">Ghi lại Pulse hôm nay...</p>
+            <p className="truncate text-xs text-slate-400">Pulse: {progressPercent}% mục tiêu - {streak} ngày</p>
           </div>
-          <div className="shrink-0 rounded-xl border border-cyan-400/15 bg-cyan-400/10 px-3 py-2 text-xs font-medium text-cyan-300 transition-colors group-hover:bg-cyan-400/15">
-            Đăng
+          <div className="shrink-0 rounded-xl border border-cyan-400/15 bg-cyan-400/10 px-3 py-2 text-xs font-bold text-cyan-300 transition-colors group-hover:bg-cyan-400/15">
+            Tạo Pulse
           </div>
         </div>
       </button>
@@ -126,15 +129,22 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateStory 
             key={action.kind}
             onClick={() => {
               if (action.kind === 'drop') {
-                onCreateStory();
+                onCreateDrop();
               } else {
                 setActiveComposer(action.kind);
               }
             }}
-            className={`flex min-w-0 items-center justify-center gap-1.5 rounded-xl border ${action.borderColor} bg-slate-800/40 px-2 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700/50 active:scale-95 transition-all`}
+            className={`min-w-0 rounded-2xl border ${action.borderColor} ${action.className} px-2.5 py-3 text-left active:scale-[0.97] transition-all`}
           >
-            <action.icon size={14} />
-            <span className="truncate">{action.label}</span>
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-slate-950/40">
+                <action.icon size={15} />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-xs font-black">{action.label}</span>
+                <span className="block truncate text-[10px] font-semibold opacity-70">{action.helper}</span>
+              </span>
+            </div>
           </button>
         ))}
       </div>

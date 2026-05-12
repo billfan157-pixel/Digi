@@ -25,6 +25,7 @@ export interface FeedTabProps {
   closeCircleIds: string[];
   isCloseCircleLoading: boolean;
   openSocialComposer: (kind: SocialComposerKind) => void;
+  openQuickDropCamera: () => void;
   setShowSocialProfile: (show: boolean) => void;
   setShowDiscoverPeople: (show: boolean) => void;
   handleToggleLikePost: (post: SocialFeedPost) => void;

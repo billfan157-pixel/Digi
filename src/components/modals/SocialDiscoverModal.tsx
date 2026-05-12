@@ -31,8 +31,8 @@ export default function SocialDiscoverModal({
       <div className="w-full max-w-md min-h-screen overflow-y-auto scrollbar-hide">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 pt-6 pb-4 border-b border-slate-800 bg-slate-950/85 backdrop-blur-md">
           <div>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Close Circle</p>
-            <h3 className="text-2xl font-black text-white mt-1">Bạn thân</h3>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Bạn bè</p>
+            <h3 className="text-2xl font-black text-white mt-1">Kết nối</h3>
           </div>
           <button onClick={() => setShowDiscoverPeople(false)} className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold hover:text-white transition-all active:scale-95">
             Đóng
@@ -68,7 +68,7 @@ export default function SocialDiscoverModal({
                       <div className="min-w-0">
                         <p className="text-white text-sm font-bold truncate">{user.nickname}</p>
                         <p className="text-slate-500 text-[11px] mt-1">
-                          {user.isInCircle ? 'Đang trong Circle' : 'Có thể nhận Pulse và Drop'}
+                          {user.isInCircle ? 'Đã là bạn bè' : 'Có thể xem Drop và nhận Duel'}
                         </p>
                       </div>
                     </div>
@@ -93,7 +93,7 @@ export default function SocialDiscoverModal({
               <p className="text-slate-400 text-xs">
                 {socialSearchQuery.trim().length >= 2
                   ? 'Thử nickname ngắn hơn hoặc gần giống hơn.'
-                  : 'Nhập nickname để thêm bạn thân vào Close Circle.'}
+                  : 'Nhập nickname để thêm bạn bè.'}
               </p>
             </div>
           )}

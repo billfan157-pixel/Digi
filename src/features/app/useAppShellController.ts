@@ -203,6 +203,12 @@ export function useAppShellController(): AppShellProps {
       className: 'hidden',
       onChange: processImageScan,
     },
+    quickDropCameraProps: {
+      isOpen: !!socialProps.showQuickDropCamera,
+      isPublishing: !!socialProps.isPublishingQuickDrop,
+      onCapture: socialProps.handleQuickDropCapture || (async () => {}),
+      onClose: socialProps.closeQuickDropCamera || (() => {}),
+    },
     onboardingProps: profile && !profile.onboarding_completed ? {
       profile,
       onComplete: async (weight: number, onboardingWaterGoal: number, name: string) => {

@@ -69,9 +69,9 @@ export function useAppSystem() {
             if (code) {
               const { data, error } = await supabase!.auth.exchangeCodeForSession(code);
               if (error) throw error;
+              window.dispatchEvent(new CustomEvent(CALENDAR_TOKEN_UPDATED_EVENT));
               if (data?.session) {
                 setView('app');
-                window.dispatchEvent(new CustomEvent(CALENDAR_TOKEN_UPDATED_EVENT));
               }
               return;
             }
@@ -82,9 +82,9 @@ export function useAppSystem() {
                 refresh_token: refreshToken,
               });
               if (error) throw error;
+              window.dispatchEvent(new CustomEvent(CALENDAR_TOKEN_UPDATED_EVENT));
               if (data?.session) {
                 setView('app');
-                window.dispatchEvent(new CustomEvent(CALENDAR_TOKEN_UPDATED_EVENT));
               }
               return;
             }

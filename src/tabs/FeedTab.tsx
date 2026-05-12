@@ -4,7 +4,6 @@ import { useFeed } from '../hooks/useFeed';
 import { useNotifications } from '../hooks/useNotifications';
 import type { SocialFeedPost } from '../models';
 import { CommentsView } from './Feed/CommentsView';
-import { CloseCircleRail } from './Feed/CloseCircleRail';
 import { EmptyFeedState } from './Feed/EmptyFeedState';
 import { FeedComposer } from './Feed/FeedComposer';
 import { FeedHeader } from './Feed/FeedHeader';
@@ -28,8 +27,7 @@ const FeedTab = memo(function FeedTab({
    socialFollowingIds,
    closeCircleMembers,
    closeCircleIds,
-   isCloseCircleLoading,
-   openSocialComposer,
+   openQuickDropCamera,
    setShowSocialProfile,
    setShowDiscoverPeople,
    handleToggleLikePost,
@@ -122,21 +120,13 @@ const FeedTab = memo(function FeedTab({
 
       <div className="max-w-[600px] mx-auto mt-3 space-y-5 pb-12">
         <NewPostsBanner count={newPostsCount} onShowNewPosts={showNewPosts} />
-        <CloseCircleRail
-          profile={profile}
-          members={closeCircleMembers}
-          stories={socialStories}
-          isLoading={isCloseCircleLoading}
-          onAddPeople={() => setShowDiscoverPeople(true)}
-          onSelectStory={setActiveStoryIndex}
-        />
-        <FeedComposer profile={profile} onCreateStory={() => openSocialComposer('story')} />
+        <FeedComposer profile={profile} onCreateDrop={openQuickDropCamera} />
         <HydrationStories
           profile={profile}
           socialStories={socialStories}
           storyCount={socialStories.length}
           isSocialLoading={isSocialLoading}
-          onCreateStory={() => openSocialComposer('story')}
+          onCreateStory={openQuickDropCamera}
           onSelectStory={setActiveStoryIndex}
         />
 
@@ -158,7 +148,7 @@ const FeedTab = memo(function FeedTab({
           <EmptyFeedState
             feedSearch={feedSearch}
             feedFilter={feedFilter}
-            closeCircleCount={closeCircleMembers.length}
+            friendCount={closeCircleMembers.length}
             onFilterChange={setFeedFilter}
             onModeChange={setFeedMode}
             onOpenDiscoverPeople={() => setShowDiscoverPeople(true)}

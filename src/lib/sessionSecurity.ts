@@ -33,6 +33,7 @@ const USER_SCOPED_PREFIX_KEYS = [
 
 const GLOBAL_SESSION_KEYS = [
   'digiwell_pending_calendar_oauth',
+  'digiwell_calendar_oauth_mode',
   'digiwell_pending_hydration_actions',
   'digiwell_last_active_hydration_user_id',
   'digiwell_strava_token',

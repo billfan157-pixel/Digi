@@ -43,10 +43,13 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
   const [socialImageFile, setSocialImageFile] = useState<File | null>(null);
   const [socialImagePreview, setSocialImagePreview] = useState('');
   const socialImageInputRef = useRef<HTMLInputElement>(null);
+  const [showQuickDropCamera, setShowQuickDropCamera] = useState(false);
+  const [isPublishingQuickDrop, setIsPublishingQuickDrop] = useState(false);
 
   useEffect(() => {
     if (!profile?.id) {
       setShowSocialComposer(false);
+      setShowQuickDropCamera(false);
       setShowDiscoverPeople(false);
       setShowSocialProfile(false);
       setSocialPosts([]);
@@ -109,16 +112,14 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     if (!options?.silent) setIsCloseCircleLoading(true);
     try {
       const { data: rows, error } = await supabase!
-        .from('widget_partners')
-        .select('partner_id, priority, is_pinned, created_at')
-        .eq('user_id', profile.id)
-        .order('is_pinned', { ascending: false })
-        .order('priority', { ascending: true })
-        .limit(12);
+        .from('social_follows')
+        .select('following_id, created_at')
+        .eq('follower_id', profile.id)
+        .order('created_at', { ascending: false });
       if (error) throw error;
 
       const partnerRows = rows || [];
-      const partnerIds = partnerRows.map((row: any) => row.partner_id).filter(Boolean);
+      const partnerIds = partnerRows.map((row: any) => row.following_id).filter(Boolean);
       if (partnerIds.length === 0) {
         setCloseCircleMembers([]);
         setSocialFollowingIds([]);
@@ -133,16 +134,16 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
 
       const profileMap = new Map((profiles || []).map((row: any) => [row.id, row]));
       const members = partnerRows.map((row: any, index: number) => {
-        const partner = profileMap.get(row.partner_id) || {};
+        const partner = profileMap.get(row.following_id) || {};
         return {
-          id: row.partner_id,
+          id: row.following_id,
           nickname: partner.nickname || 'Bạn DigiWell',
           avatar_url: partner.avatar_url ?? null,
           level: partner.level ?? null,
           water_today: partner.water_today ?? null,
           water_goal: partner.water_goal ?? null,
           priority: row.priority ?? index + 1,
-          is_pinned: !!row.is_pinned,
+          is_pinned: false,
         } satisfies CloseCircleMember;
       });
 
@@ -162,6 +163,12 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
   const openSocialComposer = (kind: SocialComposerState['postKind'] = 'status') => {
     if (!profile?.id) {
       toast.error('Vui lòng đăng nhập lại để đăng bài.');
+      return;
+    }
+
+    if (kind === 'story') {
+      setActiveTab('feed');
+      setShowQuickDropCamera(true);
       return;
     }
 
@@ -380,6 +387,55 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     event.target.value = '';
   };
 
+  const openQuickDropCamera = () => {
+    if (!profile?.id) {
+      toast.error('Vui lòng đăng nhập lại để đăng Drop.');
+      return;
+    }
+
+    setActiveTab('feed');
+    setShowQuickDropCamera(true);
+  };
+
+  const closeQuickDropCamera = () => {
+    setShowQuickDropCamera(false);
+  };
+
+  const handleQuickDropCapture = async (blob: Blob) => {
+    if (!profile?.id) {
+      toast.error('Vui lòng đăng nhập lại để đăng Drop.');
+      return;
+    }
+
+    const file = new File([blob], `drop-${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' });
+    setIsPublishingQuickDrop(true);
+    const toastId = toast.loading('Đang đăng Drop...');
+    try {
+      const imageUrl = await uploadSocialImage(file);
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase!.from('social_posts').insert({
+        author_id: profile.id,
+        content: '',
+        image_url: imageUrl,
+        post_kind: 'story',
+        visibility: 'followers',
+        hydration_ml: waterIntake,
+        streak_snapshot: streak,
+        expires_at: expiresAt,
+      }).select('id').single();
+      if (error) throw error;
+      if (!data?.id) throw new Error('Không nhận được Drop vừa tạo.');
+
+      toast.success('Drop đã lên sóng.', { id: toastId });
+      setShowQuickDropCamera(false);
+      await refreshSocialFeed({ silent: true });
+    } catch (err: any) {
+      toast.error(getSocialErrorMessage(err.message), { id: toastId });
+    } finally {
+      setIsPublishingQuickDrop(false);
+    }
+  };
+
   const handleSearchSocialUsers = async (query: string) => {
     setSocialSearchQuery(query);
     await loadSocialDirectory(query);
@@ -388,31 +444,15 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
   const handleAddCircleMember = async (targetUserId: string, nickname: string) => {
     if (!profile?.id) return;
     if (targetUserId === profile.id) {
-      toast.error('Không thể thêm chính bạn vào Close Circle.');
+      toast.error('Không thể thêm chính bạn vào bạn bè.');
       return;
     }
     if (closeCircleIds.includes(targetUserId)) {
-      toast.info(`${nickname} đã nằm trong Close Circle.`);
+      toast.info(`${nickname} đã là bạn bè.`);
       return;
     }
-    if (closeCircleMembers.length >= 12) {
-      toast.error('Close Circle tối đa 12 người để giữ feed thật gần.');
-      return;
-    }
-
-    const toastId = toast.loading(`Đang thêm ${nickname} vào Circle...`);
+    const toastId = toast.loading(`Đang thêm ${nickname} vào bạn bè...`);
     try {
-      const priority = closeCircleMembers.length + 1;
-      const { error: circleError } = await supabase!
-        .from('widget_partners')
-        .upsert({
-          user_id: profile.id,
-          partner_id: targetUserId,
-          priority,
-          is_pinned: priority <= 3,
-        }, { onConflict: 'user_id,partner_id' });
-      if (circleError) throw circleError;
-
       const { error } = await supabase!
         .from('social_follows')
         .upsert(
@@ -424,7 +464,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       setSocialFollowingIds((prev: string[]) => prev.includes(targetUserId) ? prev : [...prev, targetUserId]);
       setSocialSearchResults((prev: SocialDiscoverProfile[]) => prev.map(user => user.id === targetUserId ? { ...user, isFollowing: true, isInCircle: true } : user));
       setSocialProfileStats((prev: SocialProfileStats) => ({ ...prev, following: prev.following + 1 }));
-      toast.success(`Đã thêm ${nickname} vào Close Circle.`, { id: toastId });
+      toast.success(`Đã thêm ${nickname} vào bạn bè.`, { id: toastId });
       await loadCloseCircle({ silent: true });
       await refreshSocialFeed({ silent: true });
     } catch (err: any) {
@@ -435,15 +475,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
   const handleRemoveCircleMember = async (targetUserId: string, nickname: string) => {
     if (!profile?.id) return;
 
-    const toastId = toast.loading(`Đang gỡ ${nickname} khỏi Circle...`);
+    const toastId = toast.loading(`Đang gỡ ${nickname} khỏi bạn bè...`);
     try {
-      const { error: circleError } = await supabase!
-        .from('widget_partners')
-        .delete()
-        .eq('user_id', profile.id)
-        .eq('partner_id', targetUserId);
-      if (circleError) throw circleError;
-
       const { error } = await supabase!
         .from('social_follows')
         .delete()
@@ -454,7 +487,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       setSocialFollowingIds((prev: string[]) => prev.filter(id => id !== targetUserId));
       setSocialSearchResults((prev: SocialDiscoverProfile[]) => prev.map(user => user.id === targetUserId ? { ...user, isFollowing: false, isInCircle: false } : user));
       setSocialProfileStats((prev: SocialProfileStats) => ({ ...prev, following: Math.max(prev.following - 1, 0) }));
-      toast.success(`Đã gỡ ${nickname} khỏi Close Circle.`, { id: toastId });
+      toast.success(`Đã gỡ ${nickname} khỏi bạn bè.`, { id: toastId });
       await loadCloseCircle({ silent: true });
       await refreshSocialFeed({ silent: true });
     } catch (err: any) {
@@ -521,7 +554,12 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     const trimmedContent = socialComposer.content.trim();
     const trimmedImageUrl = socialComposer.imageUrl.trim();
 
-    if (!trimmedContent && !trimmedImageUrl && !socialImageFile) {
+    if (socialComposer.postKind === 'story' && !trimmedImageUrl && !socialImageFile) {
+      toast.error('Drop cần ảnh chụp nhanh trước khi đăng.');
+      return;
+    }
+
+    if (socialComposer.postKind !== 'story' && !trimmedContent && !trimmedImageUrl && !socialImageFile) {
       toast.error('Viết gì đó hoặc thêm ảnh trước khi đăng.');
       return;
     }
@@ -542,7 +580,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       const persistedPostKind = socialComposer.postKind === 'progress' ? 'status' : socialComposer.postKind;
       const { data, error } = await supabase!.from('social_posts').insert({
         author_id: profile.id,
-        content: trimmedContent,
+        content: socialComposer.postKind === 'story' ? '' : trimmedContent,
         image_url: imageUrl,
         post_kind: persistedPostKind,
         visibility: socialComposer.visibility,
@@ -585,14 +623,19 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     socialError, setSocialError,
     isSocialLoading, setIsSocialLoading,
     isPublishingSocialPost, setIsPublishingSocialPost,
+    showQuickDropCamera, setShowQuickDropCamera,
+    isPublishingQuickDrop,
     isSocialSearching, setIsSocialSearching,
     socialImageFile, setSocialImageFile,
     socialImagePreview, setSocialImagePreview,
     socialImageInputRef,
     closeSocialComposer,
     openSocialComposer,
+    openQuickDropCamera,
+    closeQuickDropCamera,
     loadCloseCircle,
     handleSocialImagePicked,
+    handleQuickDropCapture,
     handleSearchSocialUsers,
     handleAddCircleMember,
     handleRemoveCircleMember,

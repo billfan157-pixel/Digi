@@ -10,6 +10,7 @@ import BottomNav, { type TabType } from '@/components/layout/BottomNav';
 import ThemeEngine from '@/components/ThemeEngine';
 import GlobalModalManager from '@/components/modals/GlobalModalManager';
 import type { Profile } from '@/models';
+import { QuickDropCamera } from '@/tabs/Feed/QuickDropCamera';
 
 const HomeTab = React.lazy(() => import('@/tabs/HomeTab'));
 const InsightTab = React.lazy(() => import('@/tabs/InsightTab'));
@@ -26,6 +27,7 @@ export interface AppShellProps {
   profile: Profile | null;
   handleLogout: () => Promise<void>;
   fileInputProps: React.ComponentProps<'input'>;
+  quickDropCameraProps: React.ComponentProps<typeof QuickDropCamera>;
   onboardingProps: {
     profile: Profile;
     onComplete: (weight: number, waterGoal: number, name: string) => Promise<void>;
@@ -52,6 +54,7 @@ export default function AppShell({
   profile,
   handleLogout,
   fileInputProps,
+  quickDropCameraProps,
   onboardingProps,
   activeTab,
   setActiveTab,
@@ -99,6 +102,7 @@ export default function AppShell({
       <div className="absolute top-[-15%] left-[-20%] w-[70%] h-[50%] bg-cyan-500/15 blur-[60px] pointer-events-none rounded-full transition-colors duration-500" />
       <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[40%] bg-indigo-500/10 blur-[60px] pointer-events-none rounded-full transition-colors duration-500" />
       <input {...fileInputProps} />
+      <QuickDropCamera {...quickDropCameraProps} />
 
       {onboardingProps && (
         <OnboardingModal

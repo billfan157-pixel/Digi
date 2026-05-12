@@ -40,7 +40,7 @@ export const QuickChallengeComposer = ({ onPublish, onClose }: QuickChallengeCom
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">Tạo Duel</h3>
-              <p className="text-xs text-slate-500">Rủ bạn bè giữ nhịp uống nước.</p>
+              <p className="text-xs text-slate-500">Chỉ bạn bè mới xem và nhận lời.</p>
             </div>
           </div>
           <button type="button" onClick={onClose} className="rounded-full bg-white/5 p-2 text-slate-400 hover:bg-white/10">

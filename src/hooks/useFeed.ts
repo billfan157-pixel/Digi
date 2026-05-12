@@ -7,20 +7,24 @@ const PAGE_SIZE = 10;
 
 /** Đảm bảo user có row trong public_profiles để JOIN hiển thị tên */
 async function ensurePublicProfile(userId: string) {
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('public_profiles')
     .select('id')
     .eq('id', userId)
     .maybeSingle();
+  if (existingError) throw existingError;
+
   if (!existing) {
     // Copy từ profiles sang public_profiles
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, nickname, avatar_url, level, water_today, water_goal')
       .eq('id', userId)
       .single();
+    if (profileError) throw profileError;
+
     if (profile) {
-      await supabase.from('public_profiles').upsert({
+      const { error: upsertError } = await supabase.from('public_profiles').upsert({
         id: profile.id,
         nickname: profile.nickname || 'Người dùng DigiWell',
         avatar_url: profile.avatar_url,
@@ -28,11 +32,12 @@ async function ensurePublicProfile(userId: string) {
         water_today: profile.water_today || 0,
         water_goal: profile.water_goal || 2000,
       }, { ignoreDuplicates: true });
+      if (upsertError) throw upsertError;
     }
   }
 }
 
-export function useFeed(currentUserId: string | undefined, closeCircleIds: string[] = []) {
+export function useFeed(currentUserId: string | undefined, friendIds: string[] = []) {
   const [posts, setPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -41,15 +46,17 @@ export function useFeed(currentUserId: string | undefined, closeCircleIds: strin
   const [pendingPosts, setPendingPosts] = useState<any[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const postsLengthRef = useRef(0);
-  const closeCircleKey = closeCircleIds.join(',');
   const visibleAuthorIds = useMemo(
-    () => Array.from(new Set([currentUserId, ...closeCircleIds].filter(Boolean))) as string[],
-    [currentUserId, closeCircleKey]
+    () => Array.from(new Set([currentUserId, ...friendIds].filter(Boolean))) as string[],
+    [currentUserId, friendIds]
   );
+  const friendIdSet = useMemo(() => new Set(friendIds), [friendIds]);
 
   useEffect(() => {
     if (currentUserId && currentUserId !== 'undefined') {
-      ensurePublicProfile(currentUserId);
+      void ensurePublicProfile(currentUserId).catch(error => {
+        console.error('Lỗi đồng bộ public profile:', error);
+      });
     }
   }, [currentUserId]);
 
@@ -89,14 +96,19 @@ export function useFeed(currentUserId: string | undefined, closeCircleIds: strin
           social_post_likes (user_id)
         `)
         .neq('post_kind', 'story')
-        .in('author_id', visibleAuthorIds)
         .order('created_at', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
 
       if (error) throw error;
 
       if (data) {
-        const formatted = data.map((post: any) => ({
+        const visibleRows = data.filter((post: any) => {
+          if (post.author_id === currentUserId) return true;
+          if (post.post_kind === 'challenge') return friendIdSet.has(post.author_id);
+          return post.visibility === 'public' || friendIdSet.has(post.author_id);
+        });
+
+        const formatted = visibleRows.map((post: any) => ({
           ...post,
           likedByMe: post.social_post_likes?.some((l: any) => l.user_id === currentUserId) ?? false,
         }));
@@ -125,7 +137,7 @@ export function useFeed(currentUserId: string | undefined, closeCircleIds: strin
       setIsLoading(false);
       setIsFetchingMore(false);
     }
-  }, [currentUserId, visibleAuthorIds]);
+  }, [currentUserId, friendIdSet]);
 
   // Public refetch for pull-to-refresh
   const refetch = useCallback(async () => {
@@ -166,7 +178,8 @@ export function useFeed(currentUserId: string | undefined, closeCircleIds: strin
             .single();
           if (data) {
             if (data.post_kind === 'story') return;
-            if (!visibleAuthorSet.has(data.author_id)) return;
+            if (data.author_id !== currentUserId && data.post_kind === 'challenge' && !visibleAuthorSet.has(data.author_id)) return;
+            if (data.author_id !== currentUserId && data.post_kind !== 'challenge' && data.visibility !== 'public' && !visibleAuthorSet.has(data.author_id)) return;
             setPendingPosts(prev => [data, ...prev]);
             setNewPostsCount(prev => prev + 1);
           }

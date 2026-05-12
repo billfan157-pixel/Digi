@@ -71,8 +71,8 @@ export const HydrationStories = ({
             className="min-h-16 flex flex-1 items-center justify-between rounded-2xl border border-cyan-500/15 bg-cyan-500/5 px-4 text-left active:scale-[0.99] transition-all"
           >
             <div>
-              <p className="text-sm font-bold text-cyan-100">Tạo story đầu tiên</p>
-              <p className="mt-0.5 text-xs text-slate-500">Chia sẻ tiến độ uống nước hôm nay.</p>
+              <p className="text-sm font-bold text-cyan-100">Tạo Drop đầu tiên</p>
+              <p className="mt-0.5 text-xs text-slate-500">Chụp nhanh khoảnh khắc hôm nay.</p>
             </div>
             <Plus size={18} className="text-cyan-300" />
           </button>

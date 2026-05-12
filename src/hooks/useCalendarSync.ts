@@ -11,6 +11,7 @@ export const CALENDAR_TOKEN_UPDATED_EVENT = 'digiwell:google-provider-token-upda
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 const CALENDAR_SYNC_TOAST_ID = 'digiwell-calendar-sync-toast';
 const CALENDAR_RETRY_TOAST_DURATION_MS = 3000;
+const CALENDAR_OAUTH_MODE_KEY = 'digiwell_calendar_oauth_mode';
 
 export interface CalendarEventItem {
   id: string;
@@ -53,6 +54,8 @@ type GoogleCalendarEvent = {
   start?: GoogleEventDateTime;
   end?: GoogleEventDateTime;
 };
+
+type CalendarOAuthMode = 'link' | 'signin';
 
 type CalendarProxyResponse = {
   events?: GoogleCalendarEvent[];
@@ -123,7 +126,23 @@ function mapGoogleEvent(event: GoogleCalendarEvent): CalendarEventItem | null {
   };
 }
 
-async function beginGoogleCalendarOAuth() {
+function readCalendarOAuthMode(): CalendarOAuthMode | null {
+  const mode = window.sessionStorage.getItem(CALENDAR_OAUTH_MODE_KEY)
+    || localStorage.getItem(CALENDAR_OAUTH_MODE_KEY);
+  return mode === 'link' || mode === 'signin' ? mode : null;
+}
+
+function writeCalendarOAuthMode(mode: CalendarOAuthMode | null) {
+  if (mode) {
+    window.sessionStorage.setItem(CALENDAR_OAUTH_MODE_KEY, mode);
+    localStorage.setItem(CALENDAR_OAUTH_MODE_KEY, mode);
+    return;
+  }
+  window.sessionStorage.removeItem(CALENDAR_OAUTH_MODE_KEY);
+  localStorage.removeItem(CALENDAR_OAUTH_MODE_KEY);
+}
+
+async function beginGoogleCalendarOAuth(options: { forceSignIn?: boolean } = {}) {
   const {
     data: { user },
     error: userError,
@@ -149,7 +168,10 @@ async function beginGoogleCalendarOAuth() {
   };
 
   const hasGoogleIdentity = user.identities?.some((identity: { provider?: string }) => identity.provider === 'google');
-  const response = hasGoogleIdentity
+  const shouldSignIn = options.forceSignIn || hasGoogleIdentity;
+  writeCalendarOAuthMode(shouldSignIn ? 'signin' : 'link');
+
+  const response = shouldSignIn
     ? await supabase.auth.signInWithOAuth(credentials)
     : await supabase.auth.linkIdentity(credentials);
 
@@ -244,6 +266,7 @@ export function useCalendarSync() {
       syncToStore();
       clearRetry();
       writeCalendarOAuthPendingFlag(false);
+      writeCalendarOAuthMode(null);
 
       if (!silent) {
         toast.success(
@@ -294,6 +317,21 @@ export function useCalendarSync() {
         }
         return;
       }
+      if (attempt >= 2 && readCalendarOAuthMode() === 'link') {
+        updateToast('Đang hoàn tất kết nối Google Calendar...');
+        writeCalendarOAuthMode('signin');
+        try {
+          await beginGoogleCalendarOAuth({ forceSignIn: true });
+        } catch (error) {
+          toast.dismiss(CALENDAR_SYNC_TOAST_ID);
+          setIsSyncing(false);
+          writeCalendarOAuthPendingFlag(false);
+          writeCalendarOAuthMode(null);
+          const message = error instanceof Error ? error.message : 'Không thể mở Google OAuth.';
+          toast.error(message, { duration: 6000 });
+        }
+        return;
+      }
       if (attempt < 8) {
         const delayMs = Math.min(1500 * attempt, 8000);
         console.log(`[Calendar] Retry #${attempt} failed, next in ${delayMs}ms`);
@@ -303,6 +341,7 @@ export function useCalendarSync() {
         toast.dismiss(CALENDAR_SYNC_TOAST_ID);
         setIsSyncing(false);
         writeCalendarOAuthPendingFlag(false);
+        writeCalendarOAuthMode(null);
         clearRetry();
         toast.error('Không thể đồng bộ Google Calendar. Bạn có thể thử lại bằng nút "Kết nối".', { duration: 6000 });
       }

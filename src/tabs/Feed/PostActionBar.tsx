@@ -72,7 +72,7 @@ export const PostActionBar = ({
         </button>
       )}
 
-      {!isOwnPost && (
+      {!isOwnPost && !isChallenge && (
         <button
           onClick={onDonateFreeze}
           className="flex items-center gap-1 text-slate-400 text-xs font-bold py-2 px-2 rounded-xl hover:bg-amber-500/10 hover:text-amber-400 active:scale-95 transition-all"
