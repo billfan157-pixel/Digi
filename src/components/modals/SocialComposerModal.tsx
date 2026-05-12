@@ -52,7 +52,7 @@ export default function SocialComposerModal({
             </button>
             <div className="text-center min-w-0">
               <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Composer</p>
-              <h3 className="text-xl font-black text-white truncate mt-1">{socialComposer.postKind === 'story' ? 'Đăng story' : 'Tạo bài viết'}</h3>
+              <h3 className="text-xl font-black text-white truncate mt-1">{socialComposer.postKind === 'story' ? 'Tạo Drop' : socialComposer.postKind === 'challenge' ? 'Tạo Duel' : 'Pulse'}</h3>
             </div>
             <button type="submit" disabled={isPublishingSocialPost} className="px-4 py-2 rounded-xl text-slate-950 text-xs font-black disabled:opacity-60 active:scale-95 transition-all" style={{ background: 'linear-gradient(135deg, #22d3ee, #06b6d4)' }}>
               {isPublishingSocialPost ? 'Đang đăng' : 'Đăng'}
@@ -60,12 +60,11 @@ export default function SocialComposerModal({
           </div>
 
           <div className="px-5 pt-5 pb-10 space-y-4">
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { label: 'Bài viết', value: 'status' as const },
-                { label: 'Tiến độ', value: 'progress' as const },
-                { label: 'Tạo kèo', value: 'challenge' as any },
-                { label: 'Story', value: 'story' as const },
+            <div className="grid grid-cols-3 gap-2">
+                {[
+                { label: 'Pulse', value: 'status' as const },
+                { label: 'Drop', value: 'story' as const },
+                { label: 'Duel', value: 'challenge' as const },
               ].map((option, index) => (
                 <button
                   key={`composer-opt-${index}`}
@@ -84,16 +83,15 @@ export default function SocialComposerModal({
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSocialComposer((prev: SocialComposerState) => ({ ...prev, content: e.target.value }))}
                 rows={6}
                 placeholder={
-                  (socialComposer.postKind as string) === 'story' ? 'Viết caption ngắn cho story 24h...' :
-                  (socialComposer.postKind as string) === 'challenge' ? 'Nhập mục tiêu kèo (VD: Ai đua 2 lít trước 5h chiều không?)...' :
-                  (socialComposer.postKind as string) === 'progress' ? 'Chia sẻ tiến độ hôm nay của bạn...' :
-                  'Hôm nay bạn muốn chia sẻ gì với cộng đồng?'
+                  (socialComposer.postKind as string) === 'story' ? 'Viết caption ngắn cho Drop...' :
+                  (socialComposer.postKind as string) === 'challenge' ? 'Nhập mục tiêu Duel (VD: Ai đua 2 lít trước 5h chiều không?)...' :
+                  'Ghi chú ngắn cho Pulse hôm nay...'
                 }
                 className="w-full rounded-2xl bg-slate-900 border border-slate-700 text-white text-sm p-4 outline-none focus:border-cyan-500 resize-none"
               />
 
               <div className="flex gap-2 overflow-x-auto scrollbar-hide mt-3 pb-1 -mx-1 px-1">
-                {["💦 Vừa nạp 500ml, quá đã!", "🔥 Đang giữ chuỗi, ai đua top không?", "😴 Nay lười quá, ai nhắc tui đi!", "🏋️ Vừa tập xong, bù nước gấp 💦"].map((temp, i) => (
+                {["Vừa nạp 500ml, quá đã!", "Đang giữ chuỗi, ai đua top không?", "Nay cần người nhắc uống nước.", "Vừa tập xong, bù nước gấp."].map((temp, i) => (
                   <button 
                     key={i} 
                     type="button" 
@@ -106,8 +104,8 @@ export default function SocialComposerModal({
               </div>
 
               <div className="grid grid-cols-2 gap-3 mt-3">
-                <button type="button" onClick={() => setSocialComposer((prev: SocialComposerState) => ({ ...prev, content: buildProgressShareText({ nickname: profile?.nickname, waterIntake, waterGoal, streak }), postKind: 'progress' }))} className="py-3 rounded-xl bg-indigo-500/12 border border-indigo-500/25 text-indigo-300 text-xs font-bold active:scale-95 transition-all">
-                  Dùng progress card
+                <button type="button" onClick={() => setSocialComposer((prev: SocialComposerState) => ({ ...prev, content: buildProgressShareText({ nickname: profile?.nickname, waterIntake, waterGoal, streak }), postKind: 'status' }))} className="py-3 rounded-xl bg-indigo-500/12 border border-indigo-500/25 text-indigo-300 text-xs font-bold active:scale-95 transition-all">
+                  Dùng Pulse
                 </button>
                 <select
                   value={socialComposer.visibility}

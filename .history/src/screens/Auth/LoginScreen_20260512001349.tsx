@@ -1,52 +1,21 @@
-import { useState, useCallback, type FormEvent } from 'react';
-import { ChevronLeft, Lock, ScanFace } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { ChevronLeft, Lock } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { supabase } from '@/lib/supabase';
-import { useBiometric } from '@/hooks/useBiometric';
-import { getBiometricEnabled } from '@/lib/sessionSecurity';
 
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 
 interface LoginScreenProps {
   onBack: () => void;
   initialEmail?: string;
-  onBiometricUnlock?: () => void;
 }
 
-export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlock }: LoginScreenProps) {
+export default function LoginScreen({ onBack, initialEmail = '' }: LoginScreenProps) {
   const [loginEmail, setLoginEmail] = useState(initialEmail);
   const [loginPass, setLoginPass] = useState('');
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
-  const { authenticateBiometric, isAuthenticating } = useBiometric();
-  const [isCheckingBiometric, setIsCheckingBiometric] = useState(false);
-
-  const handleBiometricUnlock = useCallback(async () => {
-    if (!onBiometricUnlock) return;
-    
-    // Check session first — need a logged-in user
-    const { data: sessionRes } = await supabase!.auth.getSession();
-    const userId = sessionRes?.session?.user?.id;
-    if (!userId) {
-      toast.error('Vui lòng đăng nhập trước khi sử dụng Sinh trắc học');
-      return;
-    }
-
-    setIsCheckingBiometric(true);
-    const isEnabled = await getBiometricEnabled(userId);
-    if (!isEnabled) {
-      toast.error('Bạn chưa bật tính năng mở khóa Sinh trắc học');
-      setIsCheckingBiometric(false);
-      return;
-    }
-
-    const success = await authenticateBiometric(userId);
-    if (success) {
-      onBiometricUnlock();
-    }
-    setIsCheckingBiometric(false);
-  }, [onBiometricUnlock, authenticateBiometric]);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -127,15 +96,6 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
             {isSubmittingLogin ? <span className="animate-pulse">Đang xác thực...</span> : "Đăng nhập →"}
           </button>
         </form>
-
-        <button
-          onClick={handleBiometricUnlock}
-          disabled={isCheckingBiometric || isAuthenticating}
-          className="w-full py-4 rounded-xl font-bold text-white text-sm mt-4 border border-cyan-500/30 bg-cyan-500/10 backdrop-blur-xl hover:bg-cyan-500/20 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          <ScanFace size={20} />
-          {isCheckingBiometric || isAuthenticating ? 'Đang xác thực...' : 'Mở khóa bằng Sinh trắc học'}
-        </button>
 
         <div className="mt-6 flex items-center justify-between text-xs text-slate-500">
           <hr className="w-full border-slate-700" /><span className="px-3 font-bold tracking-widest">HOẶC</span><hr className="w-full border-slate-700" />

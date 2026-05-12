@@ -1,22 +1,17 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
-import { supabase } from '../lib/supabase';
-import { useAppStore } from '../store/useAppStore';
-import { useShallow } from 'zustand/react/shallow';
 import { useFeed } from '../hooks/useFeed';
 import { useNotifications } from '../hooks/useNotifications';
 import type { SocialFeedPost } from '../models';
 import { CommentsView } from './Feed/CommentsView';
+import { CloseCircleRail } from './Feed/CloseCircleRail';
 import { EmptyFeedState } from './Feed/EmptyFeedState';
 import { FeedComposer } from './Feed/FeedComposer';
 import { FeedHeader } from './Feed/FeedHeader';
 import { FeedPostList } from './Feed/FeedPostList';
-import { FeedSummaryCards } from './Feed/FeedSummaryCards';
-import { getOnlineFriendsCount, useFeedSummary, useRankedFeed } from './Feed/feedCalculations';
+import { getOnlineFriendsCount, useRankedFeed } from './Feed/feedCalculations';
 import { HydrationStories } from './Feed/HydrationStories';
 import { HydrationStoryViewer } from './Feed/HydrationStoryViewer';
-import { HydrationRitualSheet } from './Feed/HydrationRitualSheet';
 import { InfiniteScrollFooter } from './Feed/InfiniteScrollFooter';
 import { NewPostsBanner } from './Feed/NewPostsBanner';
 import { NotificationsView } from './Feed/NotificationsView';
@@ -25,26 +20,22 @@ import { PullToRefresh } from './Feed/PullToRefresh';
 
 export { PostCard } from './Feed/PostCard';
 
-type RitualKind = 'baptism' | 'ignition' | 'duel' | 'wave';
-
 const FeedTab = memo(function FeedTab({
    profile,
    socialStories,
    socialError,
    isSocialLoading,
    socialFollowingIds,
+   closeCircleMembers,
+   closeCircleIds,
+   isCloseCircleLoading,
    openSocialComposer,
    setShowSocialProfile,
    setShowDiscoverPeople,
    handleToggleLikePost,
  }: FeedTabProps) {
-   const { posts, isLoading, isFetchingMore, hasMore, loadMore, newPostsCount, showNewPosts, refetch } = useFeed(profile?.id);
+   const { posts, isLoading, isFetchingMore, hasMore, loadMore, newPostsCount, showNewPosts, refetch } = useFeed(profile?.id, closeCircleIds);
   const { notifications, unreadCount, markAllRead, markAsRead } = useNotifications(profile?.id);
-  const { waterIntake, waterGoal, streak } = useAppStore(useShallow(s => ({
-    waterIntake: s.waterIntake,
-    waterGoal: s.waterGoal,
-    streak: s.streak,
-  })));
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
@@ -53,15 +44,11 @@ const FeedTab = memo(function FeedTab({
   const [activeCommentPost, setActiveCommentPost] = useState<SocialFeedPost | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
-  const [showRitualSheet, setShowRitualSheet] = useState(false);
-  const [currentTimestamp, setCurrentTimestamp] = useState(0);
-
   const onlineFriendsCount = useMemo(
     () => getOnlineFriendsCount(socialFollowingIds),
     [socialFollowingIds]
   );
 
-  const feedSummary = useFeedSummary(posts as SocialFeedPost[], socialStories, currentTimestamp);
   const finalRankedFeed = useRankedFeed(
     posts as SocialFeedPost[],
     feedMode,
@@ -70,6 +57,14 @@ const FeedTab = memo(function FeedTab({
     socialFollowingIds,
     profile
   );
+  const feedModeLabel = feedMode === 'smart' ? 'Thông minh' : feedMode === 'latest' ? 'Mới nhất' : 'Đang follow';
+  const feedFilterLabel = {
+    all: 'Tất cả',
+    checkins: 'Pulse',
+    milestones: 'Peak',
+    challenges: 'Duel',
+    photos: 'Proof',
+  }[feedFilter];
 
   const handleNextStory = () => {
     setActiveStoryIndex(prev => {
@@ -87,14 +82,11 @@ const FeedTab = memo(function FeedTab({
     });
   };
 
-  useEffect(() => {
-    setCurrentTimestamp(Date.now());
-    const timer = window.setInterval(() => setCurrentTimestamp(Date.now()), 60 * 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
   const loadMoreRef = useRef(loadMore);
-  loadMoreRef.current = loadMore;
+
+  useEffect(() => {
+    loadMoreRef.current = loadMore;
+  }, [loadMore]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {
@@ -128,72 +120,45 @@ const FeedTab = memo(function FeedTab({
       
       <PullToRefresh onRefresh={refetch} />
 
-      <div className="max-w-[600px] mx-auto mt-4 space-y-5 pb-12">
-        <FeedSummaryCards summary={feedSummary} />
+      <div className="max-w-[600px] mx-auto mt-3 space-y-5 pb-12">
         <NewPostsBanner count={newPostsCount} onShowNewPosts={showNewPosts} />
-        <FeedComposer profile={profile} onOpenRitualSheet={() => setShowRitualSheet(true)} />
-        
-        {showRitualSheet && profile && (
-          <HydrationRitualSheet
-            profile={profile}
-            waterIntake={waterIntake}
-            waterGoal={waterGoal}
-            streak={streak}
-            onPublish={async (params) => {
-              const kindMap: Record<RitualKind, string> = {
-                baptism: 'status',
-                ignition: 'progress',
-                duel: 'challenge',
-                wave: 'progress',
-              };
-              const toastId = toast.loading('Đang lan tỏa nghi thức...');
-              try {
-                // Upload ảnh lên Storage trước nếu là blob
-                let finalImageUrl = params.imageUrl || null;
-                if (finalImageUrl && finalImageUrl.startsWith('blob:')) {
-                  const resp = await fetch(finalImageUrl);
-                  const blob = await resp.blob();
-                  finalImageUrl = await new Promise<string | null>(resolve => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.onerror = () => resolve(null);
-                    reader.readAsDataURL(blob);
-                  });
-                }
-
-                const { error } = await supabase.from('social_posts').insert({
-                  author_id: profile.id,
-                  content: params.content,
-                  image_url: finalImageUrl,
-                  post_kind: kindMap[params.kind] as 'status' | 'progress' | 'challenge',
-                  hydration_ml: waterIntake,
-                  streak_snapshot: streak,
-                  visibility: 'public',
-                });
-                if (error) throw error;
-                toast.success('✨ Nghi thức đã được lan tỏa!', { id: toastId });
-                setShowRitualSheet(false);
-              } catch (err: any) {
-                toast.error('Không thể lan tỏa lúc này!', { id: toastId });
-                throw err;
-              }
-            }}
-            onClose={() => setShowRitualSheet(false)}
-          />
-        )}
+        <CloseCircleRail
+          profile={profile}
+          members={closeCircleMembers}
+          stories={socialStories}
+          isLoading={isCloseCircleLoading}
+          onAddPeople={() => setShowDiscoverPeople(true)}
+          onSelectStory={setActiveStoryIndex}
+        />
+        <FeedComposer profile={profile} onCreateStory={() => openSocialComposer('story')} />
         <HydrationStories
           profile={profile}
           socialStories={socialStories}
-          storyCount={feedSummary.storyCount}
+          storyCount={socialStories.length}
           isSocialLoading={isSocialLoading}
           onCreateStory={() => openSocialComposer('story')}
           onSelectStory={setActiveStoryIndex}
         />
 
+        <div className="mx-4 flex items-center justify-between gap-3 sm:mx-0">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Dòng hoạt động</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-400">
+              {finalRankedFeed.length} bài - {feedModeLabel} - {feedFilterLabel}
+            </p>
+          </div>
+          {feedSearch.trim() && (
+            <span className="max-w-[180px] truncate rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-[10px] font-bold text-cyan-300">
+              "{feedSearch.trim()}"
+            </span>
+          )}
+        </div>
+
         {!socialError && !isLoading && finalRankedFeed.length === 0 && (
           <EmptyFeedState
             feedSearch={feedSearch}
             feedFilter={feedFilter}
+            closeCircleCount={closeCircleMembers.length}
             onFilterChange={setFeedFilter}
             onModeChange={setFeedMode}
             onOpenDiscoverPeople={() => setShowDiscoverPeople(true)}

@@ -20,7 +20,7 @@ export const PostCardHeader = ({
   onOpenMenu,
 }: PostCardHeaderProps) => (
   <div className="flex items-center justify-between mb-4 relative z-20">
-    <div className="flex items-center gap-3">
+    <div className="flex min-w-0 items-center gap-3">
       <div
         className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner bg-slate-800 border-2 border-slate-700/50"
         style={{
@@ -37,19 +37,19 @@ export const PostCardHeader = ({
           </span>
         )}
       </div>
-      <div className="flex flex-col">
-        <div className="flex items-center gap-2">
-          <span className="text-white font-bold text-[15px]">
+      <div className="flex min-w-0 flex-col">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="max-w-[150px] truncate text-white font-bold text-[15px] sm:max-w-[220px]">
             {post.author?.nickname ?? 'Người dùng'}
           </span>
-          {post.post_kind === 'progress' && (
+          {(post.post_kind === 'progress' || post.post_kind === 'milestone') && (
             <span className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-              Tiến độ
+              Peak
             </span>
           )}
           {isChallenge && (
             <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-              Thách đấu
+              Duel
             </span>
           )}
           {isAchievement && (

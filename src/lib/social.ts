@@ -1,7 +1,8 @@
 export type SocialComposerState = {
   content: string;
   imageUrl: string;
-  postKind: 'status' | 'progress' | 'story';
+  // `progress` is kept as a legacy alias and is persisted as `status` until the DB taxonomy migrates.
+  postKind: 'status' | 'progress' | 'story' | 'challenge';
   visibility: 'public' | 'followers';
 };
 
@@ -12,6 +13,11 @@ export type SocialProfileSummary = {
 
 export type SocialDiscoverProfile = SocialProfileSummary & {
   isFollowing: boolean;
+  isInCircle?: boolean;
+  avatar_url?: string | null;
+  water_today?: number | null;
+  water_goal?: number | null;
+  level?: number | null;
 };
 
 export type SocialProfileStats = {
@@ -20,12 +26,23 @@ export type SocialProfileStats = {
   posts: number;
 };
 
+export type CloseCircleMember = SocialProfileSummary & {
+  avatar_url?: string | null;
+  water_today?: number | null;
+  water_goal?: number | null;
+  level?: number | null;
+  priority: number;
+  is_pinned: boolean;
+  latest_post_id?: string | null;
+  latest_at?: string | null;
+};
+
 export type SocialPostRow = {
   id: string;
   author_id: string;
   content: string;
   image_url: string | null;
-  post_kind: 'status' | 'progress' | 'story';
+  post_kind: 'checkin' | 'status' | 'progress' | 'story' | 'milestone' | 'challenge';
   visibility: 'public' | 'followers';
   hydration_ml: number | null;
   streak_snapshot: number | null;
@@ -43,7 +60,7 @@ export const DEFAULT_SOCIAL_COMPOSER: SocialComposerState = {
   content: '',
   imageUrl: '',
   postKind: 'status',
-  visibility: 'public',
+  visibility: 'followers',
 };
 
 export const DEFAULT_SOCIAL_PROFILE_STATS: SocialProfileStats = {
@@ -95,7 +112,7 @@ export const buildProgressShareText = (params: {
   const progressPercent = Math.min(100, Math.round((params.waterIntake / Math.max(params.waterGoal, 1)) * 100));
   const name = params.nickname || 'Mình';
 
-  return `${name} vừa chạm ${progressPercent}% mục tiêu nước hôm nay: ${params.waterIntake}/${params.waterGoal}ml. Streak hiện tại ${params.streak} ngày, ai theo challenge uống nước cùng không?`;
+  return `${name} vừa chạm ${progressPercent}% mục tiêu nước hôm nay: ${params.waterIntake}/${params.waterGoal}ml. Streak hiện tại ${params.streak} ngày, ai theo thử thách uống nước cùng không?`;
 };
 
 export const isMissingSocialSchemaError = (message: string) => {
@@ -103,6 +120,8 @@ export const isMissingSocialSchemaError = (message: string) => {
   return lowered.includes('social_posts')
     || lowered.includes('social_follows')
     || lowered.includes('social_post_likes')
+    || lowered.includes('widget_partners')
+    || lowered.includes('nudges')
     || lowered.includes('social-media')
     || lowered.includes('bucket')
     || lowered.includes('relation')

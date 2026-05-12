@@ -27,8 +27,10 @@ export const HydrationStories = ({
     <div className="pt-1 pb-3 border-b border-white/5">
       <div className="px-4 mb-3 flex items-center justify-between">
         <div>
-          <p className="text-sm font-black text-white">Story uống nước</p>
-          <p className="text-xs text-slate-500">{storyCount} vòng story đang hoạt động</p>
+          <p className="text-sm font-black text-white">Drop</p>
+          <p className="text-xs text-slate-500">
+            {storyCount > 0 ? `${storyCount} vòng story đang hoạt động` : 'Chưa có story đang hoạt động'}
+          </p>
         </div>
         {isSocialLoading && <Loader2 size={16} className="text-slate-500 animate-spin" />}
       </div>
@@ -44,7 +46,7 @@ export const HydrationStories = ({
           </>
         )}
         <div className="flex flex-col items-center gap-1.5 shrink-0 snap-start">
-          <div className="relative w-16 h-16">
+          <button type="button" onClick={onCreateStory} className="relative w-16 h-16 active:scale-95 transition-transform">
             <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 64 64" aria-hidden="true">
               <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
               <circle cx="32" cy="32" r="30" fill="none" stroke="#06b6d4" strokeWidth="3" strokeDasharray="188.5" strokeDashoffset={188.5 * (1 - profilePct / 100)} strokeLinecap="round" />
@@ -56,12 +58,25 @@ export const HydrationStories = ({
                 <span className="text-xl font-black text-slate-500">{(profile?.nickname || 'U').charAt(0).toUpperCase()}</span>
               )}
             </div>
-            <button onClick={onCreateStory} className="absolute bottom-0 right-0 w-6 h-6 bg-cyan-500 rounded-full border-2 border-slate-900 flex items-center justify-center text-slate-900 active:scale-95 transition-all shadow-lg">
+            <span className="absolute bottom-0 right-0 w-6 h-6 bg-cyan-500 rounded-full border-2 border-slate-900 flex items-center justify-center text-slate-900 shadow-lg">
               <Plus size={14} strokeWidth={3} />
-            </button>
-          </div>
+            </span>
+          </button>
           <p className="text-slate-400 text-[11px] font-semibold w-16 text-center truncate mt-1">Bạn</p>
         </div>
+
+        {!isSocialLoading && socialStories.length === 0 && (
+          <button
+            onClick={onCreateStory}
+            className="min-h-16 flex flex-1 items-center justify-between rounded-2xl border border-cyan-500/15 bg-cyan-500/5 px-4 text-left active:scale-[0.99] transition-all"
+          >
+            <div>
+              <p className="text-sm font-bold text-cyan-100">Tạo story đầu tiên</p>
+              <p className="mt-0.5 text-xs text-slate-500">Chia sẻ tiến độ uống nước hôm nay.</p>
+            </div>
+            <Plus size={18} className="text-cyan-300" />
+          </button>
+        )}
 
         {socialStories.map((story, index) => {
           const storyPct = getFallbackStoryPercent(story);

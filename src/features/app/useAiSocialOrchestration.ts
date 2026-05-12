@@ -57,7 +57,7 @@ export function useAiSocialOrchestration() {
     setShowHistory,
   }) || {};
 
-  const { posts } = useFeed(profile?.id);
+  const { posts } = useFeed(profile?.id, socialProps.closeCircleIds || []);
 
   const handleScan = useCallback(() => {
     if (!isAiConfigured()) {

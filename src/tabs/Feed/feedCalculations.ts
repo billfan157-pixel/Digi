@@ -14,9 +14,7 @@ export const useFeedSummary = (
 ): FeedSummary => useMemo(() => {
   const sourcePosts = posts || [];
   const challengeCount = sourcePosts.filter((post: any) => post.post_kind === 'challenge').length;
-  const progressCount = sourcePosts.filter((post: any) => post.post_kind === 'progress').length;
-  const tipCount = sourcePosts.filter((post: any) => post.post_kind === 'tip').length;
-  const pollCount = sourcePosts.filter((post: any) => post.post_kind === 'poll').length;
+  const progressCount = sourcePosts.filter((post: any) => post.post_kind === 'progress' || post.post_kind === 'milestone').length;
 
   return {
     postsToday: sourcePosts.filter((post: any) => {
@@ -26,8 +24,6 @@ export const useFeedSummary = (
     challengeCount,
     progressCount,
     storyCount: socialStories.length,
-    tipCount,
-    pollCount,
   };
 }, [currentTimestamp, posts, socialStories]);
 
@@ -41,12 +37,18 @@ export const useRankedFeed = (
 ) => useMemo(() => {
   if (!posts || posts.length === 0) return [];
 
-  const normalizedPosts: SocialFeedPost[] = posts.map((post) => ({
+  const normalizedPosts: SocialFeedPost[] = posts
+    .filter((post) => post.post_kind !== 'story')
+    .map((post) => ({
     ...post,
     type: (() => {
       switch (post.post_kind) {
+        case 'checkin':
+          return 'daily_goal';
         case 'challenge':
           return 'challenge';
+        case 'milestone':
+          return 'milestone';
         case 'progress':
           return (post.streak_snapshot ?? 0) > 0 ? 'milestone' : 'daily_goal';
         case 'tip':
@@ -54,7 +56,7 @@ export const useRankedFeed = (
         case 'poll':
           return 'poll';
         case 'photo':
-          return 'photo';
+          return 'daily_goal';
         default:
           return 'status';
       }
@@ -76,16 +78,14 @@ export const useRankedFeed = (
     ranked = ranked.filter(post => post.author_id === profile?.id || socialFollowingIds.includes(post.author_id));
   }
 
-  if (feedFilter === 'milestones') {
-    ranked = ranked.filter(post => post.type === 'milestone' || post.type === 'daily_goal');
+  if (feedFilter === 'checkins') {
+    ranked = ranked.filter(post => post.type === 'daily_goal' || post.type === 'status' || post.post_kind === 'photo');
+  } else if (feedFilter === 'milestones') {
+    ranked = ranked.filter(post => post.type === 'milestone');
   } else if (feedFilter === 'challenges') {
     ranked = ranked.filter(post => post.type === 'challenge');
-  } else if (feedFilter === 'tips') {
-    ranked = ranked.filter(post => post.type === 'tip');
-  } else if (feedFilter === 'polls') {
-    ranked = ranked.filter(post => post.type === 'poll');
   } else if (feedFilter === 'photos') {
-    ranked = ranked.filter(post => post.type === 'photo');
+    ranked = ranked.filter(post => !!post.image_url);
   }
 
   const search = feedSearch.trim().toLowerCase();

@@ -5,7 +5,7 @@ export const QUICK_REACTIONS = ['💧', '🔥', '👏', '❤️', '🙌', '✨']
 export const FALLBACK_DRINKS = ['Trà xanh', 'Cà phê đá', 'Nước lọc', 'Điện giải', 'Nước detox'];
 
 export const FEED_MODES = ['smart', 'latest', 'following'] as const;
-export const FEED_FILTERS = ['all', 'milestones', 'challenges'] as const;
+export const FEED_FILTERS = ['all', 'checkins', 'milestones', 'challenges', 'photos'] as const;
 
 export const FEED_MODE_LABELS: Record<string, string> = {
   smart: 'Gợi ý',

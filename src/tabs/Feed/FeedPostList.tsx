@@ -35,6 +35,18 @@ export const FeedPostList = ({
   onOpenComments,
 }: FeedPostListProps) => (
   <>
+    {socialError && (
+      <div className="mx-4 rounded-3xl border border-rose-500/20 bg-rose-500/10 p-5 text-left sm:mx-0">
+        <div className="flex items-start gap-3">
+          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-300" />
+          <div>
+            <p className="text-sm font-bold text-rose-100">Không tải được feed</p>
+            <p className="mt-1 text-xs leading-relaxed text-rose-100/70">{socialError}</p>
+          </div>
+        </div>
+      </div>
+    )}
+
     {isLoading && posts.length === 0 && (
       <div className="space-y-4 px-4 sm:px-0">
         <SkeletonCard />

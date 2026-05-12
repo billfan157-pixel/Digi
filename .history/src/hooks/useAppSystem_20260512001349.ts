@@ -123,7 +123,7 @@ export function useAppSystem() {
               if (p && isMounted) {
                 setProfile(p);
                 const isBiometricEnabled = await getBiometricEnabled(p.id);
-                setView(isBiometricEnabled ? 'login' : 'app');
+                setView(isBiometricEnabled ? 'locked' : 'app');
               }
             }, 500);
           }

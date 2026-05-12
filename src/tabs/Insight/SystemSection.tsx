@@ -4,6 +4,7 @@ import ScheduleManager from '../../components/ScheduleManager';
 import { useAppStore } from '../../store/useAppStore';
 import { useCalendarSync } from '../../hooks/useCalendarSync';
 import type { HydrationSchedule } from '../../lib/HydrationEngine';
+import type { CalendarEventItem } from '../../hooks/useCalendarSync';
 
 interface SystemSectionProps {
   profile: any;
@@ -11,6 +12,62 @@ interface SystemSectionProps {
   isWatchConnected: boolean;
   isWeatherSynced: boolean;
   isCalendarSynced: boolean;
+}
+
+function getLocalDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getEventDateKey(value: string) {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return getLocalDateKey(date);
+}
+
+function isEventOnDate(event: CalendarEventItem, dateKey: string) {
+  const startKey = getEventDateKey(event.startRaw);
+  const endKey = getEventDateKey(event.endRaw);
+
+  if (!startKey) return false;
+  if (!event.isAllDay) {
+    return startKey <= dateKey && (!endKey || endKey >= dateKey);
+  }
+
+  return startKey <= dateKey && (!endKey || endKey > dateKey);
+}
+
+function getEventSortTime(event: CalendarEventItem, dateKey: string) {
+  if (event.isAllDay) return -1;
+
+  const startKey = getEventDateKey(event.startRaw);
+  if (startKey && startKey < dateKey) return 0;
+
+  const rawTime = new Date(event.startRaw).getTime();
+  if (!Number.isNaN(rawTime)) return rawTime;
+
+  const [hour, minute] = event.start.split(':').map(Number);
+  if (Number.isFinite(hour) && Number.isFinite(minute)) {
+    return hour * 60 + minute;
+  }
+
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function getEventTimeLabel(event: CalendarEventItem, dateKey: string) {
+  if (event.isAllDay) return 'Cả ngày';
+
+  const startKey = getEventDateKey(event.startRaw);
+  const endKey = getEventDateKey(event.endRaw);
+  const start = startKey && startKey < dateKey ? '00:00' : event.start;
+  const end = endKey && endKey > dateKey ? 'đến mai' : event.end;
+
+  return `${start} - ${end}`;
 }
 
 export default function SystemSection({
@@ -29,12 +86,14 @@ export default function SystemSection({
   const { calendarEvents, syncCalendar, isCalendarSynced: calendarSynced } = useCalendarSync();
 
   const hasAnySyncSource = isWatchConnected || isWeatherSynced || calendarSynced || isCalendarSynced;
+  const todayKey = getLocalDateKey(new Date());
 
   // Lọc events hôm nay
   const todayEvents = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return calendarEvents.filter(ev => ev.startRaw.startsWith(today));
-  }, [calendarEvents]);
+    return calendarEvents
+      .filter(ev => isEventOnDate(ev, todayKey))
+      .sort((a, b) => getEventSortTime(a, todayKey) - getEventSortTime(b, todayKey));
+  }, [calendarEvents, todayKey]);
 
   const handleCalendarSync = async () => {
     await syncCalendar({ startOAuthIfNeeded: true });
@@ -89,7 +148,7 @@ export default function SystemSection({
                     <div className="w-[3px] h-[3px] rounded-full bg-violet-400 shrink-0" />
                     <span className="flex-1 text-xs text-slate-300 truncate">{event.title}</span>
                     <span className="text-[10px] text-slate-500 tabular-nums shrink-0">
-                      {event.start} - {event.end}
+                      {getEventTimeLabel(event, todayKey)}
                     </span>
                   </div>
                 ))}
@@ -105,7 +164,7 @@ export default function SystemSection({
           alwaysExpanded={true}
           aiSchedule={aiSchedule}
           waterGoal={waterGoal}
-          calendarEvents={calendarSynced ? calendarEvents : []}
+          calendarEvents={calendarSynced ? todayEvents : []}
         />
       </div>
 

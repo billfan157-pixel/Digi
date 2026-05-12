@@ -1,23 +1,22 @@
 import { useState, memo } from 'react';
-import { Camera, Lightbulb, BarChart3, MessageCircle, Image } from 'lucide-react';
+import { Camera, Swords, BookOpen } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
 import { useShallow } from 'zustand/react/shallow';
-import type { Profile, SocialFeedPost } from '../../models';
-import type { SocialComposerKind } from './types';
+import type { Profile } from '../../models';
+import type { SignaturePostKind } from './types';
 import { QuickStatusComposer } from './QuickStatusComposer';
-import { QuickTipComposer } from './QuickTipComposer';
-import { QuickPollComposer } from './QuickPollComposer';
+import { QuickChallengeComposer } from './QuickChallengeComposer';
 
 interface FeedComposerProps {
   profile: Profile | null;
-  onOpenRitualSheet: () => void;
+  onCreateStory: () => void;
 }
 
 interface QuickAction {
-  kind: SocialComposerKind;
+  kind: Exclude<SignaturePostKind, 'peak' | 'proof'>;
   label: string;
   icon: typeof Camera;
   gradient: string;
@@ -25,21 +24,19 @@ interface QuickAction {
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { kind: 'status', label: 'Status', icon: MessageCircle, gradient: 'from-cyan-500/20 to-blue-500/20', borderColor: 'border-cyan-500/30' },
-  { kind: 'photo', label: 'Khoảnh khắc', icon: Image, gradient: 'from-violet-500/20 to-purple-500/20', borderColor: 'border-violet-500/30' },
-  { kind: 'progress', label: 'Cột mốc', icon: BarChart3, gradient: 'from-orange-500/20 to-amber-500/20', borderColor: 'border-orange-500/30' },
-  { kind: 'tip', label: 'Mẹo', icon: Lightbulb, gradient: 'from-emerald-500/20 to-teal-500/20', borderColor: 'border-emerald-500/30' },
-  { kind: 'poll', label: 'Khảo sát', icon: BarChart3, gradient: 'from-amber-500/20 to-yellow-500/20', borderColor: 'border-amber-500/30' },
+  { kind: 'pulse', label: 'Pulse', icon: Camera, gradient: 'from-cyan-500/20 to-blue-500/20', borderColor: 'border-cyan-500/30' },
+  { kind: 'drop', label: 'Drop', icon: BookOpen, gradient: 'from-sky-500/20 to-cyan-500/20', borderColor: 'border-sky-500/30' },
+  { kind: 'duel', label: 'Duel', icon: Swords, gradient: 'from-purple-500/20 to-fuchsia-500/20', borderColor: 'border-purple-500/30' },
 ];
 
-export const FeedComposer = memo(function FeedComposer({ profile, onOpenRitualSheet }: FeedComposerProps) {
+export const FeedComposer = memo(function FeedComposer({ profile, onCreateStory }: FeedComposerProps) {
   const { waterIntake, waterGoal, streak } = useAppStore(useShallow(s => ({
     waterIntake: s.waterIntake,
     waterGoal: s.waterGoal,
     streak: s.streak,
   })));
 
-  const [activeComposer, setActiveComposer] = useState<SocialComposerKind | null>(null);
+  const [activeComposer, setActiveComposer] = useState<Extract<SignaturePostKind, 'pulse' | 'duel'> | null>(null);
 
   const name = profile?.nickname || 'Bạn';
   const initial = name[0]?.toUpperCase() || 'U';
@@ -47,9 +44,14 @@ export const FeedComposer = memo(function FeedComposer({ profile, onOpenRitualSh
   const handlePublishPost = async (postData: {
     content: string;
     imageUrl?: string;
-    postKind: SocialFeedPost['post_kind'];
+    postKind: 'pulse' | 'duel';
     extra?: Record<string, any>;
   }) => {
+    if (!profile?.id) {
+      toast.error('Bạn cần đăng nhập để đăng bài.');
+      return;
+    }
+
     const toastId = toast.loading('Đang đăng bài...');
     try {
       // Chuyển blob URL sang base64 Data URL để lưu trực tiếp vào DB
@@ -70,18 +72,20 @@ export const FeedComposer = memo(function FeedComposer({ profile, onOpenRitualSh
         }
       }
 
-      const { error } = await supabase.from('social_posts').insert({
-        author_id: profile!.id,
+      const persistedPostKind = postData.postKind === 'pulse' ? 'status' : 'challenge';
+      const { data, error } = await supabase.from('social_posts').insert({
+        author_id: profile.id,
         content: postData.content,
         image_url: finalImageUrl,
-        post_kind: postData.postKind,
+        post_kind: persistedPostKind,
         hydration_ml: waterIntake,
         streak_snapshot: streak,
-        visibility: 'public',
+        visibility: 'followers',
         ...postData.extra,
-      });
+      }).select('id').single();
       if (error) throw error;
-      toast.success('Bài viết đã được đăng!', { id: toastId });
+      if (!data?.id) throw new Error('Không nhận được bài viết vừa tạo.');
+      toast.success(postData.postKind === 'duel' ? 'Duel đã lên feed.' : 'Pulse đã được đăng.', { id: toastId });
       setActiveComposer(null);
     } catch (err: any) {
       toast.error('Không thể đăng bài lúc này!', { id: toastId });
@@ -89,11 +93,11 @@ export const FeedComposer = memo(function FeedComposer({ profile, onOpenRitualSh
   };
 
   return (
-    <div className="mx-4 space-y-3">
+    <div className="mx-4 space-y-2.5">
       {/* Quick text trigger */}
       <button
         type="button"
-        onClick={() => setActiveComposer('status')}
+        onClick={() => setActiveComposer('pulse')}
         className="group relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3 text-left shadow-sm backdrop-blur-xl transition-all duration-300 hover:border-cyan-400/20 hover:bg-slate-900/70 active:scale-[0.99]"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -107,52 +111,47 @@ export const FeedComposer = memo(function FeedComposer({ profile, onOpenRitualSh
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-slate-200">{name}</p>
-            <p className="truncate text-xs text-slate-400">Chia sẻ hydration moment...</p>
+            <p className="truncate text-xs text-slate-400">Ghi lại Pulse hôm nay...</p>
           </div>
           <div className="shrink-0 rounded-xl border border-cyan-400/15 bg-cyan-400/10 px-3 py-2 text-xs font-medium text-cyan-300 transition-colors group-hover:bg-cyan-400/15">
-            Post
+            Đăng
           </div>
         </div>
       </button>
 
       {/* Quick action strip */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide px-0.5">
+      <div className="grid grid-cols-3 gap-2">
         {QUICK_ACTIONS.map(action => (
           <button
             key={action.kind}
             onClick={() => {
-              if (action.kind === 'progress') {
-                onOpenRitualSheet();
+              if (action.kind === 'drop') {
+                onCreateStory();
               } else {
                 setActiveComposer(action.kind);
               }
             }}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border ${action.borderColor} bg-slate-800/40 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700/50 active:scale-95 transition-all`}
+            className={`flex min-w-0 items-center justify-center gap-1.5 rounded-xl border ${action.borderColor} bg-slate-800/40 px-2 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700/50 active:scale-95 transition-all`}
           >
             <action.icon size={14} />
-            <span>{action.label}</span>
+            <span className="truncate">{action.label}</span>
           </button>
         ))}
       </div>
 
       {/* Composer Modals */}
       <AnimatePresence>
-        {activeComposer === 'status' && profile && (
+        {activeComposer === 'pulse' && profile && (
           <QuickStatusComposer
-            profile={profile}
+            waterIntake={waterIntake}
+            waterGoal={waterGoal}
+            streak={streak}
             onPublish={handlePublishPost}
             onClose={() => setActiveComposer(null)}
           />
         )}
-        {activeComposer === 'tip' && profile && (
-          <QuickTipComposer
-            profile={profile}
-            onPublish={handlePublishPost}
-            onClose={() => setActiveComposer(null)}
-          />
-        )}
-        {activeComposer === 'poll' && profile && (
-          <QuickPollComposer
+        {activeComposer === 'duel' && profile && (
+          <QuickChallengeComposer
             profile={profile}
             onPublish={handlePublishPost}
             onClose={() => setActiveComposer(null)}

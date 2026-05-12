@@ -53,11 +53,13 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
 
   const isChallenge = post.type === 'challenge';
   const isMilestone = post.type === 'milestone';
-  const isWaterLog = post.type === 'water_log' || post.type === 'daily_goal';
   const isAchievement = post.type === 'achievement';
   const isCompare = post.type === 'compare';
   const isTip = post.type === 'tip';
   const isPoll = post.type === 'poll';
+  const isWaterLog = post.type === 'water_log'
+    || post.type === 'daily_goal'
+    || (!isTip && !isPoll && !isChallenge && (post.hydration_ml || 0) > 0);
 
   if (isDeleted) return null;
 
@@ -120,13 +122,6 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
       transition={{ duration: 0.4, type: 'spring', bounce: 0.3 } as any}
       className={`transition-all duration-500 bg-slate-900/50 rounded-3xl shadow-lg p-5 border backdrop-blur-sm relative overflow-hidden ${borderClass}`}
     >
-      {/* Ambient glow decorations */}
-      {isChallenge && <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl rounded-full" />}
-      {isMilestone && <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full" />}
-      {isAchievement && <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-500/20 blur-3xl rounded-full" />}
-      {isCompare && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-32 bg-cyan-500/10 blur-3xl rounded-full" />}
-      {isTip && <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />}
-
       {/* Header */}
       <PostCardHeader
         post={post}
@@ -186,7 +181,7 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
         {isTip && post.tip_category && (
           <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
             <Lightbulb size={10} />
-            {post.tip_category === 'science' ? '🔬 Khoa học' : post.tip_category === 'recipe' ? '🍹 Công thức' : '💡 Mẹo vặt'}
+            {post.tip_category === 'science' ? 'Khoa học' : post.tip_category === 'recipe' ? 'Công thức' : 'Mẹo vặt'}
           </span>
         )}
         {isPoll && (

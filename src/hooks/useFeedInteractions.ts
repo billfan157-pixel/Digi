@@ -85,25 +85,28 @@ export function useFeedInteractions({
     }
   }, [currentUserId, postId, postAuthorId]);
 
-  // ── Freeze (Tặng khiên) ── Donate streak freeze item
+  // ── Nudge ── Lightweight accountability tap for close-circle posts
   const donateFreeze = useCallback(async () => {
     if (!currentUserId) return;
     if (currentUserId === postAuthorId) {
-      toast.error('Không thể tự tặng khiên cho chính mình!');
+      toast.error('Không thể tự nudge chính mình!');
       return;
     }
 
-    const tid = toast.loading('Đang gửi khiên bảo vệ... �️');
+    const tid = toast.loading('Đang gửi Nudge...');
     try {
-      const { error } = await supabase.rpc('donate_streak_freeze', {
-        p_from_user: currentUserId,
-        p_to_user: postAuthorId,
-        p_post_id: postId,
+      const { error } = await supabase.from('nudges').insert({
+        from_user_id: currentUserId,
+        to_user_id: postAuthorId,
+        nudge_type: 'reminder',
+        related_entity_id: postId,
+        related_entity_type: 'post',
+        message: 'Uống nước đi, giữ nhịp nhé.',
       });
       if (error) throw error;
-      toast.success('Đã tặng khiên bảo vệ chuỗi! 🛡️', { id: tid });
+      toast.success('Đã gửi Nudge.', { id: tid });
     } catch {
-      toast.error('Chưa thể tặng khiên lúc này!', { id: tid });
+      toast.error('Chưa thể gửi Nudge lúc này!', { id: tid });
     }
   }, [currentUserId, postId, postAuthorId]);
 

@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
+import { useUIStore } from '../store/useUIStore';
 import {
   buildProgressShareText,
   DEFAULT_SOCIAL_COMPOSER,
   DEFAULT_SOCIAL_PROFILE_STATS,
   isMissingSocialSchemaError,
   type SocialComposerState,
+  type CloseCircleMember,
   type SocialDiscoverProfile,
   type SocialFeedPost,
   type SocialProfileStats,
@@ -31,6 +33,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
   const [socialSearchQuery, setSocialSearchQuery] = useState('');
   const [socialSearchResults, setSocialSearchResults] = useState<SocialDiscoverProfile[]>([]);
   const [socialFollowingIds, setSocialFollowingIds] = useState<string[]>([]);
+  const [closeCircleMembers, setCloseCircleMembers] = useState<CloseCircleMember[]>([]);
+  const [isCloseCircleLoading, setIsCloseCircleLoading] = useState(false);
   const [socialProfileStats, setSocialProfileStats] = useState<SocialProfileStats>(DEFAULT_SOCIAL_PROFILE_STATS);
   const [socialError, setSocialError] = useState('');
   const [isSocialLoading, setIsSocialLoading] = useState(false);
@@ -49,6 +53,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       setSocialStories([]);
       setSocialSearchResults([]);
       setSocialFollowingIds([]);
+      setCloseCircleMembers([]);
       setSocialProfileStats(DEFAULT_SOCIAL_PROFILE_STATS);
       setSocialError('');
       resetSocialComposer();
@@ -81,6 +86,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     return message;
   };
 
+  const closeCircleIds = useMemo(() => closeCircleMembers.map(member => member.id), [closeCircleMembers]);
+
   const resetSocialComposer = () => {
     if (socialImagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(socialImagePreview);
@@ -93,6 +100,63 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
   const closeSocialComposer = () => {
     resetSocialComposer();
     setShowSocialComposer(false);
+    useUIStore.getState().setShowSocialComposer(false);
+  };
+
+  const loadCloseCircle = async (options?: { silent?: boolean }): Promise<CloseCircleMember[]> => {
+    if (!profile?.id) return [];
+
+    if (!options?.silent) setIsCloseCircleLoading(true);
+    try {
+      const { data: rows, error } = await supabase!
+        .from('widget_partners')
+        .select('partner_id, priority, is_pinned, created_at')
+        .eq('user_id', profile.id)
+        .order('is_pinned', { ascending: false })
+        .order('priority', { ascending: true })
+        .limit(12);
+      if (error) throw error;
+
+      const partnerRows = rows || [];
+      const partnerIds = partnerRows.map((row: any) => row.partner_id).filter(Boolean);
+      if (partnerIds.length === 0) {
+        setCloseCircleMembers([]);
+        setSocialFollowingIds([]);
+        return [];
+      }
+
+      const { data: profiles, error: profilesError } = await supabase!
+        .from('public_profiles')
+        .select('id, nickname, avatar_url, level, water_today, water_goal')
+        .in('id', partnerIds);
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map((profiles || []).map((row: any) => [row.id, row]));
+      const members = partnerRows.map((row: any, index: number) => {
+        const partner = profileMap.get(row.partner_id) || {};
+        return {
+          id: row.partner_id,
+          nickname: partner.nickname || 'Bạn DigiWell',
+          avatar_url: partner.avatar_url ?? null,
+          level: partner.level ?? null,
+          water_today: partner.water_today ?? null,
+          water_goal: partner.water_goal ?? null,
+          priority: row.priority ?? index + 1,
+          is_pinned: !!row.is_pinned,
+        } satisfies CloseCircleMember;
+      });
+
+      setCloseCircleMembers(members);
+      setSocialFollowingIds(members.map(member => member.id));
+      return members;
+    } catch (err: any) {
+      const friendlyMessage = getSocialErrorMessage(err.message);
+      setSocialError(friendlyMessage);
+      if (!options?.silent) toast.error(friendlyMessage);
+      return [];
+    } finally {
+      setIsCloseCircleLoading(false);
+    }
   };
 
   const openSocialComposer = (kind: SocialComposerState['postKind'] = 'status') => {
@@ -114,11 +178,12 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     setSocialComposer({
       content,
       imageUrl: '',
-      postKind: kind,
-      visibility: kind === 'story' ? 'followers' : 'public',
+      postKind: kind === 'progress' ? 'status' : kind,
+      visibility: 'followers',
     });
     setActiveTab('feed');
     setShowSocialComposer(true);
+    useUIStore.getState().setShowSocialComposer(true);
   };
 
   const uploadSocialImage = async (file: File) => {
@@ -144,7 +209,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       const keyword = query.trim();
       let request = supabase!
         .from('public_profiles')
-        .select('id, nickname')
+        .select('id, nickname, avatar_url, level, water_today, water_goal')
         .neq('id', profile.id);
 
       request = keyword.length >= 2
@@ -154,11 +219,17 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       const { data, error } = await request.limit(8);
       if (error) throw error;
 
+      const circleSet = new Set(closeCircleIds);
       setSocialError('');
       setSocialSearchResults((data || []).map((user: any, index: number) => ({
         id: user.id || `search-user-fallback-${index}`,
         nickname: user.nickname || 'Người dùng DigiWell',
         isFollowing: socialFollowingIds.includes(user.id),
+        isInCircle: circleSet.has(user.id),
+        avatar_url: user.avatar_url ?? null,
+        level: user.level ?? null,
+        water_today: user.water_today ?? null,
+        water_goal: user.water_goal ?? null,
       })));
     } catch (err: any) {
       const friendlyMessage = getSocialErrorMessage(err.message);
@@ -177,6 +248,9 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     }
 
     try {
+      const circleMembers = await loadCloseCircle({ silent: true });
+      const circleIds = circleMembers.map(member => member.id);
+
       const [
         followingRes,
         followersCountRes,
@@ -194,11 +268,11 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       if (followingCountRes.error) throw followingCountRes.error;
       if (postsCountRes.error) throw postsCountRes.error;
 
-      const followingIds = (followingRes.data || []).map((row: any) => row.following_id);
+      const followingIds = circleIds;
       setSocialFollowingIds(followingIds);
       setSocialProfileStats({
         followers: followersCountRes.count || 0,
-        following: followingCountRes.count || 0,
+        following: circleIds.length || followingCountRes.count || 0,
         posts: postsCountRes.count || 0,
       });
 
@@ -223,7 +297,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
 
       const [profilesRes, likesRes] = await Promise.all([
         authorIds.length > 0
-          ? supabase!.from('public_profiles').select('id, nickname').in('id', authorIds)
+          ? supabase!.from('public_profiles').select('id, nickname, avatar_url, level, water_today, water_goal').in('id', authorIds)
           : Promise.resolve({ data: [], error: null }),
         postIds.length > 0
           ? supabase!.from('social_post_likes').select('post_id').eq('user_id', profile.id).in('post_id', postIds)
@@ -236,6 +310,10 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       const profileMap = new Map((profilesRes.data || []).map((row: any) => [row.id, {
         id: row.id,
         nickname: row.nickname || 'Người dùng DigiWell',
+        avatar_url: row.avatar_url ?? null,
+        level: row.level ?? null,
+        water_today: row.water_today ?? null,
+        water_goal: row.water_goal ?? null,
       }]));
       const likedPostIds = new Set((likesRes.data || []).map((row: any) => row.post_id));
 
@@ -307,31 +385,65 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     await loadSocialDirectory(query);
   };
 
-  const handleFollowUser = async (targetUserId: string, nickname: string) => {
+  const handleAddCircleMember = async (targetUserId: string, nickname: string) => {
     if (!profile?.id) return;
+    if (targetUserId === profile.id) {
+      toast.error('Không thể thêm chính bạn vào Close Circle.');
+      return;
+    }
+    if (closeCircleIds.includes(targetUserId)) {
+      toast.info(`${nickname} đã nằm trong Close Circle.`);
+      return;
+    }
+    if (closeCircleMembers.length >= 12) {
+      toast.error('Close Circle tối đa 12 người để giữ feed thật gần.');
+      return;
+    }
 
-    const toastId = toast.loading(`Đang theo dõi ${nickname}...`);
+    const toastId = toast.loading(`Đang thêm ${nickname} vào Circle...`);
     try {
+      const priority = closeCircleMembers.length + 1;
+      const { error: circleError } = await supabase!
+        .from('widget_partners')
+        .upsert({
+          user_id: profile.id,
+          partner_id: targetUserId,
+          priority,
+          is_pinned: priority <= 3,
+        }, { onConflict: 'user_id,partner_id' });
+      if (circleError) throw circleError;
+
       const { error } = await supabase!
         .from('social_follows')
-        .insert({ follower_id: profile.id, following_id: targetUserId });
+        .upsert(
+          { follower_id: profile.id, following_id: targetUserId },
+          { onConflict: 'follower_id,following_id', ignoreDuplicates: true }
+        );
       if (error) throw error;
 
       setSocialFollowingIds((prev: string[]) => prev.includes(targetUserId) ? prev : [...prev, targetUserId]);
-      setSocialSearchResults((prev: SocialDiscoverProfile[]) => prev.map(user => user.id === targetUserId ? { ...user, isFollowing: true } : user));
+      setSocialSearchResults((prev: SocialDiscoverProfile[]) => prev.map(user => user.id === targetUserId ? { ...user, isFollowing: true, isInCircle: true } : user));
       setSocialProfileStats((prev: SocialProfileStats) => ({ ...prev, following: prev.following + 1 }));
-      toast.success(`Đã theo dõi ${nickname}.`, { id: toastId });
+      toast.success(`Đã thêm ${nickname} vào Close Circle.`, { id: toastId });
+      await loadCloseCircle({ silent: true });
       await refreshSocialFeed({ silent: true });
     } catch (err: any) {
       toast.error(getSocialErrorMessage(err.message), { id: toastId });
     }
   };
 
-  const handleUnfollowUser = async (targetUserId: string, nickname: string) => {
+  const handleRemoveCircleMember = async (targetUserId: string, nickname: string) => {
     if (!profile?.id) return;
 
-    const toastId = toast.loading(`Đang bỏ theo dõi ${nickname}...`);
+    const toastId = toast.loading(`Đang gỡ ${nickname} khỏi Circle...`);
     try {
+      const { error: circleError } = await supabase!
+        .from('widget_partners')
+        .delete()
+        .eq('user_id', profile.id)
+        .eq('partner_id', targetUserId);
+      if (circleError) throw circleError;
+
       const { error } = await supabase!
         .from('social_follows')
         .delete()
@@ -340,14 +452,18 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       if (error) throw error;
 
       setSocialFollowingIds((prev: string[]) => prev.filter(id => id !== targetUserId));
-      setSocialSearchResults((prev: SocialDiscoverProfile[]) => prev.map(user => user.id === targetUserId ? { ...user, isFollowing: false } : user));
+      setSocialSearchResults((prev: SocialDiscoverProfile[]) => prev.map(user => user.id === targetUserId ? { ...user, isFollowing: false, isInCircle: false } : user));
       setSocialProfileStats((prev: SocialProfileStats) => ({ ...prev, following: Math.max(prev.following - 1, 0) }));
-      toast.success(`Đã bỏ theo dõi ${nickname}.`, { id: toastId });
+      toast.success(`Đã gỡ ${nickname} khỏi Close Circle.`, { id: toastId });
+      await loadCloseCircle({ silent: true });
       await refreshSocialFeed({ silent: true });
     } catch (err: any) {
       toast.error(getSocialErrorMessage(err.message), { id: toastId });
     }
   };
+
+  const handleFollowUser = handleAddCircleMember;
+  const handleUnfollowUser = handleRemoveCircleMember;
 
   const handleToggleLikePost = async (post: SocialFeedPost) => {
     if (!profile?.id) return;
@@ -423,22 +539,26 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
         ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         : null;
 
-      const { error } = await supabase!.from('social_posts').insert({
+      const persistedPostKind = socialComposer.postKind === 'progress' ? 'status' : socialComposer.postKind;
+      const { data, error } = await supabase!.from('social_posts').insert({
         author_id: profile.id,
         content: trimmedContent,
         image_url: imageUrl,
-        post_kind: socialComposer.postKind,
+        post_kind: persistedPostKind,
         visibility: socialComposer.visibility,
         hydration_ml: waterIntake,
         streak_snapshot: streak,
         expires_at: expiresAt,
-      });
+      }).select('id').single();
       if (error) throw error;
+      if (!data?.id) throw new Error('Không nhận được bài viết vừa tạo.');
 
-      toast.success(
-        socialComposer.postKind === 'story' ? 'Story đã lên sóng 24 giờ.' : 'Bài đăng đã xuất hiện trên feed.',
-        { id: toastId },
-      );
+      const successMessage = socialComposer.postKind === 'story'
+        ? 'Drop đã lên sóng.'
+        : socialComposer.postKind === 'challenge'
+          ? 'Duel đã lên feed.'
+          : 'Pulse đã xuất hiện trên feed.';
+      toast.success(successMessage, { id: toastId });
       closeSocialComposer();
       await refreshSocialFeed({ silent: true });
     } catch (err: any) {
@@ -458,6 +578,9 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     socialSearchQuery, setSocialSearchQuery,
     socialSearchResults, setSocialSearchResults,
     socialFollowingIds, setSocialFollowingIds,
+    closeCircleMembers, setCloseCircleMembers,
+    closeCircleIds,
+    isCloseCircleLoading,
     socialProfileStats, setSocialProfileStats,
     socialError, setSocialError,
     isSocialLoading, setIsSocialLoading,
@@ -468,8 +591,11 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     socialImageInputRef,
     closeSocialComposer,
     openSocialComposer,
+    loadCloseCircle,
     handleSocialImagePicked,
     handleSearchSocialUsers,
+    handleAddCircleMember,
+    handleRemoveCircleMember,
     handleFollowUser,
     handleUnfollowUser,
     handleToggleLikePost,

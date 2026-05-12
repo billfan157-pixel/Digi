@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, X, Plus, Trash2 } from 'lucide-react';
+import { BarChart3, Send, X, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Profile, PostPollOption } from '../../models';
 
@@ -70,7 +70,10 @@ export const QuickPollComposer = ({ profile, onPublish, onClose }: QuickPollComp
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm" onClick={onClose} />
       <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 360 }} className="relative w-full max-w-md rounded-t-[2rem] border border-white/10 bg-slate-950/95 shadow-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-bold text-lg flex items-center gap-2">📋 Khảo sát</h3>
+          <h3 className="text-white font-bold text-lg flex items-center gap-2">
+            <BarChart3 size={18} className="text-amber-400" />
+            Khảo sát
+          </h3>
           <button onClick={onClose} className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400"><X size={18} /></button>
         </div>
 

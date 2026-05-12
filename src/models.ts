@@ -78,7 +78,7 @@ export interface SocialFeedPost {
   author_id: string;
   content: string;
   image_url: string | null;
-  post_kind: 'status' | 'progress' | 'story' | 'challenge' | 'achievement' | 'compare' | 'tip' | 'poll' | 'photo';
+  post_kind: 'checkin' | 'status' | 'progress' | 'story' | 'milestone' | 'challenge' | 'achievement' | 'compare' | 'tip' | 'poll' | 'photo';
   visibility: 'public' | 'followers';
   hydration_ml: number | null;
   streak_snapshot: number | null;

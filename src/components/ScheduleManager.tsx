@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Plus, Trash2, Save, ChevronUp, ChevronDown, Settings2, Sparkles, AlertTriangle } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
 import { AppStorage } from '@/lib/storage';
@@ -60,13 +61,11 @@ export default function ScheduleManager({
     return { pct, status: 'ok' as const };
   }, [totalMl, waterGoal]);
 
-  // Smart schedule khi có calendar events — tính 1 lần ở component level
-  const smartScheduleResult = useMemo(
-    () => (calendarEvents.length > 0 && aiSchedule && aiSchedule.length > 0
-      ? useSmartSchedule(aiSchedule, calendarEvents, waterGoal)
-      : null),
-    [aiSchedule, calendarEvents, waterGoal],
-  );
+  // Smart schedule khi có calendar events — hook phải chạy ổn định ở component level
+  const calculatedSmartSchedule = useSmartSchedule(aiSchedule, calendarEvents, waterGoal);
+  const smartScheduleResult = calendarEvents.length > 0 && aiSchedule && aiSchedule.length > 0
+    ? calculatedSmartSchedule
+    : null;
 
   const applyAiSchedule = () => {
     if (!aiSchedule || aiSchedule.length === 0) return;
@@ -115,6 +114,14 @@ export default function ScheduleManager({
     
     if (profile?.id) {
       AppStorage.setItem(`digiwell_custom_schedule_${profile.id}`, JSON.stringify(customSchedule));
+    }
+
+    if (Capacitor.getPlatform() === 'web') {
+      const warningMsg = goalDeviation.status !== 'ok'
+        ? ` (${totalMl}/${waterGoal}ml - ${goalDeviation.status === 'low' ? 'thiếu' : 'vượt'} mục tiêu)`
+        : '';
+      toast.success(`Đã lưu ${customSchedule.length} mốc uống${warningMsg}. Thông báo chỉ hoạt động trên app di động.`);
+      return;
     }
 
     try {
@@ -178,6 +185,8 @@ export default function ScheduleManager({
   };
 
   const hasAiSchedule = aiSchedule && aiSchedule.length > 0 && customSchedule.length === 0;
+  const hasCalendarOptimizedSchedule = !!smartScheduleResult && smartScheduleResult.busyEventCount > 0;
+  const canRefreshFromAiSchedule = aiSchedule && aiSchedule.length > 0 && customSchedule.length > 0 && !isEditingSchedule;
 
   return (
     <div className="w-full">
@@ -244,7 +253,11 @@ export default function ScheduleManager({
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-bold">Dùng lịch đề xuất từ AI</p>
-                    <p className="text-[10px] text-slate-400">{aiSchedule.length} mốc uống — dựa trên hồ sơ của bạn</p>
+                    <p className="text-[10px] text-slate-400">
+                      {hasCalendarOptimizedSchedule
+                        ? `${aiSchedule.length} mốc uống - né ${smartScheduleResult.busyEventCount} sự kiện hôm nay`
+                        : `${aiSchedule.length} mốc uống - dựa trên hồ sơ của bạn`}
+                    </p>
                   </div>
                 </div>
                 <ChevronDown size={18} className="text-cyan-400 rotate-[-90deg]" />
@@ -252,7 +265,16 @@ export default function ScheduleManager({
             )}
 
             {/* Nút chỉnh sửa / lưu */}
-            <div className="flex justify-end mb-4 mt-2">
+            <div className="flex flex-wrap justify-end gap-2 mb-4 mt-2">
+              {canRefreshFromAiSchedule && (
+                <button
+                  onClick={applyAiSchedule}
+                  className="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-300 text-xs font-bold border border-cyan-500/20 active:scale-95 transition-all flex items-center gap-1.5"
+                >
+                  <Sparkles size={14} />
+                  {hasCalendarOptimizedSchedule ? 'Tối ưu theo Calendar' : 'Cập nhật lịch AI'}
+                </button>
+              )}
               {!isEditingSchedule ? (
                 <button
                   disabled={customSchedule.length === 0}

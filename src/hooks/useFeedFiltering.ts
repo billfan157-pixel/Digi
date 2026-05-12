@@ -6,7 +6,7 @@ import type { SocialFeedPost, Profile } from '../models';
 export const useFeedFiltering = (
   posts: SocialFeedPost[] | undefined,
   feedMode: 'smart' | 'latest' | 'following',
-  feedFilter: 'all' | 'milestones' | 'challenges',
+  feedFilter: 'all' | 'checkins' | 'milestones' | 'challenges' | 'photos',
   feedSearch: string,
   socialFollowingIds: string[],
   profile: Profile | null,
@@ -21,6 +21,8 @@ export const useFeedFiltering = (
         ...p,
         type: (() => {
           switch (p.post_kind) {
+            case 'checkin':
+              return 'daily_goal';
             case 'challenge':
               return 'challenge';
             case 'milestone':
@@ -59,10 +61,14 @@ export const useFeedFiltering = (
       ranked = ranked.filter(post => post.author_id === profile?.id || socialFollowingIds.includes(post.author_id));
     }
 
-    if (feedFilter === 'milestones') {
-      ranked = ranked.filter(p => p.type === 'milestone' || p.type === 'daily_goal');
+    if (feedFilter === 'checkins') {
+      ranked = ranked.filter(p => p.type === 'daily_goal' || p.type === 'status');
+    } else if (feedFilter === 'milestones') {
+      ranked = ranked.filter(p => p.type === 'milestone');
     } else if (feedFilter === 'challenges') {
       ranked = ranked.filter(p => p.type === 'challenge');
+    } else if (feedFilter === 'photos') {
+      ranked = ranked.filter(p => !!p.image_url);
     }
 
     const search = feedSearch.trim().toLowerCase();

@@ -128,15 +128,6 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
           </button>
         </form>
 
-        <button
-          onClick={handleBiometricUnlock}
-          disabled={isCheckingBiometric || isAuthenticating}
-          className="w-full py-4 rounded-xl font-bold text-white text-sm mt-4 border border-cyan-500/30 bg-cyan-500/10 backdrop-blur-xl hover:bg-cyan-500/20 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          <ScanFace size={20} />
-          {isCheckingBiometric || isAuthenticating ? 'Đang xác thực...' : 'Mở khóa bằng Sinh trắc học'}
-        </button>
-
         <div className="mt-6 flex items-center justify-between text-xs text-slate-500">
           <hr className="w-full border-slate-700" /><span className="px-3 font-bold tracking-widest">HOẶC</span><hr className="w-full border-slate-700" />
         </div>

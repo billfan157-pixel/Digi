@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { readFeedCache, writeFeedCache } from '@/lib/sessionSecurity';
@@ -32,7 +32,7 @@ async function ensurePublicProfile(userId: string) {
   }
 }
 
-export function useFeed(currentUserId: string | undefined) {
+export function useFeed(currentUserId: string | undefined, closeCircleIds: string[] = []) {
   const [posts, setPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -41,6 +41,11 @@ export function useFeed(currentUserId: string | undefined) {
   const [pendingPosts, setPendingPosts] = useState<any[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const postsLengthRef = useRef(0);
+  const closeCircleKey = closeCircleIds.join(',');
+  const visibleAuthorIds = useMemo(
+    () => Array.from(new Set([currentUserId, ...closeCircleIds].filter(Boolean))) as string[],
+    [currentUserId, closeCircleKey]
+  );
 
   useEffect(() => {
     if (currentUserId && currentUserId !== 'undefined') {
@@ -83,6 +88,8 @@ export function useFeed(currentUserId: string | undefined) {
           author:public_profiles!social_posts_author_public_profile_fkey (id, nickname, avatar_url, level, water_today, water_goal),
           social_post_likes (user_id)
         `)
+        .neq('post_kind', 'story')
+        .in('author_id', visibleAuthorIds)
         .order('created_at', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
 
@@ -118,7 +125,7 @@ export function useFeed(currentUserId: string | undefined) {
       setIsLoading(false);
       setIsFetchingMore(false);
     }
-  }, [currentUserId]);
+  }, [currentUserId, visibleAuthorIds]);
 
   // Public refetch for pull-to-refresh
   const refetch = useCallback(async () => {
@@ -126,17 +133,14 @@ export function useFeed(currentUserId: string | undefined) {
     await fetchPosts(0);
   }, [currentUserId, fetchPosts]);
 
-  const initialFetchRef = useRef(false);
   useEffect(() => {
-    if (!initialFetchRef.current) {
-      initialFetchRef.current = true;
-      fetchPosts(0);
-    }
+    fetchPosts(0);
   }, [fetchPosts]);
 
   // Supabase Realtime Subscription cho bài mới
   useEffect(() => {
     if (!currentUserId || currentUserId === 'undefined') return;
+    const visibleAuthorSet = new Set(visibleAuthorIds);
 
     // Cleanup previous channel before creating new one
     if (channelRef.current) {
@@ -161,6 +165,8 @@ export function useFeed(currentUserId: string | undefined) {
             .eq('id', newPost.id)
             .single();
           if (data) {
+            if (data.post_kind === 'story') return;
+            if (!visibleAuthorSet.has(data.author_id)) return;
             setPendingPosts(prev => [data, ...prev]);
             setNewPostsCount(prev => prev + 1);
           }
@@ -174,7 +180,7 @@ export function useFeed(currentUserId: string | undefined) {
         channelRef.current = null;
       }
     };
-  }, [currentUserId]);
+  }, [currentUserId, visibleAuthorIds]);
 
   const loadMore = useCallback(() => {
     if (!isLoading && !isFetchingMore && hasMore) fetchPosts(postsLengthRef.current);

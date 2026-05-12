@@ -152,6 +152,15 @@
 }
 
 @layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .motion-ease {
     transition-duration: var(--dw-motion-ease);
     transition-timing-function: cubic-bezier(0.2, 0, 0, 1);

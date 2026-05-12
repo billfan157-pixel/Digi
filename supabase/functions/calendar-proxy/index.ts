@@ -22,6 +22,7 @@ type CalendarProxyAction = 'list-events';
 type CalendarProxyRequestBody = {
   action?: CalendarProxyAction;
   maxResults?: number;
+  daysAhead?: number;
   providerToken?: string;
   providerRefreshToken?: string;
 };
@@ -176,12 +177,18 @@ async function resolveGoogleAccessToken(
 async function fetchCalendarEvents(
   accessToken: string,
   maxResults: number,
+  daysAhead: number,
 ): Promise<Record<string, unknown>[]> {
+  const now = new Date();
+  const timeMax = new Date(now);
+  timeMax.setDate(timeMax.getDate() + Math.min(Math.max(daysAhead, 1), 14));
+
   const query = new URLSearchParams({
     singleEvents: 'true',
     orderBy: 'startTime',
     maxResults: String(Math.min(Math.max(maxResults, 1), 25)),
-    timeMin: new Date().toISOString(),
+    timeMin: now.toISOString(),
+    timeMax: timeMax.toISOString(),
   });
 
   const response = await fetch(
@@ -202,6 +209,8 @@ async function fetchCalendarEvents(
     id: event.id,
     summary: event.summary,
     htmlLink: event.htmlLink,
+    status: event.status,
+    transparency: event.transparency,
     start: event.start,
     end: event.end,
   }));
@@ -248,6 +257,7 @@ Deno.serve(async (request: Request) => {
     }
 
     const maxResults = typeof body.maxResults === 'number' ? body.maxResults : 10;
+    const daysAhead = typeof body.daysAhead === 'number' ? body.daysAhead : 7;
     const providerToken = typeof body.providerToken === 'string' ? body.providerToken : '';
     const providerRefreshToken = typeof body.providerRefreshToken === 'string' ? body.providerRefreshToken : '';
 
@@ -265,7 +275,7 @@ Deno.serve(async (request: Request) => {
 
     // Fetch events
     try {
-      const events = await fetchCalendarEvents(token, maxResults);
+      const events = await fetchCalendarEvents(token, maxResults, daysAhead);
       return json({ events, needs_reauth: false });
     } catch (error) {
       if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {

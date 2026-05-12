@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import WelcomeScreen from '@/screens/Auth/WelcomeScreen';
-import LoginScreen from '@/screens/Auth/LoginScreen';
+import LoginScreen, { type LoginScreenHandle } from '@/screens/Auth/LoginScreen';
 import RegisterScreen from '@/screens/Auth/RegisterScreen';
 import LockedScreen from '@/screens/LockedScreen';
 import OnboardingModal from '@/components/OnboardingModal';

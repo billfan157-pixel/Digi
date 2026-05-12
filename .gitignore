@@ -27,3 +27,4 @@ dist-ssr
 
 # Local tools & AI context
 .kilo/
+.vercel

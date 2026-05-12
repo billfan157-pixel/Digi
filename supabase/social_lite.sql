@@ -35,7 +35,7 @@ create table if not exists public.social_posts (
   content text not null default '',
   image_url text,
   post_kind text not null default 'status'
-    check (post_kind in ('status', 'progress', 'story')),
+    check (post_kind in ('status', 'progress', 'story', 'challenge', 'milestone')),
   visibility text not null default 'public'
     check (visibility in ('public', 'followers')),
   hydration_ml integer,

@@ -52,7 +52,7 @@ export const PostCardContent = ({
         <p className="text-center text-white font-bold text-lg leading-snug mb-2 z-10">
           Cả bạn và <span className="text-emerald-400">{post.compare_name || 'Đồng đội'}</span> đều đạt <span className="text-amber-400">{post.value || 100}%</span> mục tiêu!
         </p>
-        <p className="text-center text-slate-400 text-xs z-10">Cùng nhau giữ vững phong độ nhé! 🔥</p>
+        <p className="text-center text-slate-400 text-xs z-10">Cùng nhau giữ vững phong độ nhé.</p>
         <button className="mt-4 px-6 py-2 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition-all">
           Gửi lời chúc mừng
         </button>
@@ -70,7 +70,7 @@ export const PostCardContent = ({
             onClick={handleJoinChallenge}
             className="flex-1 bg-white text-purple-900 font-black py-2.5 rounded-xl hover:bg-slate-100 active:scale-95 transition-all shadow-[0_0_20px_rgba(168,85,247,0.4)]"
           >
-            Thách đấu ngay
+            Nhận lời
           </button>
         </div>
       </div>
@@ -83,7 +83,7 @@ export const PostCardContent = ({
         <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(249,115,22,0.4)]">
           <Flame size={32} className="text-white" />
         </div>
-        <p className="text-orange-400 text-[10px] font-black uppercase tracking-widest mb-1">Cột mốc mới</p>
+        <p className="text-orange-400 text-[10px] font-black uppercase tracking-widest mb-1">Peak mới</p>
         <h4 className="text-white text-2xl font-black mb-2">Chuỗi {post.value || post.streak_snapshot || 0} ngày</h4>
         {postContent && <p className="text-slate-300 text-sm">{postContent}</p>}
       </div>
@@ -91,15 +91,34 @@ export const PostCardContent = ({
   }
 
   if (isWaterLog) {
+    const amount = post.value || post.hydration_ml || 0;
+    const goal = post.author?.water_goal || 0;
+    const progress = goal > 0 ? Math.min(100, Math.round((Number(amount) / goal) * 100)) : 0;
+
     return (
-      <div className="flex items-center gap-4 p-4 bg-slate-800/50 border border-slate-700/50 rounded-2xl">
-        <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
-          <Droplets size={24} className="text-cyan-400" />
+      <div className="space-y-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10">
+            <Droplets size={24} className="text-cyan-400" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline justify-between gap-3">
+              <h4 className="text-xl font-black text-white">{amount} ml</h4>
+              {goal > 0 && <span className="text-xs font-bold text-cyan-300">{progress}%</span>}
+            </div>
+            {goal > 0 && (
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
+                <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${progress}%` }} />
+              </div>
+            )}
+            <p className="mt-2 truncate text-sm text-slate-400">{postContent || 'Vừa thả Pulse hôm nay.'}</p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="text-white text-xl font-black">+{post.value || post.hydration_ml || 0} ml</h4>
-          <p className="text-slate-400 text-sm truncate">{postContent || 'Vừa nạp thêm nước cho cơ thể.'}</p>
-        </div>
+        {post.image_url && (
+          <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-950">
+            <img src={post.image_url} alt="Proof Pulse" loading="lazy" className="w-full max-h-[420px] object-cover" />
+          </div>
+        )}
       </div>
     );
   }
@@ -114,7 +133,7 @@ export const PostCardContent = ({
             <Lightbulb size={20} className="text-emerald-400" />
           </div>
           <div>
-            <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">💡 Mẹo hydration</p>
+            <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">Mẹo hydration</p>
             <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-lg text-[9px] font-bold ${categoryColor}`}>{categoryLabel}</span>
           </div>
         </div>
@@ -139,7 +158,7 @@ export const PostCardContent = ({
             <BarChart3 size={20} className="text-amber-400" />
           </div>
           <div>
-            <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest">📋 Khảo sát</p>
+            <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest">Khảo sát</p>
             <p className="text-white font-bold text-lg mt-0.5">{postContent}</p>
           </div>
         </div>

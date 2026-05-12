@@ -43,7 +43,7 @@ const RITUALS: RitualOption[] = [
   {
     kind: 'ignition',
     label: 'Ignition',
-    subtitle: 'Cột mốc streak',
+    subtitle: 'Peak streak',
     description: 'Đánh dấu hành trình với một cảm xúc nổi bật.',
     gradient: 'from-orange-500/20 via-orange-500/5 to-transparent',
     icon: Flame,
@@ -59,7 +59,7 @@ const RITUALS: RitualOption[] = [
   {
     kind: 'duel',
     label: 'Duel',
-    subtitle: 'Thách đấu bạn bè',
+    subtitle: 'Duel bạn bè',
     description: 'Tạo chiến thư hydration trực tiếp trên feed.',
     gradient: 'from-purple-500/20 via-purple-500/5 to-transparent',
     icon: Swords,
@@ -150,7 +150,7 @@ export const HydrationRitualSheet = ({
       case 'duel':
         return (
           customText.trim() ||
-          '⚔️ Thách đấu — ai uống đủ nước trước sẽ thắng!'
+          'Duel — ai uống đủ nước trước sẽ thắng!'
         );
       default:
         return '';
@@ -527,7 +527,7 @@ export const HydrationRitualSheet = ({
                     <Swords size={28} className="text-purple-400" />
                   </div>
                   <p className="text-base font-bold text-white">
-                    Thách đấu bạn bè
+                    Duel bạn bè
                   </p>
                   <p className="mt-1 text-xs text-purple-400/80">
                     Ai uống đủ nước trước sẽ thắng!
@@ -537,7 +537,7 @@ export const HydrationRitualSheet = ({
                 <textarea
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
-                  placeholder="Viết lời thách đấu..."
+                  placeholder="Viết lời Duel..."
                   className="h-20 w-full resize-none rounded-xl border border-white/5 bg-slate-800/40 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-purple-500/30"
                 />
 

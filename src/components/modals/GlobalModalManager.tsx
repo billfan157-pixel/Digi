@@ -1,8 +1,5 @@
 import React from 'react';
-import { 
-  History, Settings, Zap, UserPlus, 
-  MessageSquare, Edit3, Camera, X 
-} from 'lucide-react';
+import { Camera } from 'lucide-react';
 
 import HistoryModal from './HistoryModal';
 import SmartHubModal from './SmartHubModal';
@@ -21,6 +18,7 @@ const FastingModal = React.lazy(() => import('./FastingModal'));
 const SettingsModal = React.lazy(() => import('./SettingsModal'));
 const ClubCoopModal = React.lazy(() => import('./ClubCoopModal'));
 const ConfirmDialog = React.lazy(() => import('../ui/ConfirmDialog'));
+const SocialDiscoverModal = React.lazy(() => import('./SocialDiscoverModal'));
 
 export default function GlobalModalManager() {
   const { showSocialComposer, setShowSocialComposer, showHistory, setShowHistory } = useModalStore();
@@ -28,6 +26,8 @@ export default function GlobalModalManager() {
   const isPremium = useAppStore(s => s.isPremium);
   const waterEntries = useAppStore(s => s.waterEntries);
   const waterIntake = useAppStore(s => s.waterIntake);
+  const waterGoal = useAppStore(s => s.waterGoal);
+  const streak = useAppStore(s => s.streak);
   const weatherData = useAppStore(s => s.weatherData);
   const watchData = useAppStore(s => s.watchData);
   const isWeatherSynced = useAppStore(s => s.isWeatherSynced);
@@ -39,7 +39,34 @@ export default function GlobalModalManager() {
 
   const { geminiProps, socialProps } = useAiSocial();
   const { chatMessages, isChatLoading, chatInput, setChatInput, handleSendChatMessage } = geminiProps;
-  const { socialComposer, setSocialComposer, handlePublishSocialPost } = socialProps;
+  const {
+    socialComposer,
+    setSocialComposer,
+    showDiscoverPeople,
+    setShowDiscoverPeople,
+    socialSearchQuery,
+    handleSearchSocialUsers,
+    isSocialSearching,
+    socialSearchResults,
+    handleUnfollowUser,
+    handleFollowUser,
+    handlePublishSocialPost,
+    socialImageInputRef,
+    handleSocialImagePicked,
+    socialImagePreview,
+    setSocialImagePreview,
+    setSocialImageFile,
+  } = socialProps;
+  const socialComposerTitle = socialComposer.postKind === 'story'
+    ? 'Tạo Drop'
+    : socialComposer.postKind === 'challenge'
+      ? 'Tạo Duel'
+      : 'Pulse';
+  const socialComposerPlaceholder = socialComposer.postKind === 'story'
+    ? 'Viết caption ngắn cho Drop...'
+    : socialComposer.postKind === 'challenge'
+      ? 'Nhập mục tiêu Duel...'
+      : 'Ghi chú ngắn cho Pulse hôm nay...';
 
   // Lớp nền mờ đặc trưng Cyberpunk
   const modalOverlay = "fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300";
@@ -64,14 +91,43 @@ export default function GlobalModalManager() {
         <div className={modalOverlay}>
            <div className={modalContent}>
               <form onSubmit={handlePublishSocialPost} className="p-6">
-                <h3 className="text-xl font-black text-white mb-4 uppercase">Trạm Phát Tin</h3>
+                <h3 className="text-xl font-black text-white mb-4 uppercase">{socialComposerTitle}</h3>
                 <textarea 
                   value={socialComposer.content}
                   onChange={(e) => setSocialComposer((prev) => ({ ...prev, content: e.target.value }))}
-                  placeholder="Chia sẻ thành tích uống nước hôm nay..."
+                  placeholder={socialComposerPlaceholder}
                   className="w-full h-32 p-4 bg-white/5 rounded-2xl text-white text-sm resize-none outline-none border border-white/10 focus:border-cyan-500/50"
                 />
+                <div className="mt-3 rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-3">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-cyan-300">Snapshot</p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-[11px] font-semibold text-cyan-300">{waterIntake}/{waterGoal}ml</span>
+                    <span className="rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-[11px] font-semibold text-orange-300">Streak {streak} ngày</span>
+                  </div>
+                </div>
+                {socialImagePreview && (
+                  <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-slate-950">
+                    <img src={socialImagePreview} alt="Ảnh xem trước" className="max-h-60 w-full object-cover" />
+                  </div>
+                )}
                 <div className="flex gap-2 mt-4">
+                  <button type="button" onClick={() => socialImageInputRef.current?.click()} className="px-4 py-4 bg-slate-800 text-cyan-300 font-bold rounded-2xl active:scale-95 transition-transform">
+                    <Camera size={18} />
+                  </button>
+                  <input ref={socialImageInputRef} type="file" accept="image/*" onChange={handleSocialImagePicked} className="hidden" />
+                  {socialImagePreview && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSocialImageFile(null);
+                        if (socialImagePreview.startsWith('blob:')) URL.revokeObjectURL(socialImagePreview);
+                        setSocialImagePreview('');
+                      }}
+                      className="px-4 py-4 bg-slate-800 text-slate-300 font-bold rounded-2xl active:scale-95 transition-transform"
+                    >
+                      Xóa
+                    </button>
+                  )}
                   <button type="submit" className="flex-1 py-4 bg-cyan-500 text-slate-950 font-black rounded-xl shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform">ĐĂNG NGAY</button>
                   <button type="button" onClick={() => setShowSocialComposer(false)} className="px-6 py-4 bg-slate-800 text-white font-bold rounded-2xl">Hủy</button>
                 </div>
@@ -92,6 +148,16 @@ export default function GlobalModalManager() {
         <SettingsModal />
         <EditEntryModal />
         <ConfirmDialog />
+        <SocialDiscoverModal
+          showDiscoverPeople={!!showDiscoverPeople}
+          setShowDiscoverPeople={setShowDiscoverPeople}
+          socialSearchQuery={socialSearchQuery || ''}
+          handleSearchSocialUsers={handleSearchSocialUsers || (() => {})}
+          isSocialSearching={!!isSocialSearching}
+          socialSearchResults={socialSearchResults || []}
+          handleUnfollowUser={handleUnfollowUser || (() => {})}
+          handleFollowUser={handleFollowUser || (() => {})}
+        />
       </React.Suspense>
     </>
   );

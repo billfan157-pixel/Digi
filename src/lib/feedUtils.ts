@@ -93,7 +93,7 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
       eyebrow: 'Thử thách wellness',
       title: 'Một lời mời cạnh tranh lành mạnh',
       description: 'Tham gia để biến feed thành hành động, không chỉ xem.',
-      stat: 'Kèo mở',
+      stat: 'Duel',
       accentText: 'text-purple-300',
       cardClass: 'border-purple-500/30 bg-purple-500/5',
       panelClass: 'border-purple-500/20 bg-purple-500/10',
@@ -101,10 +101,10 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
     };
   }
 
-  if (post.type === 'milestone' || (post.streak_snapshot || 0) >= 7) {
+  if (post.post_kind === 'milestone' || post.type === 'milestone' || (post.streak_snapshot || 0) >= 7) {
     return {
       Icon: Flame,
-      eyebrow: 'Cột mốc streak',
+      eyebrow: 'Peak streak',
       title: `Chuỗi ${post.streak_snapshot || post.value || 0} ngày đang sáng`,
       description: 'Một tín hiệu tốt để tạo áp lực tích cực cho cộng đồng.',
       stat: `${post.streak_snapshot || post.value || 0} ngày`,
@@ -115,10 +115,10 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
     };
   }
 
-  if (post.post_kind === 'progress' || post.type === 'daily_goal' || (post.hydration_ml || 0) > 0) {
+  if (post.post_kind === 'checkin' || post.post_kind === 'progress' || post.type === 'daily_goal' || (post.hydration_ml || 0) > 0) {
     return {
       Icon: Droplets,
-      eyebrow: 'Tiến độ hydration',
+      eyebrow: 'Pulse',
       title: progressPercent >= 100 ? 'Đã hoàn thành mục tiêu hôm nay' : 'Đang tiến gần mục tiêu hôm nay',
       description: 'Cụng ly để biến tín hiệu này thành một lần nhắc uống nước.',
       stat: `${post.hydration_ml || post.value || 0}ml`,
@@ -145,10 +145,10 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
 
   return {
     Icon: Target,
-    eyebrow: 'Check-in mục tiêu',
+    eyebrow: 'Pulse mục tiêu',
     title: 'Một tín hiệu accountability',
     description: 'Dùng để kêu gọi nhắc nhở, giữ nhịp và quay lại mục tiêu.',
-    stat: 'Check-in',
+    stat: 'Pulse',
     accentText: 'text-slate-300',
     cardClass: 'border-white/5 bg-slate-900/50',
     panelClass: 'border-white/10 bg-slate-950/40',

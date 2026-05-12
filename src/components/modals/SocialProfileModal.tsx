@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Share2, Edit2, Users, Plus } from 'lucide-react';
+import { Trophy, Edit2, Users, Plus } from 'lucide-react';
 import type { SocialProfileStats } from '../../lib/social';
 import type { Profile } from '../../models';
 
@@ -13,7 +13,7 @@ interface SocialProfileModalProps {
   streak: number;
   socialError: string;
   socialProfileStats: SocialProfileStats;
-  openSocialComposer: (kind: 'status' | 'progress' | 'story') => void;
+  openSocialComposer: (kind: 'status' | 'story') => void;
   setShowDiscoverPeople: (show: boolean) => void;
   completionPercent: number;
   remainingWater: number;
@@ -108,20 +108,11 @@ export default function SocialProfileModal({
                 <button
                   onClick={() => {
                     setShowSocialProfile(false);
-                    openSocialComposer('progress');
-                  }}
-                  className="py-3 rounded-xl bg-indigo-500/12 border border-indigo-500/25 text-indigo-300 text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all"
-                >
-                  <Share2 size={14} /> Share progress
-                </button>
-                <button
-                  onClick={() => {
-                    setShowSocialProfile(false);
                     openSocialComposer('status');
                   }}
                   className="py-3 rounded-xl bg-cyan-500/12 border border-cyan-500/25 text-cyan-300 text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all"
                 >
-                  <Edit2 size={14} /> Tạo bài
+                  <Edit2 size={14} /> Pulse
                 </button>
                 <button
                   onClick={() => {
@@ -139,7 +130,7 @@ export default function SocialProfileModal({
                   }}
                   className="py-3 rounded-xl bg-fuchsia-500/12 border border-fuchsia-500/25 text-fuchsia-300 text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all"
                 >
-                  <Plus size={14} /> Đăng story
+                  <Plus size={14} /> Drop
                 </button>
               </div>
 

@@ -5,8 +5,9 @@ import type { CalendarEventItem } from './useCalendarSync';
 /**
  * Parse time string "HH:MM" to minutes since midnight
  */
-function timeToMinutes(time: string): number {
+function timeToMinutes(time: string): number | null {
   const [h, m] = time.split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
   return h * 60 + m;
 }
 
@@ -14,28 +15,59 @@ function timeToMinutes(time: string): number {
  * Format minutes since midnight back to "HH:MM"
  */
 function minutesToTime(minutes: number): string {
-  const h = Math.floor(minutes / 60) % 24;
-  const m = Math.round(minutes % 60);
+  const normalized = Math.max(0, Math.min(23 * 60 + 59, minutes));
+  const h = Math.floor(normalized / 60) % 24;
+  const m = Math.round(normalized % 60);
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-/**
- * Check if a given time (in minutes) falls within any calendar event.
- * Returns the event if it does, null otherwise.
- */
-function findOverlappingEvent(
+type BusyWindow = {
+  start: number;
+  end: number;
+  event: CalendarEventItem;
+};
+
+const PRE_EVENT_BUFFER_MINUTES = 10;
+const POST_EVENT_BUFFER_MINUTES = 20;
+const MIN_DRINK_SPACING_MINUTES = 25;
+const EARLIEST_DRINK_MINUTES = 6 * 60;
+const LATEST_DRINK_MINUTES = 23 * 60;
+const SEARCH_WINDOW_MINUTES = 120;
+
+function buildBusyWindows(events: CalendarEventItem[]): BusyWindow[] {
+  return events
+    .filter(event => !event.isAllDay)
+    .map((event) => {
+      const startMinutes = timeToMinutes(event.start);
+      const rawEndMinutes = timeToMinutes(event.end);
+
+      if (startMinutes === null || rawEndMinutes === null) return null;
+
+      const endMinutes = rawEndMinutes <= startMinutes ? 24 * 60 : rawEndMinutes;
+      return {
+        start: Math.max(0, startMinutes - PRE_EVENT_BUFFER_MINUTES),
+        end: Math.min(24 * 60, endMinutes + POST_EVENT_BUFFER_MINUTES),
+        event,
+      };
+    })
+    .filter((window): window is BusyWindow => !!window)
+    .sort((a, b) => a.start - b.start);
+}
+
+function findOverlappingWindow(
   timeMinutes: number,
-  events: CalendarEventItem[],
-): CalendarEventItem | null {
-  for (const event of events) {
-    const startMin = timeToMinutes(event.start);
-    const endMin = timeToMinutes(event.end);
-    // Add 15min buffer after event
-    if (timeMinutes >= startMin && timeMinutes < endMin + 15) {
-      return event;
+  busyWindows: BusyWindow[],
+): BusyWindow | null {
+  for (const window of busyWindows) {
+    if (timeMinutes >= window.start && timeMinutes < window.end) {
+      return window;
     }
   }
   return null;
+}
+
+function isTooCloseToUsedSlot(timeMinutes: number, usedSlots: number[]) {
+  return usedSlots.some(slot => Math.abs(slot - timeMinutes) < MIN_DRINK_SPACING_MINUTES);
 }
 
 /**
@@ -44,23 +76,18 @@ function findOverlappingEvent(
  */
 function findAvailableSlot(
   desiredMinutes: number,
-  events: CalendarEventItem[],
-  minSpacing: number = 30,
+  busyWindows: BusyWindow[],
+  usedSlots: number[],
 ): number {
-  // Try shifting earlier first (up to 45 minutes)
-  for (let offset = 0; offset <= 45; offset += 15) {
-    const candidate = desiredMinutes - offset;
-    if (candidate < 6 * 60) break; // Not before 6am
-    if (!findOverlappingEvent(candidate, events)) {
-      return candidate;
-    }
-  }
+  for (let offset = 0; offset <= SEARCH_WINDOW_MINUTES; offset += 15) {
+    const candidates = offset === 0
+      ? [desiredMinutes]
+      : [desiredMinutes - offset, desiredMinutes + offset];
 
-  // Try shifting later (up to 60 minutes)
-  for (let offset = 15; offset <= 60; offset += 15) {
-    const candidate = desiredMinutes + offset;
-    if (candidate > 23 * 60) break; // Not after 11pm
-    if (!findOverlappingEvent(candidate, events)) {
+    for (const candidate of candidates) {
+      if (candidate < EARLIEST_DRINK_MINUTES || candidate > LATEST_DRINK_MINUTES) continue;
+      if (findOverlappingWindow(candidate, busyWindows)) continue;
+      if (isTooCloseToUsedSlot(candidate, usedSlots)) continue;
       return candidate;
     }
   }
@@ -98,12 +125,24 @@ export function useSmartSchedule(
     }
 
     let adjustedCount = 0;
+    const busyWindows = buildBusyWindows(calendarEvents);
+    const usedSlots: number[] = [];
 
     const smartSchedule: SmartScheduleItem[] = baseSchedule.map((item) => {
       const originalMinutes = timeToMinutes(item.time);
-      const overlapping = findOverlappingEvent(originalMinutes, calendarEvents);
+      if (originalMinutes === null) {
+        return {
+          time: item.time,
+          amount: item.amount,
+          note: item.note || 'Uống nước',
+          isAdjusted: false,
+        };
+      }
+
+      const overlapping = findOverlappingWindow(originalMinutes, busyWindows);
 
       if (!overlapping) {
+        usedSlots.push(originalMinutes);
         return {
           time: item.time,
           amount: item.amount,
@@ -113,25 +152,26 @@ export function useSmartSchedule(
       }
 
       // Find best alternative slot
-      const newMinutes = findAvailableSlot(originalMinutes, calendarEvents);
+      const newMinutes = findAvailableSlot(originalMinutes, busyWindows, usedSlots);
       const isActuallyMoved = newMinutes !== originalMinutes;
 
       if (isActuallyMoved) adjustedCount++;
+      usedSlots.push(newMinutes);
 
       return {
         time: minutesToTime(newMinutes),
         amount: item.amount,
         note: isActuallyMoved
-          ? `(Đã điều chỉnh do "${overlapping.title}") ${item.note || ''}`
-          : `⚠️ Trùng với "${overlapping.title}" — uống nhanh ${item.amount}ml`,
+          ? `Đã né lịch "${overlapping.event.title}" - ${item.note || 'uống nước'}`
+          : `Trùng với "${overlapping.event.title}" - uống nhanh ${item.amount}ml khi có thể`,
         isAdjusted: true,
-        conflictingEvent: overlapping.title,
+        conflictingEvent: overlapping.event.title,
       };
     });
 
     return {
-      schedule: smartSchedule,
-      busyEventCount: calendarEvents.length,
+      schedule: smartSchedule.sort((a, b) => a.time.localeCompare(b.time)),
+      busyEventCount: busyWindows.length,
       totalAdjustedCount: adjustedCount,
       hasEventsToday: calendarEvents.length > 0,
     };

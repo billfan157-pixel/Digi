@@ -10,7 +10,7 @@ export const useFeedSummary = (
   const feedSummary = useMemo(() => {
     const sourcePosts = posts || [];
     const challengeCount = sourcePosts.filter((post: any) => post.post_kind === 'challenge').length;
-    const progressCount = sourcePosts.filter((post: any) => post.post_kind === 'progress').length;
+    const progressCount = sourcePosts.filter((post: any) => post.post_kind === 'progress' || post.post_kind === 'milestone').length;
     const storyCount = socialStories.length;
 
     return {

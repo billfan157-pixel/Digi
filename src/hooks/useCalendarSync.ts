@@ -9,6 +9,8 @@ export const CALENDAR_OAUTH_PENDING_KEY = 'digiwell_pending_calendar_oauth';
 export const CALENDAR_TOKEN_UPDATED_EVENT = 'digiwell:google-provider-token-updated';
 
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+const CALENDAR_SYNC_TOAST_ID = 'digiwell-calendar-sync-toast';
+const CALENDAR_RETRY_TOAST_DURATION_MS = 3000;
 
 export interface CalendarEventItem {
   id: string;
@@ -18,6 +20,8 @@ export interface CalendarEventItem {
   startRaw: string;
   endRaw: string;
   isAllDay: boolean;
+  status?: string;
+  transparency?: string;
   htmlLink?: string;
 }
 
@@ -44,6 +48,8 @@ type GoogleCalendarEvent = {
   id?: string;
   summary?: string;
   htmlLink?: string;
+  status?: string;
+  transparency?: string;
   start?: GoogleEventDateTime;
   end?: GoogleEventDateTime;
 };
@@ -93,6 +99,10 @@ function getDisplayTime(date: GoogleEventDateTime | undefined, isEnd = false) {
 }
 
 function mapGoogleEvent(event: GoogleCalendarEvent): CalendarEventItem | null {
+  if (event.status === 'cancelled' || event.transparency === 'transparent') {
+    return null;
+  }
+
   const isAllDay = !!event.start?.date && !event.start?.dateTime;
   const startRaw = event.start?.dateTime || event.start?.date || '';
   const endRaw = event.end?.dateTime || event.end?.date || '';
@@ -101,12 +111,14 @@ function mapGoogleEvent(event: GoogleCalendarEvent): CalendarEventItem | null {
 
   return {
     id: event.id,
-    title: event.summary?.trim() || 'Su kien khong ten',
+    title: event.summary?.trim() || 'Sự kiện không tên',
     start: getDisplayTime(event.start),
     end: getDisplayTime(event.end, true),
     startRaw,
     endRaw,
     isAllDay,
+    status: event.status,
+    transparency: event.transparency,
     htmlLink: event.htmlLink,
   };
 }
@@ -163,7 +175,8 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
   const { data, error } = await supabase.functions.invoke('calendar-proxy', {
     body: {
       action: 'list-events',
-      maxResults: 10,
+      maxResults: 25,
+      daysAhead: 7,
       providerToken: session.provider_token,
       providerRefreshToken: session.provider_refresh_token,
     },
@@ -199,13 +212,14 @@ export function useCalendarSync() {
       retryTimerRef.current = null;
     }
     retryCountRef.current = 0;
+    toast.dismiss(CALENDAR_SYNC_TOAST_ID);
   }, []);
 
   const syncCalendar = useCallback(async (
     options: { silent?: boolean; startOAuthIfNeeded?: boolean } = {},
   ): Promise<number | false> => {
     const { silent = false, startOAuthIfNeeded = true } = options;
-    const tid = silent ? '' : toast.loading('Dang quet lich trinh Google Calendar...');
+    const tid = silent ? '' : toast.loading('Đang quét lịch trình Google Calendar...');
 
     try {
       const proxyResponse = await fetchCalendarEventsViaProxy();
@@ -216,7 +230,7 @@ export function useCalendarSync() {
 
         await beginGoogleCalendarOAuth();
         if (!silent) {
-          toast.success('Dang mo Google de ket noi Calendar. Hoan tat OAuth de app tiep tuc dong bo.', { id: tid });
+          toast.success('Đang mở Google để kết nối Calendar. Hoàn tất OAuth để app tiếp tục đồng bộ.', { id: tid });
         }
         return false;
       }
@@ -234,8 +248,8 @@ export function useCalendarSync() {
       if (!silent) {
         toast.success(
           events.length > 0
-            ? `Da dong bo ${events.length} su kien sap toi tu Google Calendar.`
-            : 'Da ket noi Google Calendar. Khong co su kien sap toi.',
+            ? `Đã đồng bộ ${events.length} sự kiện sắp tới từ Google Calendar.`
+            : 'Đã kết nối Google Calendar. Không có sự kiện sắp tới.',
           { id: tid },
         );
       }
@@ -244,7 +258,7 @@ export function useCalendarSync() {
       setIsCalendarSynced(false);
       setCalendarEvents([]);
       if (!silent) {
-        const message = error instanceof Error ? error.message : 'Loi dong bo lich trinh.';
+        const message = error instanceof Error ? error.message : 'Lỗi đồng bộ lịch trình.';
         toast.error(message, { id: tid });
       }
       return false;
@@ -255,32 +269,38 @@ export function useCalendarSync() {
   const scheduleRetry = useCallback(() => {
     clearRetry();
     setIsSyncing(true);
-    const tid = toast.loading('⏳ Đang đồng bộ Google Calendar sau khi xác thực...', { duration: Infinity });
+    toast.loading('Đang đồng bộ Google Calendar sau khi xác thực...', {
+      id: CALENDAR_SYNC_TOAST_ID,
+      duration: CALENDAR_RETRY_TOAST_DURATION_MS,
+    });
     // Helper to update toast text
-    const updateToast = (msg: string) => toast.loading(msg, { id: tid, duration: Infinity });
+    const updateToast = (msg: string) => toast.loading(msg, {
+      id: CALENDAR_SYNC_TOAST_ID,
+      duration: CALENDAR_RETRY_TOAST_DURATION_MS,
+    });
     const retry = async () => {
       retryCountRef.current++;
       const attempt = retryCountRef.current;
       console.log(`[Calendar] Retry #${attempt}...`);
-      updateToast(`⏳ Đang thử kết nối Google Calendar (lần ${attempt}/8)...`);
+      updateToast(`Đang thử kết nối Google Calendar (lần ${attempt}/8)...`);
       const result = await syncCalendar({ silent: true, startOAuthIfNeeded: false });
       if (result !== false) {
-        toast.dismiss(tid);
+        toast.dismiss(CALENDAR_SYNC_TOAST_ID);
         setIsSyncing(false);
         if (result > 0) {
-          toast.success(`✅ Đã đồng bộ ${result} sự kiện từ Google Calendar!`, { duration: 5000 });
+          toast.success(`Đã đồng bộ ${result} sự kiện từ Google Calendar.`, { duration: 5000 });
         } else {
-          toast.success('✅ Đã kết nối Google Calendar. Không có sự kiện trong tuần này.', { duration: 4000 });
+          toast.success('Đã kết nối Google Calendar. Không có sự kiện trong tuần này.', { duration: 4000 });
         }
         return;
       }
       if (attempt < 8) {
         const delayMs = Math.min(1500 * attempt, 8000);
         console.log(`[Calendar] Retry #${attempt} failed, next in ${delayMs}ms`);
-        updateToast(`⏳ Đồng bộ chưa sẵn sàng, thử lại sau ${Math.round(delayMs/1000)}s...`);
+        updateToast(`Đồng bộ chưa sẵn sàng, thử lại sau ${Math.round(delayMs/1000)}s...`);
         retryTimerRef.current = setTimeout(retry, delayMs);
       } else {
-        toast.dismiss(tid);
+        toast.dismiss(CALENDAR_SYNC_TOAST_ID);
         setIsSyncing(false);
         writeCalendarOAuthPendingFlag(false);
         clearRetry();
