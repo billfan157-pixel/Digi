@@ -257,14 +257,28 @@ export default function ShopModal() {
   const equipMutation = useMutation({
     mutationFn: (item: ShopItem) => equipShopItem(profileId!, item),
     onSuccess: ({ profile: updatedProfile, themeColor }, item) => {
-      if (updatedProfile) setProfile(updatedProfile);
-      if (item.category === 'bottle') setEquippedBottleId(item.id);
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+      } else if (profile) {
+        // Fallback: Update locally if updatedProfile not returned
+        const fieldMap: Record<string, keyof Profile> = {
+          theme: 'equipped_theme_id',
+          frame: 'equipped_frame_id',
+          bottle: 'equipped_bottle_id',
+          sound: 'equipped_notification_sound'
+        };
+        const field = fieldMap[item.category];
+        if (field) {
+          setProfile({ ...profile, [field]: item.id });
+        }
+      }
+
       if (item.category === 'theme' && themeColor) {
         setCurrentTheme(themeColor);
         window.dispatchEvent(new CustomEvent('themeUpdated', { detail: { themeColor } }));
       }
-      if (item.category === 'sound') setEquippedSound(getSoundValue(item));
-      toast.success(`Đã trang bị ${item.name}!`);
+      
+      toast.success(`✨ Đã trang bị ${item.name}!`);
     },
   });
 

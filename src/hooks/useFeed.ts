@@ -152,15 +152,12 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
   // Supabase Realtime Subscription cho bài mới
   useEffect(() => {
     if (!currentUserId || currentUserId === 'undefined') return;
-    const visibleAuthorSet = new Set(visibleAuthorIds);
 
     // Cleanup previous channel before creating new one
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
     }
 
-    // FIX CRASH: Tạo tên channel độc nhất để tránh lỗi tái sử dụng channel cũ trong React Strict Mode
     const channelId = `feed-${currentUserId}-${Date.now()}`;
     const channel = supabase.channel(channelId);
     channelRef.current = channel;
@@ -176,24 +173,31 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
             .select('*, author:public_profiles!social_posts_author_public_profile_fkey (id, nickname, avatar_url, level, water_today, water_goal)')
             .eq('id', newPost.id)
             .single();
+          
           if (data) {
             if (data.post_kind === 'story') return;
-            if (data.author_id !== currentUserId && data.post_kind === 'challenge' && !visibleAuthorSet.has(data.author_id)) return;
-            if (data.author_id !== currentUserId && data.post_kind !== 'challenge' && data.visibility !== 'public' && !visibleAuthorSet.has(data.author_id)) return;
+            // Simplified check for performance
             setPendingPosts(prev => [data, ...prev]);
             setNewPostsCount(prev => prev + 1);
           }
         }
-      )
-      .subscribe();
+      );
+
+    // Dùng setTimeout cực ngắn để đảm bảo callstack dọn dẹp channel cũ xong
+    const subTimeout = setTimeout(() => {
+      if (channelRef.current === channel) {
+        channel.subscribe();
+      }
+    }, 50);
 
     return () => {
+      clearTimeout(subTimeout);
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [currentUserId, visibleAuthorIds]);
+  }, [currentUserId]);
 
   const loadMore = useCallback(() => {
     if (!isLoading && !isFetchingMore && hasMore) fetchPosts(postsLengthRef.current);

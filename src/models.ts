@@ -80,9 +80,8 @@ export interface SocialFeedPost {
   visibility: 'public' | 'followers';
   hydration_ml: number | null;
   streak_snapshot: number | null;
-  likes_count: number;
-  comments_count: number;
   cheers_count: number;
+  comments_count: number;
   drops_count: number;
   pulse_count?: number;
   created_at: string;
@@ -90,7 +89,6 @@ export interface SocialFeedPost {
   
   // Joined data
   author?: Partial<Profile>;
-  likedByMe?: boolean;
   cheeredByMe?: boolean;
 
   // Client-side computed or demo data

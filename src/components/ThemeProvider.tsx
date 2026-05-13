@@ -1,9 +1,51 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { getThemeConfig } from '@/config/themes';
 import type { ThemeEffect } from '@/config/themes';
 
 const DynamicOverlay: React.FC<{ effect: ThemeEffect; accent: string }> = ({ effect, accent }) => {
+  // Fix React Purity: Use State + Effect to generate random values safely after mount
+  const [stars, setStars] = useState<any[]>([]);
+  const [embers, setEmbers] = useState<any[]>([]);
+  const [particles, setParticles] = useState<any[]>([]);
+  const [ripples, setRipples] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Generate only once on mount
+    setStars([...Array(50)].map(() => ({
+      width: Math.random() * 3 + 'px',
+      height: Math.random() * 3 + 'px',
+      top: Math.random() * 100 + '%',
+      left: Math.random() * 100 + '%',
+      delay: Math.random() * 5 + 's',
+      opacity: Math.random()
+    })));
+
+    setEmbers([...Array(20)].map(() => ({
+      width: Math.random() * 6 + 'px',
+      height: Math.random() * 6 + 'px',
+      left: Math.random() * 100 + '%',
+      duration: (Math.random() * 5 + 5) + 's',
+      delay: (Math.random() * 10) + 's',
+    })));
+
+    setParticles([...Array(15)].map(() => ({
+      width: Math.random() * 10 + 5 + 'px',
+      height: Math.random() * 10 + 5 + 'px',
+      top: Math.random() * 100 + '%',
+      left: Math.random() * 100 + '%',
+      duration: (Math.random() * 10 + 10) + 's',
+      delay: (Math.random() * 5) + 's',
+    })));
+
+    setRipples([...Array(10)].map(() => ({
+      top: Math.random() * 100 + '%',
+      left: Math.random() * 100 + '%',
+      duration: (Math.random() * 4 + 4) + 's',
+      delay: (Math.random() * 8) + 's',
+    })));
+  }, []);
+
   if (effect === 'none') return null;
 
   return (
@@ -30,17 +72,17 @@ const DynamicOverlay: React.FC<{ effect: ThemeEffect; accent: string }> = ({ eff
 
       {effect === 'space-stars' && (
         <div className="absolute inset-0">
-          {[...Array(50)].map((_, i) => (
+          {stars.map((s, i) => (
             <div 
               key={i}
               className="absolute bg-white rounded-full animate-twinkle"
               style={{
-                width: Math.random() * 3 + 'px',
-                height: Math.random() * 3 + 'px',
-                top: Math.random() * 100 + '%',
-                left: Math.random() * 100 + '%',
-                animationDelay: Math.random() * 5 + 's',
-                opacity: Math.random()
+                width: s.width,
+                height: s.height,
+                top: s.top,
+                left: s.left,
+                animationDelay: s.delay,
+                opacity: s.opacity
               }}
             />
           ))}
@@ -49,18 +91,18 @@ const DynamicOverlay: React.FC<{ effect: ThemeEffect; accent: string }> = ({ eff
 
       {effect === 'fire-embers' && (
         <div className="absolute inset-0">
-          {[...Array(20)].map((_, i) => (
+          {embers.map((e, i) => (
             <div 
               key={i}
               className="absolute rounded-full blur-[1px] animate-float-up"
               style={{
-                width: Math.random() * 6 + 'px',
-                height: Math.random() * 6 + 'px',
+                width: e.width,
+                height: e.height,
                 background: accent,
                 bottom: '-20px',
-                left: Math.random() * 100 + '%',
-                animationDuration: (Math.random() * 5 + 5) + 's',
-                animationDelay: (Math.random() * 10) + 's',
+                left: e.left,
+                animationDuration: e.duration,
+                animationDelay: e.delay,
                 boxShadow: `0 0 10px ${accent}`
               }}
             />
@@ -77,19 +119,19 @@ const DynamicOverlay: React.FC<{ effect: ThemeEffect; accent: string }> = ({ eff
 
       {effect === 'floating-particles' && (
         <div className="absolute inset-0">
-          {[...Array(15)].map((_, i) => (
+          {particles.map((p, i) => (
             <div 
               key={i}
               className="absolute animate-float-around opacity-60"
               style={{
-                width: Math.random() * 10 + 5 + 'px',
-                height: Math.random() * 10 + 5 + 'px',
+                width: p.width,
+                height: p.height,
                 background: accent,
                 borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%',
-                top: Math.random() * 100 + '%',
-                left: Math.random() * 100 + '%',
-                animationDuration: (Math.random() * 10 + 10) + 's',
-                animationDelay: (Math.random() * 5) + 's',
+                top: p.top,
+                left: p.left,
+                animationDuration: p.duration,
+                animationDelay: p.delay,
                 filter: 'blur(1px)'
               }}
             />
@@ -99,17 +141,17 @@ const DynamicOverlay: React.FC<{ effect: ThemeEffect; accent: string }> = ({ eff
 
       {effect === 'water-ripples' && (
         <div className="absolute inset-0">
-          {[...Array(10)].map((_, i) => (
+          {ripples.map((r, i) => (
             <div 
               key={i}
               className="absolute border border-white/20 rounded-full animate-ripple-out"
               style={{
                 width: '100px',
                 height: '100px',
-                top: Math.random() * 100 + '%',
-                left: Math.random() * 100 + '%',
-                animationDuration: (Math.random() * 4 + 4) + 's',
-                animationDelay: (Math.random() * 8) + 's',
+                top: r.top,
+                left: r.left,
+                animationDuration: r.duration,
+                animationDelay: r.delay,
               }}
             />
           ))}

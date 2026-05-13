@@ -38,7 +38,9 @@ export default function BottleTab({
   const [temperature, setTemperature] = useState(smartBottle?.metrics?.temperature ?? 24);
   const [latencyMs, setLatencyMs] = useState(24);
   const [signalStrength, setSignalStrength] = useState(smartBottle?.metrics?.signalStrength ?? 92);
-  const [rawSensorSeries, setRawSensorSeries] = useState<number[]>(Array.from({ length: 20 }, () => Math.random() * 100));
+  const [rawSensorSeries, setRawSensorSeries] = useState<number[]>(() => 
+    Array.from({ length: 20 }, () => Math.random() * 100)
+  );
 
   // LED & Automation state
   const [ledColor, setLedColor] = useState('#22d3ee');
