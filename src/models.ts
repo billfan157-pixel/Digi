@@ -17,9 +17,12 @@ export interface Profile {
   climate: 'temperate' | 'warm' | 'hot' | 'tropical' | 'cold';
   goal: string;
   equipped_bottle_id: string | null;
+  equipped_frame_id?: string | null;
+  equipped_theme_id?: string | null;
   equipped_notification_sound?: string | null;
   created_at?: string;
   updated_at?: string;
+  onboarding_completed?: boolean;
   // Wellness tracking fields
   sleep_hours?: number;
   sleep_quality?: number;
@@ -31,39 +34,34 @@ export interface Profile {
 export interface WaterLog {
   id: string;
   user_id: string;
-  amount: number;
-  factor: number;
-  name: string;
-  icon: string;
-  color: string;
-  timestamp: string;
+  amount_ml: number;
+  drink_type: string;
   created_at: string;
-  day: string; // YYYY-MM-DD
 }
 
-export interface DrinkPreset {
+// =================== SHOP ===================
+export interface ShopItem {
   id: string;
   name: string;
-  amount: number;
-  factor: number;
-  icon: string;
-  color: string;
-  bg?: string;
+  description: string;
+  price: number;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  category: 'bottle' | 'theme' | 'frame' | 'sound' | 'consumable';
+  meta_value: any;
+  image_url: string | null;
+  preview_color: string | null;
+  is_active: boolean;
+  created_at?: string;
 }
 
-export interface SearchResult {
+export interface InventoryItem {
   id: string;
-  nickname: string;
-  avatar_url?: string | null;
-}
-
-export interface Friend {
-  id: string;
-  name: string;
-  dept: string;
-  wp: number;
-  streak: number;
-  isMe: boolean;
+  user_id: string;
+  item_id: string;
+  item_type: string;
+  quantity: number;
+  created_at: string;
+  item?: ShopItem;
 }
 
 // =================== SOCIAL & FEED ===================
@@ -78,7 +76,7 @@ export interface SocialFeedPost {
   author_id: string;
   content: string;
   image_url: string | null;
-  post_kind: 'checkin' | 'status' | 'progress' | 'story' | 'milestone' | 'challenge' | 'achievement' | 'compare' | 'tip' | 'poll' | 'photo';
+  post_kind: 'checkin' | 'status' | 'progress' | 'story' | 'milestone' | 'challenge' | 'achievement' | 'compare' | 'tip' | 'poll' | 'photo' | 'water_log' | 'daily_goal';
   visibility: 'public' | 'followers';
   hydration_ml: number | null;
   streak_snapshot: number | null;
@@ -86,6 +84,7 @@ export interface SocialFeedPost {
   comments_count: number;
   cheers_count: number;
   drops_count: number;
+  pulse_count?: number;
   created_at: string;
   expires_at: string | null;
   
@@ -97,76 +96,16 @@ export interface SocialFeedPost {
   // Client-side computed or demo data
   type: 'status' | 'daily_goal' | 'milestone' | 'challenge' | 'achievement' | 'compare' | 'water_log' | 'tip' | 'poll' | 'photo';
   value?: number | string;
-  pulse_count: number;
   temperature?: number;
   heart_rate?: number;
   drink_type?: string;
-  compare_name?: string;
-  compare_avatar?: string;
-
-  // Poll-specific fields
-  poll_options?: PostPollOption[];
-  poll_expires_at?: string;
-  voted_option_id?: string;
-
-  // Tip-specific fields
-  tip_category?: 'science' | 'practical' | 'recipe';
 }
 
-export interface SocialComment {
+export interface PostComment {
   id: string;
   post_id: string;
-  user_id: string;
   author_id: string;
   content: string;
   created_at: string;
   author?: Partial<Profile>;
-}
-
-export interface SocialNotification {
-  id: string;
-  user_id: string; // The one who receives the notification
-  actor_id: string; // The one who performed the action
-  type: 'like' | 'comment' | 'follow' | 'battle_invite' | 'battle_result';
-  content: string;
-  reference_id: string; // e.g., post_id or battle_id
-  is_read: boolean;
-  created_at: string;
-  actor?: Partial<Profile>;
-}
-
-// =================== GAMIFICATION ===================
-export interface Battle {
-  id: string;
-  challenger_id: string;
-  opponent_id: string;
-  stake_coins: number;
-  status: 'active' | 'pending' | 'completed' | 'declined';
-  mode: 'daily' | 'quick' | 'tournament';
-  winner_id: string | null;
-  created_at: string;
-  
-  // Joined data
-  challenger?: Partial<Profile>;
-  opponent?: Partial<Profile>;
-
-  // Client-side computed
-  yourProgress?: number;
-  opponentProgress?: number;
-}
-
-// =================== SHOP ===================
-export interface ShopItem {
-  id: string;
-  name: string;
-  description?: string | null;
-  category: string;
-  price: number;
-  meta_value: string;
-  rarity?: string | null;
-  is_active?: boolean | null;
-  created_at?: string;
-  image_url?: string | null;
-  preview_color?: string | null;
-  animation_type?: string | null;
 }
