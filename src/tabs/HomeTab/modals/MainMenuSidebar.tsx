@@ -101,6 +101,7 @@ export default function MainMenuSidebar({
                       avatarUrl={profile?.avatar_url ?? null}
                       nickname={profile.nickname}
                       showBadge={false}
+                      frameId={profile?.equipped_frame_id}
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="text-white font-bold text-base leading-tight truncate">

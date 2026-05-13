@@ -72,7 +72,7 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
   const fetchPosts = useCallback(async (offset: number) => {
     if (!currentUserId || currentUserId === 'undefined') return;
     const isFirstPage = offset === 0;
-    
+
     // 1. Load từ Local Cache trước (Offline-First) cho trang đầu
     if (isFirstPage) {
       try {
@@ -82,7 +82,7 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
         } else {
           setIsLoading(true);
         }
-      } catch(e) {}
+      } catch (e) { }
     } else {
       setIsFetchingMore(true);
     }
@@ -93,7 +93,7 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
         .select(`
           *,
           author:public_profiles!social_posts_author_public_profile_fkey (id, nickname, avatar_url, level, water_today, water_goal),
-          social_post_likes (user_id)
+          post_cheers (user_id)
         `)
         .neq('post_kind', 'story')
         .order('created_at', { ascending: false })
@@ -110,7 +110,7 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
 
         const formatted = visibleRows.map((post: any) => ({
           ...post,
-          likedByMe: post.social_post_likes?.some((l: any) => l.user_id === currentUserId) ?? false,
+          cheeredByMe: post.post_cheers?.some((l: any) => l.user_id === currentUserId) ?? false,
         }));
 
         if (isFirstPage) {
@@ -167,10 +167,10 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
 
     channel
       .on(
-        'postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'social_posts' }, 
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'social_posts' },
         async (payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
-          const newPost = payload.new as { id: string; [key: string]: any };
+          const newPost = payload.new as { id: string;[key: string]: any };
           const { data } = await supabase
             .from('social_posts')
             .select('*, author:public_profiles!social_posts_author_public_profile_fkey (id, nickname, avatar_url, level, water_today, water_goal)')
@@ -187,7 +187,7 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
       )
       .subscribe();
 
-    return () => { 
+    return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

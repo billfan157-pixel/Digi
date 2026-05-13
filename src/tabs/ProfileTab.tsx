@@ -90,7 +90,7 @@ const ProfileTab = memo(function ProfileTab({
         <div className="absolute -bottom-14 -left-10 w-36 h-36 rounded-full blur-3xl bg-amber-500/10 pointer-events-none" />
         <div className="relative flex items-start gap-4">
           <div className="flex-shrink-0 shadow-lg rounded-full">
-            <AvatarFrame size="md" level={profile?.level || 1} avatarUrl={profile?.avatar_url ?? null} nickname={profile?.nickname} showBadge={true} />
+            <AvatarFrame size="md" level={profile?.level || 1} avatarUrl={profile?.avatar_url ?? null} nickname={profile?.nickname} showBadge={true} frameId={profile?.equipped_frame_id} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="min-w-0">

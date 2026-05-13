@@ -8,7 +8,7 @@ export interface ShopData {
   ownedItems: Set<string>;
 }
 
-const parseItemMeta = (item: Pick<ShopItem, 'meta_value' | 'preview_color'>) => {
+const parseItemMeta = (item: Pick<ShopItem, 'meta_value'>) => {
   try {
     return item.meta_value ? JSON.parse(item.meta_value) : {};
   } catch {
@@ -36,7 +36,7 @@ export async function fetchShopData(userId: string): Promise<ShopData> {
       supabase
         .from('shop_items')
         .select(
-          'id, name, description, price, rarity, category, meta_value, image_url, preview_color, animation_type'
+          'id, name, description, price, rarity, category, meta_value, image_url, preview_color, animation_type, is_active'
         )
         .eq('is_active', true),
 
@@ -90,13 +90,24 @@ export async function equipShopItem(userId: string, item: ShopItem) {
   }
 
   if (item.category === 'theme') {
-    const themeColor = getThemeColor(item);
-
-    writeAppPreferences(userId, { themeColor });
+    const profile = await updateProfileFields(userId, {
+      equipped_theme_id: item.id,
+    });
 
     return {
-      profile: null,
-      themeColor,
+      profile,
+      themeColor: item.preview_color,
+    };
+  }
+
+  if (item.category === 'frame') {
+    const profile = await updateProfileFields(userId, {
+      equipped_frame_id: item.id,
+    });
+
+    return {
+      profile,
+      themeColor: null,
     };
   }
 

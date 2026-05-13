@@ -4,7 +4,6 @@ import {
   CheckCircle2, Edit2, Trash2, Flag, Flame, Coffee, Bookmark, Trophy, Sparkles, CloudSun, HeartPulse
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLike } from '../../hooks/useLike';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import { getRelativeTimeLabel } from '../../lib/social';
@@ -21,9 +20,11 @@ interface PostCardProps {
 
 export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpenComments, onSendNudge }: PostCardProps) => {
   const postId = post.id ? String(post.id) : '';
-  const initialLikeCount = post.likes_count || (post as any).like_count || 0;
-  const { isLiked, count, toggleLike } = useLike(post.id, currentUserId, post.likedByMe || false, initialLikeCount);
-  const [hasCheered, setHasCheered] = useState(false);
+  // Sử dụng cheers_count hoặc like_count (đã được đồng bộ trong DB)
+  const initialCheersCount = (post as any).cheers_count || post.likes_count || (post as any).like_count || 0;
+  
+  const [cheersCount, setCheersCount] = useState(initialCheersCount);
+  const [hasCheered, setHasCheered] = useState((post as any).cheeredByMe || false);
   const [showMenu, setShowMenu] = useState(false);
   const isMyPost = currentUserId === post.author_id;
   const [isDeleted, setIsDeleted] = useState(false);
@@ -73,13 +74,20 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
   };
 
   const handleCheers = async () => {
-    if (!post.id) {
-      toast.error("Lỗi dữ liệu: Bài viết này không có ID!");
+    if (!currentUserId) {
+      toast.error("Vui lòng đăng nhập để cụng ly!");
+      return;
+    }
+    if (hasCheered) {
+      toast.error('Bạn đã cụng ly bài này rồi!');
       return;
     }
 
+    if (navigator.vibrate) navigator.vibrate(50);
+    
+    // Optimistic UI update
     setHasCheered(true);
-    toast.success('Đã ghi nhận cụng ly, đang xử lý...');
+    setCheersCount((prev: number) => prev + 1);
 
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -93,23 +101,17 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
 
       const { data, error } = await supabase.rpc('action_cheers_post', payload);
 
-      if (error) {
-        console.error("Supabase RPC Error:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      if (data === true) {
-        toast.success('+200ml vào mục tiêu hôm nay!');
-
-        supabase.rpc('pulse_post', { p_post_id: String(post.id) }).then(({ error }: any) => {
-          if (error) console.error("Lỗi cập nhật Pulse:", error);
-        });
-      } else {
-        toast.error('Bạn đã cụng ly bài này rồi!');
-      }
+      // Cập nhật Pulse âm thầm
+      void supabase.rpc('pulse_post', { p_post_id: String(post.id) });
+      
+      toast.success('🍻 Đã cụng ly! +200ml nước');
     } catch (err: any) {
+      console.error("Lỗi cụng ly:", err);
       setHasCheered(false);
-      toast.error('Lỗi máy chủ, chưa thể cộng nước!');
+      setCheersCount((prev: number) => prev - 1);
+      toast.error('Máy chủ bận, thử lại sau nhé!');
     }
   };
 
@@ -177,11 +179,6 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
     }
   };
 
-  const handleLikeClick = () => {
-    if (navigator.vibrate) navigator.vibrate(50);
-    toggleLike();
-  };
-
   const isChallenge = post.type === 'challenge';
   const isMilestone = post.type === 'milestone';
   const isWaterLog = post.type === 'water_log' || post.type === 'daily_goal';
@@ -225,7 +222,7 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.28, ease: 'easeOut' }}
       onDoubleClick={() => {
-        if (!isMyPost) onSendNudge?.(post);
+        if (!isMyPost && !hasCheered) handleCheers();
       }}
       className={`transition-all duration-300 rounded-3xl p-4 border border-white/5 bg-slate-900/60 backdrop-blur-xl shadow-xl relative overflow-hidden ${
         isAchievement ? 'ring-1 ring-amber-500/20' :
@@ -297,7 +294,7 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content Area */}
       <div className="relative z-10 mb-4">
         {isAchievement ? (
           <div className="flex flex-col items-center justify-center p-6 border border-amber-500/30 bg-amber-500/5 rounded-2xl text-center relative overflow-hidden">
@@ -318,11 +315,11 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
                 <Zap size={14} className="text-amber-400" />
               </div>
               <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 p-[2px] shadow-[0_0_20px_rgba(16,185,129,0.3)] z-10 transform -translate-x-3">
-                <img src={post.compare_avatar || `https://ui-avatars.com/api/?name=${post.compare_name}&background=10B981&color=fff`} className="w-full h-full rounded-full border-2 border-slate-900 object-cover" />
+                <img src={(post as any).compare_avatar || `https://ui-avatars.com/api/?name=${(post as any).compare_name}&background=10B981&color=fff`} className="w-full h-full rounded-full border-2 border-slate-900 object-cover" />
               </div>
             </div>
             <p className="text-center text-white font-bold text-lg leading-snug mb-2 z-10">
-              Cả bạn và <span className="text-emerald-400">{post.compare_name || 'Đồng đội'}</span> đều đạt <span className="text-amber-400">{post.value || 100}%</span> mục tiêu!
+              Cả bạn và <span className="text-emerald-400">{(post as any).compare_name || 'Đồng đội'}</span> đều đạt <span className="text-amber-400">{post.value || 100}%</span> mục tiêu!
             </p>
             <p className="text-center text-slate-400 text-xs z-10">Cùng nhau giữ vững phong độ nhé.</p>
             <button className="mt-4 px-6 py-2 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition-all">
@@ -372,72 +369,32 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
         )}
       </div>
 
-      {/* Contextual Badges */}
-      <div className="flex items-center gap-2 mb-4 relative z-10 flex-wrap">
-        {(!isMilestone && !isWaterLog && !isChallenge) && (post.hydration_ml || 0) > 0 && <motion.span animate={{ boxShadow: ['0 0 0px rgba(6,182,212,0)', '0 0 15px rgba(6,182,212,0.6)', '0 0 0px rgba(6,182,212,0)'] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold flex items-center gap-1"><Droplets size={12}/> +{post.hydration_ml}ml</motion.span>}
-        {(!isMilestone && !isWaterLog && !isChallenge) && (post.streak_snapshot || 0) > 0 && <motion.span animate={{ boxShadow: ['0 0 0px rgba(249,115,22,0)', '0 0 15px rgba(249,115,22,0.6)', '0 0 0px rgba(249,115,22,0)'] }} transition={{ duration: 2, delay: 1, repeat: Infinity, ease: "easeInOut" }} className="px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold flex items-center gap-1"><Zap size={12}/> Chuỗi {post.streak_snapshot}</motion.span>}
-        {post.temperature && <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold flex items-center gap-1"><CloudSun size={12}/> {post.temperature}°C</span>}
-        {post.heart_rate && <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold flex items-center gap-1"><HeartPulse size={12}/> {post.heart_rate} nhịp/phút</span>}
-        {post.drink_type && <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1"><Coffee size={12}/> {post.drink_type}</span>}
-      </div>
-
-      {/* SOCIAL HYDRATION PULSE */}
-      {(post.pulse_count > 0) && (
-        <motion.div
-          initial={{ opacity: 0.8 }}
-          whileHover={{ opacity: 1, scale: 1.01 }}
-          className="flex items-center gap-2.5 mb-4 relative z-10 px-3 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent border border-blue-500/20 overflow-hidden"
-        >
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-l-xl shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
-          <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-            <Droplets size={12} className="text-cyan-400" />
-          </div>
-          <p className="text-xs text-slate-300 font-medium">
-            <span className="font-black text-cyan-400">{post.pulse_count} người bạn</span> đã nạp nước sau khi xem.
-          </p>
-        </motion.div>
-      )}
-
       {/* Action Bar */}
       <div className="border-t border-white/5 pt-3 mt-1 flex items-center justify-between relative z-20">
         <div className="flex items-center gap-1 sm:gap-2">
-          <button onClick={handleLikeClick} className="flex items-center gap-1.5 text-slate-400 text-xs font-bold hover:bg-white/5 hover:text-white py-2 px-2 sm:px-3 rounded-xl transition-all active:scale-95 group">
-            <motion.div animate={isLiked ? { scale: [1, 1.5, 1], rotate: [0, -15, 15, 0] } : { scale: 1 }} transition={{ duration: 0.4, type: "spring" } as any}>
-              <Heart size={18} className={`transition-colors ${isLiked ? "fill-rose-500 text-rose-500" : "group-hover:text-rose-400"}`} />
+          {/* Unified Cheers Button (Replacing Kudos/Heart) */}
+          <button
+            onClick={handleCheers}
+            className={`flex items-center gap-1.5 text-xs font-black uppercase tracking-widest py-2.5 px-4 rounded-xl transition-all active:scale-95 group ${
+              hasCheered 
+                ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30' 
+                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/5'
+            }`}
+          >
+            <motion.div animate={hasCheered ? { scale: [1, 1.4, 1], rotate: [0, -10, 10, 0] } : { scale: 1 }}>
+              <Droplets size={18} className={hasCheered ? "fill-white" : "group-hover:text-cyan-400"} />
             </motion.div>
-            <span className={isLiked ? "text-rose-500" : ""}>{count > 0 ? `${count} kudos` : 'Kudos'}</span>
+            <span>{cheersCount > 0 ? `${cheersCount} Cheers` : 'Cụng ly'}</span>
           </button>
 
-          {!isChallenge && (
-            <button
-              onClick={handleCheers}
-              disabled={hasCheered}
-              className={`relative overflow-hidden flex items-center gap-1.5 text-xs font-bold py-2 px-2 sm:px-3 rounded-xl transition-all active:scale-95 ${hasCheered ? 'text-emerald-400 bg-emerald-500/10' : 'text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20'}`}
-            >
-              {!hasCheered && (
-                <motion.div
-                  animate={{ x: ['-100%', '200%'] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear", repeatDelay: 1.5 }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-                />
-              )}
-              <span className="relative z-10 flex items-center gap-1.5">
-                {hasCheered ? <CheckCircle2 size={18}/> : <Droplets size={18}/>}
-                <span className="hidden sm:inline">{hasCheered ? 'Đã cụng ly' : 'Cụng ly'}</span>
-              </span>
-            </button>
-          )}
-
-          <button onClick={() => onOpenComments(post)} className="flex items-center gap-1.5 text-slate-400 text-xs font-bold hover:bg-white/5 hover:text-white py-2 px-2 sm:px-3 rounded-xl transition-all active:scale-95 group">
-            <MessageCircle size={18} className="group-hover:text-blue-400 transition-colors" />
-            {(post.comments_count || 0) > 0 ? post.comments_count : <span className="hidden sm:inline">Động viên</span>}
+          <button onClick={() => onOpenComments(post)} className="flex items-center gap-1.5 text-slate-400 text-xs font-bold hover:bg-white/5 hover:text-white py-2 px-3 rounded-xl transition-all active:scale-95 group">
+            <MessageCircle size={18} className="group-hover:text-blue-400" />
+            {(post.comments_count || 0) > 0 ? post.comments_count : <span className="hidden sm:inline">Bình luận</span>}
           </button>
         </div>
 
         <button onClick={handleSavePost} className="flex items-center gap-1.5 text-slate-400 text-xs font-bold hover:bg-white/5 hover:text-white py-2 px-3 rounded-xl transition-all active:scale-95 group">
-          <motion.div animate={isSaved ? { scale: [1, 1.3, 1], y: [0, -4, 0] } : { scale: 1 }} transition={{ duration: 0.3 } as any}>
-            <Bookmark size={18} className={`transition-colors ${isSaved ? "fill-cyan-500 text-cyan-500" : "group-hover:text-cyan-400"}`} />
-          </motion.div>
+          <Bookmark size={18} className={isSaved ? "fill-cyan-500 text-cyan-500" : ""} />
         </button>
       </div>
     </motion.div>

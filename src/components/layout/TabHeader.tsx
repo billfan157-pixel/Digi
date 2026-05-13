@@ -55,6 +55,7 @@ export default function TabHeader({
             avatarUrl={profile?.avatar_url ?? null}
             nickname={profile?.nickname}
             showBadge={false}
+            frameId={profile?.equipped_frame_id}
           />
         </button>
       </div>

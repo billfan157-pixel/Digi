@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { getFrameConfig } from '../config/avatarFrames';
 
 interface AvatarFrameProps {
   level: number;
@@ -8,6 +9,8 @@ interface AvatarFrameProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showBadge?: boolean;
   nickname?: string;
+  /** ID khung viền tùy chỉnh từ Shop (ghi đè khung theo level) */
+  frameId?: string | null;
 }
 
 export function getRankTitle(level: number): string {
@@ -143,8 +146,14 @@ const imageSizeClasses = {
 };
 
 // Component chính
-export default function AvatarFrame({ level, avatarUrl, size = 'md', showBadge = true, nickname }: AvatarFrameProps) {
-  const { frameClasses, badgeColor, textColor, effects } = getFrameEffects(level);
+export default function AvatarFrame({ level, avatarUrl, size = 'md', showBadge = true, nickname, frameId }: AvatarFrameProps) {
+  const levelConfig = getFrameEffects(level);
+  const customFrame = getFrameConfig(frameId);
+
+  // Khung tùy chỉnh ghi đè khung theo level
+  const frameClasses = customFrame ? customFrame.borderClasses : levelConfig.frameClasses;
+  const effects = customFrame ? customFrame.effects : levelConfig.effects;
+  const { badgeColor, textColor } = levelConfig;
   const currentSize = sizeClasses[size];
   const imageSize = imageSizeClasses[size];
 
@@ -156,7 +165,7 @@ export default function AvatarFrame({ level, avatarUrl, size = 'md', showBadge =
       </AnimatePresence>
 
       {/* 2. Khung chính chứa Avatar */}
-      <div className={`relative w-full h-full rounded-full p-[3px] bg-slate-950 z-10 ${frameClasses} transition-all flex items-center justify-center overflow-hidden`}>
+      <div className={`relative w-full h-full rounded-full p-[3px] bg-slate-950 z-10 ${frameClasses} transition-all flex items-center justify-center ${customFrame ? '' : 'overflow-hidden'}`}>
         {avatarUrl ? (
           <img src={avatarUrl} alt="avatar" className="rounded-full object-cover w-full h-full" />
         ) : (

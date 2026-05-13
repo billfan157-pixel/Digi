@@ -2,6 +2,7 @@ import AppBootstrap from '@/app/AppBootstrap';
 import AppShell from '@/app/AppShell';
 import { useAppShellController } from '@/features/app/useAppShellController';
 import { AiSocialProvider } from './context/AiSocialContext';
+import { ThemeProvider } from './components/ThemeProvider';
 import { ErrorBoundary } from './components/ErrorBoundary'; // ✅ ĐÃ THÊM: Import Error Boundary
 
 // ============================================================================
@@ -22,7 +23,9 @@ export default function App() {
     <ErrorBoundary>
       <AppBootstrap>
         <AiSocialProvider>
-          <AppContent />
+          <ThemeProvider>
+            <AppContent />
+          </ThemeProvider>
         </AiSocialProvider>
       </AppBootstrap>
     </ErrorBoundary>

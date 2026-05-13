@@ -304,7 +304,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
           ? supabase!.from('public_profiles').select('id, nickname, avatar_url, level, water_today, water_goal').in('id', authorIds)
           : Promise.resolve({ data: [], error: null }),
         postIds.length > 0
-          ? supabase!.from('social_post_likes').select('post_id').eq('user_id', profile.id).in('post_id', postIds)
+          ? supabase!.from('post_cheers').select('post_id').eq('user_id', profile.id).in('post_id', postIds)
           : Promise.resolve({ data: [], error: null }),
       ]);
 

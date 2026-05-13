@@ -12,6 +12,9 @@
     --dw-surface-2: rgba(255, 255, 255, 0.05);
     --dw-surface-3: rgba(255, 255, 255, 0.08);
     --dw-surface-solid: rgba(15, 23, 42, 0.68);
+    --dw-bg-gradient: radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 100%);
+    --dw-glow-color: rgba(6, 182, 212, 0.15);
+    --dw-blur-level: 20px;
 
     /* ── Glass Surface (for .glass-card, .glass-card-strong, .glass-control) ── */
     --dw-surface-glass: rgba(255, 255, 255, 0.04);
@@ -72,37 +75,49 @@
   }
 
   body {
-    background: var(--dw-bg);
+    background: var(--dw-bg-gradient);
     color: var(--dw-text-primary);
     overscroll-behavior-y: none;
+    transition: background 0.8s ease-in-out;
   }
 }
 
 @layer components {
-  .glass-card {
-    background: var(--dw-surface-glass);
-    border: 1px solid var(--dw-border-glass);
-    border-radius: var(--dw-radius-card);
-    box-shadow: var(--dw-shadow-glass-soft);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+  .glass-card, .btn-primary, .btn-ghost, .btn-danger, .tab-item, .input-field {
+    border-radius: var(--dw-radius-card) !important;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .glass-card-strong {
-    background: var(--dw-surface-glass-strong);
-    border: 1px solid var(--dw-border-glass-strong);
-    border-radius: var(--dw-radius-card);
-    box-shadow: var(--dw-shadow-glass);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+  /* ── Theme Specific Card Styles ── */
+  /* Neon Glow for Cyber */
+  [style*="--dw-radius-card: 0px"], [style*="--dw-radius-card: 2px"], [style*="--dw-radius-card: 4px"] {
+    --dw-shadow-glass: 0 0 15px var(--dw-accent), 0 0 5px var(--dw-accent);
+    --dw-border-glass: var(--dw-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
+
+  /* Deep Shadows for Abyss/Dark */
+  [style*="--dw-blur-level: 40px"] {
+    --dw-shadow-glass: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    --dw-border-glass: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Organic Softness for Forest/Sakura */
+  [style*="--dw-radius-card: 2.5rem"], [style*="--dw-radius-card: 3rem"] {
+    --dw-shadow-glass: 0 10px 25px -5px var(--dw-glow-color);
+    border-style: dashed; /* Thử nghiệm viền đứt đoạn cho phong cách mộc mạc */
+    border-width: 2px;
+  }
+
 
   .glass-control {
     background: var(--dw-surface-control);
     border: 1px solid var(--dw-border-glass);
     border-radius: var(--dw-radius-control);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(var(--dw-blur-level));
+    -webkit-backdrop-filter: blur(var(--dw-blur-level));
+    transition: all 0.5s ease-in-out;
   }
 
   .glass-stat {
@@ -114,40 +129,11 @@
   }
 
   .glass-nav {
-    background: rgba(255, 255, 255, 0.05); /* Giảm độ sáng xuống mức Surface-2 */
-    border: 1px solid rgba(255, 255, 255, 0.12); /* Viền mỏng, tinh tế hơn */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42);
     backdrop-filter: blur(24px) saturate(150%);
     -webkit-backdrop-filter: blur(24px) saturate(150%);
-  }
-
-  .section-label {
-    font-size: 0.625rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--dw-text-muted);
-  }
-
-  .section-title {
-    font-size: 0.625rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    color: var(--dw-text-muted);
-  }
-
-  .text-readable {
-    color: var(--dw-text-secondary);
-  }
-
-  .text-meta {
-    color: var(--dw-text-muted);
-  }
-
-  .active-treatment {
-    background: rgba(34, 211, 238, 0.16);
-    border: 1px solid rgba(34, 211, 238, 0.28);
-    color: #67e8f9;
   }
 }
 
@@ -172,38 +158,66 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 1ms !important;
-  }
+/* ── Avatar Frame Animations ── */
+@keyframes frame-spin { to { transform: rotate(360deg); } }
+@keyframes frame-spin-reverse { to { transform: rotate(-360deg); } }
+@keyframes frame-dash { to { stroke-dashoffset: -200; } }
+@keyframes frame-dash-reverse { to { stroke-dashoffset: 200; } }
+@keyframes frame-pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  100% { transform: scale(1.1); opacity: 0; }
+}
+@keyframes frame-bubble-up {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.4; }
+  100% { transform: translateY(-120px) scale(1.5); opacity: 0; }
+}
+@keyframes frame-spark {
+  0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(5deg); }
+}
+@keyframes frame-leaf-fall {
+  0% { transform: translate(50px, -10px) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(-20px, 110px) rotate(720deg); opacity: 0; }
+}
+@keyframes frame-shard-glint {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1) brightness(1.5); }
+}
+/* ── Theme Effect Animations ── */
+@keyframes cyber-grid-move {
+  from { background-position: 0 0; }
+  to { background-position: 0 40px; }
+}
+@keyframes aurora-slow {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+@keyframes float-up {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+}
+@keyframes ray-sweep {
+  0% { background-position: -200% -200%; }
+  100% { background-position: 200% 200%; }
+}
+@keyframes float-around {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(30px, 50px) rotate(120deg); }
+  66% { transform: translate(-20px, 80px) rotate(240deg); }
+  100% { transform: translate(0, 0) rotate(360deg); }
+}
+@keyframes ripple-out {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(3); opacity: 0; }
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-@keyframes combat-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.02); opacity: 1; }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
-}
-
-.animate-float {
-  animation: float 3.5s ease-in-out infinite;
-}
-
-.animate-combat-pulse {
-  animation: combat-pulse 2s ease-in-out infinite;
-}

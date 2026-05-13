@@ -12,6 +12,7 @@ import HydrationGoalModal from '../../components/modals/HydrationGoalModal';
 import AnimatedCounter from '../../components/AnimatedCounter';
 import LiquidProgress from '../../components/LiquidProgress';
 import ConfettiParticles from '../../components/ConfettiParticles';
+import { WaterSplashEffect } from '../../components/effects/WaterSplashEffect';
 import { useAppStore } from '../../store/useAppStore';
 import DayCompleteCard from '../../components/DayCompleteCard';
 import ProgressSummary from '../../components/home/ProgressSummary';
@@ -53,7 +54,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
   const {
     profile, streak, waterIntake, waterGoal, waterEntries,
     weatherData, watchData, hydrationResult,
-    actions: { handleAddWater, handleLogout, handleDeleteEntry }
+    actions: { handleAddWater: _rawAddWater, handleLogout, handleDeleteEntry }
   } = useAppStore(useShallow((state) => ({
     profile: state.profile,
     streak: state.streak,
@@ -65,6 +66,19 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     hydrationResult: state.hydrationResult,
     actions: state.actions,
   })));
+
+  // Splash effect state
+  const [splashTrigger, setSplashTrigger] = useState(0);
+  const [splashAmount, setSplashAmount] = useState(250);
+
+  const handleAddWater = React.useCallback(
+    async (amount: number, factor: number, name: string) => {
+      setSplashAmount(amount);
+      setSplashTrigger(prev => prev + 1);
+      return _rawAddWater(amount, factor, name);
+    },
+    [_rawAddWater]
+  );
 
   const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
   const isGoalReached = waterIntake >= waterGoal && waterGoal > 0;
@@ -159,6 +173,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       {!effectiveIsConnected ? (
         <div className="relative my-4 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform px-6" onClick={() => setShowGoalDetail(true)}>
           <LiquidProgress percentage={progress} />
+          <WaterSplashEffect trigger={splashTrigger} amount={splashAmount} />
           <div className="absolute text-center z-10 drop-shadow-xl pointer-events-none flex flex-col items-center">
             <h2 className="text-5xl font-black text-white flex items-baseline justify-center">
               <AnimatedCounter value={waterIntake} /> 

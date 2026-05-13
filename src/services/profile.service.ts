@@ -54,6 +54,8 @@ function toAppProfile(profileRow: any): AppProfile {
     total_water: normalizedProfile.total_water,
     onboarding_completed: normalizedProfile.onboarding_completed,
     equipped_bottle_id: normalizedProfile.equipped_bottle_id ?? null,
+    equipped_frame_id: normalizedProfile.equipped_frame_id ?? null,
+    equipped_theme_id: normalizedProfile.equipped_theme_id ?? 'theme_default',
     equipped_notification_sound: normalizedProfile.equipped_notification_sound ?? null,
     created_at: normalizedProfile.created_at,
     updated_at: normalizedProfile.updated_at,
