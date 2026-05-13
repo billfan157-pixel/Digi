@@ -28,6 +28,7 @@ const SNOOZE_NOTIFICATION_ID = 7399;
 
 export const HYDRATION_REMINDER_ACTION_TYPE_ID = 'hydration-reminder-actions';
 export const HYDRATION_NOTIFICATION_ACTION_IDS = {
+  add100: 'hydration-add-100',
   add250: 'hydration-add-250',
   add500: 'hydration-add-500',
   snooze15: 'hydration-snooze-15',
@@ -161,9 +162,10 @@ export const registerHydrationReminderActions = async () => {
       {
         id: HYDRATION_REMINDER_ACTION_TYPE_ID,
         actions: [
+          { id: HYDRATION_NOTIFICATION_ACTION_IDS.add100, title: '+100ml' },
           { id: HYDRATION_NOTIFICATION_ACTION_IDS.add250, title: '+250ml' },
           { id: HYDRATION_NOTIFICATION_ACTION_IDS.add500, title: '+500ml' },
-          { id: HYDRATION_NOTIFICATION_ACTION_IDS.snooze15, title: 'Nhac lai 15p' },
+          { id: HYDRATION_NOTIFICATION_ACTION_IDS.snooze15, title: 'Nhắc lại 15p' },
         ],
       },
     ],
@@ -237,6 +239,8 @@ export const parseHydrationNotificationAction = (
   }
 
   switch (notificationAction.actionId) {
+    case HYDRATION_NOTIFICATION_ACTION_IDS.add100:
+      return { kind: 'add', amount: 100, name: 'Nuoc loc (notification)' };
     case HYDRATION_NOTIFICATION_ACTION_IDS.add250:
       return { kind: 'add', amount: 250, name: 'Nuoc loc (notification)' };
     case HYDRATION_NOTIFICATION_ACTION_IDS.add500:

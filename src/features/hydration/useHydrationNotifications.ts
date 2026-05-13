@@ -1,12 +1,15 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { App } from '@capacitor/app';
 import {
   LocalNotifications,
   type ActionPerformed,
 } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
 import {
+  clearHydrationReminders,
   parseHydrationNotificationAction,
   registerHydrationReminderActions,
+  scheduleHydrationReminders,
   scheduleHydrationSnooze,
   supportsNativeHydrationReminders,
 } from '@/lib/hydrationReminders';
@@ -92,6 +95,63 @@ export function useHydrationNotifications({
   const resolvedUserId = profile?.id && profile.id !== 'undefined'
     ? profile.id
     : readLastActiveHydrationUserId();
+
+  // ── App foreground/background management ──
+  // Cancel pending native reminders when app is active (in-app UI already handles them)
+  // Re-schedule when app goes to background so user still gets notification natively
+  const reminderSettingsRef = useRef<{ enabled: boolean; intervalMinutes: number; startTime: string; endTime: string }>({
+    enabled: false, intervalMinutes: 120, startTime: '08:00', endTime: '22:00',
+  });
+  const waterGoalRef = useRef(waterGoal);
+  waterGoalRef.current = waterGoal;
+  const nicknameRef = useRef(profile?.nickname);
+  nicknameRef.current = profile?.nickname;
+
+  // Load current reminder settings from store (non-reactive ref)
+  useEffect(() => {
+    import('@/store/useReminderStore').then(({ useReminderStore }) => {
+      const settings = useReminderStore.getState().reminderSettings;
+      if (settings) reminderSettingsRef.current = settings;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!supportsNativeHydrationReminders()) return;
+
+    let appStateListener: { remove: () => Promise<void> } | null = null;
+
+    const setup = async () => {
+      appStateListener = await App.addListener('appStateChange', async ({ isActive }) => {
+        const settings = reminderSettingsRef.current;
+        const goal = waterGoalRef.current;
+        const nickname = nicknameRef.current;
+
+        if (isActive) {
+          // App in foreground → cancel all pending native reminders
+          // In-app UI (HomeTab, notification toast, etc.) handles reminders
+          await clearHydrationReminders();
+        } else {
+          // App went to background → re-schedule reminders from next slot
+          if (settings.enabled) {
+            try {
+              await scheduleHydrationReminders(settings, { dailyGoal: goal, nickname });
+            } catch (e) {
+              console.warn('Failed to reschedule reminders on background:', e);
+            }
+          }
+        }
+      });
+    };
+
+    setup();
+
+    return () => {
+      if (appStateListener) {
+        void appStateListener.remove();
+      }
+    };
+  }, []);
+  // ── End app foreground/background management ──
 
   const handleHydrationNotificationAction = useCallback(async (notificationAction: ActionPerformed) => {
     const extra = notificationAction.notification.extra;
