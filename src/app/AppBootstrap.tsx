@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { Target } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeProvider';
 import { queryClient } from '@/lib/queryClient';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 function MissingConfigScreen() {
   return (
@@ -28,8 +32,6 @@ VITE_SUPABASE_ANON_KEY=eyJhbGci...`}
     </div>
   );
 }
-
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 function AppChrome({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
@@ -60,6 +62,53 @@ function AppChrome({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppBootstrap({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    // ── XỬ LÝ DEEP LINK TRÊN NATIVE (FIX CALENDAR SYNC) ──
+    if (Capacitor.isNativePlatform()) {
+      const setupDeepLinks = async () => {
+        // Lắng nghe khi App được mở bằng URL (digiwell://...)
+        await App.addListener('appUrlOpen', async (data) => {
+          const url = new URL(data.url);
+          
+          // Kiểm tra nếu là callback của login/calendar
+          if (url.host === 'login-callback' || url.pathname.includes('login-callback')) {
+            // Đóng trình duyệt Safari nội bộ
+            await Browser.close();
+            
+            // Trích xuất các tham số (access_token, refresh_token, ...)
+            // Supabase handle oauth callback qua URL fragment (#access_token=...)
+            const hash = url.hash.substring(1);
+            if (hash) {
+              const params = new URLSearchParams(hash);
+              const accessToken = params.get('access_token');
+              const refreshToken = params.get('refresh_token');
+              const providerToken = params.get('provider_token');
+              const providerRefreshToken = params.get('provider_refresh_token');
+
+              if (accessToken && refreshToken) {
+                // Lưu provider tokens vào localStorage để useCalendarSync dùng ngay
+                if (providerToken) localStorage.setItem('supabase.provider_token', providerToken);
+                if (providerRefreshToken) localStorage.setItem('digiwell_google_refresh_token', providerRefreshToken);
+
+                // Nạp session vào Supabase Client của App
+                const { error } = await supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                });
+                
+                if (!error) {
+                  // Bắn event để useCalendarSync biết mà chạy lại
+                  window.dispatchEvent(new CustomEvent('digiwell:google-provider-token-updated'));
+                }
+              }
+            }
+          }
+        });
+      };
+      setupDeepLinks();
+    }
+  }, []);
+
   if (!isSupabaseConfigured || !supabase) {
     return <MissingConfigScreen />;
   }
