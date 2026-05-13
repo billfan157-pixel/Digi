@@ -73,9 +73,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
 
       if (data === true) {
         toast.success('+200ml vào mục tiêu hôm nay!', { id: tid, icon: '✨' });
-        supabase.rpc('pulse_post', { p_post_id: String(post.id) }).then(({ error }: any) => {
-          if (error) console.error("Lỗi cập nhật Pulse:", error);
-        });
+        await supabase.rpc('pulse_post', { p_post_id: String(post.id) });
         return true;
       } else {
         toast.error('Bạn đã cụng ly bài này rồi!', { id: tid });
@@ -104,7 +102,11 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
 
     const tid = toast.loading('Đang xóa bài viết...');
     try {
-      const { error } = await supabase.from('social_posts').delete().eq('id', postId);
+      const { error } = await supabase
+        .from('social_posts')
+        .delete()
+        .eq('id', postId)
+        .eq('author_id', currentUserId);
       if (error) throw error;
       toast.success('Đã xóa bài viết thành công', { id: tid });
       return true;
@@ -122,13 +124,14 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
 
     const tid = toast.loading('Đang gửi báo cáo đến hệ thống...');
     try {
-      await supabase.from('reports').insert({ target_id: postId, target_type: 'post', reporter_id: currentUserId, reason: 'Inappropriate content / Spam' });
+      const { error } = await supabase.from('reports').insert({ target_id: postId, target_type: 'post', reporter_id: currentUserId, reason: 'Inappropriate content / Spam' });
+      if (error) throw error;
       toast.success('Đã ghi nhận báo cáo. Bài viết đã được ẩn khỏi Feed của bạn.', { id: tid });
       return true;
     } catch (err) {
-      console.warn('Report fallback:', err);
-      toast.success('Đã ghi nhận báo cáo. Bài viết đã được ẩn khỏi Feed của bạn.', { id: tid });
-      return true;
+      console.warn('Report error:', err);
+      toast.error('Gửi báo cáo thất bại, vui lòng thử lại sau.', { id: tid });
+      return false;
     }
   }, [currentUserId]);
 
@@ -137,7 +140,11 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
     if (newContent !== null && newContent.trim() !== currentContent) {
       const tid = toast.loading('Đang cập nhật...');
       try {
-        const { error } = await supabase.from('social_posts').update({ content: newContent.trim() }).eq('id', postId);
+        const { error } = await supabase
+          .from('social_posts')
+          .update({ content: newContent.trim() })
+          .eq('id', postId)
+          .eq('author_id', currentUserId);
         if (error) throw error;
         toast.success('Đã cập nhật bài viết', { id: tid });
         return newContent.trim();

@@ -180,3 +180,30 @@
     transition-duration: 1ms !important;
   }
 }
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes combat-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.02); opacity: 1; }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-float {
+  animation: float 3.5s ease-in-out infinite;
+}
+
+.animate-combat-pulse {
+  animation: combat-pulse 2s ease-in-out infinite;
+}

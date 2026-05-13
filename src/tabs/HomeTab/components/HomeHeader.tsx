@@ -1,4 +1,4 @@
-import { Droplet, Coffee, Activity, Zap, Camera } from 'lucide-react';
+import { Droplet, Coffee, Activity, Zap } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import TabHeader from '@/components/layout/TabHeader';
@@ -6,8 +6,6 @@ import type { Profile } from '@/models';
 
 interface HomeHeaderProps {
   profile: Profile | null;
-  isScanning: boolean;
-  handleScan: () => void;
   onMenuOpen: () => void;
 }
 
@@ -19,7 +17,7 @@ export const renderIcon = (iconName: string, props?: any): React.ReactNode => {
   return <Droplet {...props} />;
 };
 
-export default function HomeHeader({ profile, isScanning, handleScan, onMenuOpen }: HomeHeaderProps) {
+export default function HomeHeader({ profile, onMenuOpen }: HomeHeaderProps) {
   const { t } = useTranslation();
   
   const nowText = {
@@ -38,10 +36,6 @@ export default function HomeHeader({ profile, isScanning, handleScan, onMenuOpen
         </>
       }
       profile={profile}
-      actionIcon={<Camera size={18} />}
-      actionDisabled={isScanning}
-      actionLabel="Quét đồ uống"
-      onActionClick={handleScan}
       onAvatarClick={onMenuOpen}
     />
   );

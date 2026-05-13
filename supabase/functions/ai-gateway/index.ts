@@ -6,12 +6,11 @@ const corsHeaders = {
 };
 
 const TEXT_MODEL = 'llama-3.3-70b-versatile';
-const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 const groqApiKey = Deno.env.get('GROQ_API_KEY') ?? '';
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
-type AiGatewayAction = 'advice' | 'chat' | 'scan' | 'insight' | 'report-analysis';
+type AiGatewayAction = 'advice' | 'chat' | 'report-analysis';
 
 type AiUsageResult = {
   allowed?: boolean;
@@ -328,110 +327,7 @@ Deno.serve(async (request) => {
       return json({ reply: reply || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.' });
     }
 
-    if (action === 'scan') {
-      const imageDataUrl = String(body.imageDataUrl ?? '');
-      if (!imageDataUrl.startsWith('data:image/')) {
-        return json({ error: 'Ảnh gửi lên không hợp lệ.' }, 400);
-      }
 
-      const response = await groqChat({
-        model: VISION_MODEL,
-        max_tokens: 80,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: { url: imageDataUrl },
-              },
-              {
-                type: 'text',
-                text:
-                  'Đây là hình ảnh một loại đồ uống. ' +
-                  'Hãy ước lượng tên đồ uống và dung tích gần đúng. ' +
-                  'Trả về đúng 1 dòng theo định dạng: [Tên đồ uống] - [Dung tích bằng số]ml. ' +
-                  'Ví dụ: Cà phê đen - 200ml. ' +
-                  'Nếu trong ảnh không có đồ uống hoặc không chắc chắn, hãy trả về: Lỗi - Không nhận diện được.',
-              },
-            ],
-          },
-        ],
-      });
-
-      const responseText = String(response.choices?.[0]?.message?.content ?? '').trim();
-      if (!responseText || responseText.includes('Lỗi')) {
-        return json({ error: 'Không nhận ra đồ uống trong ảnh.' }, 422);
-      }
-
-      const match = responseText.match(/(.*)\s*-\s*(\d+)\s*ml/i);
-      if (!match) {
-        return json({ error: 'Không thể dự đoán dung tích.' }, 422);
-      }
-
-      const name = match[1].trim();
-      const amount = parseInt(match[2], 10);
-      if (!name || !Number.isFinite(amount) || amount <= 0) {
-        return json({ error: 'Kết quả AI không hợp lệ.' }, 422);
-      }
-
-      return json({ name, amount, factor: normalizeDrinkFactor(name) });
-    }
-
-    if (action === 'insight') {
-      const userContext = body.userContext as Record<string, unknown>;
-      const weeklyData = Array.isArray(body.weeklyData) ? body.weeklyData : [];
-      const activeWorkout = body.activeWorkout ? String(body.activeWorkout) : null;
-
-      const hour = new Date().getHours();
-      let currentTime = 'Morning';
-      if (hour >= 12 && hour < 18) currentTime = 'Afternoon';
-      else if (hour >= 18) currentTime = 'Evening';
-
-      const history = weeklyData
-        .filter((entry) => entry && typeof entry === 'object' && !(entry as Record<string, unknown>).isEmptySlot)
-        .map((entry) => {
-          const row = entry as Record<string, unknown>;
-          return {
-            day: row.d,
-            ml: row.ml,
-            target: userContext?.water_goal || 2000,
-          };
-        });
-
-      const promptData = {
-        biometrics: {
-          age: typeof userContext?.age === 'number' ? userContext.age : 20,
-          gender: String(userContext?.gender || 'Nam').slice(0, 10),
-          weight: typeof userContext?.weight === 'number' ? userContext.weight : 60,
-          activity: String(userContext?.activity || 'active').slice(0, 20),
-        },
-        current_time: currentTime,
-        active_workout: activeWorkout,
-        '7_day_history': history,
-      };
-
-      const response = await groqChat({
-        model: TEXT_MODEL,
-        max_tokens: 150,
-        temperature: 0.4,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Bạn là một Chuyên gia Y tế & Dinh dưỡng thể thao khắt khe. ' +
-              'Dựa vào cục dữ liệu JSON tôi cung cấp, hãy phân tích tình trạng hydrat hóa của người dùng. ' +
-              'Trả về câu trả lời RẤT NGẮN GỌN (dưới 40 chữ), chia làm 2 phần: [Chẩn đoán nhanh] và [Hành động ngay]. ' +
-              'Nếu họ đang tập nặng, phải nhắc đến điện giải. Giọng điệu dứt khoát, chuyên nghiệp.',
-          },
-          { role: 'user', content: JSON.stringify(promptData) },
-        ],
-      });
-
-      return json({
-        insight: String(response.choices?.[0]?.message?.content ?? '').trim() || 'Dữ liệu không đủ để phân tích lúc này.',
-      });
-    }
 
     if (action === 'report-analysis') {
       const stats = body.stats as Record<string, unknown>;

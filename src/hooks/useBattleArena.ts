@@ -87,15 +87,16 @@ export function useBattleArena(profile: any, isOpen: boolean, onSpendCoins: (amo
 
     const tid = toast.loading('Đang lên đài...');
     try {
-      await supabase.from('hydration_battles').update({ status: 'active' }).eq('id', battle.id);
-      const otherPending = pendingInvites.filter((b: any) => b.id !== battle.id);
-      for (const p of otherPending) {
-        await supabase.from('hydration_battles').update({ status: 'declined' }).eq('id', p.id);
-      }
+      const { error } = await supabase.rpc('accept_battle', {
+        p_user_id: profile.id,
+        p_battle_id: battle.id
+      });
+      if (error) throw error;
+
       toast.success('🔥 Bắt đầu cuộc đua!', { id: tid });
       loadArenaData();
-    } catch (err) {
-      toast.error('Lỗi vào trận', { id: tid });
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi vào trận', { id: tid });
     }
   };
 

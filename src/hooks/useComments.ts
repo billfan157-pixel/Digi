@@ -12,7 +12,8 @@ export function useComments(postId: string, currentUserId: string | undefined) {
       .from('social_comments')
       .select('id, post_id, author_id, content, created_at')
       .eq('post_id', postId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(100);
 
     if (!error && data) {
       const authorIds = Array.from(new Set(data.map((comment: any) => comment.author_id).filter(Boolean)));
@@ -55,10 +56,19 @@ export function useComments(postId: string, currentUserId: string | undefined) {
   };
 
   const deleteComment = async (id: string) => {
+    if (!currentUserId) return;
     const prev = [...comments];
     setComments(prev.filter(c => c.id !== id));
-    const { error } = await supabase.from('social_comments').delete().eq('id', id);
-    if (error) { setComments(prev); toast.error('Không thể xóa bình luận'); }
+    const { error } = await supabase
+      .from('social_comments')
+      .delete()
+      .eq('id', id)
+      .eq('author_id', currentUserId);
+
+    if (error) {
+      setComments(prev);
+      toast.error('Không thể xóa bình luận');
+    }
   };
 
   return { comments, isLoading, addComment, deleteComment };

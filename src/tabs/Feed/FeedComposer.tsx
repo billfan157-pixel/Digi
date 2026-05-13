@@ -15,21 +15,6 @@ interface FeedComposerProps {
   onCreateDrop: () => void;
 }
 
-interface QuickAction {
-  kind: Exclude<SignaturePostKind, 'peak' | 'proof'>;
-  label: string;
-  helper: string;
-  icon: typeof Activity;
-  className: string;
-  borderColor: string;
-}
-
-const QUICK_ACTIONS: QuickAction[] = [
-  { kind: 'pulse', label: 'Pulse', helper: 'Bài viết nhanh', icon: Activity, className: 'bg-cyan-500/10 text-cyan-200', borderColor: 'border-cyan-500/30' },
-  { kind: 'drop', label: 'Drop', helper: 'Chụp & đăng', icon: Droplets, className: 'bg-emerald-500/10 text-emerald-200', borderColor: 'border-emerald-500/30' },
-  { kind: 'duel', label: 'Duel', helper: 'Rủ bạn đua', icon: Swords, className: 'bg-purple-500/10 text-purple-200', borderColor: 'border-purple-500/30' },
-];
-
 export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }: FeedComposerProps) {
   const { waterIntake, waterGoal, streak } = useAppStore(useShallow(s => ({
     waterIntake: s.waterIntake,
@@ -57,8 +42,6 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
 
     const toastId = toast.loading('Đang đăng bài...');
     try {
-      // Chuyển blob URL sang base64 Data URL để lưu trực tiếp vào DB
-      // (Storage bucket RLS không cho upload ảnh feed)
       let finalImageUrl: string | null = null;
       if (postData.imageUrl) {
         if (postData.imageUrl.startsWith('blob:')) {
@@ -86,8 +69,10 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
         visibility: postData.postKind === 'duel' ? 'followers' : postData.visibility || 'followers',
         ...postData.extra,
       }).select('id').single();
+      
       if (error) throw error;
       if (!data?.id) throw new Error('Không nhận được bài viết vừa tạo.');
+      
       toast.success(postData.postKind === 'duel' ? 'Duel đã lên feed.' : 'Pulse đã được đăng.', { id: toastId });
       setActiveComposer(null);
     } catch (err: any) {
@@ -97,62 +82,74 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
 
   return (
     <div className="mx-4 space-y-2.5">
-      {/* Quick text trigger */}
-      <button
-        type="button"
-        onClick={() => setActiveComposer('pulse')}
-        className="group relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3 text-left shadow-sm backdrop-blur-xl transition-all duration-300 hover:border-cyan-400/20 hover:bg-slate-900/70 active:scale-[0.99]"
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        <div className="relative flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-slate-800/80">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt={name} className="h-full w-full object-cover" />
-            ) : (
-              <span className="text-sm font-semibold text-slate-300">{initial}</span>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-200">{name}</p>
-            <p className="truncate text-xs text-slate-400">Pulse: {progressPercent}% mục tiêu - {streak} ngày</p>
-          </div>
-          <div className="shrink-0 rounded-xl border border-cyan-400/15 bg-cyan-400/10 px-3 py-2 text-xs font-bold text-cyan-300 transition-colors group-hover:bg-cyan-400/15">
-            Tạo Pulse
-          </div>
-        </div>
-      </button>
-
-      {/* Quick action strip */}
-      <div className="grid grid-cols-3 gap-2">
-        {QUICK_ACTIONS.map(action => (
+      <div className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-xl p-4 shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-50" />
+        
+        <div className="relative space-y-4">
+          {/* Main Input Trigger */}
           <button
-            key={action.kind}
-            onClick={() => {
-              if (action.kind === 'drop') {
-                onCreateDrop();
-              } else {
-                setActiveComposer(action.kind);
-              }
-            }}
-            className={`min-w-0 rounded-2xl border ${action.borderColor} ${action.className} px-2.5 py-3 text-left active:scale-[0.97] transition-all`}
+            onClick={() => setActiveComposer('pulse')}
+            className="flex items-center gap-4 w-full text-left active:scale-[0.99] transition-transform"
           >
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-slate-950/40">
-                <action.icon size={15} />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-xs font-black">{action.label}</span>
-                <span className="block truncate text-[10px] font-semibold opacity-70">{action.helper}</span>
-              </span>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/20 p-[1.5px] border border-white/5">
+              <div className="w-full h-full rounded-[14px] bg-slate-950 flex items-center justify-center overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-sm font-black text-slate-500">{initial}</span>
+                )}
+              </div>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-slate-300">Bạn đang nạp gì thế?</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-cyan-400/60 mt-0.5">
+                {progressPercent}% mục tiêu • Chuỗi {streak} ngày
+              </p>
             </div>
           </button>
-        ))}
+
+          <div className="h-[1px] w-full bg-white/5" />
+
+          {/* Quick Action Strip - Compact Icons */}
+          <div className="flex items-center justify-between px-2">
+            <button
+              onClick={() => setActiveComposer('pulse')}
+              className="flex items-center gap-2 group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500/20 transition-colors">
+                <Activity size={14} />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-cyan-400 transition-colors">Pulse</span>
+            </button>
+
+            <button
+              onClick={onCreateDrop}
+              className="flex items-center gap-2 group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
+                <Droplets size={14} />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-emerald-400 transition-colors">Drop</span>
+            </button>
+
+            <button
+              onClick={() => setActiveComposer('duel')}
+              className="flex items-center gap-2 group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:bg-purple-500/20 transition-colors">
+                <Swords size={14} />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-purple-400 transition-colors">Duel</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Composer Modals */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {activeComposer === 'pulse' && profile && (
           <QuickStatusComposer
+            key="status-composer"
             waterIntake={waterIntake}
             waterGoal={waterGoal}
             streak={streak}
@@ -162,6 +159,7 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
         )}
         {activeComposer === 'duel' && profile && (
           <QuickChallengeComposer
+            key="challenge-composer"
             profile={profile}
             onPublish={handlePublishPost}
             onClose={() => setActiveComposer(null)}

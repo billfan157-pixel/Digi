@@ -1,13 +1,11 @@
 import type { DrinkPreset } from '@/store/useDrinkPresetStore';
-import { Plus, ScanLine, Settings, Loader2, Droplet, Coffee, Zap } from 'lucide-react';
+import { Plus, Settings, Droplet, Coffee, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface QuickActionsProps {
   primaryDrinkPreset: DrinkPreset;
   secondaryDrinkPresets: DrinkPreset[];
   handleAddWater: (amount: number, factor?: number, name?: string) => Promise<void>;
-  handleScan: () => void;
-  isScanning: boolean;
   setShowCustomDrink: (show: boolean) => void;
   setShowPresetManager: (show: boolean) => void;
 }
@@ -21,7 +19,7 @@ const getPresetIcon = (name: string) => {
 const glassCard = "backdrop-blur-xl border rounded-2xl shadow-xl bg-slate-200/50 dark:bg-slate-900/60 border-slate-300 dark:border-white/5";
 
 export function QuickActions({
-  primaryDrinkPreset, secondaryDrinkPresets, handleAddWater, handleScan, isScanning,
+  primaryDrinkPreset, secondaryDrinkPresets, handleAddWater,
   setShowCustomDrink, setShowPresetManager
 }: QuickActionsProps) {
 
@@ -96,26 +94,7 @@ export function QuickActions({
       </div>
 
       {/* Utility Actions */}
-      <div className="grid grid-cols-2 gap-4">
-        <motion.button
-          onClick={handleScan}
-          disabled={isScanning}
-          whileTap={{ scale: 0.98 }}
-          className={`${glassCard} p-4 flex items-center justify-center gap-3 group disabled:opacity-50`}
-        >
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-            {isScanning ? <Loader2 size={16} className="animate-spin" /> : <ScanLine size={16} />}
-          </div>
-          <div className="text-left">
-            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
-              AI Scan
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              Nhận diện đồ uống
-            </div>
-          </div>
-        </motion.button>
-
+      <div className="grid grid-cols-1 gap-4">
         <motion.button
           onClick={() => setShowPresetManager(true)}
           whileTap={{ scale: 0.98 }}

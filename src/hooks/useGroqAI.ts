@@ -82,20 +82,6 @@ export function useGeminiAI(props: UseGeminiAIProps) {
 
   // --- [3] ACTIONS ---
 
-  const handleGoalAdjustment = useCallback((adjustment?: number) => {
-    if (!adjustment || adjustment === 0) return;
-    
-    // Chỉ thực hiện nếu mức chênh lệch đủ lớn hoặc quan trọng
-    const currentGoal = useAppStore.getState().waterGoal;
-    const newGoal = currentGoal + adjustment;
-    
-    // Cập nhật Store
-    useAppStore.getState().setAppState({ waterGoal: newGoal });
-    
-    toast.info(`AI đã điều chỉnh mục tiêu: ${adjustment > 0 ? '+' : ''}${adjustment}ml`, {
-      description: 'Dựa trên điều kiện môi trường & hoạt động của bạn.'
-    });
-  }, []);
 
   const fetchAIAdvice = useCallback(async () => {
     const profileId = propsRef.current.profile?.id;
@@ -109,11 +95,6 @@ export function useGeminiAI(props: UseGeminiAIProps) {
     try {
       const response = await generateHydrationAdvice(buildContext());
       setAiResponse(response);
-      
-      // Auto-adjust goal if AI suggests
-      if (response.goal_adjustment_ml) {
-        handleGoalAdjustment(response.goal_adjustment_ml);
-      }
 
       localStorage.setItem(`digiwell_ai_advice_v2_${profileId}`, JSON.stringify({ response, timestamp: Date.now() }));
     } catch (error: unknown) {
@@ -122,7 +103,7 @@ export function useGeminiAI(props: UseGeminiAIProps) {
       setIsAiLoading(false);
       setTimeout(() => { isFetchingAdviceRef.current = false; }, 2000);
     }
-  }, [buildContext, isAiLoading, handleGoalAdjustment]);
+  }, [buildContext, isAiLoading]);
 
   useEffect(() => {
     if (!profile?.id || hasFetchedInitialAdvice.current) return;
@@ -188,8 +169,6 @@ export function useGeminiAI(props: UseGeminiAIProps) {
 
   return {
     aiAdvice: aiResponse?.text || '',
-    tacticalAlert: aiResponse?.tactical_alert,
-    urgency: aiResponse?.urgency || 'low',
     isAiLoading, 
     chatMessages, 
     setChatMessages,

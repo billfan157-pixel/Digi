@@ -2,17 +2,10 @@
 
 // ============================================================
 // DigiWell — AI Weekly/Monthly Health Report (Premium Version)
-// Giữ nguyên cấu trúc của mày và thêm logic Tài chính + Vận động
 // ============================================================
 
 import { supabase } from './supabase';
 import { invokeAiGateway } from './aiGateway';
-
-// ── Các hằng số mới cho Premium ────────────────────────────
-const SAVINGS_PER_DAY = 30000; // Tiết kiệm 30k/ngày nếu đạt mục tiêu
-const FUND_UNIT_PRICE = 25000; // Giá giả định 1 đơn vị quỹ VESAF/DCDS
-
-// ── Types (Thêm 2 field mới) ───────────────────────────────
 
 export type DailyEntry = {
   date:        string;
@@ -32,18 +25,12 @@ export type HealthReport = {
   worstDay:         string;
   trend:            'improving' | 'declining' | 'stable';
   
-  // MỚI: Thêm 2 field này cho Premium
-  savingsVND:       number;      
-  fundUnits:        string;      
-
   aiAnalysis:       string;
   recommendations:  string[];
   generatedAt:      string;
 };
 
 export type ReportPeriod = 'weekly' | 'monthly';
-
-// ── Fetch water data from Supabase (Giữ nguyên) ─────────────
 
 async function fetchWaterEntries(
   userId: string,
@@ -76,8 +63,6 @@ async function fetchWaterEntries(
   }));
 }
 
-// ── Calculate stats (Giữ nguyên logic cũ) ────────────────────
-
 function calculateStats(entries: DailyEntry[]) {
   if (entries.length === 0) return null;
 
@@ -106,9 +91,7 @@ const normalizeReport = (value: unknown): HealthReport | null => {
 
   try {
     const parsed = typeof value === 'string' ? JSON.parse(value) : value;
-
     if (!parsed || typeof parsed !== 'object') return null;
-
     const report = parsed as Partial<HealthReport>;
 
     return {
@@ -121,8 +104,6 @@ const normalizeReport = (value: unknown): HealthReport | null => {
       bestDay: report.bestDay ?? '',
       worstDay: report.worstDay ?? '',
       trend: report.trend ?? 'stable',
-      savingsVND: report.savingsVND ?? 0,
-      fundUnits: report.fundUnits ?? '0',
       aiAnalysis: report.aiAnalysis ?? '',
       recommendations: report.recommendations ?? [],
       generatedAt: report.generatedAt ?? '',
@@ -146,23 +127,16 @@ export async function getLatestHealthReport(
     .maybeSingle();
 
   if (error || !data) return null;
-
   return normalizeReport(data.content);
 }
-
-// ── Generate AI analysis (Update Prompt Premium) ─────────────
 
 async function generateAiAnalysis(
   stats: any,
   entries: DailyEntry[],
   periodLabel: string,
   profile?: { nickname?: string; goal?: string; activity?: string; avgHeartRate?: number },
-): Promise<{ analysis: string; recommendations: string[]; savings: number; units: string }> {
-  if (!stats) return { analysis: 'Không đủ dữ liệu.', recommendations: [], savings: 0, units: '0' };
-
-  // MỚI: Tính toán số liệu đầu tư
-  const savings = stats.goalsAchieved * SAVINGS_PER_DAY;
-  const units = (savings / FUND_UNIT_PRICE).toFixed(2);
+): Promise<{ analysis: string; recommendations: string[] }> {
+  if (!stats) return { analysis: 'Không đủ dữ liệu.', recommendations: [] };
 
   try {
     const response = await invokeAiGateway<{ analysis?: string; recommendations?: string[] }>('report-analysis', {
@@ -170,22 +144,16 @@ async function generateAiAnalysis(
       entries,
       periodLabel,
       profile: profile || {},
-      savings,
-      units,
     });
 
     return {
       analysis: response.analysis || '',
       recommendations: response.recommendations || [],
-      savings: savings,
-      units: `${units} đơn vị quỹ`
     };
   } catch {
-    return { analysis: 'Lỗi xử lý AI', recommendations: [], savings: savings, units: units };
+    return { analysis: 'Lỗi xử lý AI', recommendations: [] };
   }
 }
-
-// ── Public: Generate Weekly Report (Giữ nguyên + Update Return) ──
 
 export async function generateWeeklyReport(
   userId: string,
@@ -213,8 +181,6 @@ export async function generateWeeklyReport(
     bestDay:          stats?.bestDay          ?? '',
     worstDay:         stats?.worstDay         ?? '',
     trend:            stats?.trend            ?? 'stable',
-    savingsVND:       aiRes.savings,
-    fundUnits:        aiRes.units,
     aiAnalysis:       aiRes.analysis,
     recommendations:  aiRes.recommendations,
     generatedAt:      new Date().toISOString(),
@@ -230,8 +196,6 @@ export async function generateWeeklyReport(
 
   return report;
 }
-
-// ── Public: Generate Monthly Report (Giữ nguyên + Update Return) ──
 
 export async function generateMonthlyReport(
   userId: string,
@@ -259,8 +223,6 @@ export async function generateMonthlyReport(
     bestDay:          stats?.bestDay          ?? '',
     worstDay:         stats?.worstDay         ?? '',
     trend:            stats?.trend            ?? 'stable',
-    savingsVND:       aiRes.savings,
-    fundUnits:        aiRes.units,
     aiAnalysis:       aiRes.analysis,
     recommendations:  aiRes.recommendations,
     generatedAt:      new Date().toISOString(),

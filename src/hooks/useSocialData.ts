@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
 import { useUIStore } from '../store/useUIStore';
@@ -91,14 +91,14 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
 
   const closeCircleIds = useMemo(() => closeCircleMembers.map(member => member.id), [closeCircleMembers]);
 
-  const resetSocialComposer = () => {
+  const resetSocialComposer = useCallback(() => {
     if (socialImagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(socialImagePreview);
     }
     setSocialComposer({ ...DEFAULT_SOCIAL_COMPOSER });
     setSocialImageFile(null);
     setSocialImagePreview('');
-  };
+  }, [socialImagePreview]);
 
   const closeSocialComposer = () => {
     resetSocialComposer();
@@ -219,9 +219,11 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
         .select('id, nickname, avatar_url, level, water_today, water_goal')
         .neq('id', profile.id);
 
-      request = keyword.length >= 2
-        ? request.ilike('nickname', `%${keyword}%`)
-        : request.order('nickname', { ascending: true });
+      if (keyword) {
+        request = request.filter('nickname', 'ilike', `%${keyword}%`);
+      } else {
+        request = request.order('nickname', { ascending: true });
+      }
 
       const { data, error } = await request.limit(8);
       if (error) throw error;
@@ -260,27 +262,22 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
 
       const [
         followingRes,
-        followersCountRes,
-        followingCountRes,
-        postsCountRes,
+        profileStatsRes,
       ] = await Promise.all([
         supabase!.from('social_follows').select('following_id').eq('follower_id', profile.id),
-        supabase!.from('social_follows').select('*', { count: 'exact', head: true }).eq('following_id', profile.id),
-        supabase!.from('social_follows').select('*', { count: 'exact', head: true }).eq('follower_id', profile.id),
-        supabase!.from('social_posts').select('*', { count: 'exact', head: true }).eq('author_id', profile.id),
+        supabase!.rpc('get_profile_stats', { p_user_id: profile.id })
       ]);
 
       if (followingRes.error) throw followingRes.error;
-      if (followersCountRes.error) throw followersCountRes.error;
-      if (followingCountRes.error) throw followingCountRes.error;
-      if (postsCountRes.error) throw postsCountRes.error;
+      if (profileStatsRes.error) throw profileStatsRes.error;
 
+      const stats = profileStatsRes.data || { follower_count: 0, following_count: 0, post_count: 0 };
       const followingIds = circleIds;
       setSocialFollowingIds(followingIds);
       setSocialProfileStats({
-        followers: followersCountRes.count || 0,
-        following: circleIds.length || followingCountRes.count || 0,
-        posts: postsCountRes.count || 0,
+        followers: stats.follower_count,
+        following: stats.following_count,
+        posts: stats.post_count,
       });
 
       const feedAuthorIds = Array.from(new Set([profile.id, ...followingIds]));
@@ -289,7 +286,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
         .select('id, author_id, content, image_url, post_kind, visibility, hydration_ml, streak_snapshot, like_count, created_at, expires_at')
         .in('author_id', feedAuthorIds)
         .order('created_at', { ascending: false })
-        .limit(40);
+        .range(0, 19);
 
       if (postsError) throw postsError;
 
@@ -515,13 +512,6 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     } : item));
 
     try {
-      // Validate user ID
-      if (!profile?.id || profile.id === 'undefined') {
-        console.error('[useSocialData] Invalid user ID for like:', profile?.id);
-        toast.error('Vui lòng đăng nhập lại');
-        return;
-      }
-
       if (nextLiked) {
         const { error } = await supabase!.from('social_post_likes').insert({
           post_id: post.id,
@@ -535,11 +525,6 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
           .eq('user_id', profile.id);
         if (error) throw error;
       }
-
-      const { error: countError } = await supabase!.from('social_posts')
-        .update({ like_count: Math.max((post.like_count || 0) + likeDelta, 0) })
-        .eq('id', post.id);
-      if (countError) throw countError;
     } catch (err: any) {
       setSocialPosts((prev: SocialFeedPost[]) => prev.map(item => item.id === post.id ? post : item));
       setSocialStories((prev: SocialFeedPost[]) => prev.map(item => item.id === post.id ? post : item));

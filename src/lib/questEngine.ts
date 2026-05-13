@@ -327,7 +327,8 @@ async function updateTimeLimitedChallenge(
     .select('day, amount')
     .eq('user_id', ctx.userId)
     .gte('day', joinedDayKey)
-    .lte('day', todayKey);
+    .lte('day', todayKey)
+    .limit(1000);
 
   if (error) {
     console.error('[ChallengeEngine] time_limited logs fetch failed:', error);
@@ -467,7 +468,18 @@ export async function provisionUserQuests(userId: string, userLevel: number): Pr
     }
 
     if (rows.length > 0) {
-      await supabase.from('user_quests').insert(rows);
+      // Sử dụng upsert với ignoreDuplicates để chặn đứng Race Condition
+      // Nếu đã tồn tại (user_id, quest_id, reset_date) thì bỏ qua, không chèn đè
+      const { error } = await supabase
+        .from('user_quests')
+        .upsert(rows, { 
+          onConflict: 'user_id, quest_id, reset_date',
+          ignoreDuplicates: true 
+        });
+        
+      if (error && error.code !== '23505') { // Bỏ qua lỗi duplicate key nếu xảy ra
+        console.error('[provisionUserQuests] Insert error:', error.message);
+      }
     }
   } catch (err) {
     console.error('[provisionUserQuests] Lỗi cấp phát:', err);

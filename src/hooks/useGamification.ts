@@ -16,6 +16,7 @@ export function useGamification(userId: string | undefined) {
       const { data, error } = await supabase
         .from('challenges')
         .select('*')
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

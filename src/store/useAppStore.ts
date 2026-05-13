@@ -16,6 +16,7 @@ export interface AppState {
   watchData: { heartRate: number; steps: number } | null;
   isWeatherSynced: boolean;
   isCalendarSynced: boolean;
+  calendarEvents: any[]; // Or import CalendarEventItem if available
   isWatchConnected: boolean;
   isSyncing: boolean;
   hasPendingCloudSync: boolean;
@@ -37,7 +38,6 @@ export interface AppState {
     handleAddWater: (amount: number, factor: number, name: string) => Promise<void>;
     handleDeleteEntry: (id: string | number) => Promise<void>;
     handleEditEntry: (id: string, newAmount: number) => Promise<void>;
-    handleScan: () => void;
     handleLogout: () => void;
     openSocialComposer: (kind: 'status' | 'progress' | 'story' | 'challenge') => void;
     startFasting: (hours: number) => void;
@@ -51,14 +51,14 @@ export interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   profile: null, waterIntake: 0, waterGoal: 2000, streak: 0, waterEntries: [], weeklyHistory: [],
-  weatherData: null, watchData: null, isWeatherSynced: false, isCalendarSynced: false, isWatchConnected: false,
+  weatherData: null, watchData: null, isWeatherSynced: false, isCalendarSynced: false, calendarEvents: [], isWatchConnected: false,
   isSyncing: false, hasPendingCloudSync: false,
   hydrationResult: null, isPremium: false,
   fastingState: { isFastingMode: false, fastingPlanHours: 16, fastingTotalMs: 16 * 60 * 60 * 1000, fastingStartTime: null },
 
   actions: {
     handleAddWater: async () => { }, handleDeleteEntry: async () => { }, handleEditEntry: async () => { },
-    handleScan: () => { }, handleLogout: () => { }, openSocialComposer: () => { },
+    handleLogout: () => { }, openSocialComposer: () => { },
     startFasting: () => { }, stopFasting: () => { }
   },
 

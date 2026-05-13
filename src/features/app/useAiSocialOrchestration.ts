@@ -1,6 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { isAiConfigured, scanDrinkFromImage } from '@/lib/ai';
 import { useFeed } from '@/hooks/useFeed';
 import { useGeminiAI } from '@/hooks/useGroqAI';
 import { useSocialData } from '@/hooks/useSocialData';
@@ -9,9 +7,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useUIStore } from '@/store/useUIStore';
 
 export function useAiSocialOrchestration() {
-  const isScanning = useUIStore(s => s.isScanning);
-  const setIsScanning = (scanning: boolean) => useUIStore.getState().setIsScanning(scanning);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const profile = useAppStore(s => s.profile);
   const waterIntake = useAppStore(s => s.waterIntake);
@@ -27,7 +23,7 @@ export function useAiSocialOrchestration() {
   const setActiveTab = useUIStore(s => s.setActiveTab);
   const setShowAiChat = useUIStore(s => s.setShowAiChat);
   const setShowHistory = useUIStore(s => s.setShowHistory);
-  
+
   // Dummy handlers for now that will be wired to actual implementations 
   // or extracted from another store if available
   const handleExportPDF = async () => { toast.success('Export PDF feature') };
@@ -59,42 +55,10 @@ export function useAiSocialOrchestration() {
 
   const { posts } = useFeed(profile?.id, socialProps.closeCircleIds || []);
 
-  const handleScan = useCallback(() => {
-    if (!isAiConfigured()) {
-      toast.error('Cloud AI chưa được cấu hình.');
-      return;
-    }
-
-    fileInputRef.current?.click();
-  }, []);
-
-  const processImageScan = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsScanning(true);
-    const toastId = toast.loading('AI đang phân tích hình ảnh...');
-
-    try {
-      const result = await scanDrinkFromImage(file);
-      await handleAddWater(result.amount, result.factor, `${result.name} (AI Scan)`);
-      toast.success(`AI nhận diện: ${result.name} (${result.amount}ml)`, { id: toastId });
-    } catch (error: any) {
-      toast.error(error.message, { id: toastId });
-    } finally {
-      setIsScanning(false);
-      event.target.value = '';
-    }
-  }, [handleAddWater]);
-
   return {
     socialProps,
     geminiProps,
     posts,
-    isScanning,
-    fileInputRef,
-    handleScan,
-    processImageScan,
-    openSocialComposer: socialProps.openSocialComposer || (() => {}),
+    openSocialComposer: socialProps.openSocialComposer || (() => { }),
   };
 }

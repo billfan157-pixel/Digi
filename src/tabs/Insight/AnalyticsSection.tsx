@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart2 } from 'lucide-react';
 import CalendarView from '../../components/insight/CalendarView';
 import HourlyHeatmap from '../../components/HourlyHeatmap';
 import AdvancedStatsGrid from '../AdvancedStatsGrid';
 import WeeklyChart from '../../components/WeeklyChart';
+import BehaviorInsightCards from './BehaviorInsightCards';
 
 interface AnalyticsSectionProps {
   timeRange: 'week' | 'month';
@@ -26,6 +27,7 @@ interface AnalyticsSectionProps {
   stats: { avg: number; completed: number };
   profile: any;
   weeklyTotal: number;
+  patterns: any[]; // Added from hook
 }
 
 export default function AnalyticsSection({
@@ -48,24 +50,32 @@ export default function AnalyticsSection({
   stats,
   profile,
   weeklyTotal,
+  patterns,
 }: AnalyticsSectionProps) {
   return (
-    <div className="mb-6 mt-2">
-      <div className="px-6 flex justify-between items-center mb-4">
-        <h3 className="text-base font-black text-white tracking-tight">Hành trình & Thói quen</h3>
-        <div className="glass-control relative flex p-1 shadow-sm">
+    <div className="mb-20 mt-2 space-y-8 pb-10">
+      {/* Header & Range Picker */}
+      <div className="px-6 flex justify-between items-center">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
+            <BarChart2 size={16} className="text-cyan-400" />
+          </div>
+          <h3 className="text-lg font-black text-white tracking-tight">Hành trình</h3>
+        </div>
+        
+        <div className="glass-control relative flex p-1 shadow-sm border border-white/5 bg-slate-900/40">
           {(['week', 'month'] as const).map((t) => {
             const isActive = timeRange === t;
             return (
               <button 
                 key={t}
                 onClick={() => setTimeRange(t)}
-                className={`relative px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-colors duration-200 z-10 ${isActive ? 'text-cyan-200' : 'text-meta hover:text-slate-200'}`}
+                className={`relative px-5 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all duration-300 z-10 ${isActive ? 'text-cyan-200' : 'text-slate-500 hover:text-slate-300'}`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="timeRangeIndicator"
-                    className="absolute inset-0 active-treatment rounded-lg -z-10"
+                    className="absolute inset-0 active-treatment rounded-lg -z-10 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   />
                 )}
@@ -76,26 +86,28 @@ export default function AnalyticsSection({
         </div>
       </div>
       
-      {timeRange === 'month' && (
-        <div className="px-6 flex justify-between mb-2">
-          <button onClick={handlePrevMonth} className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-meta hover:text-cyan-400 active:scale-95 transition-transform">
-            <ChevronLeft size={16} />
-          </button>
-          <button onClick={handleNextMonth} className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-meta hover:text-cyan-400 active:scale-95 transition-transform">
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
+      {/* Chart Section */}
+      <section className="px-6">
+        {timeRange === 'month' && (
+          <div className="flex justify-between items-center mb-4 bg-slate-900/40 rounded-2xl p-1.5 border border-white/5">
+            <button onClick={handlePrevMonth} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 active:scale-95 transition-all">
+              <ChevronLeft size={18} />
+            </button>
+            <span className="text-xs font-black text-slate-300 uppercase tracking-widest">{currentMonthName}</span>
+            <button onClick={handleNextMonth} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 active:scale-95 transition-all">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
 
-      <div className="px-6">
         <AnimatePresence mode="wait">
           {timeRange === 'week' ? (
             <motion.div
               key="week-chart"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
             >
               <WeeklyChart 
                 weeklyChartData={weeklyChartData}
@@ -108,10 +120,10 @@ export default function AnalyticsSection({
           ) : (
             <motion.div
               key="month-chart"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
             >
               <CalendarView 
                 calendarCells={calendarCells}
@@ -124,18 +136,37 @@ export default function AnalyticsSection({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </section>
 
-      <div className="px-6 mb-8 space-y-5">
+      {/* Behavior Insights Section */}
+      {patterns.length > 0 && (
+        <section className="px-6">
+          <BehaviorInsightCards patterns={patterns} />
+        </section>
+      )}
+
+      {/* Quick Stats Section */}
+      <section className="px-6 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <BarChart2 size={14} className="text-cyan-400" />
+          <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Tổng quan nhanh</h4>
+        </div>
         <AdvancedStatsGrid 
           weeklyTotal={weeklyTotal}
           monthlyTotal={monthlyTotal}
           stats={stats}
           weeklyChartData={weeklyChartData}
-          profile={profile}
         />
+      </section>
+
+      {/* Heatmap Section */}
+      <section className="px-6 pb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <BarChart2 size={14} className="text-cyan-400" />
+          <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Tần suất uống (giờ)</h4>
+        </div>
         <HourlyHeatmap userId={profile?.id} />
-      </div>
+      </section>
     </div>
   );
 }

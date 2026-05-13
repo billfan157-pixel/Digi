@@ -23,7 +23,7 @@ interface UseHydrationControllerOptions {
   isCalendarSynced: boolean;
   setIsCalendarSynced: (value: boolean) => void;
   isWatchConnected: boolean;
-  watchData: { steps?: number } | null | undefined;
+  watchData: { steps?: number; heartRate?: number } | null | undefined;
   setShowOnboarding: (value: boolean) => void;
   setShowProfileSettings: (value: boolean) => void;
   setShowPremiumModal: (value: boolean) => void;
@@ -91,6 +91,7 @@ export function useHydrationController({
       isFasting: isFastingMode,
       wakeUpTime: profile.wakeUp || '07:00',
       bedTime: profile.bedTime || '23:00',
+      avgHeartRate: isWatchConnected ? watchData?.heartRate : 0,
     });
   }, [profile, weatherData, isWeatherSynced, watchData, isWatchConnected, isFastingMode]);
 

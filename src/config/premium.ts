@@ -1,28 +1,25 @@
 // ============================================================
 // DigiWell — Premium Feature Config (Upgraded)
-// Giữ nguyên toàn bộ cấu trúc cũ và thêm các tính năng Pro
 // ============================================================
 
 export type PremiumTier = 'free' | 'premium';
 
-// ── Giới hạn sử dụng mỗi ngày (Giữ nguyên) ─────────────────────────────
+// ── Giới hạn sử dụng mỗi ngày ─────────────────────────────
 
 export const DAILY_LIMITS = {
   free: {
     aiMessages:   5,   
     aiAdvice:     3,   
-    imageScan:    1,   
     historyDays:  7,   
   },
   premium: {
     aiMessages:   Infinity,
     aiAdvice:     Infinity,
-    imageScan:    Infinity,
     historyDays:  365,
   },
 } as const;
 
-// ── Feature flags theo tier (Thêm Ads & Tracking) ────────────────────────────────
+// ── Feature flags theo tier ────────────────────────────────
 
 export const FEATURES = {
   // AI Features
@@ -30,14 +27,8 @@ export const FEATURES = {
   aiUnlimitedChat:      { free: false, premium: true  },
   aiWeeklyReport:       { free: false, premium: true  },
   aiMonthlyReport:      { free: false, premium: true  },
-  aiPersonalizedPlan:   { free: false, premium: true  },
-  aiDeepAnalysis:       { free: false, premium: true  },
 
-  // NEW: AI Hydration Coach - tự điều chỉnh mục tiêu
   aiHydrationCoach:     { free: false, premium: true  },
-  // NEW: Deep Health Insights
-  deepHealthInsights:   { free: false, premium: true  },
-  // NEW: Premium Health Score Dashboard
   premiumHealthScore:   { free: false, premium: true  },
 
   // Analytics & Specialized
@@ -48,22 +39,13 @@ export const FEATURES = {
   streakCalendar:       { free: true,  premium: true  },
   advancedInsights:     { free: false, premium: true  },
 
-  // MỚI: Theo dõi tiết kiệm để đầu tư (VESAF/DCDS)
-  investmentTracking:   { free: false, premium: true  },
-
   // Device Integration
   weatherSync:          { free: true,  premium: true  },
   calendarSync:         { free: false, premium: true  },
   smartwatchSync:       { free: false, premium: true  },
-  appleHealthSync:      { free: false, premium: true  },
-
-  // MỚI: Chế độ đạp xe chuyên sâu
-  cyclingProMode:       { free: false, premium: true  },
 
   // NEW: Smart Reminder Engine
   smartReminders:       { free: false, premium: true  },
-  // NEW: Adaptive Reminders
-  adaptiveReminders:    { free: false, premium: true  },
 
   // NEW: Streak Freeze
   streakFreeze:         { free: false, premium: true  },
@@ -76,16 +58,11 @@ export const FEATURES = {
   customReminders:      { free: false, premium: true  },
   customGoals:          { free: true,  premium: true  },
   themes:               { free: false, premium: true  },
-  imageScan:            { free: true,  premium: true  },
 
   // NEW: Premium Profile Frame
   premiumProfileFrame:  { free: false, premium: true  },
   // NEW: VIP Club Tools
   vipClubTools:         { free: false, premium: true  },
-  // NEW: Premium Trial Preview
-  premiumTrialPreview:  { free: false, premium: true  },
-  // NEW: Before vs After Analytics
-  beforeAfterAnalytics: { free: false, premium: true  },
 
   // MỚI: Gỡ quảng cáo
   ads:                  { free: true,  premium: false },
@@ -93,7 +70,7 @@ export const FEATURES = {
 
 export type FeatureKey = keyof typeof FEATURES;
 
-// ── Pricing (Giữ nguyên) ────────────────────────────────────────────────
+// ── Pricing ────────────────────────────────────────────────
 
 export const PRICING = {
   monthly: {
@@ -110,7 +87,7 @@ export const PRICING = {
 
 export type BillingPlan = keyof typeof PRICING;
 
-// ── Danh sách tính năng hiển thị (Thêm tính năng Premium mới) ────────
+// ── Danh sách tính năng hiển thị ────────
 
 export const PREMIUM_HIGHLIGHTS = [
   {
@@ -119,13 +96,6 @@ export const PREMIUM_HIGHLIGHTS = [
     description: 'AI tự động điều chỉnh mục tiêu nước theo thời tiết, vận động, giấc ngủ và cafe',
     free: 'Mục tiêu cố định',
     premium: 'AI tự động điều chỉnh',
-  },
-  {
-    icon: '📊',
-    title: 'Deep Health Insights',
-    description: 'Phân tích chuyên sâu khung giờ mất nước, mood liên quan, stress & dehydration risk',
-    free: '—',
-    premium: 'Phân tích sâu',
   },
   {
     icon: '💎',

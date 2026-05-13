@@ -16,6 +16,8 @@ import { NewPostsBanner } from './Feed/NewPostsBanner';
 import { NotificationsView } from './Feed/NotificationsView';
 import type { FeedFilter, FeedMode, FeedTabProps } from './Feed/types';
 import { PullToRefresh } from './Feed/PullToRefresh';
+import TabHeader from '../components/layout/TabHeader';
+import { Search, TrendingUp } from 'lucide-react';
 
 export { PostCard } from './Feed/PostCard';
 
@@ -100,27 +102,35 @@ const FeedTab = memo(function FeedTab({
   }, [hasMore, isFetchingMore]);
 
   return (
-    <div data-feed-scroll-container className="animate-in slide-in-from-right duration-300 pb-8 relative bg-slate-950 h-full overflow-y-auto scrollbar-hide">
-      <FeedHeader
+    <div data-feed-scroll-container className="animate-in slide-in-from-right duration-300 relative">
+      <TabHeader 
+        label="HĐ CỘNG ĐỒNG" 
+        title={<span className="flex items-center gap-2">Feed <TrendingUp size={20} className="text-cyan-400" /></span>}
         profile={profile}
+        actionIcon={<Search size={18} />}
+        onActionClick={() => {
+          // Toggle search in header
+          const el = document.querySelector('[data-feed-search-trigger]') as HTMLButtonElement;
+          if (el) el.click();
+        }}
+        onAvatarClick={() => setShowSocialProfile(true)}
+      />
+      
+      <FeedHeader
         onlineFriendsCount={onlineFriendsCount}
-        unreadCount={unreadCount}
         feedMode={feedMode}
         feedFilter={feedFilter}
         feedSearch={feedSearch}
         onModeChange={setFeedMode}
         onFilterChange={setFeedFilter}
         onSearchChange={setFeedSearch}
-        onOpenNotifications={() => setShowNotifications(true)}
-        onOpenProfile={() => setShowSocialProfile(true)}
-        onOpenDiscoverPeople={() => setShowDiscoverPeople(true)}
       />
       
       <PullToRefresh onRefresh={refetch} />
 
       <div className="max-w-[600px] mx-auto mt-3 space-y-5 pb-12">
         <NewPostsBanner count={newPostsCount} onShowNewPosts={showNewPosts} />
-        <FeedComposer profile={profile} onCreateDrop={openQuickDropCamera} />
+        
         <HydrationStories
           profile={profile}
           socialStories={socialStories}
@@ -130,19 +140,7 @@ const FeedTab = memo(function FeedTab({
           onSelectStory={setActiveStoryIndex}
         />
 
-        <div className="mx-4 flex items-center justify-between gap-3 sm:mx-0">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Dòng hoạt động</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-400">
-              {finalRankedFeed.length} bài - {feedModeLabel} - {feedFilterLabel}
-            </p>
-          </div>
-          {feedSearch.trim() && (
-            <span className="max-w-[180px] truncate rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-[10px] font-bold text-cyan-300">
-              "{feedSearch.trim()}"
-            </span>
-          )}
-        </div>
+        <FeedComposer profile={profile} onCreateDrop={openQuickDropCamera} />
 
         {!socialError && !isLoading && finalRankedFeed.length === 0 && (
           <EmptyFeedState

@@ -1,4 +1,5 @@
-// src/utils/healthMath.ts
+﻿// src/utils/healthMath.ts
+import { getTierByWP } from '../tabs/League/types';
 
 /**
  * 1. Tính mục tiêu nước dựa trên cân nặng
@@ -74,37 +75,10 @@ export const calculateWP = (
 };
 
 /**
- * 3. Lấy thông tin hạng (Rank) - Hệ thống E-Sports 8 bậc
+ * 3. Lấy thông tin hạng (Rank)
  */
-const RANK_TIERS = {
-  THACH_DAU: { name: 'Thách Đấu', color: 'text-rose-400', bg: 'bg-rose-500/20', border: 'border-rose-400/80', glow: 'shadow-[0_0_20px_rgba(225,29,72,0.8)]' },
-  DAI_CAO_THU: { name: 'Đại Cao Thủ', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/60', glow: 'shadow-[0_0_15px_rgba(248,113,113,0.5)]' },
-  CAO_THU: { name: 'Cao Thủ', color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/10', border: 'border-fuchsia-500/50', glow: 'shadow-[0_0_15px_rgba(232,121,249,0.5)]' },
-  KIM_CUONG: { name: 'Kim Cương', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/40', glow: 'shadow-[0_0_10px_rgba(96,165,250,0.4)]' },
-  BACH_KIM: { name: 'Bạch Kim', color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/40', glow: 'shadow-none' },
-  VANG: { name: 'Vàng', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', glow: 'shadow-none' },
-  BAC: { name: 'Bạc', color: 'text-slate-300', bg: 'bg-slate-400/10', border: 'border-slate-400/40', glow: 'shadow-none' },
-  DONG: { name: 'Đồng', color: 'text-amber-700', bg: 'bg-amber-900/10', border: 'border-amber-900/40', glow: 'shadow-none' }
-};
-
 export const getRankInfo = (wp: number) => {
-  if (wp >= 50000) return { name: 'Thách Đấu', color: 'text-rose-400', bg: 'bg-rose-500/20', border: 'border-rose-400/80', glow: 'shadow-[0_0_20px_rgba(225,29,72,0.8)]' };
-  if (wp >= 25000) return { name: 'Đại Cao Thủ', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/60', glow: 'shadow-[0_0_15px_rgba(248,113,113,0.5)]' };
-  if (wp >= 15000) return { name: 'Cao Thủ', color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/10', border: 'border-fuchsia-500/50', glow: 'shadow-[0_0_15px_rgba(232,121,249,0.5)]' };
-  if (wp >= 10000) return { name: 'Kim Cương', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/40', glow: 'shadow-[0_0_10px_rgba(96,165,250,0.4)]' };
-  if (wp >= 6000) return { name: 'Bạch Kim', color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/40', glow: 'shadow-none' };
-  if (wp >= 3000) return { name: 'Vàng', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', glow: 'shadow-none' };
-  if (wp >= 1000) return { name: 'Bạc', color: 'text-slate-300', bg: 'bg-slate-400/10', border: 'border-slate-400/40', glow: 'shadow-none' };
-  if (wp >= 50000) return RANK_TIERS.THACH_DAU;
-  if (wp >= 25000) return RANK_TIERS.DAI_CAO_THU;
-  if (wp >= 15000) return RANK_TIERS.CAO_THU;
-  if (wp >= 10000) return RANK_TIERS.KIM_CUONG;
-  if (wp >= 6000) return RANK_TIERS.BACH_KIM;
-  if (wp >= 3000) return RANK_TIERS.VANG;
-  if (wp >= 1000) return RANK_TIERS.BAC;
-  
-  return { name: 'Đồng', color: 'text-amber-700', bg: 'bg-amber-900/10', border: 'border-amber-900/40', glow: 'shadow-none' };
-  return RANK_TIERS.DONG;
+  return getTierByWP(wp);
 };
 
 /**

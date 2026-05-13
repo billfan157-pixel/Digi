@@ -33,16 +33,21 @@ export function useNotifications(currentUserId: string | undefined) {
 
   const fetchNotifications = useCallback(async () => {
     if (!currentUserId) return;
-    const { data } = await supabase
-      .from('notifications')
-      .select('*, actor:public_profiles!notifications_actor_public_profile_fkey(nickname, avatar_url)')
-      .eq('recipient_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(20);
-    
-    if (data) {
-      setNotifications(data);
-      setUnreadCount(data.filter((n: any) => !n.is_read).length);
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*, actor:public_profiles!notifications_actor_public_profile_fkey(nickname, avatar_url)')
+        .eq('recipient_id', currentUserId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      if (data) {
+        setNotifications(data);
+        setUnreadCount(data.filter((n: any) => !n.is_read).length);
+      }
+    } catch (err) {
+      console.error('[useNotifications] Fetch error:', err);
     }
   }, [currentUserId]);
 
@@ -68,7 +73,11 @@ export function useNotifications(currentUserId: string | undefined) {
         playTingSound(); // Kích hoạt tiếng Ting
         fetchNotifications();
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('[useNotifications] Channel error for user:', currentUserId);
+        }
+      });
 
     return () => {
       if (channelRef.current) {
@@ -82,13 +91,22 @@ export function useNotifications(currentUserId: string | undefined) {
     if (!currentUserId) return;
     setUnreadCount(0);
     setNotifications(prev => prev.map((n: any) => ({ ...n, is_read: true })));
-    await supabase.from('notifications').update({ is_read: true }).eq('recipient_id', currentUserId).eq('is_read', false);
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('recipient_id', currentUserId)
+      .eq('is_read', false)
+      .catch(err => console.error('[useNotifications] Mark all read error:', err));
   };
 
   const markAsRead = async (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
-    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', id)
+      .catch(err => console.error('[useNotifications] Mark read error:', err));
   };
 
   return { notifications, unreadCount, markAllRead, markAsRead };

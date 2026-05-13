@@ -4,6 +4,7 @@ import type InsightTab from '@/tabs/InsightTab';
 import type FeedTab from '@/tabs/FeedTab';
 import type ProfileTab from '@/tabs/ProfileTab';
 import type LeagueTab from '@/tabs/LeagueTab';
+
 interface UseAppTabPropsOptions {
   profile: any;
   smartBottle: any;
@@ -61,8 +62,6 @@ export function useAppTabProps({
   posts,
   setActiveTab,
 }: UseAppTabPropsOptions) {
-  // HomeTab now reads most data from stores (useAppStore, useUIStore)
-  // Only smartBottle (hardware hook) is still passed as prop
   const homeTabProps = useMemo(() => ({
     smartBottle,
   }) satisfies React.ComponentProps<typeof HomeTab>, [
@@ -75,16 +74,12 @@ export function useAppTabProps({
     handleExportCSV,
     isAiLoading: geminiProps.isAiLoading || false,
     aiAdvice: geminiProps.aiAdvice || '',
-    tacticalAlert: geminiProps.tacticalAlert,
-    urgency: geminiProps.urgency,
     fetchAIAdvice: geminiProps.fetchAIAdvice || (() => {}),
     weeklyReport,
     isWeeklyReportLoading,
     generateWeeklyReport: handleGenerateWeeklyReport,
   }) satisfies React.ComponentProps<typeof InsightTab>, [
     geminiProps.aiAdvice,
-    geminiProps.tacticalAlert,
-    geminiProps.urgency,
     geminiProps.fetchAIAdvice,
     geminiProps.isAiLoading,
     handleExportPDF,
@@ -96,6 +91,7 @@ export function useAppTabProps({
   ]);
 
   const bottleTabProps = null;
+
   const leagueTabProps = useMemo(() => ({
     leagueMode,
     setLeagueMode,

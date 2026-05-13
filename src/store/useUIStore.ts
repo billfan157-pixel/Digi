@@ -49,8 +49,6 @@ interface UIState {
   setLevelUpInfo: (info: { fromLevel: number; toLevel: number } | null) => void;
   showFastingModal: boolean;
   setShowFastingModal: (show: boolean) => void;
-  isScanning: boolean;
-  setIsScanning: (scanning: boolean) => void;
   showFirstSessionChecklist: boolean;
   setShowFirstSessionChecklist: (show: boolean) => void;
 }
@@ -79,6 +77,5 @@ export const useUIStore = create<UIState>()((set) => ({
   showLevelUp: false, setShowLevelUp: (show) => set({ showLevelUp: show }),
   levelUpInfo: null, setLevelUpInfo: (info) => set({ levelUpInfo: info }),
   showFastingModal: false, setShowFastingModal: (show) => set({ showFastingModal: show }),
-  isScanning: false, setIsScanning: (scanning) => set({ isScanning: scanning }),
   showFirstSessionChecklist: false, setShowFirstSessionChecklist: (show) => set({ showFirstSessionChecklist: show }),
 }));

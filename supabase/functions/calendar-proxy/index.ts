@@ -25,6 +25,7 @@ type CalendarProxyRequestBody = {
   daysAhead?: number;
   providerToken?: string;
   providerRefreshToken?: string;
+  timeMin?: string;
 };
 
 const json = (body: Record<string, unknown>, status = 200) =>
@@ -69,12 +70,6 @@ async function refreshGoogleAccessToken(refreshToken: string): Promise<string | 
 
 /**
  * Try to get a valid Google access token for the user.
- *
- * Strategy:
- * 1. Read provider_token from the active Supabase session
- * 2. If expired, try using provider_refresh_token from the session
- * 3. If no refresh token in session, try reading from admin API
- * 4. If all fail, return null (client must re-auth)
  */
 async function resolveGoogleAccessToken(
   // deno-lint-ignore no-explicit-any
@@ -115,7 +110,6 @@ async function resolveGoogleAccessToken(
     const session = sessionData?.session;
 
     if (session?.provider_token) {
-      // Validate token by making a lightweight request
       const testResponse = await fetch(
         `${CALENDAR_API_BASE}/calendars/primary?fields=id`,
         { headers: { Authorization: `Bearer ${session.provider_token}` } },
@@ -125,7 +119,6 @@ async function resolveGoogleAccessToken(
         return { token: session.provider_token, needsReauth: false };
       }
 
-      // Token expired — try refresh
       if (testResponse.status === 401 || testResponse.status === 403) {
         if (session.provider_refresh_token) {
           const refreshed = await refreshGoogleAccessToken(session.provider_refresh_token);
@@ -136,7 +129,6 @@ async function resolveGoogleAccessToken(
       }
     }
 
-    // Step 3: Try refresh token from session even if provider_token was missing
     if (session?.provider_refresh_token) {
       const refreshed = await refreshGoogleAccessToken(session.provider_refresh_token);
       if (refreshed) {
@@ -147,14 +139,13 @@ async function resolveGoogleAccessToken(
     console.error('Error resolving session token:', error);
   }
 
-  // Step 4: Try admin API to get the refresh token from auth.users
+  // Step 3: Try admin API
   if (SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { data: adminUser, error: adminError } = await adminClient.auth.admin.getUserById(userId);
 
       if (!adminError && adminUser?.user) {
-        // Try raw_app_meta_data for refresh token
         const rawMeta = (adminUser.user as unknown as Record<string, unknown>).raw_app_meta_data as Record<string, unknown> | undefined;
         const refreshToken = (rawMeta?.provider_refresh_token as string) || '';
 
@@ -170,50 +161,94 @@ async function resolveGoogleAccessToken(
     }
   }
 
-  // All strategies exhausted — user must re-authenticate
   return { token: null, needsReauth: true };
 }
 
-async function fetchCalendarEvents(
+/**
+ * Fetch events from ALL selected calendars to ensure we don't miss 
+ * work/study/other important events.
+ */
+async function fetchAllCalendarEvents(
   accessToken: string,
   maxResults: number,
   daysAhead: number,
+  timeMinParam?: string,
 ): Promise<Record<string, unknown>[]> {
+  // 1. Get calendar list to identify all active calendars
+  const listResp = await fetch(`${CALENDAR_API_BASE}/users/me/calendarList`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  
+  if (!listResp.ok) {
+    console.warn('Failed to fetch calendar list, falling back to primary.');
+  }
+  
+  const listData = listResp.ok ? await listResp.json() : { items: [] };
+  // Only fetch from "selected" calendars to match what the user sees in their UI
+  const calendarIds = listData.items
+    ?.filter((c: any) => c.selected)
+    .map((c: any) => c.id) || ['primary'];
+
+  if (calendarIds.length === 0) calendarIds.push('primary');
+
+  // 2. Prepare common parameters
   const now = new Date();
+  const timeMin = timeMinParam ? new Date(timeMinParam) : now;
+  if (Number.isNaN(timeMin.getTime())) timeMin.setTime(now.getTime());
+
   const timeMax = new Date(now);
   timeMax.setDate(timeMax.getDate() + Math.min(Math.max(daysAhead, 1), 14));
 
-  const query = new URLSearchParams({
-    singleEvents: 'true',
-    orderBy: 'startTime',
-    maxResults: String(Math.min(Math.max(maxResults, 1), 25)),
-    timeMin: now.toISOString(),
-    timeMax: timeMax.toISOString(),
+  // 3. Fetch from all calendars in parallel
+  const fetchPromises = calendarIds.map(async (id: string) => {
+    const query = new URLSearchParams({
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: String(Math.min(Math.max(maxResults, 1), 50)),
+      timeMin: timeMin.toISOString(),
+      timeMax: timeMax.toISOString(),
+    });
+    
+    try {
+      const resp = await fetch(
+        `${CALENDAR_API_BASE}/calendars/${encodeURIComponent(id)}/events?${query.toString()}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      if (!resp.ok) return [];
+      const data = await resp.json();
+      return data.items || [];
+    } catch (err) {
+      console.error(`Error fetching calendar ${id}:`, err);
+      return [];
+    }
   });
 
-  const response = await fetch(
-    `${CALENDAR_API_BASE}/calendars/primary/events?${query.toString()}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } },
-  );
+  const allResults = await Promise.all(fetchPromises);
+  const flattened = allResults.flat();
 
-  if (response.status === 401 || response.status === 403) {
-    throw new Error('TOKEN_EXPIRED');
-  }
+  // 4. Deduplicate and global sort
+  const seen = new Set();
+  const unique = flattened.filter((item: any) => {
+    if (!item.id || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 
-  if (!response.ok) {
-    throw new Error(`Google Calendar API error (${response.status}).`);
-  }
-
-  const payload = (await response.json()) as { items?: Record<string, unknown>[] };
-  return (payload.items || []).map((event) => ({
-    id: event.id,
-    summary: event.summary,
-    htmlLink: event.htmlLink,
-    status: event.status,
-    transparency: event.transparency,
-    start: event.start,
-    end: event.end,
-  }));
+  return unique
+    .sort((a: any, b: any) => {
+      const startA = a.start?.dateTime || a.start?.date || '';
+      const startB = b.start?.dateTime || b.start?.date || '';
+      return startA.localeCompare(startB);
+    })
+    .map((event: any) => ({
+      id: event.id,
+      summary: event.summary,
+      htmlLink: event.htmlLink,
+      status: event.status,
+      transparency: event.transparency,
+      start: event.start,
+      end: event.end,
+    }));
 }
 
 Deno.serve(async (request: Request) => {
@@ -234,7 +269,6 @@ Deno.serve(async (request: Request) => {
     return json({ error: 'Unauthorized.' }, 401);
   }
 
-  // Authenticate via Supabase JWT
   const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
@@ -261,7 +295,6 @@ Deno.serve(async (request: Request) => {
     const providerToken = typeof body.providerToken === 'string' ? body.providerToken : '';
     const providerRefreshToken = typeof body.providerRefreshToken === 'string' ? body.providerRefreshToken : '';
 
-    // Resolve a valid Google access token
     const { token, needsReauth } = await resolveGoogleAccessToken(
       userSupabase,
       user.id,
@@ -273,9 +306,8 @@ Deno.serve(async (request: Request) => {
       return json({ needs_reauth: true, events: [] });
     }
 
-    // Fetch events
     try {
-      const events = await fetchCalendarEvents(token, maxResults, daysAhead);
+      const events = await fetchAllCalendarEvents(token, maxResults, daysAhead, body.timeMin);
       return json({ events, needs_reauth: false });
     } catch (error) {
       if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {

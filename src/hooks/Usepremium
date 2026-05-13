@@ -12,7 +12,6 @@ import { DAILY_LIMITS, FEATURES, type FeatureKey, type PremiumTier } from '../co
 export type UsageToday = {
   aiMessages: number;
   aiAdvice:   number;
-  imageScan:  number;
 };
 
 export type PremiumState = {
@@ -37,7 +36,6 @@ export function usePremium() {
   const [usage, setUsage] = useState<UsageToday>({
     aiMessages: 0,
     aiAdvice:   0,
-    imageScan:  0,
   });
 
   // ── Fetch subscription status ────────────────────────────
@@ -89,7 +87,7 @@ export function usePremium() {
 
     const { data } = await supabase
       .from('ai_usage')
-      .select('message_count, advice_count, scan_count')
+      .select('message_count, advice_count')
       .eq('user_id', user.id)
       .eq('date', today)
       .single();
@@ -98,7 +96,6 @@ export function usePremium() {
       setUsage({
         aiMessages: data.message_count,
         aiAdvice:   data.advice_count,
-        imageScan:  data.scan_count,
       });
     }
   }, []);
@@ -163,34 +160,6 @@ export function usePremium() {
     };
   }, [state.isPremium, usage.aiMessages]);
 
-  const checkAndIncrementImageScan = useCallback(async (): Promise<{
-    allowed: boolean;
-    remaining: number;
-  }> => {
-    if (state.isPremium) return { allowed: true, remaining: Infinity };
-
-    const limit = DAILY_LIMITS.free.imageScan;
-    if (usage.imageScan >= limit) {
-      return { allowed: false, remaining: 0 };
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { allowed: false, remaining: 0 };
-
-    const { data: newCount } = await supabase.rpc('increment_ai_usage', {
-      uid: user.id,
-      col_name: 'scan_count',
-    });
-
-    const count = newCount as number ?? usage.imageScan + 1;
-    setUsage(u => ({ ...u, imageScan: count }));
-
-    return {
-      allowed: true,
-      remaining: Math.max(0, limit - count),
-    };
-  }, [state.isPremium, usage.imageScan]);
-
   // ── Remaining counts (để hiển thị UI) ───────────────────
 
   const getRemainingCounts = useCallback(() => {
@@ -198,13 +167,11 @@ export function usePremium() {
       return {
         aiMessages: Infinity,
         aiAdvice:   Infinity,
-        imageScan:  Infinity,
       };
     }
     return {
       aiMessages: Math.max(0, DAILY_LIMITS.free.aiMessages - usage.aiMessages),
       aiAdvice:   Math.max(0, DAILY_LIMITS.free.aiAdvice   - usage.aiAdvice),
-      imageScan:  Math.max(0, DAILY_LIMITS.free.imageScan  - usage.imageScan),
     };
   }, [state.isPremium, usage]);
 
@@ -213,7 +180,6 @@ export function usePremium() {
     usage,
     canUseFeature,
     checkAndIncrementAiMessage,
-    checkAndIncrementImageScan,
     getRemainingCounts,
     refresh: fetchSubscription,
   };

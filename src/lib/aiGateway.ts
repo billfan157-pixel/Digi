@@ -3,8 +3,6 @@ import { isSupabaseConfigured, supabase } from './supabase';
 type AiGatewayAction =
   | 'advice'
   | 'chat'
-  | 'scan'
-  | 'insight'
   | 'report-analysis';
 
 type AiGatewayError = {

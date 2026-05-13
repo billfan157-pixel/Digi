@@ -24,20 +24,24 @@ export const PostCardContent = ({
 }: PostCardContentProps) => {
   if (isAchievement) {
     return (
-      <div className="flex flex-col items-center justify-center p-6 border border-amber-500/30 bg-amber-500/5 rounded-2xl text-center relative overflow-hidden">
-        <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.5)] mb-4 border-4 border-slate-900 z-10">
-          <Trophy size={36} className="text-white" />
+      <div className="group flex flex-col items-center justify-center p-8 border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-slate-900/40 to-slate-950 rounded-[2rem] text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] from-amber-500/10 pointer-events-none" />
+        <div className="w-24 h-24 bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 rounded-3xl flex items-center justify-center shadow-[0_20px_50px_rgba(245,158,11,0.3)] mb-6 transform -rotate-3 group-hover:rotate-0 transition-transform duration-500 border-2 border-white/20 z-10">
+          <Trophy size={40} className="text-white drop-shadow-lg" />
         </div>
-        <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest mb-1 z-10 flex items-center gap-1"><Sparkles size={12} /> Kỷ Lục Mới</p>
-        <h4 className="text-white text-2xl font-black mb-2 z-10">{post.content}</h4>
-        {post.value && <p className="text-slate-300 text-sm z-10">Hoàn thành xuất sắc mục tiêu đề ra.</p>}
+        <p className="text-amber-400 text-[10px] font-black uppercase tracking-[0.3em] mb-2 z-10 flex items-center gap-2">
+           <Sparkles size={12} className="animate-pulse" /> Kỷ Lục Mới
+        </p>
+        <h4 className="text-white text-3xl font-black mb-3 z-10 tracking-tight leading-none">{post.content}</h4>
+        <div className="h-[1px] w-12 bg-amber-500/30 mx-auto mb-3" />
+        <p className="text-slate-400 text-xs font-medium z-10 max-w-[200px] leading-relaxed">Một cột mốc đáng tự hào trong hành trình DigiWell của bạn.</p>
       </div>
     );
   }
 
   if (isCompare) {
     return (
-      <div className="border border-white/10 bg-slate-950/40 rounded-2xl p-6 relative overflow-hidden flex flex-col items-center">
+      <div className="border border-white/10 bg-slate-950/40 rounded-[2rem] p-6 relative overflow-hidden flex flex-col items-center">
         <div className="flex items-center justify-center mb-5 relative z-10">
           <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 p-[2px] shadow-[0_0_20px_rgba(6,182,212,0.3)] z-10 transform translate-x-3">
             <img src={post.author?.avatar_url || `https://ui-avatars.com/api/?name=${post.author?.nickname}&background=0D8ABC&color=fff`} className="w-full h-full rounded-full border-2 border-slate-900 object-cover" />
@@ -62,30 +66,33 @@ export const PostCardContent = ({
 
   if (isChallenge) {
     return (
-      <div className="bg-purple-900/20 border border-purple-500/20 rounded-2xl p-4">
-        <h4 className="text-purple-300 font-bold mb-1">Mục tiêu chung:</h4>
-        <p className="text-white text-lg font-black leading-relaxed">{postContent}</p>
-        <div className="mt-4 flex gap-3">
-          <button
-            onClick={handleJoinChallenge}
-            className="flex-1 bg-white text-purple-900 font-black py-2.5 rounded-xl hover:bg-slate-100 active:scale-95 transition-all shadow-[0_0_20px_rgba(168,85,247,0.4)]"
-          >
-            Nhận lời
-          </button>
+      <div className="bg-purple-900/20 border border-purple-500/20 rounded-[2rem] p-6">
+        <div className="flex items-center gap-3 mb-4">
+           <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+              <Swords size={20} className="text-purple-400" />
+           </div>
+           <p className="text-purple-400 text-[10px] font-black uppercase tracking-widest">Thử thách chung</p>
         </div>
+        <p className="text-white text-xl font-black leading-tight mb-6">{postContent}</p>
+        <button
+          onClick={handleJoinChallenge}
+          className="w-full bg-white text-purple-950 font-black py-3.5 rounded-2xl hover:bg-slate-100 active:scale-[0.98] transition-all shadow-xl shadow-purple-500/10"
+        >
+          Nhận lời thách đấu
+        </button>
       </div>
     );
   }
 
   if (isMilestone) {
     return (
-      <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-b from-orange-500/10 to-transparent border border-orange-500/20 rounded-2xl text-center">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(249,115,22,0.4)]">
-          <Flame size={32} className="text-white" />
+      <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-b from-orange-500/10 to-slate-900/40 border border-orange-500/20 rounded-[2rem] text-center">
+        <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(249,115,22,0.4)]">
+          <Flame size={40} className="text-white" />
         </div>
-        <p className="text-orange-400 text-[10px] font-black uppercase tracking-widest mb-1">Peak mới</p>
-        <h4 className="text-white text-2xl font-black mb-2">Chuỗi {post.value || post.streak_snapshot || 0} ngày</h4>
-        {postContent && <p className="text-slate-300 text-sm">{postContent}</p>}
+        <p className="text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Peak Mới</p>
+        <h4 className="text-white text-3xl font-black mb-2 tracking-tight">Chuỗi {post.value || post.streak_snapshot || 0} ngày</h4>
+        {postContent && <p className="text-slate-400 text-sm font-medium">{postContent}</p>}
       </div>
     );
   }
@@ -96,27 +103,61 @@ export const PostCardContent = ({
     const progress = goal > 0 ? Math.min(100, Math.round((Number(amount) / goal) * 100)) : 0;
 
     return (
-      <div className="space-y-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10">
-            <Droplets size={24} className="text-cyan-400" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline justify-between gap-3">
-              <h4 className="text-xl font-black text-white">{amount} ml</h4>
-              {goal > 0 && <span className="text-xs font-bold text-cyan-300">{progress}%</span>}
+      <div className="group relative space-y-4">
+        {post.image_url ? (
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-950 aspect-[4/5]">
+            <img src={post.image_url} alt="Proof Pulse" loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+            
+            {/* Glossy Overlay for Content */}
+            <div className="absolute inset-x-4 bottom-4 p-5 rounded-[1.5rem] bg-slate-950/40 backdrop-blur-xl border border-white/10 shadow-2xl">
+               <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                        <Droplets size={20} className="text-cyan-400" />
+                     </div>
+                     <div>
+                        <p className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Lượng nạp</p>
+                        <h4 className="text-xl font-black text-white">{amount} <span className="text-xs font-bold text-slate-400">ML</span></h4>
+                     </div>
+                  </div>
+                  <div className="text-right">
+                     <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Tiến độ</p>
+                     <h4 className="text-xl font-black text-white">{progress}%</h4>
+                  </div>
+               </div>
+
+               {/* Progress Bar */}
+               <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full" 
+                    style={{ width: `${progress}%` }} 
+                  />
+               </div>
+
+               {postContent && (
+                 <p className="mt-3 text-xs text-slate-200 font-medium line-clamp-2 italic">
+                   "{postContent}"
+                 </p>
+               )}
             </div>
-            {goal > 0 && (
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
-                <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${progress}%` }} />
-              </div>
-            )}
-            <p className="mt-2 truncate text-sm text-slate-400">{postContent || 'Vừa thả Pulse hôm nay.'}</p>
           </div>
-        </div>
-        {post.image_url && (
-          <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-950">
-            <img src={post.image_url} alt="Proof Pulse" loading="lazy" className="w-full max-h-[420px] object-cover" />
+        ) : (
+          <div className="space-y-4 rounded-[2rem] border border-cyan-500/10 bg-slate-900/40 p-6">
+            <div className="flex items-center gap-5">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-cyan-500/10 border border-cyan-500/20">
+                <Droplets size={28} className="text-cyan-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between mb-1">
+                  <h4 className="text-2xl font-black text-white">{amount} ml</h4>
+                  <span className="text-xs font-bold text-cyan-400">{progress}%</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${progress}%` }} />
+                </div>
+                <p className="mt-3 text-sm text-slate-400 font-medium">{postContent || 'Đã nạp thêm nước cho cơ thể.'}</p>
+              </div>
+            </div>
           </div>
         )}
       </div>

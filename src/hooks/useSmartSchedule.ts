@@ -21,10 +21,13 @@ function minutesToTime(minutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+type EventCategory = 'SPORT' | 'DEEP_WORK' | 'SOCIAL' | 'NORMAL';
+
 type BusyWindow = {
   start: number;
   end: number;
   event: CalendarEventItem;
+  category: EventCategory;
 };
 
 const PRE_EVENT_BUFFER_MINUTES = 10;
@@ -33,6 +36,18 @@ const MIN_DRINK_SPACING_MINUTES = 25;
 const EARLIEST_DRINK_MINUTES = 6 * 60;
 const LATEST_DRINK_MINUTES = 23 * 60;
 const SEARCH_WINDOW_MINUTES = 120;
+
+function detectCategory(title: string): EventCategory {
+  const t = title.toLowerCase();
+  const sportKeywords = ['gym', 'tập', 'bóng đá', 'cầu lông', 'chạy', 'yoga', 'bơi', 'workout', 'sport', 'dance', 'tennis', 'đá banh'];
+  const deepWorkKeywords = ['học', 'họp', 'thi', 'biên dịch', 'nghiên cứu', 'meeting', 'class', 'lecture', 'study', 'tiết'];
+  const socialKeywords = ['cafe', 'tiệc', 'party', 'hẹn', 'đi chơi', 'shopping', 'date'];
+
+  if (sportKeywords.some(kw => t.includes(kw))) return 'SPORT';
+  if (deepWorkKeywords.some(kw => t.includes(kw))) return 'DEEP_WORK';
+  if (socialKeywords.some(kw => t.includes(kw))) return 'SOCIAL';
+  return 'NORMAL';
+}
 
 function buildBusyWindows(events: CalendarEventItem[]): BusyWindow[] {
   return events
@@ -44,10 +59,13 @@ function buildBusyWindows(events: CalendarEventItem[]): BusyWindow[] {
       if (startMinutes === null || rawEndMinutes === null) return null;
 
       const endMinutes = rawEndMinutes <= startMinutes ? 24 * 60 : rawEndMinutes;
+      const category = detectCategory(event.title);
+
       return {
         start: Math.max(0, startMinutes - PRE_EVENT_BUFFER_MINUTES),
         end: Math.min(24 * 60, endMinutes + POST_EVENT_BUFFER_MINUTES),
         event,
+        category,
       };
     })
     .filter((window): window is BusyWindow => !!window)
@@ -154,16 +172,25 @@ export function useSmartSchedule(
       // Find best alternative slot
       const newMinutes = findAvailableSlot(originalMinutes, busyWindows, usedSlots);
       const isActuallyMoved = newMinutes !== originalMinutes;
-
       if (isActuallyMoved) adjustedCount++;
       usedSlots.push(newMinutes);
 
+      // Adjust amount based on category
+      let finalAmount = item.amount;
+      let categoryNote = '';
+      if (overlapping.category === 'SPORT') {
+        finalAmount += 150;
+        categoryNote = ' (+150ml bù thể thao)';
+      } else if (overlapping.category === 'DEEP_WORK') {
+        categoryNote = ' (ưu tiên tỉnh táo)';
+      }
+
       return {
         time: minutesToTime(newMinutes),
-        amount: item.amount,
+        amount: finalAmount,
         note: isActuallyMoved
-          ? `Đã né lịch "${overlapping.event.title}" - ${item.note || 'uống nước'}`
-          : `Trùng với "${overlapping.event.title}" - uống nhanh ${item.amount}ml khi có thể`,
+          ? `Né "${overlapping.event.title}"${categoryNote} - ${item.note || 'uống nước'}`
+          : `Trùng "${overlapping.event.title}"${categoryNote} - uống nhanh ${finalAmount}ml`,
         isAdjusted: true,
         conflictingEvent: overlapping.event.title,
       };

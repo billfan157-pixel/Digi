@@ -7,10 +7,11 @@ import { useAppStore } from '../store/useAppStore';
 
 export const CALENDAR_OAUTH_PENDING_KEY = 'digiwell_pending_calendar_oauth';
 export const CALENDAR_TOKEN_UPDATED_EVENT = 'digiwell:google-provider-token-updated';
+const CALENDAR_CACHE_KEY = 'digiwell_calendar_events_cache';
+const CALENDAR_SYNCED_KEY = 'digiwell_calendar_synced_flag';
 
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 const CALENDAR_SYNC_TOAST_ID = 'digiwell-calendar-sync-toast';
-const CALENDAR_RETRY_TOAST_DURATION_MS = 3000;
 const CALENDAR_OAUTH_MODE_KEY = 'digiwell_calendar_oauth_mode';
 
 export interface CalendarEventItem {
@@ -75,7 +76,7 @@ function readCalendarOAuthPendingFlag() {
 function writeCalendarOAuthPendingFlag(value: boolean) {
   if (value) {
     window.sessionStorage.setItem(CALENDAR_OAUTH_PENDING_KEY, 'true');
-    localStorage.setItem(CALENDAR_OAUTH_PENDING_KEY, 'true'); // persist qua redirect
+    localStorage.setItem(CALENDAR_OAUTH_PENDING_KEY, 'true');
     return;
   }
   window.sessionStorage.removeItem(CALENDAR_OAUTH_PENDING_KEY);
@@ -84,7 +85,6 @@ function writeCalendarOAuthPendingFlag(value: boolean) {
 
 function getDisplayTime(date: GoogleEventDateTime | undefined, isEnd = false) {
   if (!date) return '--';
-
   if (date.dateTime) {
     return new Intl.DateTimeFormat('vi-VN', {
       hour: '2-digit',
@@ -92,26 +92,26 @@ function getDisplayTime(date: GoogleEventDateTime | undefined, isEnd = false) {
       hour12: false,
     }).format(new Date(date.dateTime));
   }
-
   if (date.date) {
     if (isEnd) return '23:59';
     return '00:00';
   }
-
   return '--';
 }
 
 function mapGoogleEvent(event: GoogleCalendarEvent): CalendarEventItem | null {
-  if (event.status === 'cancelled' || event.transparency === 'transparent') {
-    return null;
-  }
+  // Chỉ lọc ra các sự kiện đang hoạt động
+  if (event.status === 'cancelled') return null;
+  
+  // Note: Một số người dùng set lịch là "Rảnh" (transparent) nhưng vẫn muốn thấy nó.
+  // Nếu muốn bỏ qua các lịch rảnh hoàn toàn, có thể uncomment dòng dưới:
+  // if (event.transparency === 'transparent') return null;
 
   const isAllDay = !!event.start?.date && !event.start?.dateTime;
   const startRaw = event.start?.dateTime || event.start?.date || '';
   const endRaw = event.end?.dateTime || event.end?.date || '';
-
   if (!event.id || !startRaw) return null;
-
+  
   return {
     id: event.id,
     title: event.summary?.trim() || 'Sự kiện không tên',
@@ -126,12 +126,6 @@ function mapGoogleEvent(event: GoogleCalendarEvent): CalendarEventItem | null {
   };
 }
 
-function readCalendarOAuthMode(): CalendarOAuthMode | null {
-  const mode = window.sessionStorage.getItem(CALENDAR_OAUTH_MODE_KEY)
-    || localStorage.getItem(CALENDAR_OAUTH_MODE_KEY);
-  return mode === 'link' || mode === 'signin' ? mode : null;
-}
-
 function writeCalendarOAuthMode(mode: CalendarOAuthMode | null) {
   if (mode) {
     window.sessionStorage.setItem(CALENDAR_OAUTH_MODE_KEY, mode);
@@ -143,16 +137,10 @@ function writeCalendarOAuthMode(mode: CalendarOAuthMode | null) {
 }
 
 async function beginGoogleCalendarOAuth(options: { forceSignIn?: boolean } = {}) {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError) throw userError;
-  if (!user) throw new Error('Vui long dang nhap truoc khi ket noi Google Calendar.');
-
+  if (!user) throw new Error('Vui lòng đăng nhập trước khi kết nối Google Calendar.');
   writeCalendarOAuthPendingFlag(true);
-
   const credentials: CalendarOAuthOptions = {
     provider: 'google' as const,
     options: {
@@ -166,66 +154,60 @@ async function beginGoogleCalendarOAuth(options: { forceSignIn?: boolean } = {})
       },
     },
   };
-
   const hasGoogleIdentity = user.identities?.some((identity: { provider?: string }) => identity.provider === 'google');
   const shouldSignIn = options.forceSignIn || hasGoogleIdentity;
   writeCalendarOAuthMode(shouldSignIn ? 'signin' : 'link');
-
   const response = shouldSignIn
     ? await supabase.auth.signInWithOAuth(credentials)
     : await supabase.auth.linkIdentity(credentials);
-
   if (response.error) throw response.error;
-
   if (Capacitor.isNativePlatform() && response.data?.url) {
     await Browser.open({ url: response.data.url });
   }
 }
 
-/**
- * Fetch calendar events via the server-side proxy Edge Function.
- * The provider token never reaches the client.
- */
 async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
   const { data: { session } } = await supabase.auth.getSession();
-
-  // Nếu chưa có phiên đăng nhập (app vừa mở lên chưa kịp tải), chặn không gọi API để tránh lỗi 401
   if (!session?.access_token) {
     return { events: [], needs_reauth: true };
   }
-
+  const timeMin = new Date();
+  timeMin.setHours(0, 0, 0, 0);
   const { data, error } = await supabase.functions.invoke('calendar-proxy', {
     body: {
       action: 'list-events',
-      maxResults: 25,
+      maxResults: 50,
       daysAhead: 7,
+      timeMin: timeMin.toISOString(),
       providerToken: session.provider_token,
       providerRefreshToken: session.provider_refresh_token,
     },
   });
-
-  if (error) {
-    throw new Error(error.message || 'Khong the ket noi calendar proxy.');
-  }
-
+  if (error) throw new Error(error.message || 'Không thể kết nối calendar proxy.');
   const response = data as CalendarProxyResponse | null;
   if (response?.error) {
+    if (response.error.includes('unauthorized') || response.error.includes('invalid_grant')) {
+      return { events: [], needs_reauth: true };
+    }
     throw new Error(response.error);
   }
-
   return response ?? { events: [], needs_reauth: true };
 }
 
+const SYNC_COOLDOWN_MS = 1 * 60 * 1000; // Giảm cooldown xuống 1 phút
+
 export function useCalendarSync() {
-  const [isCalendarSynced, setIsCalendarSynced] = useState(false);
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>([]);
+  const isCalendarSynced = useAppStore(s => s.isCalendarSynced);
+  const calendarEvents = useAppStore(s => s.calendarEvents);
+  
   const [isSyncing, setIsSyncing] = useState(false);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
+  const lastSyncTimeRef = useRef<number>(0);
 
-  // Sync local state to global store so parent components see it
-  const syncToStore = useCallback(() => {
-    useAppStore.getState().setAppState({ isCalendarSynced: true });
+  const setIsCalendarSynced = useCallback((synced: boolean) => {
+    useAppStore.getState().setAppState({ isCalendarSynced: synced });
+    localStorage.setItem(CALENDAR_SYNCED_KEY, synced ? 'true' : 'false');
   }, []);
 
   const clearRetry = useCallback(() => {
@@ -241,18 +223,29 @@ export function useCalendarSync() {
     options: { silent?: boolean; startOAuthIfNeeded?: boolean } = {},
   ): Promise<number | false> => {
     const { silent = false, startOAuthIfNeeded = true } = options;
-    const tid = silent ? '' : toast.loading('Đang quét lịch trình Google Calendar...');
+    const now = Date.now();
+    
+    if (lastSyncTimeRef.current > 0 && now - lastSyncTimeRef.current < SYNC_COOLDOWN_MS) {
+      return calendarEvents.length;
+    }
+
+    const tid = silent ? '' : toast.loading('Đang cập nhật lịch Google...', { id: CALENDAR_SYNC_TOAST_ID });
+    if (!silent) setIsSyncing(true);
 
     try {
       const proxyResponse = await fetchCalendarEventsViaProxy();
+      lastSyncTimeRef.current = Date.now();
 
-      // Server says the token is expired or missing — start OAuth
       if (proxyResponse.needs_reauth) {
+        // Nếu cần re-auth, gỡ cờ để nút Connect hiện ra
+        setIsCalendarSynced(false);
+        setIsSyncing(false);
+
         if (!startOAuthIfNeeded) return false;
 
         await beginGoogleCalendarOAuth();
         if (!silent) {
-          toast.success('Đang mở Google để kết nối Calendar. Hoàn tất OAuth để app tiếp tục đồng bộ.', { id: tid });
+          toast.success('Phiên làm việc hết hạn, vui lòng đăng nhập lại Google.', { id: tid });
         }
         return false;
       }
@@ -261,126 +254,92 @@ export function useCalendarSync() {
         .map(mapGoogleEvent)
         .filter((event): event is CalendarEventItem => !!event);
 
-      setCalendarEvents(events);
-      setIsCalendarSynced(true);
-      syncToStore();
+      const store = useAppStore.getState();
+      const currentEventsStr = JSON.stringify(store.calendarEvents);
+      const newEventsStr = JSON.stringify(events);
+
+      // Cập nhật dữ liệu mới nhất
+      store.setAppState({ 
+        calendarEvents: events,
+        isCalendarSynced: true 
+      });
+      localStorage.setItem(CALENDAR_CACHE_KEY, newEventsStr);
+      localStorage.setItem(CALENDAR_SYNCED_KEY, 'true');
+
       clearRetry();
       writeCalendarOAuthPendingFlag(false);
-      writeCalendarOAuthMode(null);
 
       if (!silent) {
         toast.success(
           events.length > 0
-            ? `Đã đồng bộ ${events.length} sự kiện sắp tới từ Google Calendar.`
-            : 'Đã kết nối Google Calendar. Không có sự kiện sắp tới.',
+            ? `Đã đồng bộ ${events.length} sự kiện mới nhất.`
+            : 'Lịch trình trống.',
           { id: tid },
         );
       }
+      setIsSyncing(false);
       return events.length;
     } catch (error) {
-      setIsCalendarSynced(false);
-      setCalendarEvents([]);
       if (!silent) {
-        const message = error instanceof Error ? error.message : 'Lỗi đồng bộ lịch trình.';
+        const message = error instanceof Error ? error.message : 'Lỗi đồng bộ.';
         toast.error(message, { id: tid });
       }
+      setIsSyncing(false);
       return false;
     }
-  }, [syncToStore, clearRetry]);
+  }, [calendarEvents.length, clearRetry, setIsCalendarSynced]);
 
-  // After OAuth redirect, retry sync with backoff until token is ready
   const scheduleRetry = useCallback(() => {
     clearRetry();
-    setIsSyncing(true);
-    toast.loading('Đang đồng bộ Google Calendar sau khi xác thực...', {
-      id: CALENDAR_SYNC_TOAST_ID,
-      duration: CALENDAR_RETRY_TOAST_DURATION_MS,
-    });
-    // Helper to update toast text
-    const updateToast = (msg: string) => toast.loading(msg, {
-      id: CALENDAR_SYNC_TOAST_ID,
-      duration: CALENDAR_RETRY_TOAST_DURATION_MS,
-    });
     const retry = async () => {
       retryCountRef.current++;
       const attempt = retryCountRef.current;
-      console.log(`[Calendar] Retry #${attempt}...`);
-      updateToast(`Đang thử kết nối Google Calendar (lần ${attempt}/8)...`);
       const result = await syncCalendar({ silent: true, startOAuthIfNeeded: false });
-      if (result !== false) {
-        toast.dismiss(CALENDAR_SYNC_TOAST_ID);
-        setIsSyncing(false);
-        if (result > 0) {
-          toast.success(`Đã đồng bộ ${result} sự kiện từ Google Calendar.`, { duration: 5000 });
-        } else {
-          toast.success('Đã kết nối Google Calendar. Không có sự kiện trong tuần này.', { duration: 4000 });
-        }
-        return;
-      }
-      if (attempt >= 2 && readCalendarOAuthMode() === 'link') {
-        updateToast('Đang hoàn tất kết nối Google Calendar...');
-        writeCalendarOAuthMode('signin');
-        try {
-          await beginGoogleCalendarOAuth({ forceSignIn: true });
-        } catch (error) {
-          toast.dismiss(CALENDAR_SYNC_TOAST_ID);
-          setIsSyncing(false);
-          writeCalendarOAuthPendingFlag(false);
-          writeCalendarOAuthMode(null);
-          const message = error instanceof Error ? error.message : 'Không thể mở Google OAuth.';
-          toast.error(message, { duration: 6000 });
-        }
-        return;
-      }
-      if (attempt < 8) {
-        const delayMs = Math.min(1500 * attempt, 8000);
-        console.log(`[Calendar] Retry #${attempt} failed, next in ${delayMs}ms`);
-        updateToast(`Đồng bộ chưa sẵn sàng, thử lại sau ${Math.round(delayMs/1000)}s...`);
-        retryTimerRef.current = setTimeout(retry, delayMs);
+      if (result !== false) return;
+      if (attempt < 3) {
+        retryTimerRef.current = setTimeout(retry, Math.min(1500 * attempt, 6000));
       } else {
-        toast.dismiss(CALENDAR_SYNC_TOAST_ID);
-        setIsSyncing(false);
         writeCalendarOAuthPendingFlag(false);
-        writeCalendarOAuthMode(null);
         clearRetry();
-        toast.error('Không thể đồng bộ Google Calendar. Bạn có thể thử lại bằng nút "Kết nối".', { duration: 6000 });
       }
     };
-    retryTimerRef.current = setTimeout(retry, 1000); // Start faster: 1s
+    retryTimerRef.current = setTimeout(retry, 1000);
   }, [syncCalendar, clearRetry]);
 
   useEffect(() => {
-    const shouldResumeCalendarSync = async () => {
-      // If pending flag OR no flag but we should try sync silently
-      // to detect if user already has a Google session
-      const isPending = readCalendarOAuthPendingFlag();
+    // 1. Khôi phục từ Cache
+    const cachedEvents = localStorage.getItem(CALENDAR_CACHE_KEY);
+    const cachedSynced = localStorage.getItem(CALENDAR_SYNCED_KEY) === 'true';
+    if (cachedEvents || cachedSynced) {
+      useAppStore.getState().setAppState({
+        calendarEvents: cachedEvents ? JSON.parse(cachedEvents) : [],
+        isCalendarSynced: cachedSynced
+      });
+    }
 
+    // 2. Tự động quét mới
+    const initSync = async () => {
+      const isPending = readCalendarOAuthPendingFlag();
       if (isPending) {
-        console.log('[Calendar] OAuth pending flag detected, starting retry...');
         scheduleRetry();
         return;
       }
-
-      // No pending flag — try a silent sync to check if Google is already linked
-      // This handles the case where the flag was lost during redirect
-      console.log('[Calendar] No pending flag, trying silent sync...');
-      await syncCalendar({ silent: true, startOAuthIfNeeded: false });
+      // Nếu đã từng sync, tự động quét ngầm
+      if (cachedSynced) {
+        await syncCalendar({ silent: true, startOAuthIfNeeded: false });
+      }
     };
 
-    void shouldResumeCalendarSync();
+    void initSync();
 
-    const handleTokenUpdated = () => {
-      console.log('[Calendar] Token updated event received');
-      scheduleRetry();
-    };
-
+    const handleTokenUpdated = () => scheduleRetry();
     window.addEventListener(CALENDAR_TOKEN_UPDATED_EVENT, handleTokenUpdated);
 
     return () => {
       window.removeEventListener(CALENDAR_TOKEN_UPDATED_EVENT, handleTokenUpdated);
       clearRetry();
     };
-  }, [syncCalendar, scheduleRetry, clearRetry]);
+  }, []);
 
   return { isCalendarSynced, setIsCalendarSynced, calendarEvents, syncCalendar, isSyncing };
 }

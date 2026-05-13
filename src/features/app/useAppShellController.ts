@@ -77,9 +77,6 @@ export function useAppShellController(): AppShellProps {
     socialProps,
     geminiProps,
     posts,
-    fileInputRef,
-    handleScan,
-    processImageScan,
     openSocialComposer,
   } = useAiSocialOrchestration();
 
@@ -123,13 +120,11 @@ export function useAppShellController(): AppShellProps {
     weatherData,
   ]);
 
-  // ── Sync actions to Zustand store ──
   useEffect(() => {
     setAppActions({
       handleAddWater: hydration.handleAddWater,
       handleDeleteEntry: hydration.handleDeleteEntry,
       handleEditEntry: hydration.handleEditEntry,
-      handleScan,
       handleLogout,
       openSocialComposer: openSocialComposer as any,
       startFasting: hydration.startFasting,
@@ -137,7 +132,6 @@ export function useAppShellController(): AppShellProps {
     });
   }, [
     handleLogout,
-    handleScan,
     hydration.handleAddWater,
     hydration.handleDeleteEntry,
     hydration.handleEditEntry,
@@ -195,14 +189,6 @@ export function useAppShellController(): AppShellProps {
     },
     profile,
     handleLogout,
-    fileInputProps: {
-      type: 'file',
-      accept: 'image/*',
-      capture: 'environment',
-      ref: fileInputRef,
-      className: 'hidden',
-      onChange: processImageScan,
-    },
     quickDropCameraProps: {
       isOpen: !!socialProps.showQuickDropCamera,
       isPublishing: !!socialProps.isPublishingQuickDrop,

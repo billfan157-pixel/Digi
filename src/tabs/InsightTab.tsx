@@ -1,10 +1,9 @@
 import React, { useMemo, useState, useEffect, memo, useCallback, useRef } from 'react';
 import {
-  Cpu, Droplets, Activity, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock
+  Cpu, Droplets, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock, BarChart2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
-import AvatarFrame from '../components/AvatarFrame';
 import type { WaterLog } from '../models';
 import { useAppStore } from '../store/useAppStore';
 import type { AppState } from '../store/useAppStore';
@@ -17,7 +16,6 @@ import { toast } from 'sonner';
 
 import TabHeader from '../components/layout/TabHeader';
 import OverviewSection from './Insight/OverviewSection';
-import AiCoachSection from './Insight/AiCoachSection';
 import AnalyticsSection from './Insight/AnalyticsSection';
 import SystemSection from './Insight/SystemSection';
 import SelectedDateModal from './Insight/SelectedDateModal';
@@ -28,8 +26,6 @@ interface InsightTabProps {
    handleExportCSV: () => void;
    isAiLoading: boolean;
    aiAdvice: string;
-   tacticalAlert?: string;
-   urgency?: 'low' | 'medium' | 'high';
    fetchAIAdvice: () => void;
    weeklyReport?: any;
    isWeeklyReportLoading?: boolean;
@@ -38,8 +34,7 @@ interface InsightTabProps {
 
 const InsightTab = memo(function InsightTab({
    isExportingPDF, handleExportPDF, handleExportCSV,
-   isAiLoading, aiAdvice, tacticalAlert, urgency, fetchAIAdvice,
-   weeklyReport, isWeeklyReportLoading, generateWeeklyReport
+   isAiLoading, aiAdvice, fetchAIAdvice,
  }: InsightTabProps) {
   
   const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, hydrationResult, waterIntake, waterEntries, isWatchConnected, isWeatherSynced, isCalendarSynced, actions } = useAppStore(useShallow((state: AppState) => ({
@@ -56,17 +51,15 @@ const InsightTab = memo(function InsightTab({
     isCalendarSynced: state.isCalendarSynced,
     actions: state.actions,
   })));
-  const { setShowPremiumModal, setShowAiChat } = useUIStore(useShallow((state) => ({
+  const { setShowPremiumModal } = useUIStore(useShallow((state) => ({
     setShowPremiumModal: state.setShowPremiumModal,
-    setShowAiChat: state.setShowAiChat,
   })));
   
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
-  const [activeView, setActiveView] = useState<'overview' | 'ai' | 'analytics' | 'system'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'system'>('overview');
   const secretClickCountRef = useRef(0);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // --- STATES CHO MODAL LỊCH SỬ NGÀY ---
   const [selectedDateModal, setSelectedDateModal] = useState<{date: string, ml: number} | null>(null);
   const [dayLogs, setDayLogs] = useState<WaterLog[]>([]);
   const [isDayLogsLoading, setIsDayLogsLoading] = useState(false);
@@ -75,21 +68,17 @@ const InsightTab = memo(function InsightTab({
   const [selectedWeekDay, setSelectedWeekDay] = useState<{ d: string; ml: number } | null>(null);
   const [selectedCalendarCell, setSelectedCalendarCell] = useState<{ dayNum: number; ml: number; fullDate: string } | null>(null);
 
-  // ── Monthly data via useInsightData hook ──
   const {
     monthlyDataMap,
-    isLoading: isMonthlyLoading,
     refetchMonthly,
   } = useInsightData(profile?.id, calendarDate);
 
-  // Keep monthly data in sync with water entries
   useEffect(() => {
     if (profile?.id && waterEntries.length > 0) {
       refetchMonthly();
     }
   }, [waterEntries?.length, profile?.id, refetchMonthly]);
 
-  // --- THUẬT TOÁN TRUE CALENDAR: Tự động tạo lưới lịch chuẩn theo Tháng hiện tại ---
   const { calendarCells, currentMonthName } = useMemo(() => {
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
@@ -98,28 +87,19 @@ const InsightTab = memo(function InsightTab({
     const currentMonth = now.getMonth();
     const currentDate = now.getDate();
     
-    // Tìm số ngày trong tháng (tự động 28, 29, 30, 31)
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    // Tìm thứ của ngày mùng 1 (0 = CN, 1 = T2...). Đổi sang T2 là đầu tuần (0 = T2... 6 = CN)
     let firstDayIndex = new Date(year, month, 1).getDay();
-    // Chuyển đổi: CN(0) -> 6, T2(1) -> 0, ..., T7(6) -> 5
-    // Để có T2 là đầu tuần (index 0)
     if (firstDayIndex === 0) firstDayIndex = 6;
     else firstDayIndex = firstDayIndex - 1; 
 
     const cells = [];
-    
-    // 1. Lấp đầy các ô trống ở đầu tháng
     for (let i = 0; i < firstDayIndex; i++) {
       cells.push({ dayNum: null, ml: 0, isFuture: false, isToday: false, isEmptySlot: true, fullDate: '' });
     }
 
-    // 2. Điền các ngày trong tháng
     for (let i = 1; i <= daysInMonth; i++) {
       const isToday = year === currentYear && month === currentMonth && i === currentDate;
       const isFuture = year > currentYear || (year === currentYear && month > currentMonth) || (year === currentYear && month === currentMonth && i > currentDate);
-
       const fullDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       
       const entriesForDay = waterEntries?.filter((e: any) => e.day === fullDateStr) || [];
@@ -129,16 +109,11 @@ const InsightTab = memo(function InsightTab({
       } else if (isToday) {
         ml = waterIntake;
       }
-
       cells.push({ dayNum: i, ml, isFuture, isToday, isEmptySlot: false, fullDate: fullDateStr });
     }
 
     const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
-
-    return { 
-      calendarCells: cells, 
-      currentMonthName: `${monthNames[month]} / ${year}` 
-    };
+    return { calendarCells: cells, currentMonthName: `${monthNames[month]} / ${year}` };
   }, [monthlyDataMap, waterIntake, calendarDate, waterEntries]);
 
   const handlePrevMonth = useCallback(() => {
@@ -149,21 +124,17 @@ const InsightTab = memo(function InsightTab({
     setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   }, []);
 
-  // --- HÀM LẤY CHI TIẾT LỊCH SỬ NGÀY KHI BẤM VÀO LỊCH ---
   const handleDayClick = async (dateStr: string, totalMl: number) => {
     if (!profile?.id) return;
     setSelectedDateModal({ date: dateStr, ml: totalMl });
-
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
     const entriesInStore = waterEntries?.filter((e: any) => e.day === dateStr) || [];
     if (entriesInStore.length > 0 || dateStr === todayStr || totalMl === 0) {
       if (totalMl === 0) setDayLogs([]);
       setIsDayLogsLoading(false);
       return;
     }
-
     setIsDayLogsLoading(true);
     try {
       const { data, error } = await supabase
@@ -178,39 +149,12 @@ const InsightTab = memo(function InsightTab({
       console.error('Lỗi tải lịch sử ngày:', err);
     } finally {
       setIsDayLogsLoading(false);
-}
+    }
    };
 
-  // --- DEVELOPER CHEAT: BẬT/TẮT PRO (DEV ONLY) ---
-  const handleSecretClick = useCallback(() => {
-    if (!import.meta.env.DEV) return;
-
-    // Reset bộ đếm nếu ngừng click quá 2 giây
-    if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
-    clickTimeoutRef.current = setTimeout(() => {
-      secretClickCountRef.current = 0;
-    }, 2000);
-
-    secretClickCountRef.current += 1;
-    const count = secretClickCountRef.current;
-
-    if (count === 3) toast.info('DEV: Nhấp 2 lần nữa để thay đổi chế độ PRO', { id: 'secret-toast' });
-    if (count === 4) toast.info('DEV: Nhấp 1 lần nữa để thay đổi chế độ PRO', { id: 'secret-toast' });
-    
-    if (count >= 5) {
-      const currentStatus = useAppStore.getState().isPremium;
-      useAppStore.setState({ isPremium: !currentStatus });
-      toast.success(currentStatus ? 'DEV: Đã TẮT chế độ PRO' : '🚀 DEV: Đã MỞ KHÓA chế độ PRO!', { id: 'secret-toast' });
-      secretClickCountRef.current = 0;
-      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
-    }
-  }, []);
-
-  // --- COMPARATIVE ANALYSIS: Lấy dữ liệu tuần trước ---
   const { data: previousWeekData } = usePreviousWeekData(profile?.id);
 
-  // --- BEHAVIOR ANALYSIS: Phân tích thói quen uống nước ---
-  const { patterns, getAdaptiveRecommendation } = useBehaviorAnalysis({
+  const { patterns } = useBehaviorAnalysis({
     weeklyData: weeklyChartData,
     waterLogs: waterEntries,
     waterGoal
@@ -225,7 +169,6 @@ const InsightTab = memo(function InsightTab({
   }, [weeklyChartData, waterGoal]);
 
   const completionRate = weeklyChartData.length === 0 ? 0 : Math.round((stats.completed / weeklyChartData.length) * 100);
-  
   const weeklyTotal = useMemo(() => weeklyChartData.reduce((sum: number, d: any) => sum + d.ml, 0), [weeklyChartData]);
   const monthlyTotal = useMemo(() => Object.values(monthlyDataMap).reduce((sum, ml) => sum + ml, 0), [monthlyDataMap]);
 
@@ -236,7 +179,6 @@ const InsightTab = memo(function InsightTab({
     return 0;
   }, [weeklyChartData]);
 
-  // --- DYNAMIC NARRATIVE ENGINE ---
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     const name = profile?.nickname || 'bạn';
@@ -252,33 +194,19 @@ const InsightTab = memo(function InsightTab({
     return `Hành trình ngàn dặm bắt đầu từ một ngụm nước. Cùng DigiWell thiết lập lại thói quen nào.`;
   }, [streak, completionRate]);
 
-  // --- NEXT BEST ACTION ENGINE ---
   const nextBestAction = useMemo(() => {
     const remaining = Math.max(0, waterGoal - waterIntake);
     const hour = new Date().getHours();
-
-    if (waterGoal === 0) {
-      return { title: 'Thiết lập mục tiêu', action: 'Cập nhật thông tin để AI tính toán lượng nước.', ml: 0, icon: Target, color: 'text-slate-400', bg: 'bg-slate-500/20' };
-    }
-    if (remaining === 0) {
-      return { title: 'Hoàn thành xuất sắc', action: 'Bạn đã đạt mục tiêu. Chỉ uống thêm nếu thực sự khát.', ml: 0, icon: Crown, color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
-    }
-    if (hour >= 22) {
-      return { title: 'Trước khi ngủ', action: `Uống ${Math.min(remaining, 150)}ml nước ấm để tránh tiểu đêm.`, ml: Math.min(remaining, 150), icon: Clock, color: 'text-indigo-400', bg: 'bg-indigo-500/20' };
-    }
-    if (hour <= 9 && waterIntake < 300) {
-      return { title: 'Bắt đầu ngày mới', action: 'Đánh thức cơ thể với ly nước 250ml đầu ngày.', ml: 250, icon: CloudSun, color: 'text-amber-400', bg: 'bg-amber-500/20' };
-    }
-    if (remaining > waterGoal * 0.5 && hour > 15) {
-      return { title: 'Đang tụt hậu', action: 'Bạn đang uống quá chậm. Hãy bù ngay 300ml để theo kịp tiến độ.', ml: 300, icon: AlertTriangle, color: 'text-rose-400', bg: 'bg-rose-500/20' };
-    }
+    if (waterGoal === 0) return { title: 'Thiết lập mục tiêu', action: 'Cập nhật thông tin để AI tính toán lượng nước.', ml: 0, icon: Target, color: 'text-slate-400', bg: 'bg-slate-500/20' };
+    if (remaining === 0) return { title: 'Hoàn thành xuất sắc', action: 'Bạn đã đạt mục tiêu. Chỉ uống thêm nếu thực sự khát.', ml: 0, icon: Crown, color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
+    if (hour >= 22) return { title: 'Trước khi ngủ', action: `Uống ${Math.min(remaining, 150)}ml nước ấm để tránh tiểu đêm.`, ml: Math.min(remaining, 150), icon: Clock, color: 'text-indigo-400', bg: 'bg-indigo-500/20' };
+    if (hour <= 9 && waterIntake < 300) return { title: 'Bắt đầu ngày mới', action: 'Đánh thức cơ thể với ly nước 250ml đầu ngày.', ml: 250, icon: CloudSun, color: 'text-amber-400', bg: 'bg-amber-500/20' };
+    if (remaining > waterGoal * 0.5 && hour > 15) return { title: 'Đang tụt hậu', action: 'Bạn đang uống quá chậm. Hãy bù ngay 300ml để theo kịp tiến độ.', ml: 300, icon: AlertTriangle, color: 'text-rose-400', bg: 'bg-rose-500/20' };
     return { title: 'Duy trì nhịp độ', action: `Tiếp tục nạp ${Math.min(remaining, 250)}ml để cơ thể luôn tươi mới.`, ml: Math.min(remaining, 250), icon: Droplets, color: 'text-cyan-400', bg: 'bg-cyan-500/20' };
   }, [waterIntake, waterGoal]);
 
   return (
     <div className="space-y-6 pb-28 animate-in fade-in duration-300">
-      
-      {/* --- PHẦN TIÊU ĐỀ (HEADER) --- */}
       <TabHeader
         label="Huấn luyện thông minh"
         title="DigiCoach"
@@ -286,12 +214,10 @@ const InsightTab = memo(function InsightTab({
         actionIcon={<Cpu size={18} />}
       />
 
-      {/* --- ĐIỀU HƯỚNG SUB-TABS --- */}
       <div className="px-5 mb-6 mt-1">
         <div className="glass-control flex items-center p-1.5 shadow-inner overflow-x-auto scrollbar-hide">
           {[
-            { id: 'overview', label: 'Tổng quan', icon: Target },
-            { id: 'ai', label: 'Trợ lý AI', icon: Cpu },
+            { id: 'overview', label: 'Cố vấn', icon: Cpu },
             { id: 'analytics', label: 'Phân tích', icon: TrendingUp },
             { id: 'system', label: 'Hệ thống', icon: Settings2 }
           ].map(tab => {
@@ -300,7 +226,7 @@ const InsightTab = memo(function InsightTab({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveView(tab.id as 'overview' | 'ai' | 'analytics' | 'system')}
+                onClick={() => setActiveView(tab.id as 'overview' | 'analytics' | 'system')}
                 className={`flex-1 min-w-[72px] relative flex flex-col items-center justify-center py-2.5 transition-colors duration-200 z-10 rounded-xl ${
                   isActive ? 'text-cyan-300' : 'text-meta hover:text-slate-300'
                 }`}
@@ -321,7 +247,7 @@ const InsightTab = memo(function InsightTab({
       </div>
 
       <AnimatePresence mode="wait">
-{activeView === 'overview' && (
+        {activeView === 'overview' && (
           <motion.div
             key="overview"
             initial={{ opacity: 0 }}
@@ -341,39 +267,16 @@ const InsightTab = memo(function InsightTab({
               nextBestAction={nextBestAction}
               actions={actions}
               schedule={hydrationResult?.schedule || null}
-            />
-          </motion.div>
-        )}
-
-{activeView === 'ai' && (
-          <motion.div
-            key="ai"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-6"
-          >
-            <AiCoachSection
+              aiAdvice={aiAdvice}
+              isAiLoading={isAiLoading}
+              fetchAIAdvice={fetchAIAdvice}
               isPremium={isPremium}
               setShowPremiumModal={setShowPremiumModal}
-              setShowAiChat={setShowAiChat}
-              isAiLoading={isAiLoading}
-              aiAdvice={aiAdvice}
-              tacticalAlert={tacticalAlert}
-              urgency={urgency}
-              fetchAIAdvice={fetchAIAdvice}
-              streak={streak}
-              waterIntake={waterIntake}
-              waterGoal={waterGoal}
-              isExportingPDF={isExportingPDF}
-              handleExportPDF={handleExportPDF}
-              handleExportCSV={handleExportCSV}
             />
           </motion.div>
         )}
 
-{activeView === 'analytics' && (
+        {activeView === 'analytics' && (
           <motion.div
             key="analytics"
             initial={{ opacity: 0 }}
@@ -401,11 +304,12 @@ const InsightTab = memo(function InsightTab({
               stats={stats}
               profile={profile}
               weeklyTotal={weeklyTotal}
+              patterns={patterns}
             />
           </motion.div>
         )}
 
-{activeView === 'system' && (
+        {activeView === 'system' && (
           <motion.div
             key="system"
             initial={{ opacity: 0 }}
@@ -419,12 +323,15 @@ const InsightTab = memo(function InsightTab({
               isWatchConnected={isWatchConnected}
               isWeatherSynced={isWeatherSynced}
               isCalendarSynced={isCalendarSynced}
+              isExportingPDF={isExportingPDF}
+              handleExportPDF={handleExportPDF}
+              handleExportCSV={handleExportCSV}
+              setShowPremiumModal={setShowPremiumModal}
             />
           </motion.div>
         )}
       </AnimatePresence>
       
-      {/* MODAL LỊCH SỬ UỐNG NƯỚC THEO NGÀY (CALENDAR VIEW) */}
       <SelectedDateModal
         selectedDateModal={selectedDateModal}
         onClose={() => setSelectedDateModal(null)}

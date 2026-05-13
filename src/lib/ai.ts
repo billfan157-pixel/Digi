@@ -24,14 +24,10 @@ type WaterAction = {
 
 export type AiAdviceResponse = {
   text: string;
-  tactical_alert?: string;
-  goal_adjustment_ml?: number;
-  urgency: 'low' | 'medium' | 'high';
 };
 
 const FRIENDLY_FALLBACK_ADVICE: AiAdviceResponse = {
   text: 'Hệ thống AI đang bận một chút. Tạm thời hãy uống thêm vài ngụm nước nhỏ và nghỉ 1-2 phút nhé!',
-  urgency: 'low'
 };
 
 function getAiErrorMessage(error: unknown): string {
@@ -50,14 +46,7 @@ function getAiErrorMessage(error: unknown): string {
   return raw;
 }
 
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = () => reject(new Error('Không thể đọc file ảnh.'));
-    reader.readAsDataURL(file);
-  });
-}
+
 
 export function isAiConfigured(): boolean {
   return isSupabaseConfigured;
@@ -66,20 +55,15 @@ export function isAiConfigured(): boolean {
 export async function generateHydrationAdvice(context: DigiwellAiContext): Promise<AiAdviceResponse> {
   try {
     const response = await invokeAiGateway<AiAdviceResponse>('advice', { context });
-    
-    // Đảm bảo trả về đúng cấu trúc kể cả khi backend thiếu field
+
     return {
       text: response.text || FRIENDLY_FALLBACK_ADVICE.text,
-      tactical_alert: response.tactical_alert,
-      goal_adjustment_ml: response.goal_adjustment_ml,
-      urgency: response.urgency || 'low'
     };
   } catch (error) {
     const message = getAiErrorMessage(error);
     if (message.toLowerCase().includes('rate limit')) {
       return {
         text: 'AI đang bận, tạm thời hãy uống thêm nước đều trong ngày nhé!',
-        urgency: 'low'
       };
     }
     return FRIENDLY_FALLBACK_ADVICE;
@@ -103,19 +87,5 @@ export async function sendAiChatMessage(
   } catch (err) {
     const msg = err instanceof Error ? err.message : '';
     return { reply: msg || 'Hệ thống AI đang bận một chút, bạn thử lại sau nhé.' };
-  }
-}
-
-export async function scanDrinkFromImage(
-  file: File,
-): Promise<{ name: string; amount: number; factor: number }> {
-  try {
-    const imageDataUrl = await fileToDataUrl(file);
-    const response = await invokeAiGateway<{ name: string; amount: number; factor: number }>('scan', {
-      imageDataUrl,
-    });
-    return response;
-  } catch (error) {
-    throw new Error(getAiErrorMessage(error) || 'Lỗi xử lý ảnh từ AI');
   }
 }

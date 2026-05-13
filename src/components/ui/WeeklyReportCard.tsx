@@ -30,7 +30,7 @@ export default function WeeklyReportCard({
             </div>
             <h3 className="text-2xl font-black text-white">Weekly Hydration Report</h3>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
-              Mở khóa báo cáo AI theo tuần để xem tổng lượng nước, xu hướng cải thiện, phân tích tài chính và khuyến nghị cá nhân hóa.
+              Mở khóa báo cáo AI theo tuần để xem tổng lượng nước, xu hướng cải thiện và khuyến nghị cá nhân hóa.
             </p>
           </div>
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
@@ -41,7 +41,6 @@ export default function WeeklyReportCard({
         <div className="mt-5 grid grid-cols-3 gap-3">
           {[
             { label: 'Phân tích AI', value: 'Khóa', icon: Sparkles },
-            { label: 'Tiết kiệm tuần', value: 'Khóa', icon: Wallet },
             { label: 'Xu hướng', value: 'Khóa', icon: TrendingUp },
           ].map((item) => (
             <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 py-4 px-2 flex flex-col items-center text-center">
@@ -94,12 +93,11 @@ export default function WeeklyReportCard({
 
       {report ? (
         <div className="relative mt-5 space-y-4">
-          <div className="grid gap-3 sm:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-3">
             {[
               { label: 'TB mỗi ngày', value: `${report.avgDaily.toLocaleString()} ml` },
               { label: 'Đạt mục tiêu', value: `${report.goalsAchieved}/${report.totalDays}` },
               { label: 'Tỷ lệ hoàn thành', value: `${report.achievementRate}%` },
-              { label: 'Tiết kiệm', value: `${report.savingsVND.toLocaleString()}đ` },
             ].map((item) => (
               <div key={item.label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
@@ -142,10 +140,6 @@ export default function WeeklyReportCard({
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500">Worst day</span>
                   <span className="font-black text-white">{report.worstDay || '--'}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-500">Quỹ tích lũy</span>
-                  <span className="font-black text-cyan-300">{report.fundUnits}</span>
                 </div>
               </div>
             </div>

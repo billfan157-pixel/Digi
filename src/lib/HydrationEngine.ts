@@ -59,6 +59,7 @@ export type WaterIntakeInput = {
   isFasting?:      boolean;          // [NEW] Đang trong chế độ nhịn ăn (Fasting)
   wakeUpTime?:     string;           // "07:00"
   bedTime?:        string;           // "23:00"
+  avgHeartRate?:   number;           // [NEW] Nhịp tim trung bình (bpm) từ Watch
 };
 
 // ── Output Types ───────────────────────────────────────────
@@ -73,6 +74,7 @@ export type WaterIntakeBreakdown = {
   dietAdj:         number;   // ml — điều chỉnh theo chế độ ăn
   exerciseAdj:     number;   // ml — điều chỉnh theo tập luyện hôm nay
   foodWaterAdj:    number;   // [NEW] ml — bù đắp lượng nước từ thực phẩm
+  heartRateAdj:    number;   // [NEW] ml — điều chỉnh theo nhịp tim
 };
 
 export type HydrationSchedule = {
@@ -108,6 +110,7 @@ export function calculateWaterIntake(input: WaterIntakeInput): WaterIntakeResult
     isFasting = false, // [NEW] Khởi tạo giá trị mặc định cho isFasting
     wakeUpTime = '07:00',
     bedTime = '23:00',
+    avgHeartRate = 0,
   } = input;
 
   const notes: string[] = [];
@@ -278,10 +281,18 @@ export function calculateWaterIntake(input: WaterIntakeInput): WaterIntakeResult
     notes.push(`Chế độ Nhịn ăn (Fasting): bù đắp ${foodWaterAdj}ml lượng nước thiếu hụt từ thực phẩm`);
   }
 
+  // ─ 8.6. [NEW] Heart Rate adjustment
+  let heartRateAdj = 0;
+  if (avgHeartRate > 90) {
+    // Nếu nhịp tim nghỉ > 90, tăng nhẹ nhu cầu nước (stress/trao đổi chất tăng)
+    heartRateAdj = Math.round((avgHeartRate - 90) * 15);
+    notes.push(`Nhịp tim trung bình (${avgHeartRate} bpm) cao hơn bình thường: thêm ${heartRateAdj}ml để hỗ trợ tuần hoàn`);
+  }
+
   // ─ 9. Tổng hợp
-  // [UPGRADED] Cộng thêm foodWaterAdj vào tổng
+  // [UPGRADED] Cộng thêm heartRateAdj vào tổng
   const rawTotal = base + ageAdj + genderAdj + activityAdj + climateAdj
-                 + healthAdj + dietAdj + exerciseAdj + foodWaterAdj;
+                 + healthAdj + dietAdj + exerciseAdj + foodWaterAdj + heartRateAdj;
 
   // Áp dụng cap nếu có bệnh lý
   let goalMl: number;
@@ -316,7 +327,8 @@ export function calculateWaterIntake(input: WaterIntakeInput): WaterIntakeResult
       healthAdj,
       dietAdj,
       exerciseAdj,
-      foodWaterAdj, // [NEW] Trả về biến này để UI có thể hiển thị nếu cần
+      foodWaterAdj,
+      heartRateAdj,
     },
     adjustmentNote: notes,
     riskFlags: risks,

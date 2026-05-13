@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Droplets, Sparkles, CalendarDays, TrendingUp } from 'lucide-react';
+import { Droplets, Sparkles, CalendarDays, TrendingUp, Info, Check } from 'lucide-react';
 
 interface CalendarCell {
   dayNum: number | null;
@@ -51,33 +51,37 @@ const CalendarCell = React.memo(function CalendarCell({
   }
 
   const pct = (cell.ml / (waterGoal || 1)) * 100;
-  const isCompleted = pct >= 100;
+  const isCompleted = cell.ml >= waterGoal;
+  const isPartial = cell.ml > 0 && !isCompleted;
   const isHalf = pct >= 50;
 
-  let cellClass = 'bg-slate-800/30 border border-slate-700/20';
+  // Determine Cell Background based on completion (Intuitive Color Coding)
+  let cellStyle = 'bg-slate-800/30 border-white/5';
+  let textStyle = 'text-slate-400';
 
-  if (cell.isFuture) {
-    cellClass = 'bg-white/[0.03] border border-white/[0.03] opacity-30';
-  } else if (isCompleted) {
-    cellClass = 'bg-gradient-to-br from-cyan-300 to-cyan-500 shadow-[0_0_20px_rgba(34,211,238,0.35)]';
-  } else if (isHalf) {
-    cellClass = 'bg-gradient-to-br from-cyan-900 to-cyan-700 border border-cyan-500/20';
-  } else if (pct > 0) {
-    cellClass = 'bg-cyan-950 border border-cyan-900/40';
+  if (!cell.isFuture) {
+    if (isCompleted) {
+      cellStyle = 'bg-gradient-to-br from-cyan-400 to-cyan-600 border-cyan-300/50 shadow-[0_0_15px_rgba(34,211,238,0.25)]';
+      textStyle = 'text-white';
+    } else if (isHalf) {
+      cellStyle = 'bg-cyan-900/60 border-cyan-500/30';
+      textStyle = 'text-cyan-100';
+    } else if (isPartial) {
+      cellStyle = 'bg-cyan-950/40 border-cyan-900/30';
+      textStyle = 'text-cyan-400/80';
+    }
+  } else {
+    cellStyle = 'bg-white/[0.02] border-transparent opacity-30';
+    textStyle = 'text-slate-600';
   }
 
   return (
     <motion.button
       type="button"
-      initial={{ opacity: 0, scale: 0.4 }}
+      initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{
-        type: 'spring',
-        stiffness: 120,
-        damping: 14,
-        delay: index * 0.01,
-      }}
-      whileTap={{ scale: 0.94 }}
+      transition={{ delay: index * 0.005 }}
+      whileTap={{ scale: 0.92 }}
       onClick={() => {
         if (!cell.isFuture && !cell.isEmptySlot && cell.fullDate) {
           onSelectCell({ dayNum: cell.dayNum || 0, ml: cell.ml, fullDate: cell.fullDate });
@@ -85,46 +89,28 @@ const CalendarCell = React.memo(function CalendarCell({
         }
       }}
       className={`
-        relative aspect-square overflow-hidden rounded-xl
-        transition-all duration-300
-        ${cellClass}
-        ${isSelected ? 'ring-2 ring-cyan-300/80 ring-offset-2 ring-offset-slate-950 scale-[1.05]' : ''}
-        ${!cell.isFuture ? 'cursor-pointer' : ''}
+        relative aspect-square rounded-[14px] flex flex-col items-center justify-center
+        transition-all duration-300 border
+        ${cellStyle}
+        ${isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-950 z-20 scale-105' : ''}
+        ${cell.isToday && !isSelected && !isCompleted ? 'ring-1 ring-cyan-400 ring-offset-1 ring-offset-slate-950' : ''}
       `}
     >
+      {/* Visual Feedback for Completion */}
       {isCompleted && (
-        <motion.div
-          animate={{ opacity: [0.25, 0.55, 0.25] }}
-          transition={{ repeat: Infinity, duration: 2.5 }}
-          className="absolute inset-0 bg-cyan-200/10"
-        />
-      )}
-      {cell.isToday && (
-        <motion.div
-          animate={{ opacity: [0.3, 0.8, 0.3], scale: [1, 1.2, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute inset-0 rounded-xl border border-cyan-300"
-        />
-      )}
-      <div className="absolute top-1 left-1.5 z-10">
-        <span className={`text-[10px] font-black ${cell.isToday ? 'text-white' : isCompleted ? 'text-cyan-950' : 'text-slate-300'}`}>
-          {cell.dayNum}
-        </span>
-      </div>
-      {!cell.isFuture && isCompleted && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.15 }}
-          className="absolute inset-0 flex items-center justify-center"
-        >
-          <Droplets size={13} className="text-cyan-950 drop-shadow-sm" />
-        </motion.div>
-      )}
-      {cell.isToday && (
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
-          <div className="h-1.5 w-1.5 rounded-full bg-cyan-200 shadow-[0_0_10px_rgba(103,232,249,0.8)]" />
+        <div className="absolute top-1 right-1 opacity-60">
+            <Check size={8} strokeWidth={4} className="text-white" />
         </div>
+      )}
+
+      {/* Day Number */}
+      <span className={`text-xs font-black tracking-tight ${textStyle}`}>
+        {cell.dayNum}
+      </span>
+
+      {/* Today indicator label (Very subtle) */}
+      {cell.isToday && (
+         <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white shadow-[0_0_5px_white]" />
       )}
     </motion.button>
   );
@@ -132,7 +118,6 @@ const CalendarCell = React.memo(function CalendarCell({
 
 export default function CalendarView({
   calendarCells,
-  currentMonthName,
   waterGoal,
   selectedCell,
   onSelectCell,
@@ -141,232 +126,118 @@ export default function CalendarView({
 
   const completedDays = useMemo(() => {
     return calendarCells.filter(
-      (c) =>
-        !c.isFuture &&
-        !c.isEmptySlot &&
-        c.ml >= waterGoal
+      (c) => !c.isFuture && !c.isEmptySlot && c.ml >= waterGoal
     ).length;
   }, [calendarCells, waterGoal]);
 
   const consistency = useMemo(() => {
-    const validDays = calendarCells.filter(
-      (c) => !c.isFuture && !c.isEmptySlot
-    );
-
-    if (!validDays.length) return 0;
-
-    return Math.round(
-      (completedDays / validDays.length) * 100
-    );
+    const validDays = calendarCells.filter((c) => !c.isFuture && !c.isEmptySlot);
+    return validDays.length ? Math.round((completedDays / validDays.length) * 100) : 0;
   }, [calendarCells, completedDays]);
 
   return (
-    <motion.div
-      initial={{
-        opacity: 0,
-        y: 20,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      transition={{
-        duration: 0.45,
-      }}
-      className="relative mt-5 overflow-hidden rounded-[30px] border border-white/10 bg-slate-900/55 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
-    >
-
-      {/* Ambient Background */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] h-52 w-52 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute bottom-[-20%] right-[-10%] h-56 w-56 rounded-full bg-blue-500/10 blur-3xl" />
-      </div>
-
-      <div className="relative z-10 p-5">
-
-        {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-
-          <div>
-              <p className="text-[10px] uppercase tracking-[0.25em] text-cyan-400 font-black">
-                TỔNG QUAN THÁNG
-              </p>
-
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
-              {currentMonthName}
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-400 leading-relaxed">
-              Theo dõi consistency hydration theo từng ngày.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-right">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-cyan-300 font-black">
-              ĐỀU ĐẶN
-            </p>
-
-            <p className="mt-1 text-lg font-black text-white">
-              {consistency}%
-            </p>
-
-            <p className="text-[9px] text-cyan-100/60">
-              hiệu suất
-            </p>
-          </div>
-        </div>
-
-        {/* Insights */}
-        <div className="grid grid-cols-3 gap-2 mb-6">
-
-          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="mb-1 flex items-center gap-1 text-cyan-400">
-              <Droplets size={12} />
-              <span className="text-[9px] font-black uppercase tracking-wider">
-                MỤC TIÊU
-              </span>
+    <div className="space-y-6">
+        {/* Main Calendar Card */}
+        <div className="glass-card-strong p-5 rounded-[32px] border border-white/10 bg-slate-900/40 relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+            {/* Ambient background glow */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/10 blur-[80px] rounded-full pointer-events-none" />
+            
+            {/* Week Labels */}
+            <div className="grid grid-cols-7 gap-2 mb-4">
+            {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((d) => (
+                <div key={d} className="text-center text-[10px] font-black tracking-widest text-slate-500 uppercase">
+                {d}
+                </div>
+            ))}
             </div>
 
-            <p className="text-lg font-black text-white">
-              {completedDays}
-            </p>
-
-            <p className="text-[10px] text-slate-500">
-              ngày đạt
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="mb-1 flex items-center gap-1 text-emerald-400">
-              <TrendingUp size={12} />
-              <span className="text-[9px] font-black uppercase tracking-wider">
-                XU HƯỚNG
-              </span>
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-2">
+            {calendarCells.map((cell, index) => (
+                <CalendarCell
+                    key={cell.isEmptySlot ? `empty-${index}` : `day-${cell.dayNum}`}
+                    cell={cell}
+                    waterGoal={waterGoal}
+                    index={index}
+                    isSelected={selectedCell?.fullDate === cell.fullDate}
+                    onSelectCell={onSelectCell}
+                    onDayClick={onDayClick}
+                />
+            ))}
             </div>
 
-            <p className="text-lg font-black text-white">
-              {consistency >= 70 ? 'Ổn' : consistency >= 40 ? 'TB' : 'Thấp'}
-            </p>
-
-            <p className="text-[10px] text-slate-500">
-              consistency
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="mb-1 flex items-center gap-1 text-orange-400">
-              <Sparkles size={12} />
-              <span className="text-[9px] font-black uppercase tracking-wider">
-                TRẠNG THÁI
-              </span>
+            {/* Intuitive Legend */}
+            <div className="mt-6 pt-5 border-t border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-sm bg-gradient-to-br from-cyan-400 to-cyan-600" />
+                        <span className="text-[9px] font-black text-slate-400 uppercase">Đạt</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-sm bg-cyan-900/60" />
+                        <span className="text-[9px] font-black text-slate-400 uppercase">{'>'}50%</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-sm bg-slate-800" />
+                        <span className="text-[9px] font-black text-slate-400 uppercase">Ít</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-1 text-slate-500">
+                    <Info size={10} />
+                    <span className="text-[8px] font-bold uppercase tracking-tighter">Bấm ngày để xem chi tiết</span>
+                </div>
             </div>
-
-            <p className="text-lg font-black text-white">
-              {completedDays >= 15 ? '🔥' : completedDays >= 8 ? '💧' : '🌱'}
-            </p>
-
-            <p className="text-[10px] text-slate-500">
-              hydration
-            </p>
-          </div>
         </div>
 
-        {/* Week Labels */}
-        <div className="grid grid-cols-7 gap-2 mb-3">
-          {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((d) => (
-            <div
-              key={d}
-              className="text-center text-[10px] font-black tracking-wide text-slate-500"
-            >
-              {d}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-2">
-          {calendarCells.map((cell, index) => (
-            <CalendarCell
-              key={cell.isEmptySlot ? `empty-${index}` : `day-${cell.dayNum}`}
-              cell={cell}
-              waterGoal={waterGoal}
-              index={index}
-              isSelected={selectedCell?.fullDate === cell.fullDate}
-              onSelectCell={onSelectCell}
-              onDayClick={onDayClick}
-            />
-          ))}
-        </div>
-
-        {/* Legend */}
-        <div className="mt-5 flex items-center justify-center gap-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-
-          <div className="flex items-center gap-1.5">
-            <div className="h-2.5 w-2.5 rounded-sm bg-cyan-950 border border-cyan-900/40" />
-            <span>Ít</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <div className="h-2.5 w-2.5 rounded-sm bg-cyan-700" />
-            <span>Ổn</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <div className="h-2.5 w-2.5 rounded-sm bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.4)]" />
-            <span>Đạt</span>
-          </div>
-        </div>
-
-        {/* Selected Detail */}
+        {/* Selected Day Detail (If active) */}
         <AnimatePresence>
           {selectedCell && (
             <motion.div
-              initial={{
-                opacity: 0,
-                y: 15,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              exit={{
-                opacity: 0,
-                y: 15,
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 140,
-                damping: 16,
-              }}
-              className="mt-6 overflow-hidden rounded-2xl border border-cyan-500/10 bg-cyan-500/[0.06]"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="glass-card p-5 rounded-[24px] border border-cyan-500/20 bg-slate-900/60 relative overflow-hidden"
             >
-              <div className="flex items-start gap-3 p-4">
-
-                <div className="mt-0.5 rounded-xl border border-cyan-500/10 bg-cyan-500/10 p-2">
-                  <CalendarDays
-                    size={16}
-                    className="text-cyan-300"
-                  />
-                </div>
-
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">
-                    NGÀY ĐÃ CHỌN
-                  </p>
-
-                  <p className="mt-1 text-lg font-black text-white">
-                    {selectedCell.ml.toLocaleString('vi-VN')} ml
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-400">
-                    Ngày {selectedCell.dayNum}
-                  </p>
-                </div>
+              <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày {selectedCell.dayNum}</span>
+                    </div>
+                    <p className="text-2xl font-black text-white">{selectedCell.ml.toLocaleString('vi-VN')} <span className="text-sm text-slate-500 font-bold">ml</span></p>
+                  </div>
+                  
+                  <div className="text-right">
+                      <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          selectedCell.ml >= waterGoal ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
+                      }`}>
+                          {selectedCell.ml >= waterGoal ? 'Hoàn thành' : 'Chưa đạt'}
+                      </div>
+                      <p className="mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                          Tiến độ: {Math.round((selectedCell.ml / waterGoal) * 100)}%
+                      </p>
+                  </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </motion.div>
+
+        {/* Summary Card */}
+        <div className="glass-card p-4 flex items-center justify-between border border-white/5 bg-slate-900/30">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 flex items-center justify-center">
+                    <TrendingUp size={20} className="text-cyan-400" />
+                </div>
+                <div>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Hiệu suất tháng</p>
+                    <p className="text-lg font-black text-white">{consistency}%</p>
+                </div>
+            </div>
+            <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/5">
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest text-center">Đã đạt</p>
+                <p className="text-lg font-black text-cyan-400 text-center">{completedDays} <span className="text-xs text-slate-500">ngày</span></p>
+            </div>
+        </div>
+    </div>
   );
 }
