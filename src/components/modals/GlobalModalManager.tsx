@@ -19,10 +19,16 @@ const SettingsModal = React.lazy(() => import('./SettingsModal'));
 const ClubCoopModal = React.lazy(() => import('./ClubCoopModal'));
 const ConfirmDialog = React.lazy(() => import('../ui/ConfirmDialog'));
 const SocialDiscoverModal = React.lazy(() => import('./SocialDiscoverModal'));
+const CommentsView = React.lazy(() => import('../../tabs/Feed/CommentsView').then(m => ({ default: m.CommentsView })));
 
 export default function GlobalModalManager() {
-  const { showSocialComposer, setShowSocialComposer, showHistory, setShowHistory } = useModalStore();
+  const { 
+    showSocialComposer, setShowSocialComposer, 
+    showHistory, setShowHistory,
+    activeCommentPost, setActiveCommentPost 
+  } = useModalStore();
 
+  const profile = useAppStore(s => s.profile);
   const isPremium = useAppStore(s => s.isPremium);
   const waterEntries = useAppStore(s => s.waterEntries);
   const waterIntake = useAppStore(s => s.waterIntake);
@@ -260,6 +266,13 @@ export default function GlobalModalManager() {
           handleUnfollowUser={handleUnfollowUser || (() => {})}
           handleFollowUser={handleFollowUser || (() => {})}
         />
+        {activeCommentPost && (
+          <CommentsView
+            post={activeCommentPost}
+            currentUserId={profile?.id}
+            onClose={() => setActiveCommentPost(null)}
+          />
+        )}
       </React.Suspense>
     </>
   );

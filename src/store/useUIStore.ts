@@ -51,6 +51,8 @@ interface UIState {
   setShowFastingModal: (show: boolean) => void;
   showFirstSessionChecklist: boolean;
   setShowFirstSessionChecklist: (show: boolean) => void;
+  activeCommentPost: any | null;
+  setActiveCommentPost: (post: any | null) => void;
 }
 
 export const useUIStore = create<UIState>()((set) => ({
@@ -78,4 +80,5 @@ export const useUIStore = create<UIState>()((set) => ({
   levelUpInfo: null, setLevelUpInfo: (info) => set({ levelUpInfo: info }),
   showFastingModal: false, setShowFastingModal: (show) => set({ showFastingModal: show }),
   showFirstSessionChecklist: false, setShowFirstSessionChecklist: (show) => set({ showFirstSessionChecklist: show }),
+  activeCommentPost: null, setActiveCommentPost: (post) => set({ activeCommentPost: post }),
 }));

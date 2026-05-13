@@ -6,8 +6,8 @@ import { supabase } from '../../lib/supabase';
 import { getRelativeTimeLabel } from '../../lib/social';
 import { getFallbackStoryDrink, getFallbackStoryPercent, getFallbackStoryTemperature } from '../../lib/feedUtils';
 import type { SocialFeedPost } from '../../models';
-import { CommentsView } from './CommentsView';
 import { useAppStore } from '../../store/useAppStore';
+import { useUIStore } from '../../store/useUIStore';
 
 interface HydrationStoryViewerProps {
   story: SocialFeedPost;
@@ -20,7 +20,7 @@ const QUICK_EMOJIS = ['💧', '🔥', '👏', '❤️', '🙌', '✨'];
 
 export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: HydrationStoryViewerProps) => {
   const [paused, setPaused] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const { setActiveCommentPost } = useUIStore();
   const [reactedEmojis, setReactedEmojis] = useState<Set<string>>(new Set());
   const profile = useAppStore((s) => s.profile);
 
@@ -105,9 +105,9 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
           </button>
         </div>
 
-        {/* Tap Controls */}
+        {/* Tap Controls - Only cover the middle part to allow header and bottom buttons to be clickable */}
         <div
-          className="absolute inset-0 z-20 flex"
+          className="absolute top-24 bottom-32 left-0 right-0 z-20 flex"
           onTouchStart={handleStartTouch}
           onTouchEnd={handleEndTouch}
           onMouseDown={handleStartTouch}
@@ -158,7 +158,7 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
 
           {/* Comment button */}
           <button
-            onClick={() => { setPaused(true); setShowComments(true); }}
+            onClick={() => { setPaused(true); setActiveCommentPost(story); }}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/20 text-white/80 hover:text-white hover:bg-white/20 active:scale-[0.98] transition-all"
           >
             <MessageCircle size={16} />
@@ -166,17 +166,6 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
           </button>
         </div>
       </motion.div>
-
-      {/* Comments Modal */}
-      <AnimatePresence>
-        {showComments && (
-          <CommentsView
-            post={story}
-            currentUserId={currentUserId ?? ''}
-            onClose={() => { setShowComments(false); setPaused(false); }}
-          />
-        )}
-      </AnimatePresence>
     </>
   );
 };

@@ -48,31 +48,29 @@ export default function HomeHydrationHero({
   return (
     <div
       className={[
-        'relative flex flex-col items-center justify-center -mt-4 pb-6',
-        isConnected ? 'h-[22rem]' : 'h-80',
+        'relative flex flex-col items-center justify-center pb-4',
+        isConnected ? 'mt-4' : '-mt-4 h-80',
       ].join(' ')}
     >
       {/* Visualizer Layer */}
       <div
         className={[
           'relative flex items-center justify-center',
-          isConnected ? 'w-80 h-80' : 'w-64 h-64',
+          isConnected ? 'w-72' : 'w-64 h-64',
         ].join(' ')}
       >
         {isConnected ? (
           <button
             onClick={onOpenBottleDetail || onOpenGoalDetail}
-            className="w-full h-full flex items-center justify-center active:scale-[1.08] transition-transform duration-150"
+            className="w-full flex items-center justify-center active:scale-[1.03] transition-transform duration-150"
           >
-            <div className="scale-110">
-              <BottleVisualizer
-                isConnected={true}
-                currentVolume={metrics?.currentVolume || 0}
-                capacity={bottleCapacity}
-                fillPercentage={bottleFillPercentage}
-                equippedBottle={equippedBottleSkin}
-              />
-            </div>
+            <BottleVisualizer
+              isConnected={true}
+              currentVolume={metrics?.currentVolume || 0}
+              capacity={bottleCapacity}
+              fillPercentage={bottleFillPercentage}
+              equippedBottle={equippedBottleSkin}
+            />
           </button>
         ) : (
           <button onClick={onOpenGoalDetail} className="relative w-52 h-52 active:scale-95 transition-transform duration-150">

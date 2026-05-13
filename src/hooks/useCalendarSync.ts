@@ -9,6 +9,7 @@ export const CALENDAR_OAUTH_PENDING_KEY = 'digiwell_pending_calendar_oauth';
 export const CALENDAR_TOKEN_UPDATED_EVENT = 'digiwell:google-provider-token-updated';
 const CALENDAR_CACHE_KEY = 'digiwell_calendar_events_cache';
 const CALENDAR_SYNCED_KEY = 'digiwell_calendar_synced_flag';
+const CALENDAR_REFRESH_TOKEN_KEY = 'digiwell_google_refresh_token';
 
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 const CALENDAR_SYNC_TOAST_ID = 'digiwell-calendar-sync-toast';
@@ -171,6 +172,16 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
   if (!session?.access_token) {
     return { events: [], needs_reauth: true };
   }
+
+  // Persist refresh_token khi có (chỉ xuất hiện lần đầu sau OAuth)
+  if (session.provider_refresh_token) {
+    localStorage.setItem(CALENDAR_REFRESH_TOKEN_KEY, session.provider_refresh_token);
+  }
+  // Fallback: lấy refresh token đã lưu từ trước
+  const refreshToken = session.provider_refresh_token
+    || localStorage.getItem(CALENDAR_REFRESH_TOKEN_KEY)
+    || '';
+
   const timeMin = new Date();
   timeMin.setHours(0, 0, 0, 0);
   const { data, error } = await supabase.functions.invoke('calendar-proxy', {
@@ -179,8 +190,8 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
       maxResults: 50,
       daysAhead: 7,
       timeMin: timeMin.toISOString(),
-      providerToken: session.provider_token,
-      providerRefreshToken: session.provider_refresh_token,
+      providerToken: session.provider_token || '',
+      providerRefreshToken: refreshToken,
     },
   });
   if (error) throw new Error(error.message || 'Không thể kết nối calendar proxy.');
@@ -237,15 +248,23 @@ export function useCalendarSync() {
       lastSyncTimeRef.current = Date.now();
 
       if (proxyResponse.needs_reauth) {
-        // Nếu cần re-auth, gỡ cờ để nút Connect hiện ra
-        setIsCalendarSynced(false);
         setIsSyncing(false);
+
+        // Nếu có cached data, giữ hiển thị thay vì reset
+        const hasCachedEvents = calendarEvents.length > 0;
+        if (silent && hasCachedEvents) {
+          // Giữ isCalendarSynced = true để UI vẫn hiển thị events cached
+          return calendarEvents.length;
+        }
+
+        // Chỉ reset khi không có cache hoặc user chủ động sync
+        setIsCalendarSynced(false);
 
         if (!startOAuthIfNeeded) return false;
 
         await beginGoogleCalendarOAuth();
         if (!silent) {
-          toast.success('Phiên làm việc hết hạn, vui lòng đăng nhập lại Google.', { id: tid });
+          toast.info('Phiên Google hết hạn, đang kết nối lại...', { id: tid });
         }
         return false;
       }

@@ -1,7 +1,7 @@
 import { Home, BarChart2, Trophy, Rss, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export type TabType = 'home' | 'insight' | 'league' | 'feed' | 'profile';
+export type TabType = 'home' | 'insight' | 'league' | 'feed' | 'profile' | 'bottle';
 
 interface BottomNavProps {
   activeTab: TabType;

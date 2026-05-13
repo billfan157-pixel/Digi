@@ -18,6 +18,8 @@ const InsightTab = React.lazy(() => import('@/tabs/InsightTab'));
 const FeedTab = React.lazy(() => import('@/tabs/FeedTab'));
 const ProfileTab = React.lazy(() => import('@/tabs/ProfileTab'));
 const LeagueTab = React.lazy(() => import('@/tabs/LeagueTab'));
+const BottleTab = React.lazy(() => import('@/tabs/BottleTab'));
+
 export type AppView = 'welcome' | 'login' | 'register' | 'app' | 'locked';
 
 export interface AppShellProps {
@@ -36,7 +38,7 @@ export interface AppShellProps {
   setActiveTab: (tab: TabType) => void;
   homeTabProps: React.ComponentProps<typeof HomeTab>;
   insightTabProps: React.ComponentProps<typeof InsightTab>;
-  bottleTabProps?: null;
+  bottleTabProps: React.ComponentProps<typeof BottleTab>;
   leagueTabProps: React.ComponentProps<typeof LeagueTab>;
   feedTabProps: React.ComponentProps<typeof FeedTab>;
   profileTabProps: React.ComponentProps<typeof ProfileTab>;
@@ -137,7 +139,11 @@ export default function AppShell({
               <ProfileTab {...profileTabProps} />
             </ErrorBoundary>
           )}
-          
+          {activeTab === 'bottle' && (
+            <ErrorBoundary key="bottle-tab">
+              <BottleTab {...bottleTabProps} />
+            </ErrorBoundary>
+          )}
         </Suspense>
       </div>
 

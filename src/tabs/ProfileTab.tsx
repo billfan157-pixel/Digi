@@ -45,11 +45,12 @@ const ProfileTab = memo(function ProfileTab({
     weeklyHistory: state.weeklyHistory,
     actions: state.actions,
   })));
-  const { setShowPremiumModal, setShowAddFriend, setShowProfileSettings, setActiveTab } = useUIStore(useShallow((state) => ({
+  const { setShowPremiumModal, setShowAddFriend, setShowProfileSettings, setActiveTab, setActiveCommentPost } = useUIStore(useShallow((state) => ({
     setShowPremiumModal: state.setShowPremiumModal,
     setShowAddFriend: state.setShowAddFriend,
     setShowProfileSettings: state.setShowProfileSettings,
     setActiveTab: state.setActiveTab,
+    setActiveCommentPost: state.setActiveCommentPost,
   })));
   const wp = profile?.wp || 0;
   const currentRank = getRankInfo(wp);
@@ -278,7 +279,7 @@ const ProfileTab = memo(function ProfileTab({
       </>}
 
     {activeView === 'posts' && <div className="mt-4 space-y-4">
-        {myPosts.length > 0 ? myPosts.map((post, index: number) => <PostCard key={post.id || `mypost-${index}`} post={post} currentUserId={profile?.id} handleToggleLikePost={handleToggleLikePost || (() => {})} onOpenComments={() => {}} />) : <div className="text-center py-10 bg-slate-900/50 rounded-3xl border border-white/5">
+        {myPosts.length > 0 ? myPosts.map((post, index: number) => <PostCard key={post.id || `mypost-${index}`} post={post} currentUserId={profile?.id} handleToggleLikePost={handleToggleLikePost || (() => {})} onOpenComments={setActiveCommentPost} />) : <div className="text-center py-10 bg-slate-900/50 rounded-3xl border border-white/5">
             <Grid size={40} className="text-slate-700 mx-auto mb-3" />
             <p className="text-slate-500 text-sm font-medium">Bạn chưa có bài đăng nào</p>
           </div>}

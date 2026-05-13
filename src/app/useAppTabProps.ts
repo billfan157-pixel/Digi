@@ -90,7 +90,23 @@ export function useAppTabProps({
     weeklyReport,
   ]);
 
-  const bottleTabProps = null;
+  const bottleTabProps = useMemo(() => ({
+    profile,
+    weatherData,
+    isWeatherSynced,
+    watchData,
+    isWatchConnected,
+    smartBottle,
+    onBack: () => setActiveTab('home'),
+  }), [
+    profile,
+    weatherData,
+    isWeatherSynced,
+    watchData,
+    isWatchConnected,
+    smartBottle,
+    setActiveTab,
+  ]);
 
   const leagueTabProps = useMemo(() => ({
     leagueMode,

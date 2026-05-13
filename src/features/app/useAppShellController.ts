@@ -217,7 +217,7 @@ export function useAppShellController(): AppShellProps {
     setActiveTab: setActiveTab as any,
     homeTabProps: tabProps.homeTabProps,
     insightTabProps: tabProps.insightTabProps,
-    bottleTabProps: null,
+    bottleTabProps: tabProps.bottleTabProps,
     leagueTabProps: tabProps.leagueTabProps,
     feedTabProps: tabProps.feedTabProps,
     profileTabProps: tabProps.profileTabProps,

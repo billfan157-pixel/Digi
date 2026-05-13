@@ -203,7 +203,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
           bottleCapacity={750}
           onConnectBottle={connectBottle}
           onOpenGoalDetail={() => setShowGoalDetail(true)}
-          onOpenBottleDetail={() => setActiveTab('insight')}
+          onOpenBottleDetail={() => setActiveTab('bottle')}
         />
       )}
 

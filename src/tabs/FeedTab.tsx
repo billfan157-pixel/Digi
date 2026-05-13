@@ -3,7 +3,6 @@ import { AnimatePresence } from 'framer-motion';
 import { useFeed } from '../hooks/useFeed';
 import { useNotifications } from '../hooks/useNotifications';
 import type { SocialFeedPost } from '../models';
-import { CommentsView } from './Feed/CommentsView';
 import { EmptyFeedState } from './Feed/EmptyFeedState';
 import { FeedComposer } from './Feed/FeedComposer';
 import { FeedHeader } from './Feed/FeedHeader';
@@ -18,6 +17,7 @@ import type { FeedFilter, FeedMode, FeedTabProps } from './Feed/types';
 import { PullToRefresh } from './Feed/PullToRefresh';
 import TabHeader from '../components/layout/TabHeader';
 import { Search, TrendingUp } from 'lucide-react';
+import { useUIStore } from '../store/useUIStore';
 
 export { PostCard } from './Feed/PostCard';
 
@@ -41,7 +41,7 @@ const FeedTab = memo(function FeedTab({
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
   const [feedMode, setFeedMode] = useState<FeedMode>('smart');
   const [feedSearch, setFeedSearch] = useState('');
-  const [activeCommentPost, setActiveCommentPost] = useState<SocialFeedPost | null>(null);
+  const { activeCommentPost, setActiveCommentPost } = useUIStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
   const onlineFriendsCount = useMemo(
@@ -161,12 +161,6 @@ const FeedTab = memo(function FeedTab({
           handleToggleLikePost={handleToggleLikePost}
           onOpenComments={setActiveCommentPost}
         />
-
-        <AnimatePresence>
-          {activeCommentPost && (
-            <CommentsView key="comments-view-modal" post={activeCommentPost} currentUserId={profile?.id} onClose={() => setActiveCommentPost(null)} />
-          )}
-        </AnimatePresence>
 
         <AnimatePresence>
           {showNotifications && (

@@ -1,496 +1,360 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Bluetooth, RefreshCw, LogOut, Droplet, GlassWater, Zap, Lock, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Bluetooth, RefreshCw, LogOut, Droplet, GlassWater, Zap, Lock, ChevronRight, Activity, Battery, Thermometer, Wifi } from 'lucide-react';
 import { getBatteryIcon, CAPACITY } from './constants';
 
 // ============================================================================
-// METRIC MINI COMPONENT
+// METRIC MINI COMPONENT (CYBER UPGRADE)
 // ============================================================================
-export function MetricMini({ label, value }: { label: string; value: string }) {
+export function MetricMini({ label, value, icon: Icon }: { label: string; value: string; icon?: any }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5 text-center">
-      <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500 font-black">{label}</p>
-      <p className="text-sm font-black text-white mt-1">{value}</p>
-    </div>
-  );
-}
+    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-3 transition-all hover:bg-slate-900/60 hover:border-cyan-500/30">
+      {/* Subtle background glow */}
+      <div className="absolute -inset-1 bg-gradient-to-br from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity blur-sm" />
 
-// ============================================================================
-// REALISTIC WATER SURFACE
-// ============================================================================
-function RealisticWaterSurface({ isActive }: { isActive: boolean }) {
-  if (!isActive) return null;
-  
-  return (
-    <div className="absolute top-0 left-0 right-0 h-8 overflow-visible">
-      {/* Main water surface with elliptical perspective */}
-      <motion.div
-        className="absolute top-0 left-0 right-0 h-6 rounded-[50%]"
-        style={{
-          background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.4) 0%, rgba(34, 211, 238, 0.6) 30%, rgba(59, 130, 246, 0.8) 100%)',
-          transform: 'perspective(400px) rotateX(75deg)',
-          transformOrigin: 'center center',
-        }}
-        animate={{
-          scaleX: [1, 1.02, 1],
-          scaleY: [1, 0.98, 1],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: 'easeInOut'
-        }}
-      />
-      
-      {/* Secondary ripple */}
-      <motion.div
-        className="absolute top-1 left-[10%] right-[10%] h-4 rounded-[50%]"
-        style={{
-          background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.3) 0%, rgba(34, 211, 238, 0.4) 50%, transparent 100%)',
-          transform: 'perspective(400px) rotateX(75deg)',
-        }}
-        animate={{
-          scaleX: [1, 0.98, 1],
-          opacity: [0.6, 0.8, 0.6]
-        }}
-        transition={{
-          duration: 2.5,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          delay: 0.5
-        }}
-      />
-    </div>
-  );
-}
-
-// ============================================================================
-// REALISTIC 3D BOTTLE
-// ============================================================================
-function RealisticBottle3D({ 
-  fillPercentage, 
-  isConnected 
-}: { 
-  fillPercentage: number; 
-  isConnected: boolean;
-}) {
-  return (
-    <div 
-      className="relative w-full h-full"
-      style={{
-        perspective: '1000px',
-        perspectiveOrigin: 'center center'
-      }}
-    >
-      {/* Bottle container with 3D transform */}
-      <div
-        className="relative w-full h-full"
-        style={{
-          transform: 'rotateY(-8deg) rotateX(2deg)',
-          transformStyle: 'preserve-3d'
-        }}
-      >
-        {/* Bottle cap - realistic sport bottle style */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-14 z-20">
-          {/* Cap top */}
-          <div className="absolute top-0 left-0 right-0 h-10 rounded-t-xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900" />
-            {/* Cap threading texture */}
-            <div className="absolute inset-x-2 top-2 bottom-2 space-y-0.5">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-0.5 bg-slate-600/50 rounded" />
-              ))}
-            </div>
-            {/* Cap highlight */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-            <div className="absolute left-2 top-2 bottom-2 w-1 bg-gradient-to-b from-white/30 to-transparent rounded-full" />
-          </div>
-          
-          {/* Cap neck/ring */}
-          <div className="absolute bottom-0 left-0 right-0 h-5 rounded-md overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-800 to-slate-900" />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-            {/* Ring grooves */}
-            <div className="absolute inset-x-0 top-1 h-px bg-slate-700" />
-            <div className="absolute inset-x-0 bottom-1 h-px bg-black/30" />
-          </div>
-        </div>
-
-        {/* Main bottle body - realistic sport bottle proportions */}
-        <div className="absolute top-12 left-1/2 -translate-x-1/2 w-32 h-[calc(100%-3rem)]">
-          {/* Outer glass shell with realistic curvature */}
-          <div className="relative w-full h-full rounded-[2rem] overflow-hidden">
-            {/* Base bottle material - translucent plastic/glass */}
-            <div className="absolute inset-0 rounded-[2rem] overflow-hidden">
-              {/* Main body gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-200/10 via-slate-300/5 to-slate-400/10" />
-              
-              {/* Left edge highlight - strong light source from left */}
-              <div 
-                className="absolute left-0 top-8 bottom-8 w-12 rounded-l-[2rem]"
-                style={{
-                  background: 'linear-gradient(to right, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 20%, transparent 60%)'
-                }}
-              />
-              
-              {/* Center highlight stripe */}
-              <div className="absolute left-5 top-12 bottom-12 w-2 bg-gradient-to-b from-transparent via-white/40 to-transparent rounded-full blur-[1px]" />
-              
-              {/* Right edge shadow - depth */}
-              <div 
-                className="absolute right-0 top-8 bottom-8 w-16 rounded-r-[2rem]"
-                style={{
-                  background: 'linear-gradient(to left, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.08) 30%, transparent 70%)'
-                }}
-              />
-              
-              {/* Bottom curve shadow */}
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-20 rounded-b-[2rem]"
-                style={{
-                  background: 'radial-gradient(ellipse at bottom, rgba(0, 0, 0, 0.1) 0%, transparent 60%)'
-                }}
-              />
-            </div>
-
-            {/* Water fill with realistic behavior */}
-            <motion.div
-              className="absolute bottom-0 left-0 right-0 rounded-b-[2rem] overflow-hidden"
-              initial={false}
-              animate={{ 
-                height: `${isConnected ? fillPercentage : 0}%`
-              }}
-              transition={{ 
-                duration: 1.4, 
-                ease: [0.19, 1, 0.22, 1]
-              }}
-            >
-              {/* Water body - realistic gradient */}
-              <div 
-                className="absolute inset-0"
-                style={{
-                  background: 'linear-gradient(to bottom, rgba(34, 211, 238, 0.7) 0%, rgba(34, 211, 238, 0.8) 10%, rgba(59, 130, 246, 0.85) 50%, rgba(37, 99, 235, 0.9) 100%)'
-                }}
-              />
-              
-              {/* Water subsurface scattering effect */}
-              <div 
-                className="absolute inset-0"
-                style={{
-                  background: 'radial-gradient(ellipse at 30% 40%, rgba(96, 165, 250, 0.4) 0%, transparent 60%)',
-                  mixBlendMode: 'screen'
-                }}
-              />
-              
-              {/* Caustics effect - light patterns through water */}
-              <motion.div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage: `
-                    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.8) 0%, transparent 3%),
-                    radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.6) 0%, transparent 4%),
-                    radial-gradient(circle at 45% 70%, rgba(255, 255, 255, 0.5) 0%, transparent 3%),
-                    radial-gradient(circle at 75% 55%, rgba(255, 255, 255, 0.7) 0%, transparent 2%)
-                  `
-                }}
-                animate={{
-                  x: [0, 10, 0],
-                  y: [0, -15, 0],
-                }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: 'easeInOut'
-                }}
-              />
-              
-              {/* Water surface */}
-              <div className="absolute top-0 left-0 right-0">
-                <RealisticWaterSurface isActive={isConnected} />
-              </div>
-              
-              {/* Refraction line at water surface */}
-              {isConnected && (
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-              )}
-            </motion.div>
-
-            {/* Outer glass reflection - post water */}
-            <div className="absolute inset-0 rounded-[2rem] pointer-events-none">
-              {/* Strong specular highlight */}
-              <div 
-                className="absolute left-3 top-16 bottom-16 w-3 rounded-full"
-                style={{
-                  background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.8) 20%, rgba(255, 255, 255, 0.6) 40%, rgba(255, 255, 255, 0.3) 60%, transparent 100%)',
-                  filter: 'blur(2px)'
-                }}
-              />
-              
-              {/* Secondary highlight */}
-              <div 
-                className="absolute left-7 top-20 bottom-24 w-1.5 rounded-full"
-                style={{
-                  background: 'linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.4) 30%, rgba(255, 255, 255, 0.2) 70%, transparent 100%)',
-                  filter: 'blur(1px)'
-                }}
-              />
-              
-              {/* Environmental reflection - subtle */}
-              <motion.div
-                className="absolute right-6 top-20 bottom-20 w-8 rounded-full opacity-30"
-                style={{
-                  background: 'linear-gradient(to bottom, rgba(59, 130, 246, 0.3) 0%, rgba(34, 211, 238, 0.2) 50%, transparent 100%)',
-                  filter: 'blur(4px)'
-                }}
-                animate={{
-                  opacity: [0.2, 0.4, 0.2]
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: 'easeInOut'
-                }}
-              />
-            </div>
-
-            {/* Glass edge thickness */}
-            <div 
-              className="absolute inset-0 rounded-[2rem] pointer-events-none"
-              style={{
-                boxShadow: `
-                  inset 0 0 0 1px rgba(255, 255, 255, 0.2),
-                  inset 0 0 0 2px rgba(0, 0, 0, 0.05),
-                  0 4px 20px rgba(0, 0, 0, 0.15),
-                  0 8px 40px rgba(0, 0, 0, 0.1)
-                `
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Bottle base - realistic ground contact */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-8">
-          <div className="absolute inset-0 rounded-b-[2rem] overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-800/20 to-slate-900/40" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-          </div>
-        </div>
-
-        {/* Floor shadow */}
-        <div 
-          className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-28 h-3 rounded-[50%]"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 50%, transparent 100%)',
-            filter: 'blur(3px)'
-          }}
-        />
+      <div className="relative flex flex-col items-center text-center">
+        {Icon && <Icon size={12} className="text-slate-500 mb-1.5 group-hover:text-cyan-400 transition-colors" />}
+        <p className="text-[9px] uppercase tracking-[0.25em] text-slate-500 font-black leading-none">{label}</p>
+        <p className="text-sm font-black text-white mt-1.5 tracking-tight group-hover:text-cyan-100 transition-colors">{value}</p>
       </div>
+
+      {/* Bottom accent line */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[1px] bg-cyan-400 group-hover:w-1/2 transition-all duration-300" />
     </div>
   );
 }
 
 // ============================================================================
-// BOTTLE VISUALIZER (MAIN COMPONENT)
+// HYDRATESPARK PRO BOTTLE — Inspired by HidrateSpark Steel
 // ============================================================================
-export function BottleVisualizer({
-  isConnected,
-  currentVolume,
-  capacity,
+function HydrateSparkBottle({
   fillPercentage,
-  equippedBottle
+  isConnected
 }: {
-  isConnected: boolean;
-  currentVolume: number;
-  capacity: number;
   fillPercentage: number;
-  equippedBottle: any;
+  isConnected: boolean;
 }) {
-  const skinUrl = isConnected && (equippedBottle?.image_url || (equippedBottle?.meta_value && equippedBottle.meta_value.startsWith('http'))) 
-    ? (equippedBottle.image_url || equippedBottle.meta_value) 
-    : null;
-  const hasSkin = !!skinUrl;
+  const fillPct = isConnected ? Math.min(Math.max(fillPercentage, 0), 100) : 0;
+  const isLowWater = fillPct < 20 && isConnected;
 
   return (
-    <div className="flex justify-center items-center py-4 relative h-[300px]">
-      {/* Ambient light - subtle */}
-      <AnimatePresence>
-        {isConnected && (
-          <motion.div
-            key="ambient-glow"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-            className="absolute inset-0 pointer-events-none"
+    <div className="relative w-full h-full flex flex-col items-center justify-end">
+      {/* ── Complete Bottle Assembly ── */}
+      <div className="relative w-[72px] flex-1 max-h-[94%] flex flex-col items-center">
+
+        {/* ═══ 1. FLIP-TOP CAP ASSEMBLY ═══ */}
+        <div className="relative z-20 flex-shrink-0 w-[56px] h-[52px] mb-[-2px]">
+
+          {/* Cap top dome (the flip lid) */}
+          <div className="absolute top-0 left-[4px] right-[4px] h-[22px] rounded-t-[14px] overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #8a949e 0%, #6d7680 30%, #5a6370 60%, #4e5862 100%)',
+              boxShadow: 'inset 0 2px 1px rgba(255,255,255,0.18), inset 0 -1px 2px rgba(0,0,0,0.15)'
+            }}
           >
-            {/* Soft ambient glow */}
-            <div 
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-64 rounded-full"
+            {/* Hinge mechanism */}
+            <div className="absolute top-[4px] left-1/2 -translate-x-1/2 w-[26px] h-[4px] rounded-full"
               style={{
-                background: 'radial-gradient(ellipse, rgba(59, 130, 246, 0.08) 0%, transparent 70%)',
-                filter: 'blur(40px)'
+                background: 'linear-gradient(to bottom, #9aa3ad, #737c86)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 1px rgba(0,0,0,0.15)'
               }}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main bottle */}
-      <motion.div
-        initial={{ opacity: 0, y: 20, rotateY: -15 }}
-        animate={{ 
-          opacity: 1, 
-          y: 0,
-          rotateY: 0
-        }}
-        transition={{ 
-          duration: 1, 
-          ease: [0.16, 1, 0.3, 1]
-        }}
-        className="relative w-44 h-full"
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        {hasSkin ? (
-          // Custom skin bottle
-          <div className="relative w-full h-full">
-            <motion.div
-              className="absolute bottom-0 left-0 right-0"
+            {/* Flip latch / push button */}
+            <div className="absolute bottom-[3px] left-1/2 -translate-x-1/2 w-[14px] h-[6px] rounded-[3px]"
               style={{
-                maskImage: `url(${skinUrl})`,
-                maskSize: 'contain',
-                maskRepeat: 'no-repeat',
-                maskPosition: 'center bottom',
-                WebkitMaskImage: `url(${skinUrl})`,
-                WebkitMaskSize: 'contain',
-                WebkitMaskRepeat: 'no-repeat',
-                WebkitMaskPosition: 'center bottom',
+                background: 'linear-gradient(to bottom, #b0b8c0, #8a929a)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.3)'
               }}
-              initial={false}
-              animate={{ 
-                height: `${isConnected ? fillPercentage : 0}%`
-              }}
-              transition={{ 
-                duration: 1.4, 
-                ease: [0.19, 1, 0.22, 1]
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-700 via-blue-500 to-cyan-300" />
-            </motion.div>
-            
-            <img 
-              src={skinUrl} 
-              alt={equippedBottle.name} 
-              className="absolute inset-0 w-full h-full object-contain"
-              style={{
-                filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.3)) drop-shadow(0 8px 16px rgba(0,0,0,0.2))'
-              }}
+            />
+            {/* Subtle groove line */}
+            <div className="absolute bottom-0 left-[6px] right-[6px] h-[1px]"
+              style={{ background: 'rgba(0,0,0,0.2)' }}
             />
           </div>
-        ) : (
-          <RealisticBottle3D fillPercentage={fillPercentage} isConnected={isConnected} />
-        )}
 
-        {/* Volume display overlay */}
-        <motion.div 
-          className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-        >
-          {/* Volume number */}
-          <motion.div
-            key={currentVolume}
-            initial={{ opacity: 0, y: -10, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ 
-              duration: 0.4,
-              ease: [0.34, 1.56, 0.64, 1]
-            }}
-            className="text-4xl font-black text-white tracking-tighter tabular-nums"
+          {/* Spout lip (the drink opening visible when open) */}
+          <div className="absolute top-[20px] left-[3px] right-[3px] h-[8px]"
             style={{
-              textShadow: `
-                0 2px 8px rgba(0, 0, 0, 0.5),
-                0 4px 16px rgba(0, 0, 0, 0.3),
-                0 0 30px rgba(59, 130, 246, 0.3)
-              `
-            }}
-          >
-            {isConnected ? currentVolume : 0}
-          </motion.div>
-          
-          {/* Capacity */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
-            className="mt-1 text-xs font-bold text-cyan-100 tracking-wide"
-            style={{
-              textShadow: '0 1px 4px rgba(0, 0, 0, 0.5)'
-            }}
-          >
-            / {capacity} ml
-          </motion.div>
-
-          {/* Percentage badge */}
-          {isConnected && fillPercentage > 0 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.9, type: "spring", bounce: 0.4 }}
-              className="mt-3 px-3 py-1 rounded-full backdrop-blur-md"
-              style={{
-                background: 'rgba(6, 182, 212, 0.15)',
-                border: '1px solid rgba(34, 211, 238, 0.3)',
-                boxShadow: '0 4px 12px rgba(6, 182, 212, 0.2)'
-              }}
-            >
-              <span className="text-[10px] font-black text-cyan-300 tracking-wider">
-                {Math.round(fillPercentage)}%
-              </span>
-            </motion.div>
-          )}
-        </motion.div>
-      </motion.div>
-
-      {/* Status indicator */}
-      {isConnected && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.1, type: "spring" }}
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2"
-          style={{
-            background: 'rgba(16, 185, 129, 0.12)',
-            border: '1px solid rgba(52, 211, 153, 0.3)',
-            boxShadow: '0 4px 16px rgba(16, 185, 129, 0.15)'
-          }}
-        >
-          <motion.div
-            animate={{ 
-              scale: [1, 1.3, 1],
-              opacity: [1, 0.7, 1]
-            }}
-            transition={{ 
-              duration: 2, 
-              repeat: Infinity,
-              ease: 'easeInOut'
-            }}
-            className="w-1.5 h-1.5 rounded-full bg-emerald-400"
-            style={{
-              boxShadow: '0 0 6px rgba(52, 211, 153, 0.8)'
+              background: 'linear-gradient(to bottom, #5a6370 0%, #4e5862 50%, #525b65 100%)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 2px rgba(0,0,0,0.2)',
+              borderRadius: '2px 2px 4px 4px'
             }}
           />
-          <span className="text-[10px] font-black text-emerald-300 tracking-wider uppercase">
-            Demo
-          </span>
-        </motion.div>
-      )}
+
+          {/* Cap collar / neck ring (wider, connects to body) */}
+          <div className="absolute bottom-0 left-0 right-0 h-[24px] overflow-hidden"
+            style={{
+              borderRadius: '4px 4px 6px 6px',
+              background: 'linear-gradient(to bottom, #6b747e 0%, #5e6770 30%, #535c65 60%, #4a535e 100%)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 3px 6px rgba(0,0,0,0.3)'
+            }}
+          >
+            {/* Ring detail lines */}
+            <div className="absolute top-[3px] left-[2px] right-[2px] h-[1px]" style={{ background: 'rgba(255,255,255,0.08)' }} />
+            <div className="absolute bottom-[3px] left-0 right-0 h-[1px]" style={{ background: 'rgba(0,0,0,0.25)' }} />
+            {/* Center grip ridge */}
+            <div className="absolute top-[8px] left-[3px] right-[3px] h-[6px]"
+              style={{
+                background: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 2px)',
+                borderRadius: '2px'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ═══ 2. SHOULDER (tapers from cap width to body width) ═══ */}
+        <div className="relative flex-shrink-0 w-full h-[18px] -mt-[1px]"
+          style={{
+            background: 'linear-gradient(to right, #3d424a 0%, #5e6770 12%, #8e98a2 28%, #b5bdc5 42%, #ccd3d9 50%, #b5bdc5 58%, #8e98a2 72%, #5e6770 88%, #3d424a 100%)',
+            borderRadius: '3px 3px 0 0',
+            clipPath: 'polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%)'
+          }}
+        >
+          {/* Shoulder highlight */}
+          <div className="absolute left-[22%] top-0 bottom-0 w-[4px] rounded-full pointer-events-none"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.1))',
+              filter: 'blur(1px)'
+            }}
+          />
+        </div>
+
+        {/* ═══ 3. BRUSHED STEEL BODY (tall cylinder) ═══ */}
+        <div className="relative w-full flex-1 min-h-0 overflow-hidden -mt-[1px]"
+          style={{
+            borderRadius: '2px 2px 0 0',
+            background: 'linear-gradient(to right, #3a3f47 0%, #535c65 8%, #6d7680 14%, #8e98a2 24%, #a8b2bb 34%, #bcc4cc 44%, #ccd3d9 50%, #bcc4cc 56%, #a8b2bb 66%, #8e98a2 76%, #6d7680 86%, #535c65 92%, #3a3f47 100%)',
+            boxShadow: 'inset 0 0 15px rgba(0,0,0,0.1), 0 8px 32px rgba(0,0,0,0.5)'
+          }}
+        >
+          {/* Brushed metal texture (fine horizontal lines) */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.035]"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.6) 1px, rgba(255,255,255,0.6) 2px)',
+              backgroundSize: '100% 2px'
+            }}
+          />
+
+          {/* Primary specular highlight (left) */}
+          <div className="absolute left-[20%] top-[2%] bottom-[2%] w-[5px] rounded-full pointer-events-none"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 15%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0.4) 85%, rgba(255,255,255,0) 100%)',
+              filter: 'blur(1.5px)'
+            }}
+          />
+
+          {/* Secondary specular (right, subtle) */}
+          <div className="absolute right-[24%] top-[4%] bottom-[4%] w-[3px] rounded-full pointer-events-none"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0.12) 75%, rgba(255,255,255,0) 100%)',
+              filter: 'blur(1px)'
+            }}
+          />
+
+          {/* Edge darkening (left & right) */}
+          <div className="absolute left-0 top-0 bottom-0 w-[6px] pointer-events-none"
+            style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.15), transparent)' }}
+          />
+          <div className="absolute right-0 top-0 bottom-0 w-[6px] pointer-events-none"
+            style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.15), transparent)' }}
+          />
+
+          {/* ── Branding (vertical) — "DigiWell" ── */}
+          <div className="absolute bottom-[30%] right-[14%] pointer-events-none" style={{ writingMode: 'vertical-rl' }}>
+            <span className="text-[7px] font-black tracking-[0.35em] uppercase"
+              style={{ color: 'rgba(55,60,70,0.55)', textShadow: '0 0.5px 0 rgba(255,255,255,0.1)' }}
+            >DigiWell</span>
+          </div>
+
+          {/* Capacity sub-label */}
+          <div className="absolute bottom-[22%] right-[14%] pointer-events-none" style={{ writingMode: 'vertical-rl' }}>
+            <span className="text-[5px] font-bold tracking-wider" style={{ color: 'rgba(55,60,70,0.35)' }}>750 ml</span>
+          </div>
+
+          {/* ── Water level indicator (sleek side strip) ── */}
+          <div className="absolute left-[12%] top-[8%] bottom-[6%] w-[3.5px] rounded-full overflow-hidden pointer-events-none"
+            style={{ background: 'rgba(0,0,0,0.12)' }}
+          >
+            <motion.div
+              className="absolute bottom-0 left-0 right-0"
+              initial={false}
+              animate={{ height: `${fillPct}%` }}
+              transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <motion.div
+                className="absolute inset-0"
+                animate={{ opacity: isLowWater ? [0.6, 1, 0.6] : [0.7, 1, 0.7] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                style={{
+                  background: isLowWater
+                    ? 'linear-gradient(to top, #fbbf24, #f59e0b)'
+                    : 'linear-gradient(to top, #22d3ee, #06b6d4)',
+                  boxShadow: isLowWater
+                    ? '0 0 8px rgba(251,191,36,0.8)'
+                    : '0 0 8px rgba(34,211,238,0.7)',
+                  borderRadius: '2px'
+                }}
+              />
+            </motion.div>
+          </div>
+        </div>
+
+        {/* ═══ 4. RAINBOW LED BASE (frosted translucent) ═══ */}
+        <div className="relative flex-shrink-0 w-[76px] h-[28px] -mt-[1px] z-10">
+          {/* Physical base housing */}
+          <div className="absolute inset-0 rounded-b-[12px] overflow-hidden"
+            style={{
+              background: 'linear-gradient(to bottom, #4a535e 0%, #3a3f47 40%, #2e343b 100%)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.5)'
+            }}
+          >
+            {/* Rainbow LED strip — full width, frosted glass look */}
+            {isConnected && (
+              <motion.div
+                className="absolute inset-x-0 bottom-0 h-[22px] rounded-b-[12px]"
+                animate={{
+                  filter: ['hue-rotate(0deg)', 'hue-rotate(360deg)']
+                }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                style={{
+                  background: 'linear-gradient(to right, #ff0044 0%, #ff4400 10%, #ff8800 18%, #ffcc00 28%, #88ff00 38%, #00ff66 48%, #00ffcc 58%, #0088ff 68%, #4400ff 78%, #8800ff 86%, #cc00ff 93%, #ff0066 100%)',
+                  opacity: 0.9
+                }}
+              />
+            )}
+            {!isConnected && (
+              <div className="absolute inset-x-0 bottom-0 h-[22px] rounded-b-[12px]"
+                style={{
+                  background: 'linear-gradient(to right, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 100%)'
+                }}
+              />
+            )}
+            {/* Frosted glass overlay for LED diffusion */}
+            <div className="absolute inset-0 rounded-b-[12px]"
+              style={{
+                background: 'linear-gradient(to bottom, rgba(50,56,64,0.7) 0%, rgba(50,56,64,0.15) 40%, transparent 70%)',
+              }}
+            />
+            {/* Subtle inner glow on the translucent edge */}
+            {isConnected && (
+              <div className="absolute inset-x-[2px] bottom-[2px] h-[8px] rounded-b-[10px]"
+                style={{
+                  background: 'linear-gradient(to top, rgba(255,255,255,0.08), transparent)',
+                }}
+              />
+            )}
+          </div>
+
+          {/* Bloom glow beneath base */}
+          {isConnected && (
+            <>
+              <motion.div
+                className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[80px] h-[20px] rounded-full"
+                animate={{
+                  opacity: [0.4, 0.7, 0.4],
+                  filter: ['hue-rotate(0deg)', 'hue-rotate(360deg)']
+                }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                style={{
+                  background: 'linear-gradient(to right, #ff0044, #ff8800, #ffcc00, #00ff66, #00ccff, #4400ff, #cc00ff)',
+                  filter: 'blur(12px)'
+                }}
+              />
+              {/* Secondary softer glow */}
+              <motion.div
+                className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[100px] h-[16px] rounded-full"
+                animate={{
+                  opacity: [0.15, 0.3, 0.15],
+                  filter: ['hue-rotate(0deg)', 'hue-rotate(360deg)']
+                }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                style={{
+                  background: 'linear-gradient(to right, #ff0044, #ffcc00, #00ff88, #0088ff, #cc00ff)',
+                  filter: 'blur(20px)'
+                }}
+              />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── Ground shadow ── */}
+      <div
+        className="w-20 h-3 rounded-full flex-shrink-0 mt-2"
+        style={{
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 75%)',
+          filter: 'blur(6px)'
+        }}
+      />
     </div>
   );
 }
 
 // ============================================================================
-// DEVICE HERO COMPONENT
+// BOTTLE VISUALIZER
+// ============================================================================
+export function BottleVisualizer({
+  isConnected, currentVolume, capacity, fillPercentage, equippedBottle
+}: {
+  isConnected: boolean; currentVolume: number; capacity: number; fillPercentage: number; equippedBottle: any;
+}) {
+  const displayVolume = isConnected ? currentVolume : 0;
+  const pct = isConnected ? Math.round(fillPercentage) : 0;
+
+  return (
+    <div className="flex flex-col items-center py-4 relative">
+      {/* Bottle Visual */}
+      <div className="relative w-48 h-[260px]">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1 }}
+          className="w-full h-full"
+        >
+          <HydrateSparkBottle fillPercentage={fillPercentage} isConnected={isConnected} />
+        </motion.div>
+      </div>
+
+      {/* Volume Display — Below bottle, no overlap */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="flex flex-col items-center mt-2"
+      >
+        <div className="flex items-baseline gap-1.5">
+          <motion.span
+            key={displayVolume}
+            initial={{ opacity: 0, y: 6, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="text-4xl font-black text-white tracking-tighter tabular-nums"
+            style={{ textShadow: '0 0 20px rgba(34,211,238,0.3)' }}
+          >
+            {displayVolume}
+          </motion.span>
+          <span className="text-sm font-bold text-cyan-400/70 tracking-wider uppercase">ml</span>
+        </div>
+
+        <div className="flex items-center gap-2 mt-1">
+          <div className="h-px w-6 bg-gradient-to-r from-transparent to-white/15" />
+          <span className="text-[10px] font-bold text-white/30 tracking-widest tabular-nums">/ {capacity}</span>
+          <div className="h-px w-6 bg-gradient-to-l from-transparent to-white/15" />
+        </div>
+
+        {/* Fill percentage badge */}
+        {isConnected && (
+          <div className="mt-2 px-3 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/15">
+            <span className="text-[9px] font-black text-cyan-400/80 tracking-widest uppercase tabular-nums">{pct}% đầy</span>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
+// ============================================================================
+// DEVICE HERO (CYBER UPGRADE)
 // ============================================================================
 export function DeviceHero({
   isConnected, isSyncing, fillPercentage, currentVolume, batteryLevel, signalStrength, latencyMs, temperature, onConnect, onDisconnect, equippedBottle
@@ -498,57 +362,68 @@ export function DeviceHero({
   isConnected: boolean; isSyncing: boolean; fillPercentage: number; currentVolume: number; batteryLevel: number; signalStrength: number; latencyMs: number; temperature: number; onConnect: () => void; onDisconnect: () => void; equippedBottle: any;
 }) {
   return (
-    <div className="space-y-3">
-      <div className="rounded-[1.5rem] bg-slate-900/80 border border-white/10 backdrop-blur-xl p-4 overflow-hidden relative">
-        <div className="absolute -right-10 top-0 w-40 h-40 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-        
-        <div className="flex items-center justify-between gap-4 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-full border flex items-center justify-center shrink-0 ${isConnected ? 'bg-cyan-500/12 border-cyan-400/30 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'bg-slate-800/80 border-slate-700 text-slate-500'}`}>
-              <Bluetooth size={20} className={isSyncing ? 'animate-pulse' : ''} />
+    <div className="space-y-4">
+      {/* Connectivity Status Orb */}
+      <div className="group relative rounded-[2rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl p-5 overflow-hidden transition-all hover:bg-slate-900/60 hover:border-cyan-500/20">
+        <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/5 blur-[80px] pointer-events-none group-hover:bg-cyan-500/10 transition-colors" />
+
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-4">
+            <div className={`relative w-14 h-14 rounded-2xl border flex items-center justify-center transition-all duration-500 ${isConnected ? 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300 shadow-[0_0_30px_rgba(34,211,238,0.15)]' : 'bg-slate-900/80 border-white/5 text-slate-500'}`}>
+              <Bluetooth size={24} className={isSyncing ? 'animate-pulse' : ''} />
+              {isConnected && (
+                <motion.div
+                  className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-950"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              )}
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-black text-white tracking-tight">{isConnected ? 'DigiBottle Pro' : 'DigiBottle Demo'}</h2>
-                <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-slate-600'}`} />
+              <h2 className="text-base font-black text-white tracking-tight">
+                {isConnected ? 'DigiBottle Pro' : 'Device Offline'}
+              </h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500'}`}>
+                  {isConnected ? 'ENCRYPTED LINK' : 'READY TO PAIR'}
+                </span>
+                {isConnected && <span className="text-[10px] text-slate-500 font-bold tracking-widest">{signalStrength}% RSSI</span>}
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 max-w-[10rem] truncate">
-                {isConnected ? `Liên kết ổn định • ${signalStrength}%` : 'Sẵn sàng ghép nối'}
-              </p>
             </div>
           </div>
 
-          <div className="shrink-0">
-            {!isConnected ? (
-              <button 
-                onClick={onConnect} 
-                disabled={isSyncing} 
-                className="h-9 px-4 rounded-full bg-cyan-400 text-slate-950 text-xs font-black shadow-[0_0_20px_rgba(34,211,238,0.3)] active:scale-95 transition-all disabled:opacity-60 flex items-center gap-1.5"
-              >
-                {isSyncing ? <RefreshCw size={14} className="animate-spin" /> : 'Bật'}
-              </button>
-            ) : (
-              <button 
-                onClick={onDisconnect} 
-                className="h-9 px-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-black active:scale-95 transition-all flex items-center gap-1.5"
-              >
-                Ngắt
-              </button>
-            )}
-          </div>
+          <button
+            onClick={isConnected ? onDisconnect : onConnect}
+            className={`h-11 px-6 rounded-2xl font-black text-xs tracking-widest uppercase transition-all active:scale-95 ${isConnected
+              ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20'
+              : 'bg-cyan-400 text-slate-950 shadow-[0_0_25px_rgba(34,211,238,0.3)] hover:shadow-[0_0_35px_rgba(34,211,238,0.4)]'
+              }`}
+          >
+            {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : isConnected ? 'Eject' : 'Link'}
+          </button>
         </div>
       </div>
 
-      <div className="rounded-[1.75rem] bg-slate-900/75 border border-white/10 backdrop-blur-xl p-4">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-[11px] uppercase tracking-[0.28em] text-slate-400 font-black">Bottle Core</span>
-          <span className="text-[11px] font-black text-cyan-300">{latencyMs > 0 ? `${latencyMs}ms` : '--'}</span>
+      {/* Main Visualizer Deck */}
+      <div className="relative rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl p-6 overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent" />
+        <div className="absolute bottom-4 right-6 text-[8px] font-black text-white/5 tracking-[0.5em] uppercase pointer-events-none">Hardware Protocol v2.4</div>
+
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,1)]" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black">Live Telemetry</span>
+          </div>
+          <span className="text-[10px] font-black text-white/30 tracking-widest">{latencyMs > 0 ? `${latencyMs}ms PING` : '----'}</span>
         </div>
+
         <BottleVisualizer isConnected={isConnected} currentVolume={currentVolume} capacity={CAPACITY} fillPercentage={fillPercentage} equippedBottle={equippedBottle} />
-        <div className="grid grid-cols-3 gap-2 mt-3">
-          <MetricMini label="Pin" value={`${batteryLevel}%`} />
-          <MetricMini label="Nhiệt" value={`${temperature}°C`} />
-          <MetricMini label="BLE" value={isConnected ? `${signalStrength}%` : '--'} />
+
+        <div className="grid grid-cols-3 gap-3 mt-4">
+          <MetricMini label="Charge" value={`${batteryLevel}%`} icon={Battery} />
+          <MetricMini label="Liquid" value={`${temperature}°C`} icon={Thermometer} />
+          <MetricMini label="Signal" value={isConnected ? 'Excellent' : '---'} icon={Wifi} />
         </div>
       </div>
     </div>
@@ -556,7 +431,7 @@ export function DeviceHero({
 }
 
 // ============================================================================
-// CONTROL DECK COMPONENT
+// CONTROL DECK (CYBER UPGRADE)
 // ============================================================================
 export function ControlDeck({
   isConnected, isSyncing, onDrink, onRefill, onForceSync,
@@ -564,30 +439,49 @@ export function ControlDeck({
   isConnected: boolean; isSyncing: boolean; onDrink: (amount: number) => void; onRefill: () => void; onForceSync: () => void;
 }) {
   const controls = [
-    { id: 'sip-50', label: '+50ml', sub: 'Sip', icon: <Droplet size={22} />, accent: 'text-cyan-300 bg-cyan-500/10 border-cyan-400/20', onClick: () => onDrink(50) },
-    { id: 'sip-250', label: '+250ml', sub: 'Drink', icon: <GlassWater size={22} />, accent: 'text-blue-300 bg-blue-500/10 border-blue-400/20', onClick: () => onDrink(250) },
-    { id: 'refill', label: 'Đổ đầy', sub: 'Refill', icon: <RefreshCw size={22} />, accent: 'text-emerald-300 bg-emerald-500/10 border-emerald-400/20', onClick: onRefill },
-    { id: 'sync', label: 'Force Sync', sub: 'Sync', icon: <Zap size={22} />, accent: 'text-fuchsia-300 bg-fuchsia-500/10 border-fuchsia-400/20', onClick: onForceSync },
+    { id: 'sip-50', label: 'SIP', sub: '+50ml', icon: <Droplet size={22} />, color: '#22d3ee', onClick: () => onDrink(50) },
+    { id: 'sip-250', label: 'GULP', sub: '+250ml', icon: <GlassWater size={22} />, color: '#3b82f6', onClick: () => onDrink(250) },
+    { id: 'refill', label: 'REFILL', sub: 'Fill Tank', icon: <RefreshCw size={22} />, color: '#10b981', onClick: onRefill },
+    { id: 'sync', label: 'BOOST', sub: 'Overclock', icon: <Zap size={22} />, color: '#d946ef', onClick: onForceSync },
   ];
 
   return (
-    <div className="rounded-[1.75rem] border border-white/10 bg-slate-900/78 backdrop-blur-xl p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-[2.5rem] border border-white/5 bg-slate-900/40 backdrop-blur-3xl p-6">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.28em] text-slate-400 font-black">Quick Controls</p>
-          <h3 className="text-lg font-black text-white mt-1">Điều khiển nhanh</h3>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-black">Manual Overrides</p>
+          <h3 className="text-xl font-black text-white mt-1">Hệ thống nạp</h3>
         </div>
-        <span className="text-[11px] text-slate-500 font-black">{isConnected ? 'Demo' : 'Offline'}</span>
+        <Activity size={18} className="text-white/10" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+
+      <div className="grid grid-cols-2 gap-4">
         {controls.map(control => (
-          <motion.button key={control.id} whileTap={{ scale: 0.97 }} disabled={!isConnected || isSyncing} onClick={control.onClick} className={`rounded-[1.5rem] border p-3.5 text-left transition-all disabled:opacity-45 disabled:cursor-not-allowed ${control.accent}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center border border-white/10 bg-slate-950/35">{control.icon}</div>
-              <ChevronRight size={18} className="text-white/40" />
+          <motion.button
+            key={control.id}
+            whileTap={{ scale: 0.95 }}
+            disabled={!isConnected || isSyncing}
+            onClick={control.onClick}
+            className="group relative rounded-3xl border border-white/5 bg-slate-950/40 p-5 text-left transition-all hover:bg-slate-900/60 hover:border-white/10 disabled:opacity-40"
+          >
+            {/* Action color glow */}
+            <div
+              className="absolute -top-4 -right-4 w-16 h-16 rounded-full blur-2xl opacity-0 group-hover:opacity-20 transition-opacity"
+              style={{ background: control.color }}
+            />
+
+            <div className="flex items-center justify-between mb-5">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 bg-slate-900 shadow-inner group-hover:scale-110 transition-transform"
+                style={{ color: control.color }}
+              >
+                {control.icon}
+              </div>
+              <ChevronRight size={16} className="text-slate-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
             </div>
-            <p className="text-base font-black text-white">{control.label}</p>
-            <p className="text-xs text-slate-400 mt-1 uppercase tracking-[0.18em]">{control.sub}</p>
+
+            <p className="text-sm font-black text-white tracking-wider">{control.label}</p>
+            <p className="text-[10px] text-slate-500 mt-1 font-bold tracking-widest uppercase">{control.sub}</p>
           </motion.button>
         ))}
       </div>
@@ -596,22 +490,23 @@ export function ControlDeck({
 }
 
 // ============================================================================
-// ARENA PAYWALL COMPONENT
+// ARENA PAYWALL
 // ============================================================================
 export const ArenaPaywall = () => (
-  <div className="relative h-[55vh] rounded-[2rem] overflow-hidden border border-white/5 mx-4 flex items-center justify-center mt-4">
-    <div className="absolute inset-0 p-4 space-y-4 blur-[6px] opacity-40 pointer-events-none select-none flex flex-col">
-      {[1, 2, 3].map((index) => (<div key={index} className="h-24 bg-slate-800 rounded-3xl border border-slate-700" />))}
+  <div className="relative h-[60vh] rounded-[2.5rem] overflow-hidden border border-white/5 mx-4 flex items-center justify-center mt-6">
+    <div className="absolute inset-0 p-6 space-y-4 blur-[8px] opacity-30 pointer-events-none select-none flex flex-col">
+      {[1, 2, 3, 4].map((index) => (<div key={index} className="h-28 bg-slate-800 rounded-3xl border border-slate-700" />))}
     </div>
-    <div className="relative z-10 flex flex-col items-center text-center p-8 bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl mx-4 w-full max-w-[320px]">
-      <div className="w-20 h-20 bg-purple-500/20 rounded-[1.5rem] flex items-center justify-center mb-5 border border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.3)]">
-        <Lock size={36} className="text-purple-400" />
+    <div className="relative z-10 flex flex-col items-center text-center p-10 bg-slate-900/80 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 shadow-2xl mx-6 w-full max-w-[340px]">
+      <div className="relative w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center mb-6 border border-indigo-500/20 group">
+        <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full" />
+        <Lock size={40} className="text-indigo-400 relative z-10" />
       </div>
-      <h3 className="text-2xl font-black text-white mb-3">Đấu trường bị khóa!</h3>
-      <p className="text-slate-400 text-sm mb-4 leading-relaxed">Tính năng này dành cho phụ kiện phần cứng và chưa mở trong build public hiện tại.</p>
-      <p className="w-full py-4 rounded-2xl font-black text-sm text-slate-300 bg-white/5 border border-white/10">
-        Phần cứng DigiBottle chưa phát hành cho người dùng công khai
-      </p>
+      <h3 className="text-2xl font-black text-white mb-3 tracking-tight">Khu vực hạn chế</h3>
+      <p className="text-slate-400 text-sm mb-6 leading-relaxed">Đấu trường DigiBottle yêu cầu phụ kiện kết nối vật lý và xác thực phần cứng Pro-Link.</p>
+      <div className="w-full py-4 rounded-2xl font-black text-[10px] text-indigo-300 bg-indigo-500/5 border border-indigo-500/20 uppercase tracking-[0.2em]">
+        CHƯA PHÁT HÀNH CÔNG KHAI
+      </div>
     </div>
   </div>
 );

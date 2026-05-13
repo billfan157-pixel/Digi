@@ -1,42 +1,14 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, BatteryFull, Gauge, Thermometer, Wifi, Cpu, Waves, Heart, Sparkles, Zap, Lock, FlaskConical, Download, Bug, Activity } from 'lucide-react';
+import { ChevronDown, BatteryFull, Gauge, Thermometer, Wifi, Cpu, Waves, Heart, Sparkles, Zap, Lock, FlaskConical, Download, Bug, Activity, Sliders, Box, Layers, Play } from 'lucide-react';
 import type { LedPattern, RuleTrigger, RuleAction, AutomationRule } from './types';
 import { ledColors, ruleTriggerLabel, ruleActionLabel, buildRuleDescription } from './constants';
+import { AuraPulseEffect } from './effects/AuraPulseEffect';
 
-export function MetricCard({ icon, label, value, hint, accent }: { icon: React.ReactNode; label: string; value: string; hint: string; accent: 'cyan' | 'violet' | 'amber' | 'emerald'; }) {
-  const accentClass = accent === 'cyan' ? 'text-cyan-300 bg-cyan-500/10 border-cyan-400/20' : accent === 'violet' ? 'text-violet-300 bg-violet-500/10 border-violet-400/20' : accent === 'amber' ? 'text-amber-300 bg-amber-500/10 border-amber-400/20' : 'text-emerald-300 bg-emerald-500/10 border-emerald-400/20';
-  return (
-    <div className={`min-w-[10.75rem] snap-start rounded-[1.35rem] border p-4 ${accentClass}`}>
-      <div className="flex items-center justify-between mb-6">
-        <div className="w-10 h-10 rounded-2xl border border-white/10 bg-slate-950/35 flex items-center justify-center">{icon}</div>
-        <Sparkles size={14} className="text-white/35" />
-      </div>
-      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400 font-black">{label}</p>
-      <p className="text-2xl font-black text-white mt-2">{value}</p>
-      <p className="text-xs text-slate-400 mt-2">{hint}</p>
-    </div>
-  );
-}
-
-export function SensorWaveChart({ series, isConnected }: { series: number[]; isConnected: boolean }) {
-  const width = 640; const height = 180;
-  const points = series.map((value, index) => `${(index / Math.max(series.length - 1, 1)) * width},${height - (value / 100) * (height - 18) - 9}`).join(' ');
-  return (
-    <div className="rounded-[1.35rem] overflow-hidden border border-white/5 bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(2,6,23,0.95))]">
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-32">
-        <defs><linearGradient id="sensor-line" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stopColor="#22d3ee" /><stop offset="100%" stopColor="#a855f7" /></linearGradient></defs>
-        {Array.from({ length: 4 }).map((_, index) => (<line key={`grid-${index}`} x1="0" x2={width} y1={(height / 4) * (index + 1)} y2={(height / 4) * (index + 1)} stroke="rgba(148,163,184,0.14)" strokeDasharray="6 8" />))}
-        <polyline fill="none" stroke="url(#sensor-line)" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" points={points} />
-      </svg>
-      <div className="flex flex-col gap-2 px-4 py-3 border-t border-white/5 text-xs">
-        <div className="flex items-center gap-2 text-slate-300"><Activity size={14} className={isConnected ? 'text-cyan-300' : 'text-slate-500'} /><span>{isConnected ? 'Sensor stream live' : 'Waiting for bottle motion'}</span></div>
-      </div>
-    </div>
-  );
-}
-
-interface DiagnosticsPanelProps {
+// ============================================================================
+// INTERFACES
+// ============================================================================
+export interface DiagnosticsPanelProps {
   isConnected: boolean;
   batteryLevel: number;
   batteryHealth: number;
@@ -49,36 +21,7 @@ interface DiagnosticsPanelProps {
   onToggle: () => void;
 }
 
-export function DiagnosticsPanel({ isConnected, batteryLevel, batteryHealth, batteryCycleCount, latencyMs, rawSensorSeries, temperature, signalStrength, isOpen, onToggle }: DiagnosticsPanelProps) {
-  return (
-    <div className="rounded-[1.75rem] bg-slate-900/80 border border-white/10 backdrop-blur-xl overflow-hidden">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between gap-3 text-left">
-        <div className="min-w-0"><p className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/70 font-black">Diagnostics</p><h3 className="text-lg font-black text-white mt-1">Thiết bị & cảm biến</h3></div>
-        <div className="flex items-center gap-2 shrink-0"><div className={`px-3 py-2 rounded-full text-[11px] font-black border ${isConnected ? 'bg-emerald-500/10 border-emerald-400/20 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>{isConnected ? 'Live' : 'Offline'}</div><motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown size={18} className="text-slate-400" /></motion.div></div>
-      </button>
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div key="diagnostics-panel" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22, ease: 'easeOut' }} className="overflow-hidden">
-            <div className="px-4 pb-4">
-              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 mb-4 snap-x snap-mandatory scrollbar-hide">
-                <MetricCard icon={<BatteryFull size={18} />} label="Health" value={`${batteryHealth}%`} hint={`Cycles ${batteryCycleCount}`} accent="cyan" />
-                <MetricCard icon={<Gauge size={18} />} label="Latency" value={latencyMs > 0 ? `${latencyMs}ms` : '--'} hint="BLE round-trip" accent="violet" />
-                <MetricCard icon={<Thermometer size={18} />} label="Temp" value={`${temperature}°C`} hint="Sensor board" accent="amber" />
-                <MetricCard icon={<Wifi size={18} />} label="Signal" value={`${signalStrength}%`} hint={`Pin ${batteryLevel}%`} accent="emerald" />
-              </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/45 p-4">
-                <div className="flex flex-col gap-1 mb-3"><div className="flex items-center gap-2"><Cpu size={16} className="text-cyan-300" /><span className="text-sm font-black text-white">Raw Sensor</span></div></div>
-                <SensorWaveChart series={rawSensorSeries} isConnected={isConnected} />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-interface LedPatternStudioProps {
+export interface LedPatternStudioProps {
   ledColor: string;
   setLedColor: React.Dispatch<React.SetStateAction<string>>;
   ledPattern: LedPattern;
@@ -90,38 +33,7 @@ interface LedPatternStudioProps {
   onToggle: () => void;
 }
 
-export function LedPatternStudio({ ledColor, setLedColor, ledPattern, setLedPattern, heartRate, isWatchConnected, isConnected, isOpen, onToggle }: LedPatternStudioProps) {
-  const previewDuration = ledPattern === 'heart-sync' && heartRate > 0 ? Math.max(0.35, 60 / heartRate) : ledPattern === 'strobe' ? 0.5 : ledPattern === 'wave' ? 1.8 : 2.4;
-  const patterns: { id: LedPattern; name: string; hint: string }[] = [ { id: 'breathe', name: 'Breathe', hint: 'Glow mềm theo nhịp thở' }, { id: 'wave', name: 'Wave', hint: 'Sóng sáng chạy quanh thân bình' }, { id: 'strobe', name: 'Strobe', hint: 'Nháy gắt để kéo sự chú ý' }, { id: 'heart-sync', name: 'Heart Sync', hint: 'Đập theo nhịp tim từ Apple Watch' } ];
-  return (
-    <div className="rounded-[1.75rem] bg-slate-900/80 border border-white/10 backdrop-blur-xl overflow-hidden">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between gap-3 text-left">
-        <div className="min-w-0"><p className="text-[11px] uppercase tracking-[0.28em] text-fuchsia-300/70 font-black">LED Studio</p><h3 className="text-lg font-black text-white mt-1">Bottle Aura</h3></div>
-        <div className="flex items-center gap-2 shrink-0"><div className="px-3 py-2 rounded-full text-[11px] font-black border bg-fuchsia-500/10 border-fuchsia-400/20 text-fuchsia-300">{isConnected ? 'Ready' : 'Preview'}</div><motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown size={18} className="text-slate-400" /></motion.div></div>
-      </button>
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div key="led-studio-panel" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22, ease: 'easeOut' }} className="overflow-hidden">
-            <div className="px-4 pb-4">
-              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 mb-4 snap-x snap-mandatory scrollbar-hide">
-                {patterns.map(p => ( <button key={p.id} disabled={p.id === 'heart-sync' && !isWatchConnected} onClick={() => setLedPattern(p.id)} className={`min-w-[12rem] snap-start rounded-[1.5rem] p-4 border text-left transition-all ${ledPattern === p.id ? 'border-fuchsia-400/40 bg-fuchsia-500/10' : 'border-white/10 bg-slate-950/30'}`}><div className="flex justify-between mb-3"><Waves size={18} className="text-fuchsia-300" /></div><p className="text-sm font-black text-white">{p.name}</p></button> ))}
-              </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/45 p-4 mb-4">
-                <p className="text-sm font-black text-white mb-3">Color Bank</p>
-                <div className="flex gap-2 overflow-x-auto pb-1"><div className="flex gap-2">{ledColors.map(c => (<button key={c.value} onClick={() => setLedColor(c.value)} className="shrink-0 flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-white/10 bg-white/5"><span className="w-5 h-5 rounded-full" style={{ backgroundColor: c.value }}/></button>))}</div></div>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/45 p-4">
-                <motion.div animate={{ boxShadow: [`0 0 0px ${ledColor}`, `0 0 35px ${ledColor}`, `0 0 0px ${ledColor}`] }} transition={{ repeat: Infinity, duration: previewDuration }} className="h-36 rounded-[2rem] border border-white/10 bg-slate-900 flex items-center justify-center relative"><motion.div className="w-28 h-28 rounded-full border border-white/10 bg-slate-950/40 flex items-center justify-center"><Sparkles size={30} style={{ color: ledColor }} /></motion.div></motion.div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-interface AutomationCenterProps {
+export interface AutomationCenterProps {
   ruleTrigger: RuleTrigger;
   setRuleTrigger: React.Dispatch<React.SetStateAction<RuleTrigger>>;
   ruleAction: RuleAction;
@@ -140,136 +52,173 @@ interface AutomationCenterProps {
   onToggle: () => void;
 }
 
-export function AutomationCenter({
-  ruleTrigger, setRuleTrigger, ruleAction, setRuleAction, ruleTime, setRuleTime, ruleThreshold, setRuleThreshold, addAutomationRule, rules, setRules, weatherData, isWeatherSynced, fillPercentage, isOpen, onToggle
-}: AutomationCenterProps) {
+
+// ============================================================================
+// METRIC CARD
+// ============================================================================
+export function MetricCard({ icon, label, value, hint, accent }: { icon: React.ReactNode; label: string; value: string; hint: string; accent: 'cyan' | 'violet' | 'amber' | 'emerald'; }) {
+  const accentColors = {
+    cyan: 'text-cyan-400 border-cyan-500/20 bg-cyan-500/5 shadow-[0_0_20px_rgba(34,211,238,0.1)]',
+    violet: 'text-violet-400 border-violet-500/20 bg-violet-500/5 shadow-[0_0_20px_rgba(168,85,247,0.1)]',
+    amber: 'text-amber-400 border-amber-500/20 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.1)]',
+    emerald: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
+  };
+
   return (
-    <div className="rounded-[1.75rem] bg-slate-900/80 border border-white/10 backdrop-blur-xl overflow-hidden">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between gap-3 text-left">
-        <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-amber-300/70 font-black">Automation</p>
-          <h3 className="text-lg font-black text-white mt-1">Smart Rules</h3>
-          <p className="text-sm text-slate-400 mt-1 truncate">Tự động hóa thiết bị theo điều kiện</p>
+    <div className={`min-w-[12rem] snap-start rounded-3xl border p-5 backdrop-blur-md relative overflow-hidden group transition-all hover:bg-slate-900/40 ${accentColors[accent]}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+      <div className="flex items-center justify-between mb-6 relative z-10">
+        <div className="w-11 h-11 rounded-2xl border border-white/10 bg-slate-950/40 flex items-center justify-center group-hover:scale-110 transition-transform">{icon}</div>
+        <div className="w-1.5 h-1.5 rounded-full bg-white/20 animate-pulse" />
+      </div>
+      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-black relative z-10">{label}</p>
+      <p className="text-2xl font-black text-white mt-1.5 tracking-tight relative z-10">{value}</p>
+      <p className="text-xs text-slate-400 mt-2 font-medium relative z-10 opacity-70">{hint}</p>
+      <div className="absolute bottom-0 left-0 w-full h-px bg-white/5" />
+    </div>
+  );
+}
+
+// ============================================================================
+// SENSOR WAVE CHART
+// ============================================================================
+export function SensorWaveChart({ series, isConnected }: { series: number[]; isConnected: boolean }) {
+  const width = 640; const height = 180;
+  const points = series.map((value, index) => `${(index / Math.max(series.length - 1, 1)) * width},${height - (value / 100) * (height - 30) - 15}`).join(' ');
+  
+  return (
+    <div className="rounded-3xl overflow-hidden border border-white/5 bg-slate-950/60 relative group">
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-36 relative z-10">
+        <defs>
+          <linearGradient id="sensor-line-grad" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="#22d3ee" />
+            <stop offset="100%" stopColor="#a855f7" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        {Array.from({ length: 4 }).map((_, index) => (
+          <line key={`grid-${index}`} x1="0" x2={width} y1={(height / 4) * (index + 1)} y2={(height / 4) * (index + 1)} stroke="rgba(255,255,255,0.05)" strokeDasharray="4 6" />
+        ))}
+        <polyline fill="none" stroke="url(#sensor-line-grad)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" points={points} filter="url(#glow)" />
+      </svg>
+      <div className="px-5 py-3 border-t border-white/5 flex items-center justify-between text-[10px] font-black tracking-widest uppercase relative z-10">
+        <div className="flex items-center gap-2">
+          <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'bg-slate-600'}`} />
+          <span className={isConnected ? 'text-cyan-300' : 'text-slate-500'}>{isConnected ? 'Stream Active' : 'Sensor Sleeping'}</span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="px-3 py-2 rounded-full text-[11px] font-black border bg-amber-500/10 border-amber-400/20 text-amber-300">
-            {rules.filter(rule => rule.status === 'Triggered').length} firing
+        <span className="text-white/20">Protocol X-10</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// DIAGNOSTICS PANEL
+// ============================================================================
+export function DiagnosticsPanel({ isConnected, batteryLevel, batteryHealth, batteryCycleCount, latencyMs, rawSensorSeries, temperature, signalStrength, isOpen, onToggle }: DiagnosticsPanelProps) {
+  return (
+    <div className="rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl overflow-hidden transition-all hover:border-white/10">
+      <button onClick={onToggle} className="w-full p-6 flex items-center justify-between gap-4 text-left group">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 group-hover:scale-110 transition-transform">
+            <Gauge size={24} className="text-cyan-400" />
           </div>
-          <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
-          </motion.div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70 font-black">Core Diagnostics</p>
+            <h3 className="text-xl font-black text-white mt-1">Hệ thống & Cảm biến</h3>
+          </div>
         </div>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} className="w-10 h-10 rounded-full border border-white/5 flex items-center justify-center bg-white/5">
+          <ChevronDown size={20} className="text-slate-400" />
+        </motion.div>
       </button>
-      <AnimatePresence initial={false}>
+      <AnimatePresence>
         {isOpen && (
-          <motion.div key="automation-center-panel" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22, ease: 'easeOut' }} className="overflow-hidden">
-            <div className="px-4 pb-4">
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/45 p-4 mb-4">
-                <p className="text-sm font-black text-white mb-4">Rule Composer</p>
-                <div className="space-y-3 mb-3">
-                  <label className="space-y-2">
-                    <span className="text-[11px] uppercase tracking-[0.24em] text-slate-400 font-black">Kích hoạt khi</span>
-                    <select value={ruleTrigger} onChange={(e) => setRuleTrigger(e.target.value as RuleTrigger)} className="w-full rounded-2xl bg-slate-900 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/35">
-                      <option value="goal_time">Qua mốc giờ mà chưa đạt mục tiêu</option>
-                      <option value="weather_temp">Nhiệt độ ngoài trời quá cao</option>
-                      <option value="low_battery">Pin xuống thấp</option>
-                    </select>
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-[11px] uppercase tracking-[0.24em] text-slate-400 font-black">Hành động</span>
-                    <select value={ruleAction} onChange={(e) => setRuleAction(e.target.value as RuleAction)} className="w-full rounded-2xl bg-slate-900 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/35">
-                      <option value="red_strobe">Nháy đỏ liên tục</option>
-                      <option value="boost_reminders">Nhắc mỗi 30 phút</option>
-                      <option value="cyan_wave">Chạy sóng cyan</option>
-                      <option value="power_save">Bật chế độ tiết kiệm</option>
-                    </select>
-                  </label>
-                </div>
-                <div className="space-y-3 mb-4">
-                  <label className="space-y-2">
-                    <span className="text-[11px] uppercase tracking-[0.24em] text-slate-400 font-black">
-                      {ruleTrigger === 'goal_time' ? 'Mốc giờ' : 'Ngưỡng'}
-                    </span>
-                    {ruleTrigger === 'goal_time' ? (
-                      <input value={ruleTime} onChange={(e) => setRuleTime(e.target.value)} type="time" className="w-full rounded-2xl bg-slate-900 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/35" />
-                    ) : (
-                      <input value={ruleThreshold} onChange={(e) => setRuleThreshold(Number(e.target.value))} type="number" className="w-full rounded-2xl bg-slate-900 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/35" />
-                    )}
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-[11px] uppercase tracking-[0.24em] text-slate-400 font-black">
-                      {ruleTrigger === 'goal_time' ? 'Mục tiêu cần đạt %' : ruleTrigger === 'weather_temp' ? 'Ngưỡng nhiệt độ °C' : 'Ngưỡng pin %'}
-                    </span>
-                    <input value={ruleThreshold} onChange={(e) => setRuleThreshold(Number(e.target.value))} type="number" className="w-full rounded-2xl bg-slate-900 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/35" />
-                  </label>
-                </div>
-                <div className="rounded-2xl bg-cyan-500/10 border border-cyan-400/15 px-4 py-3 text-sm text-cyan-100">
-                  <span className="font-black uppercase tracking-[0.24em] text-[11px] text-cyan-300">Preview</span>
-                  <p className="mt-2">{buildRuleDescription(ruleTrigger, ruleAction, ruleTime, ruleThreshold)}</p>
-                </div>
-                <button onClick={addAutomationRule} className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black active:scale-95 transition-all shadow-[0_0_25px_rgba(34,211,238,0.2)]">
-                  Thêm luật vào Automation Engine
-                </button>
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+            <div className="px-6 pb-6 space-y-6">
+              <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 snap-x scrollbar-hide">
+                <MetricCard icon={<Activity size={20} />} label="Health" value={`${batteryHealth}%`} hint={`Cycles: ${batteryCycleCount}`} accent="cyan" />
+                <MetricCard icon={<Zap size={20} />} label="Latency" value={latencyMs > 0 ? `${latencyMs}ms` : '--'} hint="BLE Response" accent="violet" />
+                <MetricCard icon={<Thermometer size={20} />} label="Temp" value={`${temperature}°C`} hint="Board Core" accent="amber" />
+                <MetricCard icon={<Wifi size={20} />} label="Signal" value={`${signalStrength}%`} hint="RSSI Strength" accent="emerald" />
               </div>
-              <div className="grid gap-3">
-                {rules.map((rule) => (
-                  <div key={rule.id} className="rounded-[1.35rem] border border-white/10 bg-slate-950/35 p-4">
-                    <div className="flex flex-col gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Zap size={16} className="text-amber-300" />
-                          <p className="text-sm font-black text-white">{ruleTriggerLabel[rule.trigger]}</p>
-                        </div>
-                        <p className="text-sm text-slate-300 mt-2">{rule.description}</p>
-                      </div>
-                      <button onClick={() => setRules((prev: AutomationRule[]) => prev.map(item => item.id === rule.id ? { ...item, active: !item.active } : item))} className={`self-start px-3 py-2 rounded-full text-[11px] font-black border ${rule.status === 'Triggered' ? 'bg-rose-500/10 border-rose-400/20 text-rose-300' : rule.active ? 'bg-emerald-500/10 border-emerald-400/20 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
-                        {rule.status}
-                      </button>
-                    </div>
-                    <div className="mt-3 flex flex-col gap-1 text-xs text-slate-400">
-                      <span>Realtime: {rule.trigger === 'weather_temp' ? isWeatherSynced ? `${weatherData?.temp ?? '--'}°C ngoài trời` : 'Chưa sync weather' : `Hydration tank ${Math.round(fillPercentage)}%`}</span>
-                      <span>{ruleActionLabel[rule.action]}</span>
-                    </div>
-                  </div>
+              <div className="rounded-[2rem] border border-white/5 bg-slate-950/40 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2"><Activity size={16} className="text-cyan-400" /><span className="text-xs font-black text-white tracking-widest uppercase">Motion Analytics</span></div>
+                  <span className="text-[10px] text-slate-500 font-bold">120HZ POLLING</span>
+                </div>
+                <SensorWaveChart series={rawSensorSeries} isConnected={isConnected} />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ============================================================================
+// LED PATTERN STUDIO
+// ============================================================================
+export function LedPatternStudio({ ledColor, setLedColor, ledPattern, setLedPattern, heartRate, isWatchConnected, isConnected, isOpen, onToggle }: LedPatternStudioProps) {
+  const patterns: { id: LedPattern; name: string; icon: any }[] = [
+    { id: 'breathe', name: 'Breathe', icon: Waves },
+    { id: 'wave', name: 'Flowing', icon: Play },
+    { id: 'strobe', name: 'Alert', icon: Zap },
+    { id: 'heart-sync', name: 'Heart', icon: Heart }
+  ];
+
+  return (
+    <div className="rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl overflow-hidden">
+      <button onClick={onToggle} className="w-full p-6 flex items-center justify-between gap-4 text-left group">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/10 flex items-center justify-center border border-fuchsia-500/20 group-hover:scale-110 transition-transform">
+            <Sparkles size={24} className="text-fuchsia-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-fuchsia-400/70 font-black">Chroma Control</p>
+            <h3 className="text-xl font-black text-white mt-1">Aura Studio</h3>
+          </div>
+        </div>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} className="w-10 h-10 rounded-full border border-white/5 flex items-center justify-center bg-white/5">
+          <ChevronDown size={20} className="text-slate-400" />
+        </motion.div>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+            <div className="px-6 pb-6 space-y-6">
+              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+                {patterns.map(p => (
+                  <button key={p.id} disabled={p.id === 'heart-sync' && !isWatchConnected} onClick={() => setLedPattern(p.id)} className={`shrink-0 flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all ${ledPattern === p.id ? 'bg-fuchsia-500/20 border-fuchsia-400/40 text-white' : 'bg-slate-950/40 border-white/5 text-slate-500 hover:border-white/10'}`}>
+                    <p.icon size={16} className={ledPattern === p.id ? 'text-fuchsia-400' : ''} /><span className="text-xs font-black tracking-tight">{p.name}</span>
+                  </button>
                 ))}
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-interface DeveloperModePanelProps {
-  isUnlocked: boolean;
-  syncLogs: any[];
-  onCalibration: () => void;
-  onExportLogs: () => void;
-  firmwareVersion: string;
-  isOpen: boolean;
-  onToggle: () => void;
-}
-
-export function DeveloperModePanel({ isUnlocked, syncLogs, onCalibration, onExportLogs, firmwareVersion, isOpen, onToggle }: DeveloperModePanelProps) {
-  return (
-    <div className="rounded-[1.75rem] bg-slate-900/80 border border-white/10 backdrop-blur-xl overflow-hidden">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between gap-3 text-left">
-        <div className="min-w-0"><p className="text-[11px] uppercase tracking-[0.28em] text-emerald-300/70 font-black">Developer</p><h3 className="text-lg font-black text-white mt-1">Dev Toolkit</h3></div>
-        <div className="flex items-center gap-2 shrink-0"><motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown size={18} className="text-slate-400" /></motion.div></div>
-      </button>
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div key="dev-mode-panel" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="px-4 pb-4">
-              {!isUnlocked ? (
-                <div className="rounded-[1.75rem] border border-dashed border-white/10 bg-slate-950/35 p-5 text-center"><Lock size={28} className="text-slate-500 mx-auto mb-3" /><p className="text-white font-black">Firmware {firmwareVersion}</p></div>
-              ) : (
-                <div className="space-y-3">
-                  <button onClick={onCalibration} className="w-full rounded-[1.5rem] border border-emerald-400/20 bg-emerald-500/10 p-4 text-left active:scale-95"><p className="text-base font-black text-white">Zero Calibration</p></button>
-                  <button onClick={onExportLogs} className="w-full rounded-[1.5rem] border border-cyan-400/20 bg-cyan-500/10 p-4 text-left active:scale-95"><p className="text-base font-black text-white">Export Log</p></button>
+              <div className="rounded-[2rem] border border-white/5 bg-slate-950/40 p-5">
+                <div className="flex items-center justify-between mb-4"><span className="text-[10px] font-black text-white/40 tracking-[0.2em] uppercase">Palettes</span><div className="w-3 h-3 rounded-full shadow-[0_0_10px_currentColor]" style={{ color: ledColor, backgroundColor: ledColor }} /></div>
+                <div className="grid grid-cols-6 gap-3">
+                  {ledColors.map(c => (
+                    <button key={c.value} onClick={() => setLedColor(c.value)} className={`h-10 rounded-xl border transition-all active:scale-90 ${ledColor === c.value ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-white/5'}`} style={{ backgroundColor: c.value }} />
+                  ))}
                 </div>
-              )}
+              </div>
+              <div className="relative h-44 rounded-[2.5rem] bg-slate-950/60 border border-white/5 flex items-center justify-center overflow-hidden">
+                <AuraPulseEffect color={ledColor} size="lg" intensity={1.5} className="absolute" />
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-24 h-32 rounded-3xl border border-white/10 bg-slate-900 shadow-2xl relative overflow-hidden">
+                    <motion.div className="absolute inset-0 opacity-40" animate={{ opacity: [0.2, 0.6, 0.2], backgroundColor: ledColor }} transition={{ duration: 2, repeat: Infinity }} />
+                  </div>
+                  <span className="mt-3 text-[10px] font-black text-white/20 tracking-[0.3em] uppercase">Visual Preview</span>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -278,27 +227,56 @@ export function DeveloperModePanel({ isUnlocked, syncLogs, onCalibration, onExpo
   );
 }
 
-interface DeviceConsoleProps {
-  syncLogs: any[];
-  isOpen: boolean;
-  onToggle: () => void;
-}
-
-export function DeviceConsole({ syncLogs, isOpen, onToggle }: DeviceConsoleProps) {
+// ============================================================================
+// AUTOMATION CENTER
+// ============================================================================
+export function AutomationCenter({ ruleTrigger, setRuleTrigger, ruleAction, setRuleAction, ruleTime, setRuleTime, ruleThreshold, setRuleThreshold, addAutomationRule, rules, setRules, weatherData, isWeatherSynced, fillPercentage, isOpen, onToggle }: AutomationCenterProps) {
   return (
-    <div className="rounded-[1.75rem] bg-slate-900/80 border border-white/10 backdrop-blur-xl overflow-hidden">
-      <button onClick={onToggle} className="w-full p-4 flex items-center justify-between gap-3 text-left">
-        <div className="min-w-0"><p className="text-[11px] uppercase tracking-[0.28em] text-slate-400 font-black">Console</p><h3 className="text-lg font-black text-white mt-1">Event Logs</h3></div>
-        <div className="flex items-center gap-2 shrink-0"><motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown size={18} className="text-slate-400" /></motion.div></div>
+    <div className="rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl overflow-hidden">
+      <button onClick={onToggle} className="w-full p-6 flex items-center justify-between gap-4 text-left group">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 group-hover:scale-110 transition-transform"><Cpu size={24} className="text-amber-400" /></div>
+          <div className="min-w-0"><p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/70 font-black">Logic Engine</p><h3 className="text-xl font-black text-white mt-1">Smart Rules</h3></div>
+        </div>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} className="w-10 h-10 rounded-full border border-white/5 flex items-center justify-center bg-white/5"><ChevronDown size={20} className="text-slate-400" /></motion.div>
       </button>
-      <AnimatePresence initial={false}>
+      <AnimatePresence>
         {isOpen && (
-          <motion.div key="device-console-panel" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="px-4 pb-4">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+            <div className="px-6 pb-6 space-y-6">
+              <div className="rounded-[2.5rem] border border-white/5 bg-slate-950/40 p-6 relative">
+                <div className="flex flex-col gap-6 relative z-10">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3"><div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-[10px] font-black text-amber-400">1</div><span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black">XÁC ĐỊNH ĐIỀU KIỆN</span></div>
+                    <select value={ruleTrigger} onChange={(e) => setRuleTrigger(e.target.value as RuleTrigger)} className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white outline-none focus:border-amber-500/30 transition-all appearance-none">
+                      <option value="goal_time">Qua mốc giờ chưa đạt mục tiêu</option><option value="weather_temp">Nhiệt độ ngoài trời quá cao</option><option value="low_battery">Pin xuống mức thấp</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-center py-1"><div className="w-px h-8 bg-gradient-to-b from-amber-500/40 to-cyan-500/40" /></div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3"><div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center text-[10px] font-black text-cyan-400">2</div><span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black">KÍCH HOẠT HÀNH ĐỘNG</span></div>
+                    <select value={ruleAction} onChange={(e) => setRuleAction(e.target.value as RuleAction)} className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white outline-none focus:border-cyan-500/30 transition-all appearance-none">
+                      <option value="red_strobe">Nháy đỏ (Cảnh báo mạnh)</option><option value="boost_reminders">Nhắc nhở dồn dập</option><option value="cyan_wave">Sóng xanh (Nhẹ nhàng)</option><option value="power_save">Bật tiết kiệm Pin</option>
+                    </select>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5 grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><span className="text-[10px] text-slate-500 font-black uppercase">Tham số</span>{ruleTrigger === 'goal_time' ? (<input value={ruleTime} onChange={(e) => setRuleTime(e.target.value)} type="time" className="w-full bg-transparent border-none text-white font-black outline-none" />) : (<div className="flex items-center gap-1"><input value={ruleThreshold} onChange={(e) => setRuleThreshold(Number(e.target.value))} type="number" className="w-12 bg-transparent border-none text-white font-black outline-none" /><span className="text-slate-500 text-xs">{ruleTrigger === 'weather_temp' ? '°C' : '%'}</span></div>)}</div>
+                    <div className="space-y-2 text-right"><span className="text-[10px] text-slate-500 font-black uppercase">Trạng thái</span><p className="text-emerald-400 font-black text-xs uppercase">Validated</p></div>
+                  </div>
+                  <button onClick={addAutomationRule} className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-sm tracking-tight active:scale-95 transition-all shadow-[0_0_30px_rgba(245,158,11,0.2)]">Deploy Smart Rule</button>
+                </div>
+              </div>
               <div className="space-y-3">
-                {[...syncLogs].reverse().slice(0, 5).map((log: any) => (
-                  <div key={log.id} className="rounded-[1.35rem] border border-white/10 bg-slate-950/35 p-4 flex flex-col gap-2">
-                    <p className="text-sm font-black text-white">{log.action}</p>
+                {rules.map((rule: AutomationRule & { description: string }) => (
+                  <div key={rule.id} className="rounded-3xl border border-white/5 bg-slate-950/40 p-5 flex items-center justify-between group">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${rule.active ? 'bg-amber-500/10 text-amber-400' : 'bg-slate-800 text-slate-500'}`}><Zap size={20} /></div>
+                      <div>
+                        <p className="text-sm font-black text-white tracking-tight">{rule.description}</p>
+                        <p className="text-[10px] text-slate-500 mt-1 font-bold uppercase tracking-widest">{ruleActionLabel[rule.action as RuleAction]}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setRules((prev: AutomationRule[]) => prev.map(r => r.id === rule.id ? { ...r, active: !r.active } : r))} className={`w-12 h-6 rounded-full relative transition-all ${rule.active ? 'bg-amber-500' : 'bg-slate-800'}`}><motion.div animate={{ x: rule.active ? 24 : 4 }} className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-lg" /></button>
                   </div>
                 ))}
               </div>
