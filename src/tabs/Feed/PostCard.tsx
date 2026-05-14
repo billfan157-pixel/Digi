@@ -51,15 +51,16 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
   const isMyPost = currentUserId === post.author_id;
   const isSaved = savedPosts.has(post.id);
 
-  const isChallenge = post.type === 'challenge';
-  const isMilestone = post.type === 'milestone';
-  const isAchievement = post.type === 'achievement';
-  const isCompare = post.type === 'compare';
-  const isTip = post.type === 'tip';
-  const isPoll = post.type === 'poll';
-  const isWaterLog = post.type === 'water_log'
-    || post.type === 'daily_goal'
-    || (!isTip && !isPoll && !isChallenge && (post.hydration_ml || 0) > 0);
+const isChallenge = post.type === 'challenge';
+   const isMilestone = post.type === 'milestone';
+   const isAchievement = post.type === 'achievement';
+   const isCompare = post.type === 'compare';
+   const isTip = post.type === 'tip';
+   const isPoll = post.type === 'poll';
+   const isWaterLog = post.type === 'water_log'
+     || post.type === 'daily_goal'
+     || (!isTip && !isPoll && !isChallenge && (post.hydration_ml || 0) > 0);
+   const isDrop = post.post_kind === 'story';
 
   if (isDeleted) return null;
 
@@ -108,11 +109,13 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
         ? 'border-purple-500/30'
         : isMilestone
           ? 'border-orange-500/30'
-          : isTip
-            ? 'border-emerald-500/25'
-            : isPoll
-              ? 'border-amber-500/25'
-              : 'border-white/5';
+          : isDrop
+            ? 'border-cyan-500/30'
+            : isTip
+              ? 'border-emerald-500/25'
+              : isPoll
+                ? 'border-amber-500/25'
+                : 'border-white/5';
 
   return (
     <motion.div
@@ -154,6 +157,7 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
           isChallenge={isChallenge}
           isMilestone={isMilestone}
           isWaterLog={isWaterLog}
+          isDrop={isDrop}
           handleJoinChallenge={() => joinChallenge(post.author_id)}
         />
       </div>

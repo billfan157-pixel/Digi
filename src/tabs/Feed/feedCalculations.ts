@@ -28,47 +28,48 @@ export const useFeedSummary = (
 }, [currentTimestamp, posts, socialStories]);
 
 export const useRankedFeed = (
-  posts: SocialFeedPost[] | undefined,
-  feedMode: FeedMode,
-  feedFilter: FeedFilter,
-  feedSearch: string,
-  socialFollowingIds: string[],
-  profile: Profile | null
-) => useMemo(() => {
-  if (!posts || posts.length === 0) return [];
+   posts: SocialFeedPost[] | undefined,
+   feedMode: FeedMode,
+   feedFilter: FeedFilter,
+   feedSearch: string,
+   socialFollowingIds: string[],
+   profile: Profile | null
+ ) => useMemo(() => {
+   if (!posts || posts.length === 0) return [];
 
-  const normalizedPosts: SocialFeedPost[] = posts
-    .filter((post) => post.post_kind !== 'story')
-    .map((post) => ({
-    ...post,
-    type: (() => {
-      switch (post.post_kind) {
-        case 'checkin':
-          return 'daily_goal';
-        case 'challenge':
-          return 'challenge';
-        case 'milestone':
-          return 'milestone';
-        case 'progress':
-          return (post.streak_snapshot ?? 0) > 0 ? 'milestone' : 'daily_goal';
-        case 'tip':
-          return 'tip';
-        case 'poll':
-          return 'poll';
-        case 'photo':
-          return 'daily_goal';
-        default:
-          return 'status';
-      }
-    })() as SocialFeedPost['type'],
-    value: post.hydration_ml ?? post.streak_snapshot ?? 0,
-    likes: post.likes_count ?? 0,
-    comments: post.comments_count ?? 0,
-    temperature: post.temperature,
-    heart_rate: post.heart_rate,
-    drink_type: post.drink_type,
-    pulse_count: post.pulse_count ?? 0,
-  }));
+   // Include drop/story posts in feed - they will have type 'status'
+   const normalizedPosts: SocialFeedPost[] = posts
+     .map((post) => ({
+     ...post,
+     type: (() => {
+       switch (post.post_kind) {
+         case 'checkin':
+           return 'daily_goal';
+         case 'challenge':
+           return 'challenge';
+         case 'milestone':
+         case 'progress':
+           return (post.streak_snapshot ?? 0) > 0 ? 'milestone' : 'daily_goal';
+         case 'story':
+           return 'status';
+         case 'tip':
+           return 'tip';
+         case 'poll':
+           return 'poll';
+         case 'photo':
+           return 'daily_goal';
+         default:
+           return 'status';
+       }
+     })() as SocialFeedPost['type'],
+     value: post.hydration_ml ?? post.streak_snapshot ?? 0,
+     likes: post.likes_count ?? 0,
+     comments: post.comments_count ?? 0,
+     temperature: post.temperature,
+     heart_rate: post.heart_rate,
+     drink_type: post.drink_type,
+     pulse_count: post.pulse_count ?? 0,
+   }));
 
   let ranked: SocialFeedPost[] = feedMode === 'latest'
     ? sortPostsByLatest(normalizedPosts)
@@ -78,15 +79,17 @@ export const useRankedFeed = (
     ranked = ranked.filter(post => post.author_id === profile?.id || socialFollowingIds.includes(post.author_id));
   }
 
-  if (feedFilter === 'checkins') {
-    ranked = ranked.filter(post => post.type === 'daily_goal' || post.type === 'status' || post.post_kind === 'photo');
-  } else if (feedFilter === 'milestones') {
-    ranked = ranked.filter(post => post.type === 'milestone');
-  } else if (feedFilter === 'challenges') {
-    ranked = ranked.filter(post => post.type === 'challenge');
-  } else if (feedFilter === 'photos') {
-    ranked = ranked.filter(post => !!post.image_url);
-  }
+if (feedFilter === 'checkins') {
+     ranked = ranked.filter(post => post.type === 'daily_goal' || post.type === 'status' || post.post_kind === 'photo');
+   } else if (feedFilter === 'drops') {
+     ranked = ranked.filter(post => post.post_kind === 'story');
+   } else if (feedFilter === 'milestones') {
+     ranked = ranked.filter(post => post.type === 'milestone');
+   } else if (feedFilter === 'challenges') {
+     ranked = ranked.filter(post => post.type === 'challenge');
+   } else if (feedFilter === 'photos') {
+     ranked = ranked.filter(post => !!post.image_url);
+   }
 
   const search = feedSearch.trim().toLowerCase();
   if (search) {

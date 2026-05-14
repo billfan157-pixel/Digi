@@ -9,6 +9,7 @@ interface PostCardContentProps {
   isChallenge: boolean;
   isMilestone: boolean;
   isWaterLog: boolean;
+  isDrop: boolean;
   handleJoinChallenge: () => void;
 }
 
@@ -20,6 +21,7 @@ export const PostCardContent = ({
   isChallenge,
   isMilestone,
   isWaterLog,
+  isDrop,
   handleJoinChallenge,
 }: PostCardContentProps) => {
   if (isAchievement) {
@@ -236,22 +238,42 @@ export const PostCardContent = ({
             );
           })}
         </div>
-        {hasVoted && (
-          <p className="text-center text-[10px] text-slate-500 mt-3">{totalVotes} phiếu bầu</p>
-        )}
-      </div>
-    );
-  }
+{hasVoted && (
+           <p className="text-center text-[10px] text-slate-500 mt-3">{totalVotes} phiếu bầu</p>
+         )}
+       </div>
+     );
+   }
 
-  return (
-    <>
-      {postContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap mb-3">{postContent}</p>}
-      {post.image_url && (
-        <div className="rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border border-white/5">
-          <img src={post.image_url} alt="Ảnh bài viết" loading="lazy" className="w-full max-h-[500px] object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        </div>
-      )}
-    </>
-  );
+   // Drop/Story posts special styling
+   if (isDrop) {
+     return (
+       <div className="space-y-3">
+         <div className="flex items-center gap-2 mb-1">
+           <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+             Drop
+           </span>
+         </div>
+         {postContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap">{postContent}</p>}
+         {post.image_url && (
+           <div className="rounded-2xl overflow-hidden bg-slate-950 border border-white/5">
+             <img src={post.image_url} alt="Drop" loading="lazy" className="w-full max-h-[300px] object-cover"
+               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+           </div>
+         )}
+       </div>
+     );
+   }
+
+   return (
+     <>
+       {postContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap mb-3">{postContent}</p>}
+       {post.image_url && (
+         <div className="rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border border-white/5">
+           <img src={post.image_url} alt="Ảnh bài viết" loading="lazy" className="w-full max-h-[500px] object-cover"
+             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+         </div>
+       )}
+     </>
+   );
 };

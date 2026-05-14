@@ -86,9 +86,10 @@ export default function AppBootstrap({ children }: { children: React.ReactNode }
               const providerRefreshToken = params.get('provider_refresh_token');
 
               if (accessToken && refreshToken) {
-                // Lưu provider tokens vào localStorage để useCalendarSync dùng ngay
-                if (providerToken) localStorage.setItem('supabase.provider_token', providerToken);
-                if (providerRefreshToken) localStorage.setItem('digiwell_google_refresh_token', providerRefreshToken);
+                // Store provider tokens in sessionStorage (not localStorage for security)
+                // Note: These tokens are passed to calendar-proxy Edge Function server-side
+                if (providerToken) sessionStorage.setItem('digiwell_provider_token', providerToken);
+                if (providerRefreshToken) sessionStorage.setItem('digiwell_google_refresh_token', providerRefreshToken);
 
                 // Nạp session vào Supabase Client của App
                 const { error } = await supabase.auth.setSession({

@@ -28,7 +28,16 @@ export default function RegisterScreen({ onBack, onSuccess }: RegisterScreenProp
     if (isSubmittingReg) return;
     if (!regEmail || !regData.nickname || !regData.password) { toast.error("Vui lòng điền đầy đủ thông tin!"); return; }
     if (!isValidEmail(regEmail)) { toast.error("Email không hợp lệ!"); return; }
-    if (regData.password.length < 6) { toast.error("Mật khẩu tối thiểu 6 ký tự!"); return; }
+    
+    // Password validation: min 8 chars, at least 1 letter and 1 number
+    if (regData.password.length < 8) { 
+      toast.error("Mật khẩu tối thiểu 8 ký tự!"); 
+      return; 
+    }
+    if (!/[a-zA-Z]/.test(regData.password) || !/[0-9]/.test(regData.password)) { 
+      toast.error("Mật khẩu cần có ít nhất 1 chữ cái và 1 số!"); 
+      return; 
+    }
     
     setIsSubmittingReg(true);
     const toastId = toast.loading("Đang thiết lập Cloud Profile...");

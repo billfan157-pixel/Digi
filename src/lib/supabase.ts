@@ -1,9 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// 1. LẤY BIẾN MÔI TRƯỜNG VỚI GIÁ TRỊ DỰ PHÒNG (FALLBACK)
-// Nếu .env không load được trên mobile, app sẽ không bị crash mà vẫn chạy với giá trị cứng này.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://plbwqjdrivyffrhpbmvm.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYndxamRyaXZ5ZmZyaHBibXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMjY3NjYsImV4cCI6MjA5MDcwMjc2Nn0.nZDHmQyVdn4a99zISog9-hzOzsFQ7G8RClV8GPe7sJw';
+// 1. LẤY BIẾN MÔI TRƯỜNG TỪ .env (Bắt buộc phải có)
+// Fallback đã được loại bỏ vì lý do bảo mật - không được phép hardcode credentials
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // 2. KIỂM TRA CẤU HÌNH VÀ GHI LOG
 if (!supabaseUrl || !supabaseAnonKey) {

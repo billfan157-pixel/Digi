@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { readFeedCache, writeFeedCache } from '@/lib/sessionSecurity';
+import type { SocialFeedPost } from '@/models';
 
 const PAGE_SIZE = 10;
 
@@ -38,12 +39,12 @@ async function ensurePublicProfile(userId: string) {
 }
 
 export function useFeed(currentUserId: string | undefined, friendIds: string[] = []) {
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<SocialFeedPost[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [newPostsCount, setNewPostsCount] = useState(0);
-  const [pendingPosts, setPendingPosts] = useState<any[]>([]);
+  const [pendingPosts, setPendingPosts] = useState<SocialFeedPost[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const postsLengthRef = useRef(0);
   const visibleAuthorIds = useMemo(
@@ -62,7 +63,7 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
 
   useEffect(() => {
     setPosts(currentUserId && currentUserId !== 'undefined'
-      ? readFeedCache<any[]>(currentUserId) || []
+      ? readFeedCache<SocialFeedPost[]>(currentUserId) || []
       : []);
     setPendingPosts([]);
     setNewPostsCount(0);
@@ -76,28 +77,30 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
     // 1. Load từ Local Cache trước (Offline-First) cho trang đầu
     if (isFirstPage) {
       try {
-        const cached = readFeedCache<any[]>(currentUserId);
+        const cached = readFeedCache<SocialFeedPost[]>(currentUserId);
         if (cached) {
           setPosts(cached);
         } else {
           setIsLoading(true);
         }
-      } catch (e) { }
+      } catch (e) {
+        console.error('Failed to read feed cache:', e);
+        setIsLoading(true);
+      }
     } else {
       setIsFetchingMore(true);
     }
 
     try {
-      const { data, error } = await supabase
-        .from('social_posts')
-        .select(`
-          *,
-          author:public_profiles!social_posts_author_public_profile_fkey (id, nickname, avatar_url, level, water_today, water_goal),
-          post_cheers (user_id)
-        `)
-        .neq('post_kind', 'story')
-        .order('created_at', { ascending: false })
-        .range(offset, offset + PAGE_SIZE - 1);
+const { data, error } = await supabase
+         .from('social_posts')
+         .select(`
+           *,
+           author:public_profiles!social_posts_author_public_profile_fkey (id, nickname, avatar_url, level, water_today, water_goal),
+           post_cheers (user_id)
+         `)
+         .order('created_at', { ascending: false })
+         .range(offset, offset + PAGE_SIZE - 1);
 
       if (error) throw error;
 
@@ -129,7 +132,7 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
           });
         }
 
-        setHasMore(data.length === PAGE_SIZE);
+        setHasMore(visibleRows.length === PAGE_SIZE);
       }
     } catch (err) {
       console.error('Lỗi tải feed:', err);
@@ -174,12 +177,11 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
             .eq('id', newPost.id)
             .single();
           
-          if (data) {
-            if (data.post_kind === 'story') return;
-            // Simplified check for performance
-            setPendingPosts(prev => [data, ...prev]);
-            setNewPostsCount(prev => prev + 1);
-          }
+if (data) {
+             // Include story/drop posts in real-time updates
+             setPendingPosts(prev => [data, ...prev]);
+             setNewPostsCount(prev => prev + 1);
+           }
         }
       );
 
@@ -204,7 +206,7 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
   }, [isLoading, isFetchingMore, hasMore, fetchPosts]);
 
   const showNewPosts = useCallback(() => {
-    const formattedPending = pendingPosts.map(p => ({ ...p, likedByMe: false }));
+    const formattedPending = pendingPosts.map(p => ({ ...p, cheeredByMe: false }));
     setPosts(prev => {
       const nextPosts = [...formattedPending, ...prev];
       postsLengthRef.current = nextPosts.length;

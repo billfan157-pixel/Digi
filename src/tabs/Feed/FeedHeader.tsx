@@ -28,6 +28,7 @@ const modeOptions: { key: FeedMode; label: string; icon: typeof TrendingUp }[] =
 const filterOptions: { key: FeedFilter; label: string; icon: typeof Award }[] = [
   { key: 'all', label: 'Tất cả', icon: Sparkles },
   { key: 'checkins', label: 'Pulse', icon: Droplets },
+  { key: 'drops', label: 'Drop', icon: Droplets },
   { key: 'milestones', label: 'Peak', icon: Award },
   { key: 'challenges', label: 'Duel', icon: Swords },
   { key: 'photos', label: 'Proof', icon: Image },

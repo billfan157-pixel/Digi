@@ -104,6 +104,34 @@ async function secureDeleteValue(server: string) {
   }
 }
 
+const SESSION_TIMEOUT_KEY = 'digiwell_last_activity';
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+export function updateLastActivity() {
+  const timestamp = Date.now().toString();
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem(SESSION_TIMEOUT_KEY, timestamp);
+  }
+}
+
+export function getLastActivity(): number {
+  if (typeof window === 'undefined') return 0;
+  const stored = sessionStorage.getItem(SESSION_TIMEOUT_KEY);
+  return stored ? parseInt(stored, 10) : 0;
+}
+
+export function isSessionTimedOut(): boolean {
+  const lastActivity = getLastActivity();
+  if (!lastActivity) return false;
+  return Date.now() - lastActivity > SESSION_TIMEOUT_MS;
+}
+
+export function clearSessionActivity() {
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem(SESSION_TIMEOUT_KEY);
+  }
+}
+
 /**
  * Google provider tokens are now handled server-side by the calendar-proxy Edge Function.
  * One-time cleanup of legacy client-side tokens is handled by purgeLegacySensitiveStorage().

@@ -243,6 +243,52 @@ Deno.serve(async (request) => {
       return json({ error: 'Missing action.' }, 400);
     }
 
+    // Validate and sanitize input based on action type
+    // Validate context for 'advice' action
+    if (action === 'advice') {
+      const context = body.context as Partial<DigiwellAiContext>;
+      if (!context || typeof context !== 'object') {
+        return json({ error: 'Invalid or missing context.' }, 400);
+      }
+      // Validate numeric fields
+      if (context.waterIntake !== undefined && (!Number.isFinite(context.waterIntake) || context.waterIntake < 0)) {
+        return json({ error: 'Invalid waterIntake value.' }, 400);
+      }
+      if (context.waterGoal !== undefined && (!Number.isFinite(context.waterGoal) || context.waterGoal <= 0)) {
+        return json({ error: 'Invalid waterGoal value.' }, 400);
+      }
+      // Validate weather if present
+      if (context.weather) {
+        if (typeof context.weather.temp !== 'number' || context.weather.temp < -50 || context.weather.temp > 60) {
+          return json({ error: 'Invalid weather temperature.' }, 400);
+        }
+      }
+    }
+
+    // Validate stats and entries for 'report-analysis' action
+    if (action === 'report-analysis') {
+      const stats = body.stats as Record<string, unknown>;
+      const entries = body.entries;
+      
+      if (!stats || typeof stats !== 'object') {
+        return json({ error: 'Invalid or missing stats.' }, 400);
+      }
+      
+      // Validate entries array
+      if (!Array.isArray(entries)) {
+        return json({ error: 'Invalid or missing entries array.' }, 400);
+      }
+      if (entries.length > 100) {
+        return json({ error: 'Entries array too large (max 100).' }, 400);
+      }
+      
+      // Sanitize string inputs to prevent prompt injection
+      const periodLabel = String(body.periodLabel ?? '').slice(0, 50);
+      if (periodLabel && periodLabel.length !== String(body.periodLabel ?? '').length) {
+        body.periodLabel = periodLabel;
+      }
+    }
+
     const rateLimitResponse = await enforceRateLimit(supabase, action);
     if (rateLimitResponse) {
       return rateLimitResponse;

@@ -101,13 +101,12 @@ async function normalizeProfileRow(profileRow: any) {
 
 
 export async function fetchProfileById(userId: string) {
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error('Profile not found');
+  if (!data) return null;
 
   const normalizedRow = await normalizeProfileRow(data);
-  const appProfile = toAppProfile(normalizedRow);
-  return appProfile;
+  return toAppProfile(normalizedRow);
 }
 
 export async function fetchCurrentProfile() {

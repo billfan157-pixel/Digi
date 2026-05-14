@@ -21,6 +21,11 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
   const { authenticateBiometric, isAuthenticating } = useBiometric();
   const [isCheckingBiometric, setIsCheckingBiometric] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [lastAttemptTime, setLastAttemptTime] = useState<number>(0);
+
+  const isLockedOut = lockoutUntil ? Date.now() < lockoutUntil : false;
 
   const handleBiometricUnlock = useCallback(async () => {
     if (!onBiometricUnlock) return;
@@ -51,15 +56,39 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmittingLogin) return;
+    
+    // Check lockout
+    if (isLockedOut) {
+      const remainingMs = Math.ceil((lockoutUntil! - Date.now()) / 1000);
+      toast.error(`Temporarily locked. Try again in ${remainingMs} seconds.`);
+      return;
+    }
+    
     if (!loginEmail || !loginPass) { toast.error("Vui lòng nhập Email và Mật khẩu!"); return; }
     setIsSubmittingLogin(true);
     const toastId = toast.loading("Đang xác thực...");
     try {
       const { error } = await supabase!.auth.signInWithPassword({ email: loginEmail.toLowerCase().trim(), password: loginPass });
-      if (error) throw error;
+      if (error) {
+        // Rate limiting: track failed attempts
+        const now = Date.now();
+        const attempts = now - lastAttemptTime < 300000 ? loginAttempts + 1 : 1; // 5 min window
+        setLoginAttempts(attempts);
+        setLastAttemptTime(now);
+        
+        if (attempts >= 5) {
+          setLockoutUntil(now + 300000); // 5 min lockout
+          toast.error("Quá nhiều lần thử. Vui lòng đợi 5 phút.", { id: toastId });
+        } else {
+          toast.error(error.message === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng!' : error.message, { id: toastId });
+        }
+        throw error;
+      }
+      // Reset on success
+      setLoginAttempts(0);
       toast.success("Đăng nhập thành công! 👋", { id: toastId });
     } catch (err: any) {
-      toast.error(err.message === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng!' : err.message, { id: toastId });
+      // Already handled above
     } finally { setIsSubmittingLogin(false); }
   };
 
@@ -123,8 +152,8 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
               <Lock className="w-4 h-4 absolute left-4 top-4 text-slate-500" />
             </div>
           </div>
-          <button type="submit" disabled={isSubmittingLogin} className="w-full py-4 rounded-xl font-semibold text-slate-950 text-sm mt-2 disabled:opacity-50 active:scale-95 transition-all duration-200 ease-out shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]" style={{ background: isSubmittingLogin ? '#334155' : '#06b6d4' }}>
-            {isSubmittingLogin ? <span className="animate-pulse">Đang xác thực...</span> : "Đăng nhập →"}
+<button type="submit" disabled={isSubmittingLogin || isLockedOut} className="w-full py-4 rounded-xl font-semibold text-slate-950 text-sm mt-2 disabled:opacity-50 active:scale-95 transition-all duration-200 ease-out shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]" style={{ background: isSubmittingLogin ? '#334155' : '#06b6d4' }}>
+           {isSubmittingLogin ? <span className="animate-pulse">Đang xác thực...</span> : isLockedOut ? "Đã khóa tạm thời" : "Đăng nhập →"}
           </button>
         </form>
 

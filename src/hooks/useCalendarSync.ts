@@ -173,14 +173,25 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
     return { events: [], needs_reauth: true };
   }
 
-  // Persist refresh_token khi có (chỉ xuất hiện lần đầu sau OAuth)
+  // 1. Persist refresh_token khi có (chỉ xuất hiện lần đầu sau OAuth)
   if (session.provider_refresh_token) {
     localStorage.setItem(CALENDAR_REFRESH_TOKEN_KEY, session.provider_refresh_token);
+    // Lưu lên DB để đồng bộ xuyên thiết bị
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('profiles').update({ google_refresh_token: session.provider_refresh_token }).eq('id', user.id);
+      await supabase.from('public_profiles').update({ is_calendar_synced: true }).eq('id', user.id);
+    }
   }
-  // Fallback: lấy refresh token đã lưu từ trước
-  const refreshToken = session.provider_refresh_token
-    || localStorage.getItem(CALENDAR_REFRESH_TOKEN_KEY)
-    || '';
+
+  // 2. Lấy refresh token (Ưu tiên local -> rồi đến DB)
+  let refreshToken = session.provider_refresh_token || localStorage.getItem(CALENDAR_REFRESH_TOKEN_KEY);
+  
+  if (!refreshToken) {
+    const { data: profile } = await supabase.from('profiles').select('google_refresh_token').single();
+    refreshToken = profile?.google_refresh_token || '';
+    if (refreshToken) localStorage.setItem(CALENDAR_REFRESH_TOKEN_KEY, refreshToken);
+  }
 
   const timeMin = new Date();
   timeMin.setHours(0, 0, 0, 0);
@@ -208,6 +219,7 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
 const SYNC_COOLDOWN_MS = 1 * 60 * 1000; // Giảm cooldown xuống 1 phút
 
 export function useCalendarSync() {
+  const profile = useAppStore(s => s.profile);
   const isCalendarSynced = useAppStore(s => s.isCalendarSynced);
   const calendarEvents = useAppStore(s => s.calendarEvents);
   
@@ -219,6 +231,12 @@ export function useCalendarSync() {
   const setIsCalendarSynced = useCallback((synced: boolean) => {
     useAppStore.getState().setAppState({ isCalendarSynced: synced });
     localStorage.setItem(CALENDAR_SYNCED_KEY, synced ? 'true' : 'false');
+    
+    // Lưu vào DB để ghi nhớ vĩnh viễn
+    const userId = useAppStore.getState().profile?.id;
+    if (userId) {
+      supabase.from('public_profiles').update({ is_calendar_synced: synced }).eq('id', userId).then();
+    }
   }, []);
 
   const clearRetry = useCallback(() => {
@@ -249,23 +267,18 @@ export function useCalendarSync() {
 
       if (proxyResponse.needs_reauth) {
         setIsSyncing(false);
-
-        // Nếu có cached data, giữ hiển thị thay vì reset
-        const hasCachedEvents = calendarEvents.length > 0;
-        if (silent && hasCachedEvents) {
-          // Giữ isCalendarSynced = true để UI vẫn hiển thị events cached
+        
+        // GIỮ LẠI LỊCH CŨ: Nếu đã có dữ liệu cached, không được set isCalendarSynced = false
+        const hasCachedEvents = calendarEvents.length > 0 || localStorage.getItem(CALENDAR_CACHE_KEY);
+        if (hasCachedEvents) {
+          // Vẫn coi như đã đồng bộ để UI hiện lịch cũ
+          setIsCalendarSynced(true);
           return calendarEvents.length;
         }
 
-        // Chỉ reset khi không có cache hoặc user chủ động sync
-        setIsCalendarSynced(false);
-
+        // Chỉ khi chưa bao giờ sync thành công mới bắt re-auth
         if (!startOAuthIfNeeded) return false;
-
         await beginGoogleCalendarOAuth();
-        if (!silent) {
-          toast.info('Phiên Google hết hạn, đang kết nối lại...', { id: tid });
-        }
         return false;
       }
 
@@ -326,7 +339,7 @@ export function useCalendarSync() {
   }, [syncCalendar, clearRetry]);
 
   useEffect(() => {
-    // 1. Khôi phục từ Cache
+    // 1. Khôi phục từ Cache ngay lập tức
     const cachedEvents = localStorage.getItem(CALENDAR_CACHE_KEY);
     const cachedSynced = localStorage.getItem(CALENDAR_SYNCED_KEY) === 'true';
     if (cachedEvents || cachedSynced) {
@@ -336,15 +349,22 @@ export function useCalendarSync() {
       });
     }
 
-    // 2. Tự động quét mới
+    // 2. Tự động quét mới - Chờ Profile có dữ liệu
     const initSync = async () => {
+      if (!profile?.id) return; // Chờ cho đến khi có profile
+
       const isPending = readCalendarOAuthPendingFlag();
       if (isPending) {
         scheduleRetry();
         return;
       }
-      // Nếu đã từng sync, tự động quét ngầm
-      if (cachedSynced) {
+
+      // Kiểm tra trạng thái đồng bộ từ DB (Ghi nhớ xuyên trình duyệt)
+      const profileSynced = profile?.is_calendar_synced;
+      if (cachedSynced || profileSynced) {
+        if (profileSynced && !cachedSynced) {
+           useAppStore.getState().setAppState({ isCalendarSynced: true });
+        }
         await syncCalendar({ silent: true, startOAuthIfNeeded: false });
       }
     };
@@ -358,7 +378,7 @@ export function useCalendarSync() {
       window.removeEventListener(CALENDAR_TOKEN_UPDATED_EVENT, handleTokenUpdated);
       clearRetry();
     };
-  }, []);
+  }, [profile?.id, profile?.is_calendar_synced]); // Chạy lại khi Profile tải xong
 
   return { isCalendarSynced, setIsCalendarSynced, calendarEvents, syncCalendar, isSyncing };
 }

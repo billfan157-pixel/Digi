@@ -61,6 +61,7 @@ const FeedTab = memo(function FeedTab({
   const feedFilterLabel = {
     all: 'Tất cả',
     checkins: 'Pulse',
+    drops: 'Drop',
     milestones: 'Peak',
     challenges: 'Duel',
     photos: 'Proof',
