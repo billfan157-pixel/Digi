@@ -1,7 +1,7 @@
 import { useState, useEffect, memo } from 'react';
 import {
-  Share2, Heart, Zap, Target, MoreHorizontal, MessageCircle, Globe, Droplets,
-  CheckCircle2, Edit2, Trash2, Flag, Flame, Coffee, Bookmark, Trophy, Sparkles, CloudSun, HeartPulse
+  Share2, Zap, MoreHorizontal, MessageCircle, Globe, Droplets,
+  Edit2, Trash2, Flag, Flame, Bookmark, Trophy, Sparkles, Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -18,13 +18,12 @@ interface PostCardProps {
   onSendNudge?: (post: SocialFeedPost) => void;
 }
 
-export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpenComments, onSendNudge }: PostCardProps) => {
+export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardProps) => {
   const postId = post.id ? String(post.id) : '';
-  // Sử dụng cheers_count hoặc like_count (đã được đồng bộ trong DB)
-  const initialCheersCount = (post as any).cheers_count || post.likes_count || (post as any).like_count || 0;
+  const initialCheersCount = post.like_count || 0;
   
   const [cheersCount, setCheersCount] = useState(initialCheersCount);
-  const [hasCheered, setHasCheered] = useState((post as any).cheeredByMe || false);
+  const [hasCheered, setHasCheered] = useState(Boolean((post as unknown as Record<string, unknown>).cheeredByMe));
   const [showMenu, setShowMenu] = useState(false);
   const isMyPost = currentUserId === post.author_id;
   const [isDeleted, setIsDeleted] = useState(false);
@@ -67,7 +66,7 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
 
       writeSavedPostIds(currentUserId, savedIds);
       setIsSaved(newState);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Lỗi khi lưu bài viết:', err);
       toast.error('Có lỗi xảy ra, vui lòng thử lại sau.');
     }
@@ -99,15 +98,10 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
         p_local_date: today
       };
 
-      const { data, error } = await supabase.rpc('action_cheers_post', payload);
-
-      if (error) throw error;
-
-      // Cập nhật Pulse âm thầm
-      void supabase.rpc('pulse_post', { p_post_id: String(post.id) });
+      await supabase.rpc('action_cheers_post', payload);
       
       toast.success('🍻 Đã cụng ly! +200ml nước');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Lỗi cụng ly:", err);
       setHasCheered(false);
       setCheersCount((prev: number) => prev - 1);
@@ -128,7 +122,7 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
       toast.success('Đã xóa bài viết thành công', { id: tid });
       setShowMenu(false);
       setIsDeleted(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Lỗi xóa bài viết:", err);
       toast.error('Không thể xóa bài viết lúc này!', { id: tid });
     }
@@ -163,7 +157,7 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
     }
   };
 
-  const handleEditPost = async () => {
+    const _handleEditPost = async () => {
     setShowMenu(false);
     const newContent = window.prompt('Chỉnh sửa bài viết:', postContent);
     if (newContent !== null && newContent.trim() !== postContent) {
@@ -173,7 +167,7 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
         if (error) throw error;
         setPostContent(newContent.trim());
         toast.success('Đã cập nhật bài viết', { id: tid });
-      } catch(err) {
+      } catch {
         toast.error('Lỗi khi cập nhật!', { id: tid });
       }
     }
@@ -209,7 +203,7 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
 
       if (error) throw error;
       toast.success('Đã gửi chiến thư. Đối thủ sẽ nhận được thông báo trong Đấu trường.', { id: tid });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Lỗi gửi chiến thư:", err);
       toast.error('Không thể gửi chiến thư lúc này!', { id: tid });
     }
@@ -274,7 +268,7 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
                   >
                     {isMyPost ? (
                       <>
-                        <button onClick={handleEditPost} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/5 transition-colors">
+                        <button onClick={_handleEditPost} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/5 transition-colors">
                           <Edit2 size={16} /> Chỉnh sửa
                         </button>
                         <button onClick={handleDeletePost} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors">
@@ -315,11 +309,11 @@ export const PostCard = memo(({ post, currentUserId, handleToggleLikePost, onOpe
                 <Zap size={14} className="text-amber-400" />
               </div>
               <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 p-[2px] shadow-[0_0_20px_rgba(16,185,129,0.3)] z-10 transform -translate-x-3">
-                <img src={(post as any).compare_avatar || `https://ui-avatars.com/api/?name=${(post as any).compare_name}&background=10B981&color=fff`} className="w-full h-full rounded-full border-2 border-slate-900 object-cover" />
+                <img src={(post as unknown as Record<string, string>).compare_avatar || `https://ui-avatars.com/api/?name=${(post as unknown as Record<string, string>).compare_name}&background=10B981&color=fff`} className="w-full h-full rounded-full border-2 border-slate-900 object-cover" />
               </div>
             </div>
             <p className="text-center text-white font-bold text-lg leading-snug mb-2 z-10">
-              Cả bạn và <span className="text-emerald-400">{(post as any).compare_name || 'Đồng đội'}</span> đều đạt <span className="text-amber-400">{post.value || 100}%</span> mục tiêu!
+              Cả bạn và <span className="text-emerald-400">{(post as unknown as Record<string, string>).compare_name || 'Đồng đội'}</span> đều đạt <span className="text-amber-400">{post.value || 100}%</span> mục tiêu!
             </p>
             <p className="text-center text-slate-400 text-xs z-10">Cùng nhau giữ vững phong độ nhé.</p>
             <button className="mt-4 px-6 py-2 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition-all">

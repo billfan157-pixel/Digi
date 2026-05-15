@@ -6,7 +6,7 @@ import type { Profile, PostPollOption } from '../../models';
 
 interface QuickPollComposerProps {
   profile: Profile;
-  onPublish: (data: { content: string; postKind: 'poll'; extra: Record<string, any> }) => Promise<void>;
+  onPublish: (data: { content: string; postKind: 'poll'; extra: Record<string, unknown> }) => Promise<void>;
   onClose: () => void;
 }
 
@@ -16,7 +16,7 @@ const DURATIONS = [
   { value: '24h', label: '24 giờ' },
 ];
 
-export const QuickPollComposer = ({ profile, onPublish, onClose }: QuickPollComposerProps) => {
+export const QuickPollComposer = ({ onPublish, onClose }: QuickPollComposerProps) => {
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [duration, setDuration] = useState('24h');

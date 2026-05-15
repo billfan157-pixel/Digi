@@ -12,11 +12,11 @@ export const NewPostsBanner = ({ count, onShowNewPosts }: NewPostsBannerProps) =
 
   useEffect(() => {
     if (count > 0) {
-      setVisible(true);
+      setTimeout(() => setVisible(true), 0);
       const timer = setTimeout(() => setVisible(false), 8000);
       return () => clearTimeout(timer);
     } else {
-      setVisible(false);
+      setTimeout(() => setVisible(false), 0);
     }
   }, [count]);
 

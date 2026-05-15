@@ -1,5 +1,4 @@
-import { useCallback, useEffect } from 'react';
-import { toast } from 'sonner';
+import { useEffect } from 'react';
 import type { AppShellProps } from '@/app/AppShell';
 import { useAppTabProps } from '@/app/useAppTabProps';
 import type { TabType } from '@/components/layout/BottomNav';
@@ -12,6 +11,8 @@ import { useAppSystem } from '@/hooks/useAppSystem';
 import { useReminderStore } from '@/store/useReminderStore';
 import { useDrinkPresetStore } from '@/store/useDrinkPresetStore';
 import { useAppStore } from '@/store/useAppStore';
+import type { Profile } from '@/models';
+import type { SocialComposerState } from '@/lib/social';
 import { getRankInfo } from '@/utils/healthMath';
 
 export function useAppShellController(): AppShellProps {
@@ -36,7 +37,6 @@ export function useAppShellController(): AppShellProps {
     activeTab,
     setActiveTab,
     setShowOnboarding,
-    setShowAiChat,
     setShowPremiumModal,
     setShowProfileSettings,
     setShowAddFriend,
@@ -45,8 +45,8 @@ export function useAppShellController(): AppShellProps {
 
   const { loadReminderSettings } = useReminderStore();
   const { loadDrinkPresets } = useDrinkPresetStore();
-  const setAppState = useAppStore((state: any) => state.setAppState);
-  const setAppActions = useAppStore((state: any) => state.setActions);
+  const setAppState = useAppStore((state) => state.setAppState);
+  const setAppActions = useAppStore((state) => state.setActions);
 
   const hydration = useHydrationController({
     profile,
@@ -83,13 +83,13 @@ export function useAppShellController(): AppShellProps {
   // ── Sync hydration data to Zustand store ──
   useEffect(() => {
     setAppState({
-      profile,
+      profile: profile as unknown as Profile | null,
       waterIntake: hydration.waterIntake,
       waterGoal: hydration.waterGoal,
       streak: hydration.streak,
-      waterEntries: hydration.waterEntries as any,
+      waterEntries: hydration.waterEntries,
       weeklyHistory: hydration.weeklyHistory,
-      weatherData: weatherData as any,
+      weatherData,
       watchData,
       isWeatherSynced,
       isWatchConnected,
@@ -126,7 +126,7 @@ export function useAppShellController(): AppShellProps {
       handleDeleteEntry: hydration.handleDeleteEntry,
       handleEditEntry: hydration.handleEditEntry,
       handleLogout,
-      openSocialComposer: openSocialComposer as any,
+      openSocialComposer,
       startFasting: hydration.startFasting,
       stopFasting: hydration.stopFasting,
     });
@@ -151,7 +151,7 @@ export function useAppShellController(): AppShellProps {
 
   // ── Sync tab props ──
   const tabProps = useAppTabProps({
-    profile,
+    profile: profile as unknown as Profile | null,
     smartBottle: hydration.smartBottle,
     isExportingPDF: hydration.isExportingPDF,
     handleExportPDF: hydration.handleExportPDF,
@@ -169,9 +169,9 @@ export function useAppShellController(): AppShellProps {
     setShowAddFriend,
     setShowShopModal,
     getLeagueData: league.getLeagueData,
-    getRankInfo,
+    getRankInfo: (wp: number) => getRankInfo(wp) as unknown as Record<string, unknown>,
     socialProps,
-    openSocialComposer,
+    openSocialComposer: ((kind?: SocialComposerState['postKind']) => void 0) as (...args: unknown[]) => void,
     streakFreezes: hydration.streakFreezes,
     needsFreeze: hydration.needsFreeze,
     useStreakFreeze: hydration.useStreakFreeze,
@@ -187,7 +187,7 @@ export function useAppShellController(): AppShellProps {
       setLoginPrefill(email);
       setView('login');
     },
-    profile,
+    profile: profile as unknown as Profile | null,
     handleLogout,
     quickDropCameraProps: {
       isOpen: !!socialProps.showQuickDropCamera,
@@ -195,17 +195,17 @@ export function useAppShellController(): AppShellProps {
       onCapture: socialProps.handleQuickDropCapture || (async () => {}),
       onClose: socialProps.closeQuickDropCamera || (() => {}),
     },
-    onboardingProps: profile && !profile.onboarding_completed ? {
-      profile,
+    onboardingProps: profile && !(profile as Record<string, unknown>).onboarding_completed ? {
+      profile: profile as unknown as Profile,
       onComplete: async (weight: number, onboardingWaterGoal: number, name: string) => {
-        setProfile((prev: any) => ({
+        setProfile((prev: Record<string, unknown> | null) => ({
           ...prev,
           weight,
           water_goal: onboardingWaterGoal,
           nickname: name,
           onboarding_completed: true,
         }));
-        await updateProfileFields(profile.id, {
+        await updateProfileFields(profile.id as string, {
           nickname: name.trim(),
           onboarding_completed: true,
           water_goal: onboardingWaterGoal,
@@ -214,10 +214,10 @@ export function useAppShellController(): AppShellProps {
       },
     } : null,
     activeTab: activeTab as TabType,
-    setActiveTab: setActiveTab as any,
-    homeTabProps: tabProps.homeTabProps,
+    setActiveTab,
+    homeTabProps: tabProps.homeTabProps as unknown as typeof tabProps.homeTabProps,
     insightTabProps: tabProps.insightTabProps,
-    bottleTabProps: tabProps.bottleTabProps,
+    bottleTabProps: tabProps.bottleTabProps as unknown as AppShellProps['bottleTabProps'],
     leagueTabProps: tabProps.leagueTabProps,
     feedTabProps: tabProps.feedTabProps,
     profileTabProps: tabProps.profileTabProps,

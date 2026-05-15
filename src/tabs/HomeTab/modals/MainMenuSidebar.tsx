@@ -1,6 +1,5 @@
 import {
   User,
-  Settings,
   LogOut,
   X,
   Swords,
@@ -35,7 +34,7 @@ export default function MainMenuSidebar({
   onLogout,
 }: MainMenuSidebarProps) {
   const { t } = useTranslation();
-  const profile = useAppStore((state: any) => state.profile);
+  const profile = useAppStore((state: { profile: unknown }) => state.profile) as Record<string, unknown> | null;
   const { setShowShopModal, setShowBattleArena, setShowQuestModal } =
     useUIStore();
 
@@ -97,20 +96,20 @@ export default function MainMenuSidebar({
                   >
                     <AvatarFrame
                       size="md"
-                      level={profile.level || 1}
-                      avatarUrl={profile?.avatar_url ?? null}
-                      nickname={profile.nickname}
+                      level={Number(profile?.level) || 1}
+                      avatarUrl={profile?.avatar_url as string | null ?? null}
+                      nickname={String(profile?.nickname || '')}
                       showBadge={false}
-                      frameId={profile?.equipped_frame_id}
+                      frameId={profile?.equipped_frame_id as string | undefined}
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="text-white font-bold text-base leading-tight truncate">
-                        {profile.nickname || t('home.you')}
+                        {String(profile?.nickname || t('home.you'))}
                       </h3>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <Sparkles size={11} className="text-cyan-400 shrink-0" />
                         <p className="text-cyan-400 text-[10px] font-bold uppercase tracking-wider">
-                          Cấp {profile.level || 1}
+                          Cấp {Number(profile?.level) || 1}
                         </p>
                       </div>
                     </div>
@@ -132,7 +131,7 @@ export default function MainMenuSidebar({
                   <div className="absolute -top-4 -right-4 w-16 h-16 bg-emerald-400/10 blur-[30px] rounded-full" />
                   <ShieldCheck size={16} className="text-emerald-400 mb-1.5" />
                   <span className="text-emerald-400 font-black text-lg block leading-none">
-                    <CountUp value={profile?.wp || 0} />
+                    <CountUp value={Number(profile?.wp) || 0} />
                   </span>
                   <span className="text-[9px] text-emerald-400/60 font-bold uppercase tracking-widest mt-1 block">
                     Điểm SK
@@ -142,7 +141,7 @@ export default function MainMenuSidebar({
                   <div className="absolute -top-4 -right-4 w-16 h-16 bg-amber-400/10 blur-[30px] rounded-full" />
                   <Coins size={16} className="text-amber-400 mb-1.5" />
                   <span className="text-amber-400 font-black text-lg block leading-none">
-                    <CountUp value={profile?.coins || 0} />
+                    <CountUp value={Number(profile?.coins) || 0} />
                   </span>
                   <span className="text-[9px] text-amber-400/60 font-bold uppercase tracking-widest mt-1 block">
                     Điểm thưởng

@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Bluetooth, RefreshCw, LogOut, Droplet, GlassWater, Zap, Lock, ChevronRight, Activity, Battery, Thermometer, Wifi } from 'lucide-react';
-import { getBatteryIcon, CAPACITY } from './constants';
+import { Bluetooth, RefreshCw, Droplet, GlassWater, Zap, Lock, ChevronRight, Activity, Battery, Thermometer, Wifi } from 'lucide-react';
+import { CAPACITY } from './constants';
 
 // ============================================================================
 // METRIC MINI COMPONENT (CYBER UPGRADE)
 // ============================================================================
-export function MetricMini({ label, value, icon: Icon }: { label: string; value: string; icon?: any }) {
+export function MetricMini({ label, value, icon: Icon }: { label: string; value: string; icon?: React.ComponentType<{ size?: number; className?: string }> }) {
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-3 transition-all hover:bg-slate-900/60 hover:border-cyan-500/30">
       {/* Subtle background glow */}
@@ -294,9 +294,9 @@ function HydrateSparkBottle({
 // BOTTLE VISUALIZER
 // ============================================================================
 export function BottleVisualizer({
-  isConnected, currentVolume, capacity, fillPercentage, equippedBottle
+  isConnected, currentVolume, capacity, fillPercentage
 }: {
-  isConnected: boolean; currentVolume: number; capacity: number; fillPercentage: number; equippedBottle: any;
+  isConnected: boolean; currentVolume: number; capacity: number; fillPercentage: number;
 }) {
   const displayVolume = isConnected ? currentVolume : 0;
   const pct = isConnected ? Math.round(fillPercentage) : 0;
@@ -359,7 +359,7 @@ export function BottleVisualizer({
 export function DeviceHero({
   isConnected, isSyncing, fillPercentage, currentVolume, batteryLevel, signalStrength, latencyMs, temperature, onConnect, onDisconnect, equippedBottle
 }: {
-  isConnected: boolean; isSyncing: boolean; fillPercentage: number; currentVolume: number; batteryLevel: number; signalStrength: number; latencyMs: number; temperature: number; onConnect: () => void; onDisconnect: () => void; equippedBottle: any;
+  isConnected: boolean; isSyncing: boolean; fillPercentage: number; currentVolume: number; batteryLevel: number; signalStrength: number; latencyMs: number; temperature: number; onConnect: () => void; onDisconnect: () => void; equippedBottle: Record<string, unknown> | null;
 }) {
   return (
     <div className="space-y-4">
@@ -418,7 +418,7 @@ export function DeviceHero({
           <span className="text-[10px] font-black text-white/30 tracking-widest">{latencyMs > 0 ? `${latencyMs}ms PING` : '----'}</span>
         </div>
 
-        <BottleVisualizer isConnected={isConnected} currentVolume={currentVolume} capacity={CAPACITY} fillPercentage={fillPercentage} equippedBottle={equippedBottle} />
+        <BottleVisualizer isConnected={isConnected} currentVolume={currentVolume} capacity={CAPACITY} fillPercentage={fillPercentage} />
 
         <div className="grid grid-cols-3 gap-3 mt-4">
           <MetricMini label="Charge" value={`${batteryLevel}%`} icon={Battery} />

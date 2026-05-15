@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Crown, Flame, Medal, Sparkles, Zap } from 'lucide-react';
+import { Crown, Flame, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getTierByWP } from './types';
 import type { LeagueEntry } from './types';

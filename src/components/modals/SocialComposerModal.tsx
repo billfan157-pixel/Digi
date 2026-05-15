@@ -8,7 +8,7 @@ interface SocialComposerModalProps {
   isPublishingSocialPost: boolean;
   socialComposer: SocialComposerState;
   setSocialComposer: React.Dispatch<React.SetStateAction<SocialComposerState>>;
-  profile: any;
+  profile: Record<string, unknown> | null;
   waterIntake: number;
   waterGoal: number;
   streak: number;
@@ -69,7 +69,7 @@ export default function SocialComposerModal({
                 <button
                   key={`composer-opt-${index}`}
                   type="button"
-                  onClick={() => setSocialComposer((prev: any) => ({ ...prev, postKind: option.value, visibility: option.value === 'story' ? 'followers' : prev.visibility }))}
+                  onClick={() => setSocialComposer((prev: SocialComposerState) => ({ ...prev, postKind: option.value, visibility: option.value === 'story' ? 'followers' : prev.visibility }))}
                   className={`py-3 rounded-2xl text-[11px] font-bold border transition-all ${(socialComposer.postKind as string) === option.value ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
                 >
                   {option.label}
@@ -104,7 +104,7 @@ export default function SocialComposerModal({
               </div>
 
               <div className="grid grid-cols-2 gap-3 mt-3">
-                <button type="button" onClick={() => setSocialComposer((prev: SocialComposerState) => ({ ...prev, content: buildProgressShareText({ nickname: profile?.nickname, waterIntake, waterGoal, streak }), postKind: 'status' }))} className="py-3 rounded-xl bg-indigo-500/12 border border-indigo-500/25 text-indigo-300 text-xs font-bold active:scale-95 transition-all">
+                <button type="button" onClick={() => setSocialComposer((prev: SocialComposerState) => ({ ...prev, content: buildProgressShareText({ nickname: profile?.nickname as string | undefined, waterIntake, waterGoal, streak }), postKind: 'status' }))} className="py-3 rounded-xl bg-indigo-500/12 border border-indigo-500/25 text-indigo-300 text-xs font-bold active:scale-95 transition-all">
                   Dùng Pulse
                 </button>
                 <select

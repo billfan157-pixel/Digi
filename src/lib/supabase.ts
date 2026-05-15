@@ -15,7 +15,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // 3. KHỞI TẠO SINGLETON (Tránh lỗi Multiple Instances)
-const globalAny = globalThis as any;
+const globalAny = globalThis as unknown as { __supabaseClient?: SupabaseClient };
 
 if (!globalAny.__supabaseClient) {
   globalAny.__supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -57,7 +57,7 @@ if (!globalAny.__supabaseClient) {
   });
 }
 
-export const supabase: SupabaseClient = globalAny.__supabaseClient;
+export const supabase: SupabaseClient = globalAny.__supabaseClient!;
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 

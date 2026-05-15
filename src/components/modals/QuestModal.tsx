@@ -11,11 +11,9 @@ import { toast } from 'sonner';
 
 import { playSuccessSound } from '@/lib/audio';
 import { QuestCard, QuestCardSkeleton } from '@/components/QuestCard';
-import { resolveQuestProgress } from '@/lib/questProgress';
 import { useUIStore } from '@/store/useUIStore';
 import { useAppStore } from '@/store/useAppStore';
-import { appQueryKeys } from '@/lib/queryKeys';
-import { queryClient } from '@/lib/queryClient';
+import type { UserQuest } from '@/config/questConfig';
 import { useQuests } from '@/hooks/useQuests';
 
 type QuestFilter = 'daily' | 'weekly' | 'level';
@@ -53,7 +51,7 @@ export default function QuestModal() {
     const filtered = quests.filter(q => q.quest?.type === filter);
     
     return filtered.sort((a, b) => {
-      const getDynamicProgress = (q: any) => {
+      const getDynamicProgress = (q: UserQuest) => {
         let p = q.progress;
         if (q.status === 'active') {
           if (q.quest.condition_type === 'drink_today') p = Math.max(p, waterToday || 0);
@@ -64,7 +62,7 @@ export default function QuestModal() {
         return p;
       };
       
-      const getPriority = (q: any) => {
+      const getPriority = (q: UserQuest) => {
         if (q.status === 'claimed') return 2;
         const p = getDynamicProgress(q);
         if (q.status === 'completed' || p >= q.quest.condition_value) return 0;
@@ -120,8 +118,8 @@ export default function QuestModal() {
         `🎉 +${quest.quest.reward_exp} EXP • +${quest.quest.reward_coins} WP`,
         { id: toastId }
       );
-    } catch (error: any) {
-      toast.error(error?.message || 'Có lỗi xảy ra', {
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra', {
         id: toastId,
       });
     } finally {

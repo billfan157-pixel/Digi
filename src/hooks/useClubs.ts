@@ -3,8 +3,8 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 
 export function useClubs(userId?: string) {
-  const [myClub, setMyClub] = useState<any>(null);
-  const [allClubs, setAllClubs] = useState<any[]>([]);
+  const [myClub, setMyClub] = useState<Record<string, unknown> | null>(null);
+  const [allClubs, setAllClubs] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
   const [joining, setJoining] = useState(false);
 
@@ -64,15 +64,14 @@ export function useClubs(userId?: string) {
       if (clubsError) throw clubsError;
 
       const normalized =
-        clubsData?.map((club: any) => ({
+        clubsData?.map((club: Record<string, unknown>) => ({
           ...club,
-          member_count: club.club_members?.[0]?.count ?? 0
+          member_count: (club.club_members as Array<{ count: number }> | null)?.[0]?.count ?? 0
         })) || [];
 
       setAllClubs(normalized);
-    } catch (error: any) {
-      console.error('fetchClubData error:', error);
-      toast.error('Không tải được dữ liệu club');
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -81,40 +80,26 @@ export function useClubs(userId?: string) {
   // =========================
   // JOIN CLUB
   // =========================
-  const joinClub = useCallback(
-    async (clubId: string) => {
-      if (!userId || joining) return;
+  const joinClub = useCallback(async (clubId: string) => {
+    if (!userId || joining) return;
 
-      try {
-        setJoining(true);
+    setJoining(true);
 
-        // leave current first
-        await supabase
-          .from('club_members')
-          .delete()
-          .eq('user_id', userId);
+    try {
+      const { error } = await supabase
+        .from('club_members')
+        .insert({ user_id: userId, club_id: clubId, role: 'member' });
 
-        const { error } = await supabase
-          .from('club_members')
-          .insert({
-            user_id: userId,
-            club_id: clubId,
-            role: 'member'
-          });
+      if (error) throw error;
 
-        if (error) throw error;
-
-        toast.success('Đã tham gia câu lạc bộ');
-        fetchClubData();
-      } catch (error: any) {
-        console.error(error);
-        toast.error('Không thể tham gia club');
-      } finally {
-        setJoining(false);
-      }
-    },
-    [userId, joining, fetchClubData]
-  );
+      toast.success('Đã tham gia club thành công');
+      fetchClubData();
+    } catch {
+      toast.error('Không thể tham gia club');
+    } finally {
+      setJoining(false);
+    }
+  }, [userId, joining, fetchClubData]);
 
   // =========================
   // LEAVE CLUB
@@ -133,7 +118,7 @@ export function useClubs(userId?: string) {
       setMyClub(null);
       toast.success('Đã rời câu lạc bộ');
       fetchClubData();
-    } catch (error) {
+    } catch {
       toast.error('Không thể rời club');
     }
   }, [userId, fetchClubData]);

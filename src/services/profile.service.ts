@@ -18,39 +18,73 @@ export interface AppProfile extends Profile {
   energy_tracking?: boolean;
 }
 
-const isValidProfileId = (profileId: string | undefined) =>
-  !!profileId && profileId !== 'undefined' && profileId.length === 36;
-
 const getTodayKey = () => {
   const today = new Date();
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 };
 
-function toAppProfile(profileRow: any): AppProfile {
-  const normalizedProfile = normalizeProfileEnums(profileRow);
+interface ProfileRow {
+  id?: string;
+  nickname?: string;
+  avatar_url?: string | null;
+  gender?: string;
+  age?: number;
+  height?: number;
+  weight?: number;
+  activity?: string;
+  climate?: string;
+  goal?: string;
+  wake_up?: string;
+  bed_time?: string;
+  water_goal?: number;
+  wp?: number;
+  coins?: number;
+  total_exp?: number;
+  current_exp?: number;
+  water_today?: number;
+  total_water?: number;
+  onboarding_completed?: boolean;
+  equipped_bottle_id?: string | null;
+  equipped_frame_id?: string | null;
+  equipped_theme_id?: string | null;
+  equipped_notification_sound?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  sleep_hours?: number;
+  sleep_quality?: number;
+  mood_tracking?: boolean;
+  sync_wellness_data?: boolean;
+  energy_tracking?: boolean;
+  last_water_date?: string;
+  level?: number;
+  [key: string]: unknown;
+}
+
+function toAppProfile(profileRow: ProfileRow): AppProfile {
+  const normalizedProfile = normalizeProfileEnums(profileRow) as ProfileRow;
   const calculatedLevel = levelFromExp(normalizedProfile.total_exp || 0);
 
   return {
-    id: normalizedProfile.id,
-    nickname: normalizedProfile.nickname,
+    id: normalizedProfile.id || '',
+    nickname: normalizedProfile.nickname || '',
     password: '',
-    avatar_url: normalizedProfile.avatar_url,
-    gender: normalizedProfile.gender,
-    age: normalizedProfile.age,
-    height: normalizedProfile.height,
-    weight: normalizedProfile.weight,
-    activity: normalizedProfile.activity,
-    climate: normalizedProfile.climate,
-    goal: normalizedProfile.goal,
+    avatar_url: normalizedProfile.avatar_url ?? null,
+    gender: (normalizedProfile.gender as Profile['gender']) || 'Khác',
+    age: normalizedProfile.age || 0,
+    height: normalizedProfile.height || 0,
+    weight: normalizedProfile.weight || 0,
+    activity: (normalizedProfile.activity as Profile['activity']) || 'sedentary',
+    climate: (normalizedProfile.climate as Profile['climate']) || 'temperate',
+    goal: normalizedProfile.goal || '',
     wakeUp: normalizedProfile.wake_up,
     bedTime: normalizedProfile.bed_time,
-    water_goal: normalizedProfile.water_goal,
-    wp: normalizedProfile.wp,
-    coins: normalizedProfile.coins,
-    total_exp: normalizedProfile.total_exp,
+    water_goal: normalizedProfile.water_goal || 2000,
+    wp: normalizedProfile.wp || 0,
+    coins: normalizedProfile.coins || 0,
+    total_exp: normalizedProfile.total_exp || 0,
     level: calculatedLevel,
     current_exp: normalizedProfile.current_exp,
-    water_today: normalizedProfile.water_today,
+    water_today: normalizedProfile.water_today || 0,
     total_water: normalizedProfile.total_water,
     onboarding_completed: normalizedProfile.onboarding_completed,
     equipped_bottle_id: normalizedProfile.equipped_bottle_id ?? null,
@@ -68,7 +102,7 @@ function toAppProfile(profileRow: any): AppProfile {
   };
 }
 
-async function normalizeProfileRow(profileRow: any) {
+async function normalizeProfileRow(profileRow: ProfileRow) {
   const profilePatch: Record<string, unknown> = {
     ...getProfileEnumPatch(profileRow),
   };
@@ -87,7 +121,7 @@ async function normalizeProfileRow(profileRow: any) {
     const { data, error } = await supabase
       .from('profiles')
       .update(profilePatch)
-      .eq('id', profileRow.id)
+      .eq('id', profileRow.id ?? '')
       .select('*')
       .single();
 

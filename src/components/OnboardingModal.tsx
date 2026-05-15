@@ -46,8 +46,8 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
       
       toast.success('Đã cập nhật mục tiêu của bạn!');
       onComplete(numWeight, waterGoal, name.trim());
-    } catch (error: any) {
-      toast.error(error.message || 'Lỗi cập nhật hồ sơ!');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Lỗi cập nhật hồ sơ!');
     } finally {
       setIsSubmitting(false);
     }

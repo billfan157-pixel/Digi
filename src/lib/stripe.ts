@@ -1,5 +1,3 @@
-import type { BillingPlan } from '../config/premium';
-
 type CheckoutResult = {
   status: 'success' | 'cancel' | 'unavailable';
   sessionId: string | null;
@@ -11,7 +9,7 @@ export const readCheckoutResult = (): CheckoutResult | null => null;
 
 export const clearCheckoutResult = () => {};
 
-export const startPremiumCheckout = async (_plan: BillingPlan): Promise<CheckoutResult> => ({
+export const startPremiumCheckout = async (): Promise<CheckoutResult> => ({
   status: 'unavailable',
   sessionId: null,
 });

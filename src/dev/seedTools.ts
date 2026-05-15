@@ -16,7 +16,7 @@ const sampleQuests = [
 
 export const seedSampleQuests = async () => {
   const { data: existingQuests } = await supabase.from('quests').select('title');
-  const existingTitles = new Set(existingQuests?.map((quest: any) => quest.title) || []);
+  const existingTitles = new Set(existingQuests?.map((quest: { title: string }) => quest.title) || []);
 
   if (existingTitles.size > 0) {
     const shouldContinue = confirm(`Đã có ${existingTitles.size} quests. Tiếp tục seed sẽ tạo duplicate. Clear trước?`);

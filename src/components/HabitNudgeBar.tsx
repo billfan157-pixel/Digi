@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { Droplets, Zap, Clock } from 'lucide-react';
-import { getTimeBasedNudge, getNextRecommendedDrink, TINT_STYLES, type Nudge } from '../lib/habitEngine';
+import { Droplets, Zap } from 'lucide-react';
+import { getTimeBasedNudge, getNextRecommendedDrink, TINT_STYLES } from '../lib/habitEngine';
 
 interface HabitNudgeBarProps {
   hour: number;

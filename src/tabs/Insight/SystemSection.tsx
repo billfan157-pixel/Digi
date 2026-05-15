@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Cpu, Activity, CloudSun, Calendar, Wifi, ChevronRight, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Cpu, Activity, Calendar, ChevronRight, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScheduleManager from '../../components/ScheduleManager';
 import { useAppStore } from '../../store/useAppStore';
@@ -8,11 +8,8 @@ import type { HydrationSchedule } from '../../lib/HydrationEngine';
 import type { CalendarEventItem } from '../../hooks/useCalendarSync';
 
 interface SystemSectionProps {
-  profile: any;
+  profile: { id?: string } | null;
   isPremium: boolean;
-  isWatchConnected: boolean;
-  isWeatherSynced: boolean;
-  isCalendarSynced: boolean;
   isExportingPDF: boolean;
   handleExportPDF: () => void;
   handleExportCSV: () => void;
@@ -78,9 +75,6 @@ function getEventTimeLabel(event: CalendarEventItem, dateKey: string) {
 export default function SystemSection({
   profile,
   isPremium,
-  isWatchConnected,
-  isWeatherSynced,
-  isCalendarSynced,
   isExportingPDF,
   handleExportPDF,
   handleExportCSV,
@@ -93,9 +87,9 @@ export default function SystemSection({
   const aiSchedule: HydrationSchedule[] | null = hydrationResult?.schedule ?? null;
 
   // Calendar — dùng state từ hook (real-time), không dùng prop (stale sau OAuth reload)
-  const { calendarEvents, syncCalendar, isCalendarSynced: calendarSynced } = useCalendarSync();
+  const { calendarEvents: rawCalendarEvents, syncCalendar, isCalendarSynced: calendarSynced } = useCalendarSync();
+  const calendarEvents = rawCalendarEvents as CalendarEventItem[];
 
-  const hasAnySyncSource = isWatchConnected || isWeatherSynced || calendarSynced || isCalendarSynced;
   const todayKey = getLocalDateKey(new Date());
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);

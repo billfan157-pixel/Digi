@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Flame, Droplet, Trophy, Users, Target, Shield, ArrowRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-// @ts-ignore
+// @ts-ignore - canvas-confetti has no types
 import confetti from 'canvas-confetti';
-import type { Profile } from '@/models';
 
 import { useUIStore } from '@/store/useUIStore';
 import { useAppStore } from '@/store/useAppStore';
@@ -12,14 +11,12 @@ import { useAppStore } from '@/store/useAppStore';
 export default function ClubCoopModal() {
   const isOpen = useUIStore(s => s.showClubCoopModal);
   const onClose = () => useUIStore.getState().setShowClubCoopModal(false);
-  const profile = useAppStore(s => s.profile);
   const waterIntake = useAppStore(s => s.waterIntake);
   const [hasContributed, setHasContributed] = useState(false);
   
   // Mock data cho Boss (Có thể nối với Backend sau)
   const GOAL_ML = 500000; // 500 Lít
-  const [currentProgress, setCurrentProgress] = useState(384500); 
-  const membersCount = 124;
+  const [currentProgress, setCurrentProgress] = useState(384500);
 
   const topContributors = [
     { name: 'Diệu Linh', amount: 15400, isMVP: true },

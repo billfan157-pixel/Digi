@@ -22,7 +22,7 @@ export async function fetchMonthlyWaterData(
   if (error) throw error;
 
   const dataMap: MonthlyDataResult = {};
-  (data || []).forEach((log: any) => {
+  (data || []).forEach((log: { day: string; amount: number }) => {
     if (log.day && log.amount) {
       dataMap[log.day] = (dataMap[log.day] || 0) + log.amount;
     }
@@ -34,7 +34,7 @@ export async function fetchMonthlyWaterData(
 export async function fetchDayLogs(
   userId: string,
   dateStr: string
-): Promise<any[]> {
+): Promise<Record<string, unknown>[]> {
   const { data, error } = await supabase
     .from('water_logs')
     .select('*')
@@ -52,5 +52,5 @@ export interface WaterLogWithAmount {
   amount: number;
   day: string;
   created_at: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

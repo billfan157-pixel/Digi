@@ -5,29 +5,27 @@ import type { HealthReport } from '@/lib/aiReports';
 import { generateWeeklyReport, getLatestHealthReport } from '@/lib/aiReports';
 import { provisionUserQuests, runChallengeEngine, runQuestEngine } from '@/lib/questEngine';
 import { playSuccessSound } from '@/lib/audio';
-// @ts-ignore
 import confetti from 'canvas-confetti';
 
 import { AppStorage } from '@/lib/storage';
 
 interface UsePremiumGamificationOptions {
-  profile: any;
-  setProfile: React.Dispatch<React.SetStateAction<any>>;
+  profile: Record<string, unknown> | null;
+  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   isPremium: boolean;
   setIsPremium: (value: boolean) => void;
   waterIntake: number;
   waterGoal: number;
   streak: number;
-  waterEntries: any[];
+  waterEntries: Record<string, unknown>[];
   weeklyHistory: { d: string; ml: number; isToday: boolean }[];
   weeklyLogCount: number;
-  watchData: any;
+  watchData: Record<string, unknown> | null;
   setShowPremiumModal: (value: boolean) => void;
 }
 
 export function usePremiumGamification({
   profile,
-  setProfile,
   isPremium,
   setIsPremium,
   waterIntake,
@@ -96,7 +94,7 @@ export function usePremiumGamification({
       setIsWeeklyReportLoading(true);
 
       try {
-        const latestReport = await getLatestHealthReport(profile.id, 'weekly');
+        const latestReport = await getLatestHealthReport(profile.id as string, 'weekly');
         if (!ignore) {
           setWeeklyReport(latestReport);
         }
@@ -115,12 +113,13 @@ export function usePremiumGamification({
   }, [profile?.id, isPremium]);
 
   useEffect(() => {
-    if (!profile?.level || previousLevelRef.current === null || profile.level <= previousLevelRef.current) {
-      previousLevelRef.current = profile?.level || null;
+    const profileLevel = Number(profile?.level) || 0;
+    if (!profileLevel || previousLevelRef.current === null || profileLevel <= previousLevelRef.current) {
+      previousLevelRef.current = profileLevel || null;
       return;
     }
 
-    const newLevel = profile.level;
+    const newLevel = profileLevel;
     const isMilestone10 = newLevel % 10 === 0;
 
     setLevelUpInfo({ from: previousLevelRef.current, to: newLevel });
@@ -129,10 +128,10 @@ export function usePremiumGamification({
     playSuccessSound();
 
     setTimeout(() => {
-      toast.success(`🎉 Lên cấp ${newLevel}! Thành tích đã được ghi nhận.`, { icon: '⭐', duration: 5000 });
+      toast.success(`Lên cấp ${newLevel}! Thành tích đã được ghi nhận.`, { icon: '⭐', duration: 5000 });
     }, 500);
 
-    previousLevelRef.current = profile.level;
+    previousLevelRef.current = profileLevel;
   }, [profile]);
 
   useEffect(() => {
@@ -180,14 +179,15 @@ export function usePremiumGamification({
 
     const assignQuestsIfNeeded = async () => {
       const todayStr = new Date().toISOString().split('T')[0];
-      const lastCheckKey = `daily_quest_check_v3_${profile.id}`;
+      const profileId = profile.id as string;
+      const lastCheckKey = `daily_quest_check_v3_${profileId}`;
       const lastCheckDate = AppStorage.getItem(lastCheckKey);
 
       if (lastCheckDate === todayStr) return;
 
       try {
-        await supabase.rpc('assign_daily_quests', { p_user_id: profile.id });
-        await provisionUserQuests(profile.id, profile.level || 1);
+        await supabase.rpc('assign_daily_quests', { p_user_id: profileId });
+        await provisionUserQuests(profileId, Number(profile.level) || 1);
         AppStorage.setItem(lastCheckKey, todayStr);
       } catch (error) {
         console.error('Lỗi khi gán nhiệm vụ hàng ngày:', error);
@@ -224,18 +224,19 @@ export function usePremiumGamification({
   useEffect(() => {
     if (!profile?.id || !profile.onboarding_completed) return;
 
+    const p = profile as Record<string, unknown>;
     const questCtx = {
-      userId: profile.id,
+      userId: p.id as string,
       waterToday: waterIntake,
       waterGoal,
       streak,
-      totalWater: profile.total_water || 0,
+      totalWater: Number(p.total_water) || 0,
       logCountToday: waterEntries.length,
       weeklyDays: weeklyHistory.filter(item => item.ml >= waterGoal).length,
       weeklyWater: weeklyHistory.reduce((sum, item) => sum + item.ml, 0),
       weeklyLogCount,
-      equippedSound: profile.equipped_notification_sound,
-      level: profile.level || 1,
+      equippedSound: String(p.equipped_notification_sound || ''),
+      level: Number(p.level) || 1,
     };
 
     runQuestEngine(questCtx);
@@ -266,16 +267,16 @@ export function usePremiumGamification({
     const toastId = toast.loading('AI đang tạo báo cáo tuần...');
 
     try {
-      const report = await generateWeeklyReport(profile.id, {
-        nickname: profile.nickname,
-        goal: profile.goal,
-        activity: profile.activity,
-        avgHeartRate: watchData?.heartRate,
+      const report = await generateWeeklyReport(profile.id as string, {
+        nickname: String((profile as Record<string, unknown>).nickname || ''),
+        goal: String((profile as Record<string, unknown>).goal || ''),
+        activity: String((profile as Record<string, unknown>).activity || ''),
+        avgHeartRate: Number(watchData?.heartRate) || 0,
       });
 
       setWeeklyReport(report);
       toast.success('Đã tạo báo cáo tuần thành công.', { id: toastId });
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Không thể tạo báo cáo tuần lúc này.';
       toast.error(message, { id: toastId });
     } finally {

@@ -49,9 +49,9 @@ export function useDeviceHealth(profileId?: string) {
 
       toast.success("Đã cấp quyền truy cập dữ liệu sức khỏe!");
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Lỗi khi yêu cầu quyền:', error);
-      if (error.message?.includes('denied')) {
+      if (error instanceof Error && error.message?.includes('denied')) {
         toast.error("Quyền truy cập dữ liệu sức khỏe bị từ chối. Vui lòng cấp quyền trong cài đặt thiết bị.");
       } else {
         toast.error("Không thể kết nối với Apple Health / Health Connect.");
@@ -87,11 +87,11 @@ export function useDeviceHealth(profileId?: string) {
         limit: 1,
       });
 
-      const totalSteps = stepsRes.samples.reduce((sum: number, entry: any) => sum + entry.value, 0);
+      const totalSteps = stepsRes.samples.reduce((sum: number, entry: { value: number }) => sum + entry.value, 0);
       const latestHr = hrRes.samples.length > 0 ? hrRes.samples[0].value : 0;
 
       setWatchData({ steps: Math.round(totalSteps), heartRate: Math.round(latestHr) });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Lỗi đồng bộ dữ liệu sức khỏe:', error);
       // Don't disconnect on sync errors, just log them
     }

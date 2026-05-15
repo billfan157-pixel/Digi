@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useEffect, memo, useCallback, useRef } from 'react';
+import { useMemo, useState, useEffect, memo, useCallback } from 'react';
 import {
-  Cpu, Droplets, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock, BarChart2
+  Cpu, Droplets, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -12,7 +12,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { useInsightData } from '../hooks/useInsightData';
 import { usePreviousWeekData } from '../hooks/usePreviousWeekData';
 import { useBehaviorAnalysis } from '../hooks/useBehaviorAnalysis';
-import { toast } from 'sonner';
 
 import TabHeader from '../components/layout/TabHeader';
 import OverviewSection from './Insight/OverviewSection';
@@ -27,9 +26,6 @@ interface InsightTabProps {
    isAiLoading: boolean;
    aiAdvice: string;
    fetchAIAdvice: () => void;
-   weeklyReport?: any;
-   isWeeklyReportLoading?: boolean;
-   generateWeeklyReport?: () => void;
  }
 
 const InsightTab = memo(function InsightTab({
@@ -57,8 +53,6 @@ const InsightTab = memo(function InsightTab({
   
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
   const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'system'>('overview');
-  const secretClickCountRef = useRef(0);
-  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [selectedDateModal, setSelectedDateModal] = useState<{date: string, ml: number} | null>(null);
   const [dayLogs, setDayLogs] = useState<WaterLog[]>([]);
@@ -102,10 +96,10 @@ const InsightTab = memo(function InsightTab({
       const isFuture = year > currentYear || (year === currentYear && month > currentMonth) || (year === currentYear && month === currentMonth && i > currentDate);
       const fullDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       
-      const entriesForDay = waterEntries?.filter((e: any) => e.day === fullDateStr) || [];
+      const entriesForDay = waterEntries?.filter((e: { day: string }) => e.day === fullDateStr) || [];
       let ml = Number(monthlyDataMap[fullDateStr] || 0);
       if (entriesForDay.length > 0) {
-        ml = entriesForDay.reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
+        ml = entriesForDay.reduce((sum: number, e: { amount: number }) => sum + (e.amount || 0), 0);
       } else if (isToday) {
         ml = waterIntake;
       }
@@ -129,7 +123,7 @@ const InsightTab = memo(function InsightTab({
     setSelectedDateModal({ date: dateStr, ml: totalMl });
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const entriesInStore = waterEntries?.filter((e: any) => e.day === dateStr) || [];
+    const entriesInStore = waterEntries?.filter((e: { day: string }) => e.day === dateStr) || [];
     if (entriesInStore.length > 0 || dateStr === todayStr || totalMl === 0) {
       if (totalMl === 0) setDayLogs([]);
       setIsDayLogsLoading(false);
@@ -156,20 +150,19 @@ const InsightTab = memo(function InsightTab({
 
   const { patterns } = useBehaviorAnalysis({
     weeklyData: weeklyChartData,
-    waterLogs: waterEntries,
     waterGoal
   });
 
   const stats = useMemo(() => {
     if (weeklyChartData.length === 0) return { avg: 0, completed: 0 };
-    const total = weeklyChartData.reduce((acc: number, curr: any) => acc + curr.ml, 0);
+    const total = weeklyChartData.reduce((acc: number, curr: { ml: number }) => acc + curr.ml, 0);
     const avg = total / weeklyChartData.length;
-    const completed = weeklyChartData.filter((day: any) => day.ml >= waterGoal).length;
+    const completed = weeklyChartData.filter((day: { ml: number }) => day.ml >= waterGoal).length;
     return { avg: Math.round(avg), completed };
   }, [weeklyChartData, waterGoal]);
 
   const completionRate = weeklyChartData.length === 0 ? 0 : Math.round((stats.completed / weeklyChartData.length) * 100);
-  const weeklyTotal = useMemo(() => weeklyChartData.reduce((sum: number, d: any) => sum + d.ml, 0), [weeklyChartData]);
+  const weeklyTotal = useMemo(() => weeklyChartData.reduce((sum: number, d: { ml: number }) => sum + d.ml, 0), [weeklyChartData]);
   const monthlyTotal = useMemo(() => Object.values(monthlyDataMap).reduce((sum, ml) => sum + ml, 0), [monthlyDataMap]);
 
   const yesterdayIntake = useMemo(() => {
@@ -293,8 +286,8 @@ const InsightTab = memo(function InsightTab({
               calendarCells={calendarCells}
               currentMonthName={currentMonthName}
               waterGoal={waterGoal}
-              weeklyChartData={weeklyChartData}
-              previousWeekData={previousWeekData}
+              weeklyChartData={weeklyChartData as unknown as Array<{ d: string; ml: number; isToday: boolean }>}
+              previousWeekData={previousWeekData as unknown as Array<{ d: string; ml: number }> | null}
               selectedWeekDay={selectedWeekDay}
               setSelectedWeekDay={setSelectedWeekDay}
               selectedCalendarCell={selectedCalendarCell}
@@ -304,7 +297,7 @@ const InsightTab = memo(function InsightTab({
               stats={stats}
               profile={profile}
               weeklyTotal={weeklyTotal}
-              patterns={patterns}
+              patterns={patterns as unknown as Record<string, unknown>[]}
             />
           </motion.div>
         )}
@@ -320,9 +313,6 @@ const InsightTab = memo(function InsightTab({
             <SystemSection
               profile={profile}
               isPremium={isPremium}
-              isWatchConnected={isWatchConnected}
-              isWeatherSynced={isWeatherSynced}
-              isCalendarSynced={isCalendarSynced}
               isExportingPDF={isExportingPDF}
               handleExportPDF={handleExportPDF}
               handleExportCSV={handleExportCSV}

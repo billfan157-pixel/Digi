@@ -6,7 +6,7 @@ export interface UseInsightDataResult {
   isLoading: boolean;
   error: string | null;
   refetchMonthly: () => Promise<void>;
-  fetchDayLogs: (dateStr: string) => Promise<any[]>;
+  fetchDayLogs: (dateStr: string) => Promise<unknown[]>;
 }
 
 export function useInsightData(profileId: string | undefined, calendarDate: Date) {

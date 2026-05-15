@@ -3,11 +3,10 @@ import { motion } from 'framer-motion';
 import { Cpu, Sparkles, RefreshCw } from 'lucide-react';
 import BasicTodayRingUpgraded from '../../components/BasicTodayRingUpgraded';
 import WellnessDashboard from '../../components/Wellness/WellnessDashboard';
-import type { WaterLog } from '../../models';
 import type { HydrationSchedule } from '../../lib/HydrationEngine';
 
 interface OverviewSectionProps {
-  profile?: any;
+  profile?: { id?: string } | null;
   waterIntake: number;
   waterGoal: number;
   streak: number;
@@ -19,7 +18,7 @@ interface OverviewSectionProps {
     title: string;
     action: string;
     ml: number;
-    icon: any;
+    icon: React.ComponentType<{ size?: number }>;
     color: string;
     bg: string;
   };
@@ -43,19 +42,12 @@ export default function OverviewSection({
   yesterdayIntake,
   greeting,
   primaryStory,
-  nextBestAction,
-  actions,
-  schedule,
   aiAdvice,
   isAiLoading,
   fetchAIAdvice,
   isPremium,
   setShowPremiumModal,
 }: OverviewSectionProps) {
-  // Pass profile from props, not from hook's internal store
-  // This ensures the component uses the same profile reference
-  const wellnessData = {}; // Placeholder - hook internally reads from store
-
   if (waterGoal === 0) {
     return (
       <div className="px-6 py-12">

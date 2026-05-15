@@ -33,7 +33,7 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
     imageUrl?: string;
     postKind: 'pulse' | 'duel';
     visibility?: 'public' | 'followers';
-    extra?: Record<string, any>;
+    extra?: Record<string, unknown>;
   }) => {
     if (!profile?.id) {
       toast.error('Bạn cần đăng nhập để đăng bài.');
@@ -75,7 +75,7 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
       
       toast.success(postData.postKind === 'duel' ? 'Duel đã lên feed.' : 'Pulse đã được đăng.', { id: toastId });
       setActiveComposer(null);
-    } catch (err: any) {
+    } catch {
       toast.error('Không thể đăng bài lúc này!', { id: toastId });
     }
   };

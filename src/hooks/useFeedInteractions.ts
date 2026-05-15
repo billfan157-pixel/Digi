@@ -37,7 +37,7 @@ export function useFeedInteractions({
 
     const today = new Date().toISOString().slice(0, 10);
     try {
-      const { data, error } = await supabase.rpc('action_cheers_post', {
+      const { error } = await supabase.rpc('action_cheers_post', {
         p_post_id: postId,
         p_author_id: postAuthorId,
         p_local_date: today,

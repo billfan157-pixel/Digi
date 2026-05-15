@@ -1,6 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Gift, Zap, CheckCircle2, Loader2, Sparkles, Flame, Star, Info, Volume2, Award } from 'lucide-react';
+import { Gift, Zap, Loader2, Sparkles, Flame, Star, Info, Volume2, Award } from 'lucide-react';
 
 import type { UserQuest } from '../config/questConfig';
 import { playSound } from '../lib/audio';
@@ -91,6 +92,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
     return Math.min((actualProgress / userQuest.quest.condition_value) * 100, 100);
   }, [actualProgress, userQuest.quest.condition_value]);
 
+  const questMeta = userQuest.quest as { type?: string; reward_badge_id?: string };
   const isCompleted = userQuest.status === 'completed' || actualProgress >= Number(userQuest.quest.condition_value || 0);
   const canClaim = isCompleted && !isClaimed && !isClaiming;
 
@@ -170,13 +172,13 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
             <h3 className={`font-bold text-base ${isClaimed ? 'text-slate-400' : 'text-white'}`}>
               {userQuest.quest.title}
             </h3>
-            {(userQuest.quest as any).type === 'weekly' && (
+            {questMeta.type === 'weekly' && (
               <span className="px-2 py-0.5 rounded text-[8px] font-black bg-purple-500/20 text-purple-400 uppercase tracking-widest border border-purple-500/30">Tuần</span>
             )}
-            {(userQuest.quest as any).type === 'daily' && (
+            {questMeta.type === 'daily' && (
               <span className="px-2 py-0.5 rounded text-[8px] font-black bg-cyan-500/20 text-cyan-400 uppercase tracking-widest border border-cyan-500/30">Ngày</span>
             )}
-            {(userQuest.quest as any).type === 'level' && (
+            {questMeta.type === 'level' && (
               <span className="px-2 py-0.5 rounded text-[8px] font-black bg-amber-500/20 text-amber-400 uppercase tracking-widest border border-amber-500/30">Vĩnh viễn</span>
             )}
           </div>
@@ -225,7 +227,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
               <Zap size={12} /> +{finalWp} WP
             </div>
           </div>
-          {(userQuest.quest as any).reward_badge_id && (
+          {questMeta.reward_badge_id && (
             <div className={`flex items-center justify-end gap-1 text-[10px] font-bold mt-1 ${isClaimed ? 'text-slate-600' : 'text-fuchsia-400'}`}>
               <Award size={12} /> +Huy hiệu
             </div>

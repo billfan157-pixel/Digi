@@ -7,7 +7,7 @@ import type { TipCategory } from './types';
 
 interface QuickTipComposerProps {
   profile: Profile;
-  onPublish: (data: { content: string; postKind: 'tip'; extra: Record<string, any> }) => Promise<void>;
+  onPublish: (data: { content: string; postKind: 'tip'; extra: Record<string, unknown> }) => Promise<void>;
   onClose: () => void;
 }
 
@@ -17,7 +17,7 @@ const CATEGORIES: { key: TipCategory; label: string; icon: typeof Beaker; color:
   { key: 'recipe', label: 'Công thức', icon: ChefHat, color: 'text-amber-400 border-amber-500/30 bg-amber-500/10' },
 ];
 
-export const QuickTipComposer = ({ profile, onPublish, onClose }: QuickTipComposerProps) => {
+export const QuickTipComposer = ({ onPublish, onClose }: QuickTipComposerProps) => {
   const [text, setText] = useState('');
   const [category, setCategory] = useState<TipCategory>('practical');
   const [isPublishing, setIsPublishing] = useState(false);

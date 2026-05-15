@@ -68,32 +68,6 @@ const RITUALS: RitualOption[] = [
 
 const MOOD_EMOJIS = ['💪', '🔥', '🎯', '✨', '🙌', '💧', '🌟', '⚡'];
 
-const RITUAL_META: Record<
-  RitualKind,
-  { gradient: string; border: string; accent: string }
-> = {
-  baptism: {
-    gradient: 'from-cyan-500 to-blue-500',
-    border: 'border-cyan-500/30',
-    accent: 'text-cyan-400',
-  },
-  ignition: {
-    gradient: 'from-orange-500 to-amber-500',
-    border: 'border-orange-500/30',
-    accent: 'text-orange-400',
-  },
-  wave: {
-    gradient: 'from-emerald-500 to-teal-500',
-    border: 'border-emerald-500/30',
-    accent: 'text-emerald-400',
-  },
-  duel: {
-    gradient: 'from-purple-500 to-pink-500',
-    border: 'border-purple-500/30',
-    accent: 'text-purple-400',
-  },
-};
-
 interface HydrationRitualSheetProps {
   profile: Profile | null;
   waterIntake: number;
@@ -108,7 +82,6 @@ interface HydrationRitualSheetProps {
 }
 
 export const HydrationRitualSheet = ({
-  profile,
   waterIntake,
   waterGoal,
   streak,
@@ -251,8 +224,6 @@ export const HydrationRitualSheet = ({
     reset,
     selectedKind,
   ]);
-
-  const profileName = profile?.nickname?.trim() || 'Bạn';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center">

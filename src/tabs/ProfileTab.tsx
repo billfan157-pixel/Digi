@@ -1,13 +1,12 @@
 import React, { useState, useMemo, memo } from 'react';
-import { Sparkles, Trophy, Zap, UserPlus, Settings, Medal, Flame, Bike, Lock, BarChart2, Grid, Droplets, Target, Award, Coins, Shield, Heart, Crown } from 'lucide-react';
+import { Sparkles, Trophy, Zap, UserPlus, Settings, Flame, Lock, BarChart2, Grid, Droplets, Target, Award, Shield, Heart, Crown } from 'lucide-react';
 import TabHeader from '../components/layout/TabHeader';
 import { PostCard } from './FeedTab';
 import BadgesGrid from '../components/BadgesGrid';
-import CountUp from '../components/CountUp';
 import { toast } from 'sonner';
 import { expRequiredForLevel, totalExpForLevel } from '../config/questConfig';
 import AvatarFrame from '../components/AvatarFrame';
-import type { Profile, SocialFeedPost } from '../models';
+import type { SocialFeedPost } from '../models';
 import { useAppStore } from '../store/useAppStore';
 import { useUIStore } from '../store/useUIStore';
 import { getRankInfo } from '../utils/healthMath';
@@ -34,7 +33,7 @@ const cardGlow = "bg-slate-900/60 backdrop-blur-xl border border-cyan-500/20 rou
 
 const ProfileTab = memo(function ProfileTab({
   streakFreezes, needsFreeze, onUseStreakFreeze, socialProfileStats,
-  posts, handleToggleLikePost, setShowShopModal
+  posts, handleToggleLikePost
 }: ProfileTabProps) {
   const { profile, isPremium, streak, waterIntake, waterGoal, weeklyHistory, actions: { handleLogout } } = useAppStore(useShallow((state) => ({
     profile: state.profile,

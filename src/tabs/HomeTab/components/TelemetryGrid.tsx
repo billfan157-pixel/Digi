@@ -1,6 +1,5 @@
-import { CloudSun, Heart, Wifi, TrendingUp, TrendingDown, Footprints, Wind, Droplets as WaterDrop, Zap, Activity } from 'lucide-react';
+import { CloudSun, Heart, TrendingUp, TrendingDown, Footprints, Wind, Droplets as WaterDrop, Zap, Activity } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 
 interface TelemetryGridProps {
   weatherData: { 
@@ -119,7 +118,6 @@ function getWeatherRecommendation(temp: number, uvIndex?: number): { text: strin
 }
 
 const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData }: TelemetryGridProps) {
-  const { t } = useTranslation();
   const [isHoveringWeather, setIsHoveringWeather] = useState(false);
   const [isHoveringWatch, setIsHoveringWatch] = useState(false);
   
@@ -127,11 +125,6 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
   const animatedTemp = useAnimatedValue(weatherData?.temp || 0);
   const animatedHR = useAnimatedValue(watchData?.heartRate || 0);
   const animatedSteps = useAnimatedValue(watchData?.steps || 0);
-  
-  // Calculate steps progress
-  const stepsProgress = watchData?.stepsGoal 
-    ? Math.min((watchData.steps / watchData.stepsGoal) * 100, 100)
-    : 0;
   
   // Heart rate analysis
   const hrZone = watchData?.heartRate 

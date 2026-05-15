@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { expRequiredForLevel, totalExpForLevel, rankFromExpWithProgress, RANKS } from "../config/questConfig";
+import { expRequiredForLevel, totalExpForLevel, rankFromExpWithProgress } from "../config/questConfig";
 import { ShieldCheck, Activity, ChevronRight } from "lucide-react";
 
 interface LevelBarProps {
@@ -27,7 +27,7 @@ const LevelBar = ({
     return { progress, remainingExp, nextLevelExp: nextLevelTotalExp, rankProgression, safeLevel };
   }, [level, exp]);
 
-  const { current: currentRank, next: nextRank, progress: rankProgress } = rankProgression;
+  const { current: currentRank, progress: rankProgress } = rankProgression;
 
   return (
     <div className="relative overflow-hidden bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-3xl p-5 mb-6 shadow-sm group hover:bg-slate-800/60 transition-colors">

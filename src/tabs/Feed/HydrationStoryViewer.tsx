@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { X, MessageCircle, Heart, Smile, Droplets, CloudSun, Coffee, Zap, Send } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { X, MessageCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import { getRelativeTimeLabel } from '../../lib/social';
@@ -55,7 +55,7 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
       });
       if (error) throw error;
       toast.success(`Đã thả ${emoji}`, { duration: 1200 });
-    } catch (err) {
+    } catch {
       setReactedEmojis(prev => {
         const next = new Set(prev);
         next.delete(emoji);

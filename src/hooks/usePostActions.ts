@@ -34,7 +34,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
         toast.info('Đã bỏ lưu bài viết');
       }
       return true;
-    } catch (err: any) {
+    } catch {
       setSavedPosts(prev => {
         const next = new Set(prev);
         if (isSaved) next.add(postId);
@@ -84,7 +84,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
         });
         return false;
       }
-    } catch (err: any) {
+    } catch {
       setCheeredPosts(prev => {
         const next = new Set(prev);
         next.delete(post.id);
@@ -110,7 +110,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
       if (error) throw error;
       toast.success('Đã xóa bài viết thành công', { id: tid });
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Lỗi xóa bài viết:", err);
       toast.error('Không thể xóa bài viết lúc này!', { id: tid });
       return false;
@@ -148,7 +148,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
         if (error) throw error;
         toast.success('Đã cập nhật bài viết', { id: tid });
         return newContent.trim();
-      } catch (err) {
+      } catch {
         toast.error('Lỗi khi cập nhật!', { id: tid });
         return null;
       }
@@ -173,7 +173,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
       if (error) throw error;
       toast.success('Đã gửi chiến thư! Đối thủ sẽ nhận được thông báo trong Đấu trường. ⚔️', { id: tid });
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Lỗi gửi chiến thư:", err);
       toast.error('Không thể gửi chiến thư lúc này!', { id: tid });
       return false;

@@ -38,7 +38,7 @@ export default function AnomalyDetectionPanel({
       severity: 'low' | 'medium' | 'high';
       message: string;
       suggestion: string;
-      icon: any;
+      icon: React.ComponentType<{ size?: number; className?: string }>;
       color: string;
     }> = [];
 
@@ -114,7 +114,7 @@ export default function AnomalyDetectionPanel({
       priority: 'high' | 'medium' | 'low';
       title: string;
       description: string;
-      icon: any;
+      icon: React.ComponentType<{ size?: number; className?: string }>;
       action?: string;
     }> = [];
 
@@ -152,7 +152,7 @@ export default function AnomalyDetectionPanel({
     const insights: Array<{
       type: 'positive' | 'neutral' | 'negative';
       message: string;
-      icon: any;
+      icon: React.ComponentType<{ size?: number; className?: string }>;
     }> = [];
 
     if (streak >= 7) {

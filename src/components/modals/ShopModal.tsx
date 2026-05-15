@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { X, ShoppingBag, Check, Sparkles, Palette, Frame, Droplets, Coins, Loader2, Package, Music, Box, ShoppingCart, Gem, Shield, Star, Lock, Zap, Crown } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, ShoppingBag, Check, Palette, Frame, Droplets, Coins, Loader2, Package, Music, Box, ShoppingCart, Gem, Shield, Lock, Zap, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFrameConfig } from '../../config/avatarFrames';
 import { toast } from 'sonner';
@@ -86,10 +86,11 @@ const ShopItemCard: React.FC<ShopItemCardProps> = ({ item, isOwned, isEquipped, 
   let themeColor = item.preview_color;
   if (!themeColor && item.category === 'theme' && item.meta_value) {
     try {
-      const meta = JSON.parse(item.meta_value);
+      const meta = JSON.parse(String(item.meta_value));
       themeColor = meta.primary || meta.bg;
-    } catch(e) {
-      if (item.meta_value.startsWith('#')) themeColor = item.meta_value;
+    } catch {
+      const metaStr = String(item.meta_value);
+      if (metaStr.startsWith('#')) themeColor = metaStr;
     }
   }
 
@@ -194,10 +195,10 @@ export default function ShopModal() {
   const profile = useAppStore(s => s.profile);
   const setAppState = useAppStore(s => s.setAppState);
   
-  const setProfile = (newProfileOrUpdater: any) => {
+  const setProfile = (newProfileOrUpdater: unknown) => {
        const currentProfile = useAppStore.getState().profile;
-       const newProfile = typeof newProfileOrUpdater === 'function' ? newProfileOrUpdater(currentProfile) : newProfileOrUpdater;
-       setAppState({ profile: newProfile });
+       const newProfile = typeof newProfileOrUpdater === 'function' ? (newProfileOrUpdater as (prev: typeof currentProfile) => typeof currentProfile)(currentProfile) : newProfileOrUpdater;
+       setAppState({ profile: newProfile as import('@/models').Profile | null });
   };
   
   const onSpendCoins = async (amount: number) => {
@@ -291,7 +292,7 @@ export default function ShopModal() {
     }
     setProcessingId(item.id);
     try { await buyMutation.mutateAsync(item); } 
-    catch (e) { toast.error('Giao dịch thất bại'); }
+    catch { toast.error('Giao dịch thất bại'); }
     finally { setProcessingId(null); }
   };
 
@@ -302,7 +303,7 @@ export default function ShopModal() {
       await equipMutation.mutateAsync(item);
       if (item.category === 'bottle') window.dispatchEvent(new CustomEvent('bottleEquipped', { detail: { equipped_bottle_id: item.id } }));
       if (item.category === 'frame') setEquippedFrameId(item.id);
-    } catch (e) { toast.error('Thử lại sau'); }
+    } catch { toast.error('Thử lại sau'); }
     finally { setProcessingId(null); }
   };
 

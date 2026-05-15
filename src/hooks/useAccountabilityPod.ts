@@ -25,7 +25,7 @@ export const useAccountabilityPod = (
     const followingSet = new Set(socialFollowingIds || []);
     const candidates = new Map<string, AccountabilityMember>();
 
-    sourcePosts.forEach((post: any) => {
+    sourcePosts.forEach((post: SocialFeedPost) => {
       const authorId = post.author_id || post.author?.id;
       if (!authorId || authorId === profile?.id) return;
       if (followingSet.size > 0 && !followingSet.has(authorId)) return;

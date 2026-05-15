@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { getStreakTier, getNextStreakTier, type StreakTier } from '../utils/healthMath';
+import { getStreakTier, getNextStreakTier } from '../utils/healthMath';
 
 interface StreakTierBadgeProps {
   streak: number;

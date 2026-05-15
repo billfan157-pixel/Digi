@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { calculateWP } from '@/utils/healthMath';
-import type { Friend, SearchResult } from '@/models';
+import type { SearchResult } from '@/models';
 import type { TabType } from '@/components/layout/BottomNav';
 
 interface LeagueEntry {

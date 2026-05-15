@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { levelFromExp } from '@/config/questConfig';
 import { readAppPreferences, writeAppPreferences } from '@/services/appPreferences.service';
-import { clearCachedProfile } from '@/lib/sessionSecurity';
 import { updateProfileFields } from '@/services/profile.service';
 
 interface UseAppBootstrapSyncOptions {
-  profile: any;
-  setProfile: React.Dispatch<React.SetStateAction<any>>;
+  profile: Record<string, unknown> | null;
+  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   refetchProfile: () => Promise<void>;
   refetchWater: () => Promise<void>;
   setIsWeatherSynced: (value: boolean) => void;
@@ -60,19 +59,19 @@ export function useAppBootstrapSync({
       const { amount_ml = 0, new_total_exp, new_coins, refresh_profile, refresh_water } = customEvent.detail || {};
 
       if (new_total_exp !== undefined || new_coins !== undefined || amount_ml > 0) {
-        setProfile((prev: any) => {
+        setProfile((prev: Record<string, unknown> | null) => {
           if (!prev) return prev;
 
-          const updatedExp = new_total_exp ?? prev.total_exp;
+          const updatedExp = new_total_exp ?? Number(prev.total_exp) ?? 0;
           const updatedLevel = levelFromExp(updatedExp);
 
           return {
             ...prev,
             total_exp: updatedExp,
             level: updatedLevel,
-            coins: new_coins !== undefined ? (prev.coins || 0) + new_coins : prev.coins,
-            water_today: amount_ml > 0 ? (prev.water_today || 0) + amount_ml : prev.water_today,
-            total_water: amount_ml > 0 ? (prev.total_water || 0) + amount_ml : prev.total_water,
+            coins: new_coins !== undefined ? (Number(prev.coins) || 0) + new_coins : prev.coins,
+            water_today: amount_ml > 0 ? (Number(prev.water_today) || 0) + amount_ml : prev.water_today,
+            total_water: amount_ml > 0 ? (Number(prev.total_water) || 0) + amount_ml : prev.total_water,
           };
         });
       }
@@ -95,18 +94,20 @@ export function useAppBootstrapSync({
 
   useEffect(() => {
     if (profile?.id && profile.id !== 'undefined') {
-      const prefs = readAppPreferences(profile.id);
+      const prefs = readAppPreferences(profile.id as string);
       setIsWeatherSynced(!!prefs.weather);
       setIsCalendarSynced(!!prefs.calendar);
-      loadReminderSettings(profile.id);
+      loadReminderSettings(profile.id as string);
       loadDrinkPresets();
-      setIsPrefsLoaded(true);
+      setTimeout(() => setIsPrefsLoaded(true), 0);
       return;
     }
 
-    setIsPrefsLoaded(false);
-    setShowOnboarding(false);
-    setShowProfileSettings(false);
+    setTimeout(() => {
+      setIsPrefsLoaded(false);
+      setShowOnboarding(false);
+      setShowProfileSettings(false);
+    }, 0);
   }, [
     profile?.id,
     loadDrinkPresets,
@@ -119,11 +120,12 @@ export function useAppBootstrapSync({
 
   useEffect(() => {
     if (!profile?.id || profile.id === 'undefined') return;
-    if (profile.onboarding_completed) return;
+    const p = profile as Record<string, unknown>;
+    if (p.onboarding_completed) return;
 
-    if (profile.weight && profile.water_goal) {
-      updateProfileFields(profile.id, { onboarding_completed: true })
-        .then((updatedProfile) => setProfile(updatedProfile))
+    if (p.weight && p.water_goal) {
+      updateProfileFields(profile.id as string, { onboarding_completed: true })
+        .then((updatedProfile) => setProfile(updatedProfile as unknown as Record<string, unknown> | null))
         .catch(() => {});
       return;
     }
@@ -131,9 +133,9 @@ export function useAppBootstrapSync({
     setShowOnboarding(true);
   }, [
     profile?.id,
-    profile?.onboarding_completed,
-    profile?.weight,
-    profile?.water_goal,
+    (profile as Record<string, unknown>)?.onboarding_completed,
+    (profile as Record<string, unknown>)?.weight,
+    (profile as Record<string, unknown>)?.water_goal,
     setProfile,
     setShowOnboarding,
   ]);
@@ -141,7 +143,7 @@ export function useAppBootstrapSync({
   useEffect(() => {
     if (!profile?.id || profile.id === 'undefined' || !isPrefsLoaded) return;
 
-    writeAppPreferences(profile.id, {
+    writeAppPreferences(profile.id as string, {
       watch: isWatchConnected,
       weather: isWeatherSynced,
       calendar: isCalendarSynced,
@@ -155,7 +157,7 @@ export function useAppBootstrapSync({
 
     const refreshForNewDay = async () => {
       lastDayRef.current = getDayKey(new Date());
-      setProfile((prev: any) => prev ? {
+      setProfile((prev: Record<string, unknown> | null) => prev ? {
         ...prev,
         water_today: 0,
       } : prev);

@@ -1,7 +1,6 @@
 import { useMemo, useCallback } from 'react';
-import type { WaterLog } from '../models';
 
-interface BehaviorPattern {
+export interface BehaviorPattern {
   pattern: string;
   confidence: number;
   recommendation: string;
@@ -9,11 +8,10 @@ interface BehaviorPattern {
 
 interface UseBehaviorAnalysisProps {
   weeklyData: { d: string; ml: number }[];
-  waterLogs: WaterLog[];
   waterGoal: number;
 }
 
-export function useBehaviorAnalysis({ weeklyData, waterLogs, waterGoal }: UseBehaviorAnalysisProps) {
+export function useBehaviorAnalysis({ weeklyData, waterGoal }: UseBehaviorAnalysisProps) {
   // Dùng JSON.stringify để tạo chuỗi cố định, tránh infinite loop do tham chiếu array thay đổi liên tục
   const weeklyDataStr = JSON.stringify(weeklyData);
 

@@ -1,4 +1,4 @@
-import { BarChart3, Crown, RefreshCw, ShieldCheck, Sparkles, TrendingUp, Wallet } from 'lucide-react';
+import { BarChart3, Crown, RefreshCw, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react';
 import type { HealthReport } from '../../lib/aiReports';
 
 type WeeklyReportCardProps = {

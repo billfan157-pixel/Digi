@@ -16,7 +16,7 @@ export interface AppState {
   watchData: { heartRate: number; steps: number } | null;
   isWeatherSynced: boolean;
   isCalendarSynced: boolean;
-  calendarEvents: any[]; // Or import CalendarEventItem if available
+  calendarEvents: unknown[]; // Or import CalendarEventItem if available
   isWatchConnected: boolean;
   isSyncing: boolean;
   hasPendingCloudSync: boolean;

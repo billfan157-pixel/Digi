@@ -1,13 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  UserPen, Camera, Activity, Droplets, Heart, Bell, Clock,
-  MoonStar, Send, Smartphone, Ruler, Palette, CloudUpload, Fingerprint, CloudSun,
-  FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Check, Sparkles
+  Camera, Activity, Droplets, Heart, Bell,
+  MoonStar, Send, Smartphone, Ruler, CloudUpload, Fingerprint,
+  FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
-import { deleteCurrentUserAccount, updateProfileFields, uploadProfileAvatar } from '@/services/profile.service';
 import { useUIStore } from '../../store/useUIStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useSettings } from '../../hooks/useSettings';
@@ -24,12 +23,9 @@ import { syncWeatherAndWaterGoal } from '@/hooks/useWeatherSync';
 import { requestHealthReadStepsAndHeartRate } from '@/lib/healthIntegration';
 
 // Khai báo Plugin tự chế
-const WidgetPlugin = registerPlugin<any>('WidgetPlugin');
+const WidgetPlugin = registerPlugin<Record<string, unknown>>('WidgetPlugin');
 
 // ================= BUTTON VARIANTS =================
-const btnPrimary = "w-full bg-cyan-500 text-white rounded-full py-4 px-6 font-bold hover:bg-cyan-400 active:scale-95 transition-all flex items-center justify-center gap-2";
-const btnGhost = "w-full border border-slate-400 dark:border-white/20 text-slate-700 dark:text-white/80 rounded-full py-4 px-6 font-bold hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2";
-const btnDanger = "w-full bg-red-500/20 text-red-400 rounded-full py-4 px-6 font-bold hover:bg-red-500/30 active:scale-95 transition-all flex items-center justify-center gap-2";
 const btnIcon = "p-2 rounded-full hover:bg-slate-300 dark:hover:bg-white/10 active:scale-95 transition-all text-slate-700 dark:text-white/80";
 
 // ================= TRÙM CUỐI ĐÃ BỊ LÔI RA NGOÀI =================
@@ -99,10 +95,10 @@ export default function SettingsModal() {
   const isOpen = useUIStore(s => s.showProfileSettings);
   const onClose = () => useUIStore.getState().setShowProfileSettings(false);
   const profile = useAppStore(s => s.profile);
-  const setProfile = (newProfile: any) => useAppStore.getState().setAppState({ profile: newProfile });
+  const setProfile = (newProfile: Profile | null) => useAppStore.getState().setAppState({ profile: newProfile });
   const handleLogout = useAppStore(s => s.actions.handleLogout);
 
-  const { settings, updateSettings, isSaving, lastSync, triggerHaptic } = useSettings(profile);
+  const { settings, updateSettings, isSaving, lastSync, triggerHaptic } = useSettings(profile as unknown as Record<string, unknown> | null);
   const [activeSheet, setActiveSheet] = useState<'none' | 'personal' | 'quiet' | 'privacy' | 'delete' | 'name' | 'widget' | 'wellness'>('none');
   
   // ================= ĐÃ ĐỒNG BỘ TOÀN BỘ BIẾN VÀO ĐÂY =================
@@ -118,7 +114,7 @@ export default function SettingsModal() {
   const [cropImage, setCropImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   // ================= STATES XÓA TÀI KHOẢN =================
   const [deleteStep, setDeleteStep] = useState<'select' | 'confirm' | null>(null);
@@ -127,7 +123,7 @@ export default function SettingsModal() {
   const { performDelete, isDeleting, error: deleteError } = useDeleteAccount();
 
   // BIOMETRIC HOOK
-  const { registerBiometric, disableBiometric, getBiometricStatus, isRegistering } = useBiometric();
+  const { registerBiometric, disableBiometric, isRegistering } = useBiometric();
 
   const handleToggleBiometric = async () => {
     if (!profile?.id) return;
@@ -184,8 +180,8 @@ export default function SettingsModal() {
       toast.success('Đã cập nhật ảnh đại diện', { id: toastId });
       setCropImage(null);
       triggerHaptic();
-    } catch (err: any) {
-      toast.error('Lỗi tải ảnh: ' + err.message, { id: toastId });
+    } catch (err: unknown) {
+      toast.error('Lỗi tải ảnh: ' + (err instanceof Error ? err.message : String(err)), { id: toastId });
     }
   };
 
@@ -231,7 +227,7 @@ export default function SettingsModal() {
 
       if (error) throw error;
       
-      setProfile({ ...profile, ...formData, nickname: formData.nickname.trim() });
+      setProfile({ ...profile, ...formData, nickname: formData.nickname.trim() } as unknown as Profile);
       updateSettings({
         displayName: formData.nickname.trim(),
         weight: formData.weight,
@@ -244,8 +240,8 @@ export default function SettingsModal() {
       
       toast.success('Cập nhật hồ sơ thành công!', { id: toastId });
       closeSheet();
-    } catch (err: any) {
-      toast.error(err.message || 'Lỗi cập nhật hồ sơ', { id: toastId });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err) || 'Lỗi cập nhật hồ sơ', { id: toastId });
     }
   };
 
@@ -517,7 +513,7 @@ export default function SettingsModal() {
         {activeSheet === 'name' && (
           <BottomSheetWrapper key="section-name" title="Đổi tên hiển thị" onClose={closeSheet}>
             <input type="text" value={formData.nickname} onChange={e => setFormData({...formData, nickname: e.target.value})} className="w-full p-4 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-lg font-semibold outline-none focus:border-cyan-500 transition-colors mb-6" placeholder="Nhập tên mới..." />
-            <button onClick={handleSaveProfile} className={btnPrimary}>Lưu thay đổi</button>
+            <button onClick={handleSaveProfile} className="w-full py-3 rounded-xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600 transition-colors">Lưu thay đổi</button>
           </BottomSheetWrapper>
         )}
 
@@ -588,7 +584,7 @@ export default function SettingsModal() {
               </div>
             </div>
             {/* Đã chuyển hàm Save để đồng bộ luôn lên DB */}
-            <button onClick={handleSaveProfile} className={btnPrimary}>Lưu Thay Đổi</button>
+            <button onClick={handleSaveProfile} className="w-full py-3 rounded-xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600 transition-colors">Lưu Thay Đổi</button>
           </BottomSheetWrapper>
         )}
 
@@ -605,7 +601,7 @@ export default function SettingsModal() {
                 <input type="time" value={draftQuiet.end} onChange={e => setDraftQuiet(p => ({...p, end: e.target.value}))} className="w-full p-4 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-lg font-semibold outline-none focus:border-purple-500" />
               </div>
             </div>
-            <button onClick={() => { triggerHaptic(); updateSettings({ quietHoursStart: draftQuiet.start, quietHoursEnd: draftQuiet.end }); closeSheet(); }} className={btnPrimary}>Lưu cài đặt</button>
+            <button onClick={() => { triggerHaptic(); updateSettings({ quietHoursStart: draftQuiet.start, quietHoursEnd: draftQuiet.end }); closeSheet(); }} className="w-full py-3 rounded-xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600 transition-colors">Lưu cài đặt</button>
           </BottomSheetWrapper>
         )}
 
@@ -616,7 +612,7 @@ export default function SettingsModal() {
               <p>Dữ liệu được mã hóa và đồng bộ bảo mật lên máy chủ Supabase. Chúng tôi cam kết không bán dữ liệu sức khỏe của bạn cho bên thứ ba.</p>
               <p>Các tính năng phân tích AI thông qua Google Gemini không sử dụng dữ liệu định danh trực tiếp của bạn để huấn luyện mô hình.</p>
             </div>
-            <button onClick={closeSheet} className={btnGhost}>Đã hiểu</button>
+            <button onClick={closeSheet} className="w-full py-3 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white font-semibold hover:bg-slate-300 dark:hover:bg-white/20 transition-colors">Đã hiểu</button>
           </BottomSheetWrapper>
         )}
 
@@ -671,16 +667,17 @@ export default function SettingsModal() {
                 
                 // Đẩy dữ liệu xuyên qua màng Native iOS
                 try {
-                  await WidgetPlugin.syncData({
-                    water_today: profile?.water_today || 0,
+                  const widgetPlugin = WidgetPlugin as unknown as Record<string, (data: unknown) => Promise<void>>;
+                  await widgetPlugin.syncData({
+                    water_today: Number((profile as unknown as Record<string, unknown>)?.water_today) || 0,
                     water_goal: settings.waterGoal || 2000,
                     themeColor: settings.themeColor || '#06b6d4'
                   });
-                } catch (e) { console.log('Bỏ qua vì không chạy trên iOS Native'); }
+                } catch { console.log('Bỏ qua vì không chạy trên iOS Native'); }
 
                  toast.success('Đã đồng bộ giao diện và dữ liệu ra Widget!'); 
                  closeSheet(); 
-               }} className={btnPrimary} style={{ backgroundColor: settings.themeColor }}>
+               }} className="w-full py-3 rounded-xl text-white font-semibold hover:opacity-90 transition-colors" style={{ backgroundColor: settings.themeColor }}>
                  Đồng bộ ngay ra Widget
                </button>
              </div>

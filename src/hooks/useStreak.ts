@@ -80,8 +80,8 @@ export function useStreak(userId: string | undefined, waterGoal: number, todayIn
     }
 
     const dailyTotals = new Map<string, number>();
-    (data || []).forEach((log: any) => {
-      const amt = Number(log.amount ?? log.ml ?? 0);
+    (data || []).forEach((log: { day: string; amount: number }) => {
+      const amt = Number(log.amount ?? 0);
       const logDay = String(log.day);
 
       const current = dailyTotals.get(logDay) || 0;

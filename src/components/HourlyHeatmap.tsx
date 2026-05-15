@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Grid, TrendingUp, Calendar, Award, Sun, Cloud, Moon, MoonStar,
-  TrendingDown, Minus, Zap, Trophy, Activity, Target
+  Grid, TrendingUp, Award, Sun, Cloud, Moon, MoonStar,
+  TrendingDown, Minus, Trophy, Target
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -107,10 +107,9 @@ function EmptyState() {
 
 export default function HourlyHeatmapUltimate({ userId, className = '' }: HourlyHeatmapProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<{ amount?: number; created_at: string; day?: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [hoveredCell, setHoveredCell] = useState<{x: number; y: number} | null>(null);
-  const [expandedInsight, setExpandedInsight] = useState(false);
 
   // 7 ngày qua
   const last7Days = useMemo(() => {
@@ -148,7 +147,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
 
         if (supabaseError) throw supabaseError;
         if (mounted) setLogs(data || []);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err);
         if (mounted) setError('Không thể tải dữ liệu heatmap');
       } finally {
@@ -161,7 +160,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
   }, [userId, last7Days]);
 
   // Process data
-  const { grid, maxVal, insight, totalIntake, blockTotals, bestBlock, worstBlock } = useMemo(() => {
+  const { grid, maxVal, insight, totalIntake, bestBlock, worstBlock } = useMemo(() => {
     const g = Array(7).fill(0).map(() => Array(4).fill(0));
     const blockTotals = [0, 0, 0, 0];
 

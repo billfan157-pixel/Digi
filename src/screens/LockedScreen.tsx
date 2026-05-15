@@ -3,7 +3,13 @@ import { ScanFace } from 'lucide-react';
 import { useBiometric } from '../hooks/useBiometric';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function LockedScreen({ profile, onUnlock, onLogout }: any) {
+interface LockedScreenProps {
+  profile: { id: string } | null;
+  onUnlock: () => void;
+  onLogout: () => void;
+}
+
+export default function LockedScreen({ profile, onUnlock, onLogout }: LockedScreenProps) {
   const { authenticateBiometric, isAuthenticating } = useBiometric();
   const [isUnlocked, setIsUnlocked] = useState(false);
   

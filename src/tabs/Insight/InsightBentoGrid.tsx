@@ -16,7 +16,7 @@ export interface BentoCardProps {
   title: string;
   value: string | number;
   unit?: string;
-  icon: any;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   color: string;
   bg: string;
   className?: string;

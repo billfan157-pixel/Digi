@@ -51,8 +51,8 @@ interface UIState {
   setShowFastingModal: (show: boolean) => void;
   showFirstSessionChecklist: boolean;
   setShowFirstSessionChecklist: (show: boolean) => void;
-  activeCommentPost: any | null;
-  setActiveCommentPost: (post: any | null) => void;
+  activeCommentPost: unknown | null;
+  setActiveCommentPost: (post: unknown | null) => void;
 }
 
 export const useUIStore = create<UIState>()((set) => ({

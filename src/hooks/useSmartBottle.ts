@@ -16,7 +16,7 @@ interface SyncLog {
   amountChange?: number;
 }
 
-interface EquippedBottleSkin {
+export interface EquippedBottleSkin {
   id: string;
   name?: string;
   description?: string;

@@ -48,7 +48,7 @@ export function useChallenges(userId: string) {
       } else {
         setLoading(true);
       }
-    } catch { /* empty */ }
+    } catch (e) { console.error('Failed to load cached challenges:', e); }
 
     try {
       const [challengesRes, userChallengesRes] = await Promise.all([

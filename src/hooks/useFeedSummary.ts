@@ -9,12 +9,12 @@ export const useFeedSummary = (
 ) => {
   const feedSummary = useMemo(() => {
     const sourcePosts = posts || [];
-    const challengeCount = sourcePosts.filter((post: any) => post.post_kind === 'challenge').length;
-    const progressCount = sourcePosts.filter((post: any) => post.post_kind === 'progress' || post.post_kind === 'milestone').length;
+    const challengeCount = sourcePosts.filter((post: SocialFeedPost) => post.post_kind === 'challenge').length;
+    const progressCount = sourcePosts.filter((post: SocialFeedPost) => post.post_kind === 'progress' || post.post_kind === 'milestone').length;
     const storyCount = socialStories.length;
 
     return {
-      postsToday: sourcePosts.filter((post: any) => {
+      postsToday: sourcePosts.filter((post: SocialFeedPost) => {
         const createdAt = new Date(post.created_at).getTime();
         return Number.isFinite(createdAt) && currentTimestamp - createdAt < 24 * 60 * 60 * 1000;
       }).length,

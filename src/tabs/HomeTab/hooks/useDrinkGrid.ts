@@ -35,7 +35,6 @@ export function useDrinkGrid() {
   });
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const debouncedSaveRef = useRef(false);
 
   const debouncedSave = useCallback((grid: DrinkPreset[]) => {
     if (saveTimeoutRef.current) {

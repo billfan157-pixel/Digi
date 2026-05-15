@@ -9,8 +9,8 @@ import {
 } from '@/services/profile.service';
 
 interface UseProfileSyncOptions {
-  profile: any;
-  setProfile: React.Dispatch<React.SetStateAction<any>>;
+  profile: Record<string, unknown> | null;
+  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   isEnabled: boolean;
 }
 
@@ -18,20 +18,21 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
   const refetchProfile = useCallback(async () => {
     if (!profile?.id || profile.id === 'undefined' || !isEnabled) return;
 
+    const profileId = profile.id as string;
     try {
       const nextProfile = await queryClient.fetchQuery({
-        queryKey: appQueryKeys.profile(profile.id),
-        queryFn: () => fetchProfileById(profile.id),
+        queryKey: appQueryKeys.profile(profileId),
+        queryFn: () => fetchProfileById(profileId),
       });
-      setProfile(nextProfile);
+      setProfile(nextProfile as unknown as Record<string, unknown> | null);
     } catch (error) {
       console.error('Error refetching profile:', error);
-      const cachedProfile = queryClient.getQueryData<any>(appQueryKeys.profile(profile.id));
+      const cachedProfile = queryClient.getQueryData<Record<string, unknown>>(appQueryKeys.profile(profileId));
       if (!cachedProfile) return;
 
       setProfile({
         ...cachedProfile,
-        level: levelFromExp(cachedProfile.total_exp || 0),
+        level: levelFromExp(Number(cachedProfile.total_exp) || 0),
       });
     }
   }, [isEnabled, profile, setProfile]);
@@ -42,7 +43,7 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
     toast.success('Đồng bộ thành công!', { id: toastId });
   }, [refetchProfile]);
 
-  const handleWaterSync = useCallback(async (optimisticAmount?: number, _optimisticExp?: number) => {
+  const handleWaterSync = useCallback(async (optimisticAmount?: number) => {
     if (optimisticAmount === undefined) {
       await refetchProfile();
       return;
@@ -50,10 +51,11 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
 
     if (!profile?.id || profile.id === 'undefined') return;
 
+    const p = profile as Record<string, unknown>;
     // NOTE: EXP, coins, và level đã được backend xử lý trong RPC process_hydration_event.
     // Frontend chỉ sync water_today và total_water để tránh double EXP.
-    const newWaterToday = (profile.water_today || 0) + optimisticAmount;
-    const newTotalWater = (profile.total_water || 0) + optimisticAmount;
+    const newWaterToday = (Number(p.water_today) || 0) + optimisticAmount;
+    const newTotalWater = (Number(p.total_water) || 0) + optimisticAmount;
 
     const updatedProfile = {
       ...profile,
@@ -62,10 +64,10 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
     };
 
     setProfile(updatedProfile);
-    queryClient.setQueryData(appQueryKeys.profile(updatedProfile.id), updatedProfile);
+    queryClient.setQueryData(appQueryKeys.profile(profile.id as string), updatedProfile);
 
     try {
-      await updateProfileFields(updatedProfile.id, {
+      await updateProfileFields(profile.id as string, {
         water_today: updatedProfile.water_today,
         total_water: updatedProfile.total_water,
       });

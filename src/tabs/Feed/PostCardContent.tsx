@@ -52,11 +52,11 @@ export const PostCardContent = ({
             <Zap size={14} className="text-amber-400" />
           </div>
           <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 p-[2px] shadow-[0_0_20px_rgba(16,185,129,0.3)] z-10 transform -translate-x-3">
-            <img src={post.compare_avatar || `https://ui-avatars.com/api/?name=${post.compare_name}&background=10B981&color=fff`} className="w-full h-full rounded-full border-2 border-slate-900 object-cover" />
+            <img src={(post as unknown as Record<string, string>).compare_avatar || `https://ui-avatars.com/api/?name=${(post as unknown as Record<string, string>).compare_name}&background=10B981&color=fff`} className="w-full h-full rounded-full border-2 border-slate-900 object-cover" />
           </div>
         </div>
         <p className="text-center text-white font-bold text-lg leading-snug mb-2 z-10">
-          Cả bạn và <span className="text-emerald-400">{post.compare_name || 'Đồng đội'}</span> đều đạt <span className="text-amber-400">{post.value || 100}%</span> mục tiêu!
+          Cả bạn và <span className="text-emerald-400">{(post as unknown as Record<string, string>).compare_name || 'Đồng đội'}</span> đều đạt <span className="text-amber-400">{post.value || 100}%</span> mục tiêu!
         </p>
         <p className="text-center text-slate-400 text-xs z-10">Cùng nhau giữ vững phong độ nhé.</p>
         <button className="mt-4 px-6 py-2 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition-all">
@@ -167,8 +167,10 @@ export const PostCardContent = ({
   }
 
   if (post.type === 'tip') {
-    const categoryLabel = post.tip_category === 'science' ? 'Khoa học' : post.tip_category === 'recipe' ? 'Công thức nước' : 'Mẹo vặt';
-    const categoryColor = post.tip_category === 'science' ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' : post.tip_category === 'recipe' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
+    const postRecord = post as unknown as Record<string, unknown>;
+    const tipCategory = String(postRecord.tip_category || '');
+    const categoryLabel = tipCategory === 'science' ? 'Khoa học' : tipCategory === 'recipe' ? 'Công thức nước' : 'Mẹo vặt';
+    const categoryColor = tipCategory === 'science' ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' : tipCategory === 'recipe' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
     return (
       <div className="border border-emerald-500/20 bg-emerald-500/5 rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-3">
@@ -191,9 +193,10 @@ export const PostCardContent = ({
   }
 
   if (post.type === 'poll') {
-    const options = post.poll_options || [];
-    const totalVotes = options.reduce((sum, o) => sum + (o.count || 0), 0);
-    const hasVoted = !!post.voted_option_id;
+    const postRecord = post as unknown as Record<string, unknown>;
+    const options = (postRecord.poll_options as Array<{ id: string; text: string; count: number }>) || [];
+    const totalVotes = options.reduce((sum: number, o: { count: number }) => sum + (o.count || 0), 0);
+    const hasVoted = !!postRecord.voted_option_id;
     return (
       <div className="border border-amber-500/20 bg-amber-500/5 rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-4">
@@ -206,9 +209,9 @@ export const PostCardContent = ({
           </div>
         </div>
         <div className="space-y-2">
-          {options.map((opt) => {
+          {options.map((opt: { id: string; text: string; count: number }) => {
             const pct = totalVotes > 0 ? Math.round((opt.count / totalVotes) * 100) : 0;
-            const isSelected = hasVoted && post.voted_option_id === opt.id;
+            const isSelected = hasVoted && (post as unknown as Record<string, unknown>).voted_option_id === opt.id;
             return (
               <button
                 key={opt.id}

@@ -13,7 +13,7 @@ interface HistoryModalProps {
   handleDeleteEntry: (id: string, amount: number) => void;
 }
 
-export default function HistoryModal({ showHistory, setShowHistory, waterEntries, waterIntake, setEditingEntry, setEditAmount, handleDeleteEntry }: HistoryModalProps) {
+export default function HistoryModal({ showHistory, setShowHistory, waterEntries, handleDeleteEntry }: HistoryModalProps) {
   
 
   return (

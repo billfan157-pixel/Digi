@@ -1,11 +1,10 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { playWaterDropSound } from '@/lib/audio';
 import type { Profile } from '@/models';
 import { expGainedForWater } from '@/config/questConfig';
-// @ts-ignore
-// import confetti from 'canvas-confetti';
 
 // ── Dev-only logger ────────────────────────────────────────
 const devLog = (...args: unknown[]) => {
@@ -29,12 +28,10 @@ export interface WaterLog {
   id:         string;
   user_id:    string;
   amount:     number;
-  name:       string;
-  day:        string;
+  name:       string | null;
   exp:        number;
+  day:        string;
   created_at: string;
-  timestamp:  string;
-  factor:     number;
 }
 
 interface OfflineQueueItem {
@@ -43,9 +40,8 @@ interface OfflineQueueItem {
   amount:     number;
   name:       string;
   exp:        number;
-  day:        string;   // FIX: lưu ngay khi push, tránh sai ngày khi sync qua đêm
+  day:        string;
   created_at: string;
-  factor:     number;
   tempC?:     number;
   exerciseMins?: number;
   isFasting?: boolean;
@@ -60,18 +56,16 @@ const isRealUser = (id: unknown): id is string =>
 
 const toDateStr = (d = new Date()): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; // Local date
-const normalizeRow = (row: any): WaterLog => {
-  const createdAt = row.created_at ?? new Date().toISOString();
+const normalizeRow = (row: Record<string, unknown>): WaterLog => {
+  const createdAt = String(row.created_at ?? new Date().toISOString());
   return {
     id:         String(row.id ?? crypto.randomUUID()),
     user_id:    String(row.user_id ?? ''),
     amount:     Number(row.amount ?? 0),
-    name:       row.name ?? 'Nuoc Loc',
-    day:        row.day ?? toDateStr(new Date(createdAt)),
+    name:       String(row.name ?? 'Nuoc Loc'),
+    day:        String(row.day ?? toDateStr(new Date(createdAt))),
     exp:        Number(row.exp ?? 0),
     created_at: createdAt,
-    timestamp:  row.timestamp ?? createdAt,
-    factor:     Number(row.factor ?? 1),
   };
 };
 
@@ -174,11 +168,11 @@ export function useWaterData(
 
   useEffect(() => {
     if (!isRealUser(profile?.id)) {
-      setHasPendingCloudSync(false);
+      setTimeout(() => setHasPendingCloudSync(false), 0);
       return;
     }
 
-    setHasPendingCloudSync(readOfflineQueue(profile.id).length > 0);
+    setTimeout(() => setHasPendingCloudSync(readOfflineQueue(profile.id).length > 0), 0);
   }, [profile?.id]);
 
   // ── Fetch ──────────────────────────────────────────────
@@ -246,8 +240,6 @@ export function useWaterData(
           day: toDateStr(),
           exp: detail.added_exp || 0,
           created_at: now,
-          timestamp: now,
-          factor: 1,
         };
         
         setWaterEntries(prev => [newEntry, ...prev]);
@@ -280,7 +272,7 @@ export function useWaterData(
       const optimisticEntry: WaterLog = {
         id: tempId, user_id: String(profile.id),
         amount: actualAmount, name, day: today,
-        exp, created_at: now, timestamp: now, factor,
+        exp, created_at: now,
       };
       setWaterEntries(prev => [optimisticEntry, ...prev]);
       playWaterDropSound();
@@ -340,7 +332,7 @@ export function useWaterData(
           tempId, user_id: String(profile.id),
           amount: actualAmount, name, exp,
           day: today,
-          created_at: now, factor,
+          created_at: now,
           tempC, exerciseMins, isFasting
         });
 
@@ -484,7 +476,7 @@ export function useWaterData(
 
           if (!existingLog) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { tempId: _t, factor: _f, tempC: _tc, exerciseMins: _em, isFasting: _if, logSynced: _ls, progressionSynced: _ps, ...payload } = item;
+            const { tempId: _t, tempC: _tc, exerciseMins: _em, isFasting: _if, logSynced: _ls, progressionSynced: _ps, ...payload } = item;
             const { error: insertError } = await supabase.from('water_logs').insert(payload);
             if (insertError) {
               devError('Insert error:', insertError);

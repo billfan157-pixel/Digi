@@ -87,7 +87,7 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
       // Reset on success
       setLoginAttempts(0);
       toast.success("Đăng nhập thành công! 👋", { id: toastId });
-    } catch (err: any) {
+    } catch {
       // Already handled above
     } finally { setIsSubmittingLogin(false); }
   };
@@ -109,8 +109,8 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
       });
       if (error) throw error;
       if (data?.url && Capacitor.isNativePlatform()) await Browser.open({ url: data.url });
-    } catch (err: any) {
-      toast.error("Lỗi kết nối Google: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Lỗi kết nối Google: " + (err as Error).message);
     }
   };
 
@@ -125,8 +125,8 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
       });
       if (error) throw error;
       if (data?.url && Capacitor.isNativePlatform()) await Browser.open({ url: data.url });
-    } catch (err: any) {
-      toast.error("Lỗi kết nối Apple: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Lỗi kết nối Apple: " + (err as Error).message);
     }
   };
 

@@ -78,10 +78,10 @@ function writePendingHydrationActions(actions: PendingHydrationAction[]) {
 }
 
 interface UseHydrationNotificationsOptions {
-  profile: any;
+  profile: Record<string, unknown> | null;
   view: string;
   waterGoal: number;
-  handleAddWater: (amount: number, factor: number, name: string) => Promise<any>;
+  handleAddWater: (amount: number, factor: number, name: string) => Promise<void>;
   refetchProfile: () => Promise<void>;
 }
 
@@ -104,8 +104,8 @@ export function useHydrationNotifications({
   });
   const waterGoalRef = useRef(waterGoal);
   waterGoalRef.current = waterGoal;
-  const nicknameRef = useRef(profile?.nickname);
-  nicknameRef.current = profile?.nickname;
+  const nicknameRef = useRef<string>(String((profile as unknown as Record<string, unknown>)?.nickname || ''));
+  nicknameRef.current = String((profile as unknown as Record<string, unknown>)?.nickname || '');
 
   // Load current reminder settings from store (non-reactive ref)
   useEffect(() => {
@@ -162,15 +162,15 @@ export function useHydrationNotifications({
 
     if (actionId === 'claim_quest' && extra?.type === 'quest' && extra?.id) {
       if (!profile?.id || profile.id === 'undefined') return;
-      await claimQuestReward(profile.id, extra.id);
+      await claimQuestReward(profile.id as string, String(extra.id));
       await refetchProfile();
-      toast.success('🎁 Đã nhận thưởng nhiệm vụ thành công!');
+      toast.success('Đã nhận thưởng nhiệm vụ thành công!');
       return;
     }
 
     if (actionId === 'claim_challenge' && extra?.type === 'challenge' && extra?.id) {
       if (!profile?.id || profile.id === 'undefined') return;
-      await claimChallengeReward(profile.id, extra.id);
+      await claimChallengeReward(profile.id as string, String(extra.id));
       await refetchProfile();
       toast.success('🎁 Đã nhận thưởng thử thách thành công!');
       return;
@@ -226,7 +226,7 @@ export function useHydrationNotifications({
       await scheduleHydrationSnooze({
         minutes: intent.minutes,
         dailyGoal: waterGoal,
-        nickname: profile?.nickname,
+        nickname: String((profile as unknown as Record<string, unknown>)?.nickname || ''),
       });
       toast.info(`Đã nhắc lại sau ${intent.minutes} phút.`);
       return;
@@ -272,7 +272,7 @@ export function useHydrationNotifications({
   }, [handleHydrationNotificationAction]);
 
   useEffect(() => {
-    writeLastActiveHydrationUserId(profile?.id);
+    writeLastActiveHydrationUserId(profile?.id as string | undefined);
   }, [profile?.id]);
 
   useEffect(() => {

@@ -71,7 +71,7 @@ class StorageManager {
     try {
       localStorage.setItem(key, value);
     } catch (e) {
-      // Ignore quota exceeded
+      console.error('[AppStorage] setItem fallback error:', e);
     }
   }
 
@@ -83,7 +83,7 @@ class StorageManager {
     try {
       localStorage.removeItem(key);
     } catch (e) {
-      // Ignore
+      console.error('[AppStorage] removeItem fallback error:', e);
     }
   }
 
@@ -101,7 +101,9 @@ class StorageManager {
     Preferences.clear().catch(console.error);
     try {
       localStorage.clear();
-    } catch (e) {}
+    } catch (e) {
+      console.error('[AppStorage] clear fallback error:', e);
+    }
   }
 }
 

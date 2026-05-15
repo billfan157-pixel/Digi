@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Droplets, Sparkles, CalendarDays, TrendingUp, Activity } from 'lucide-react';
+import { Droplets, CalendarDays, TrendingUp, Activity } from 'lucide-react';
 import { useMemo } from 'react';
 
 interface CalendarCell {

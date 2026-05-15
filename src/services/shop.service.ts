@@ -1,6 +1,6 @@
 import type { ShopItem } from '@/models';
 import { supabase } from '@/lib/supabase';
-import { readThemePreference, writeAppPreferences } from '@/services/appPreferences.service';
+import { readThemePreference } from '@/services/appPreferences.service';
 import { updateProfileFields } from '@/services/profile.service';
 
 export interface ShopData {
@@ -10,8 +10,9 @@ export interface ShopData {
 
 const parseItemMeta = (item: Pick<ShopItem, 'meta_value'>) => {
   try {
-    return item.meta_value ? JSON.parse(item.meta_value) : {};
-  } catch {
+    return item.meta_value ? JSON.parse(item.meta_value as string) : {};
+  } catch (err) {
+    console.error('[parseItemMeta]', err);
     return {};
   }
 };
@@ -26,8 +27,8 @@ export function getThemeColor(item: Pick<ShopItem, 'meta_value' | 'preview_color
 }
 
 export function getSoundValue(item: Pick<ShopItem, 'meta_value'>) {
-  const meta = parseItemMeta(item);
-  return meta.url || item.meta_value;
+  const meta = parseItemMeta(item) as Record<string, unknown>;
+  return String(meta.url || item.meta_value || '');
 }
 
 export async function fetchShopData(userId: string): Promise<ShopData> {

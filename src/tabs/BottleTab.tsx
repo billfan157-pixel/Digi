@@ -1,10 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { Bluetooth, RefreshCw, LogOut, Droplet, GlassWater, Zap, Lock, ChevronRight, Activity, Battery, Thermometer, Wifi, FlaskConical, Trophy, ArrowLeft, Layers, Sliders, Box, Sparkles, Cpu } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Activity, FlaskConical, Trophy, ArrowLeft, Box, Sparkles, Cpu } from 'lucide-react';
 import { DeviceHero, ControlDeck, ArenaPaywall } from '../components/DeviceComponents';
 import { DiagnosticsPanel, LedPatternStudio, AutomationCenter } from '../components/LabComponents';
 import type { LedPattern, RuleTrigger, RuleAction, AutomationRule } from '../components/types';
 import { AuraPulseEffect } from '../components/effects/AuraPulseEffect';
+
+interface SmartBottleMetrics {
+  currentVolume?: number;
+  batteryLevel?: number;
+  temperature?: number;
+  signalStrength?: number;
+}
+
+interface SmartBottleProps {
+  isConnected?: boolean;
+  metrics?: SmartBottleMetrics;
+  [key: string]: unknown;
+}
 
 export default function BottleTab({
   profile,
@@ -15,12 +28,12 @@ export default function BottleTab({
   smartBottle,
   onBack,
 }: {
-  profile: any;
-  weatherData: any;
+  profile: Record<string, unknown>;
+  weatherData: Record<string, unknown>;
   isWeatherSynced: boolean;
-  watchData: any;
+  watchData: Record<string, unknown>;
   isWatchConnected: boolean;
-  smartBottle: any;
+  smartBottle: SmartBottleProps;
   onBack?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<'lab' | 'arena'>('lab');
@@ -29,16 +42,16 @@ export default function BottleTab({
   // Local state for Demo/Lab controls
   const CAPACITY = 750;
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isConnected, setIsConnected] = useState(smartBottle?.isConnected || false);
+  const [isConnected, setIsConnected] = useState(Boolean(smartBottle?.isConnected));
   const [currentVolume, setCurrentVolume] = useState(smartBottle?.metrics?.currentVolume ?? CAPACITY);
   const [fillPercentage, setFillPercentage] = useState(
     smartBottle?.metrics?.currentVolume != null ? (smartBottle.metrics.currentVolume / CAPACITY) * 100 : 100
   );
   const [batteryLevel, setBatteryLevel] = useState(smartBottle?.metrics?.batteryLevel ?? 84);
   const [temperature, setTemperature] = useState(smartBottle?.metrics?.temperature ?? 24);
-  const [latencyMs, setLatencyMs] = useState(24);
+  const [latencyMs] = useState(24);
   const [signalStrength, setSignalStrength] = useState(smartBottle?.metrics?.signalStrength ?? 92);
-  const [rawSensorSeries, setRawSensorSeries] = useState<number[]>(() => 
+  const [rawSensorSeries] = useState<number[]>(() => 
     Array.from({ length: 20 }, () => Math.random() * 100)
   );
 
@@ -50,18 +63,20 @@ export default function BottleTab({
   const [ruleTime, setRuleTime] = useState('20:00');
   const [ruleThreshold, setRuleThreshold] = useState(50);
   const [rules, setRules] = useState<AutomationRule[]>([]);
-  const [syncLogs, setSyncLogs] = useState<any[]>([]);
+  const [, setSyncLogs] = useState<Array<{id: number; action: string; timestamp: string}>>([]);
 
   // Sync from props (useSmartBottle returns metrics.currentVolume, not top-level)
   useEffect(() => {
     if (smartBottle) {
-      setIsConnected(smartBottle.isConnected);
-      const vol = smartBottle.metrics?.currentVolume ?? currentVolume;
-      setCurrentVolume(vol);
-      setFillPercentage((vol / CAPACITY) * 100);
-      if (smartBottle.metrics?.batteryLevel != null) setBatteryLevel(smartBottle.metrics.batteryLevel);
-      if (smartBottle.metrics?.temperature != null) setTemperature(smartBottle.metrics.temperature);
-      if (smartBottle.metrics?.signalStrength != null) setSignalStrength(smartBottle.metrics.signalStrength);
+      setTimeout(() => {
+        setIsConnected(Boolean(smartBottle.isConnected));
+        const vol = smartBottle.metrics?.currentVolume ?? currentVolume;
+        setCurrentVolume(vol);
+        setFillPercentage((vol / CAPACITY) * 100);
+        if (smartBottle.metrics?.batteryLevel != null) setBatteryLevel(smartBottle.metrics.batteryLevel);
+        if (smartBottle.metrics?.temperature != null) setTemperature(smartBottle.metrics.temperature);
+        if (smartBottle.metrics?.signalStrength != null) setSignalStrength(smartBottle.metrics.signalStrength);
+      }, 0);
     }
   }, [smartBottle]);
 
@@ -119,10 +134,10 @@ export default function BottleTab({
           <div className="flex items-center gap-2">
             <div className="text-right hidden sm:block">
               <p className="text-[9px] uppercase tracking-widest text-slate-500 font-black">Identity</p>
-              <p className="text-xs font-black text-white">{profile?.nickname || 'Cyber User'}</p>
+              <p className="text-xs font-black text-white">{String(profile?.nickname || 'Cyber User')}</p>
             </div>
             <div className="w-10 h-10 rounded-xl border-2 border-cyan-400/30 overflow-hidden bg-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-              <img src={profile?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Cyber'} className="w-full h-full object-cover" alt="User" />
+              <img src={String(profile?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Cyber')} className="w-full h-full object-cover" alt="User" />
             </div>
           </div>
         </div>
@@ -182,7 +197,7 @@ export default function BottleTab({
                 ].map(item => (
                   <button
                     key={item.id}
-                    onClick={() => setLabTab(item.id as any)}
+                    onClick={() => setLabTab(item.id as 'control' | 'diagnostics' | 'aura' | 'logic')}
                     className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all ${labTab === item.id ? 'bg-white text-slate-950 border-white font-black' : 'bg-slate-900/40 border-white/5 text-slate-400 font-bold hover:border-white/10'}`}
                   >
                     <item.icon size={14} />
@@ -229,7 +244,7 @@ export default function BottleTab({
                       setLedColor={setLedColor}
                       ledPattern={ledPattern}
                       setLedPattern={setLedPattern}
-                      heartRate={watchData?.heartRate || 72}
+                      heartRate={Number(watchData?.heartRate) || 72}
                       isWatchConnected={isWatchConnected}
                       isConnected={isConnected}
                       isOpen={true}

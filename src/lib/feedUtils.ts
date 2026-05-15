@@ -41,17 +41,17 @@ export const getFallbackStoryDrink = (story: SocialFeedPost) => {
 export const postSeed = (postId: string | undefined, index: number, suffix: string) =>
   `${suffix}:${postId || `post-${index}`}`;
 
-export const getFallbackPostTemperature = (post: any, index: number) => {
+export const getFallbackPostTemperature = (post: Record<string, unknown>, index: number) => {
   if (post.temperature) return post.temperature;
-  return index % 4 === 0 ? stableRange(postSeed(post.id, index, 'temp'), 32, 36) : undefined;
+  return index % 4 === 0 ? stableRange(postSeed(post.id as string | undefined, index, 'temp'), 32, 36) : undefined;
 };
 
-export const getFallbackPostHeartRate = (post: any, index: number) => {
+export const getFallbackPostHeartRate = (post: Record<string, unknown>, index: number) => {
   if (post.heart_rate) return post.heart_rate;
-  return index % 5 === 0 ? stableRange(postSeed(post.id, index, 'heart'), 90, 129) : undefined;
+  return index % 5 === 0 ? stableRange(postSeed(post.id as string | undefined, index, 'heart'), 90, 129) : undefined;
 };
 
-export const getFallbackPostDrinkType = (post: any, index: number) => {
+export const getFallbackPostDrinkType = (post: Record<string, unknown>, index: number) => {
   if (post.drink_type) return post.drink_type;
   return index % 6 === 0 ? 'Trà Đào' : undefined;
 };
@@ -115,7 +115,7 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
     };
   }
 
-  if (post.post_kind === 'checkin' || post.post_kind === 'progress' || post.type === 'daily_goal' || (post.hydration_ml || 0) > 0) {
+  if (post.post_kind === 'progress' || post.type === 'daily_goal' || (post.hydration_ml || 0) > 0) {
     return {
       Icon: Droplets,
       eyebrow: 'Pulse',

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, AlertTriangle, Target, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -66,8 +66,6 @@ export default function TrendForecastingChart({
     const confidence = Math.min(100, Math.round((r2 * 0.7 + consistency * 0.3) * 100));
 
     // Status determination
-    const last7Days = weeklyChartData.slice(-7);
-    const avgLast7 = last7Days.reduce((sum, d) => sum + d.ml, 0) / last7Days.length;
     const projectedGoal = forecast[6]; // 7 days ahead
 
     let status: 'on_track' | 'at_risk' | 'excellent' | 'needs_attention';

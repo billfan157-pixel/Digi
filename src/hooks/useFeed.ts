@@ -47,10 +47,6 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
   const [pendingPosts, setPendingPosts] = useState<SocialFeedPost[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const postsLengthRef = useRef(0);
-  const visibleAuthorIds = useMemo(
-    () => Array.from(new Set([currentUserId, ...friendIds].filter(Boolean))) as string[],
-    [currentUserId, friendIds]
-  );
   const friendIdSet = useMemo(() => new Set(friendIds), [friendIds]);
 
   useEffect(() => {
@@ -92,28 +88,28 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
     }
 
     try {
-const { data, error } = await supabase
-         .from('social_posts')
-         .select(`
-           *,
-           author:public_profiles!social_posts_author_public_profile_fkey (id, nickname, avatar_url, level, water_today, water_goal),
-           post_cheers (user_id)
-         `)
+ const { data, error } = await supabase
+          .from('social_posts')
+          .select(`
+            *,
+            author:profiles!social_posts_author_id_fkey (id, nickname, avatar_url, level, water_today, water_goal),
+            post_cheers (user_id)
+          `)
          .order('created_at', { ascending: false })
          .range(offset, offset + PAGE_SIZE - 1);
 
       if (error) throw error;
 
       if (data) {
-        const visibleRows = data.filter((post: any) => {
+        const visibleRows = data.filter((post: { author_id: string; post_kind: string; visibility: string }) => {
           if (post.author_id === currentUserId) return true;
           if (post.post_kind === 'challenge') return friendIdSet.has(post.author_id);
           return post.visibility === 'public' || friendIdSet.has(post.author_id);
         });
 
-        const formatted = visibleRows.map((post: any) => ({
-          ...post,
-          cheeredByMe: post.post_cheers?.some((l: any) => l.user_id === currentUserId) ?? false,
+        const formatted: SocialFeedPost[] = visibleRows.map((post: Record<string, unknown>) => ({
+          ...(post as unknown as SocialFeedPost),
+          cheeredByMe: (post.post_cheers as Array<{ user_id: string }>)?.some((l) => l.user_id === currentUserId) ?? false,
         }));
 
         if (isFirstPage) {
@@ -125,7 +121,7 @@ const { data, error } = await supabase
         else {
           setPosts(prev => {
             const existingIds = new Set(prev.map(p => p.id));
-            const newPosts = formatted.filter((p: any) => !existingIds.has(p.id));
+            const newPosts = formatted.filter((p: { id: string }) => !existingIds.has(p.id));
             const merged = [...prev, ...newPosts];
             postsLengthRef.current = merged.length;
             return merged;
@@ -169,11 +165,11 @@ const { data, error } = await supabase
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'social_posts' },
-        async (payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
-          const newPost = payload.new as { id: string;[key: string]: any };
+        async (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          const newPost = payload.new as { id: string;[key: string]: unknown };
           const { data } = await supabase
             .from('social_posts')
-            .select('*, author:public_profiles!social_posts_author_public_profile_fkey (id, nickname, avatar_url, level, water_today, water_goal)')
+             .select('*, author:profiles!social_posts_author_id_fkey (id, nickname, avatar_url, level, water_today, water_goal)')
             .eq('id', newPost.id)
             .single();
           

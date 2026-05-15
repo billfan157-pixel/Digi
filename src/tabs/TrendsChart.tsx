@@ -1,18 +1,17 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart2, Calendar, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 
 interface TrendsChartProps {
   timeRange: 'week' | 'month';
   onTimeRangeChange: (range: 'week' | 'month') => void;
-  weeklyChartData: any[];
+  weeklyChartData: Array<{ d: string; ml: number; isToday: boolean; fullDate: string }>;
   waterGoal: number;
-  selectedWeekDay: any;
-  onSelectDay: (day: any) => void;
-  calendarCells: any[];
+  selectedWeekDay: { d: string; ml: number } | null;
+  onSelectDay: (day: { d: string; ml: number } | null) => void;
+  calendarCells: Array<{ dayNum: number | null; ml: number; isFuture: boolean; isToday: boolean; isEmptySlot: boolean; fullDate: string }>;
   currentMonthName: string;
-  selectedCalendarCell: any;
-  onSelectCell: (cell: any) => void;
+  selectedCalendarCell: { dayNum: number; ml: number; fullDate: string } | null;
+  onSelectCell: (cell: { dayNum: number | null; ml: number; fullDate: string }) => void;
   onDayClick: (dateStr: string, ml: number) => void;
   isMonthDataLoading: boolean;
   hasAnyInsightData: boolean;

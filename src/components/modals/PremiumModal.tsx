@@ -1,7 +1,6 @@
 import React from 'react';
-import { Sparkles, Target, ShieldAlert, Crown, Zap, BrainCircuit } from 'lucide-react';
+import { Sparkles, ShieldAlert, Crown, Zap, BrainCircuit } from 'lucide-react';
 import { toast } from 'sonner';
-import { PREMIUM_CHECKOUT_AVAILABLE } from '@/lib/stripe';
 
 interface PremiumModalProps {
   showPremiumModal: boolean;
@@ -12,10 +11,7 @@ interface PremiumModalProps {
 export default function PremiumModal({
   showPremiumModal,
   setShowPremiumModal,
-  setIsPremium
 }: PremiumModalProps) {
-  void setIsPremium;
-  void PREMIUM_CHECKOUT_AVAILABLE;
 
   if (!showPremiumModal) return null;
 

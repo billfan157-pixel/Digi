@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, BatteryFull, Gauge, Thermometer, Wifi, Cpu, Waves, Heart, Sparkles, Zap, Lock, FlaskConical, Download, Bug, Activity, Sliders, Box, Layers, Play } from 'lucide-react';
+import { ChevronDown, Gauge, Thermometer, Wifi, Cpu, Waves, Heart, Sparkles, Zap, Activity, Play } from 'lucide-react';
 import type { LedPattern, RuleTrigger, RuleAction, AutomationRule } from './types';
-import { ledColors, ruleTriggerLabel, ruleActionLabel, buildRuleDescription } from './constants';
+import { ledColors, ruleActionLabel } from './constants';
 import { AuraPulseEffect } from './effects/AuraPulseEffect';
 
 // ============================================================================
@@ -45,7 +45,7 @@ export interface AutomationCenterProps {
   addAutomationRule: () => void;
   rules: Array<AutomationRule & { status?: string }>;
   setRules: React.Dispatch<React.SetStateAction<AutomationRule[]>>;
-  weatherData?: any;
+  weatherData?: Record<string, unknown>;
   isWeatherSynced: boolean;
   fillPercentage: number;
   isOpen: boolean;
@@ -122,7 +122,7 @@ export function SensorWaveChart({ series, isConnected }: { series: number[]; isC
 // ============================================================================
 // DIAGNOSTICS PANEL
 // ============================================================================
-export function DiagnosticsPanel({ isConnected, batteryLevel, batteryHealth, batteryCycleCount, latencyMs, rawSensorSeries, temperature, signalStrength, isOpen, onToggle }: DiagnosticsPanelProps) {
+export function DiagnosticsPanel({ isConnected, batteryHealth, batteryCycleCount, latencyMs, rawSensorSeries, temperature, signalStrength, isOpen, onToggle }: DiagnosticsPanelProps) {
   return (
     <div className="rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl overflow-hidden transition-all hover:border-white/10">
       <button onClick={onToggle} className="w-full p-6 flex items-center justify-between gap-4 text-left group">
@@ -167,8 +167,8 @@ export function DiagnosticsPanel({ isConnected, batteryLevel, batteryHealth, bat
 // ============================================================================
 // LED PATTERN STUDIO
 // ============================================================================
-export function LedPatternStudio({ ledColor, setLedColor, ledPattern, setLedPattern, heartRate, isWatchConnected, isConnected, isOpen, onToggle }: LedPatternStudioProps) {
-  const patterns: { id: LedPattern; name: string; icon: any }[] = [
+export function LedPatternStudio({ ledColor, setLedColor, ledPattern, setLedPattern, isWatchConnected, isOpen, onToggle }: LedPatternStudioProps) {
+  const patterns: { id: LedPattern; name: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
     { id: 'breathe', name: 'Breathe', icon: Waves },
     { id: 'wave', name: 'Flowing', icon: Play },
     { id: 'strobe', name: 'Alert', icon: Zap },
@@ -230,7 +230,7 @@ export function LedPatternStudio({ ledColor, setLedColor, ledPattern, setLedPatt
 // ============================================================================
 // AUTOMATION CENTER
 // ============================================================================
-export function AutomationCenter({ ruleTrigger, setRuleTrigger, ruleAction, setRuleAction, ruleTime, setRuleTime, ruleThreshold, setRuleThreshold, addAutomationRule, rules, setRules, weatherData, isWeatherSynced, fillPercentage, isOpen, onToggle }: AutomationCenterProps) {
+export function AutomationCenter({ ruleTrigger, setRuleTrigger, ruleAction, setRuleAction, ruleTime, setRuleTime, ruleThreshold, setRuleThreshold, addAutomationRule, rules, setRules, isOpen, onToggle }: AutomationCenterProps) {
   return (
     <div className="rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl overflow-hidden">
       <button onClick={onToggle} className="w-full p-6 flex items-center justify-between gap-4 text-left group">

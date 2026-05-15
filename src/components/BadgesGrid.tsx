@@ -47,8 +47,8 @@ export default function BadgesGrid({ userId }: { userId: string }) {
         if (userBadgesRes.error) throw userBadgesRes.error;
 
         setBadges(badgesRes.data || []);
-        setUnlockedBadgeIds(new Set((userBadgesRes.data || []).map((ub: any) => ub.badge_id)));
-      } catch (error: any) {
+        setUnlockedBadgeIds(new Set((userBadgesRes.data || []).map((ub: { badge_id: string }) => ub.badge_id)));
+      } catch (error: unknown) {
         console.error("Error fetching badges:", error);
         toast.error("Không thể tải danh sách huy hiệu");
       } finally {
@@ -64,7 +64,7 @@ export default function BadgesGrid({ userId }: { userId: string }) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'user_badges', filter: `user_id=eq.${userId}` },
-        (payload: any) => {
+        (payload: { new: { badge_id: string } }) => {
           const newBadgeId = payload.new.badge_id;
           
           // Tự động cập nhật UI: Chuyển huy hiệu sang trạng thái mở khóa

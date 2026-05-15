@@ -11,11 +11,12 @@ import { useStreak } from '@/hooks/useStreak';
 import { useWaterData } from '@/hooks/useWaterData';
 import { calculateWaterIntake, type ActivityLevel, type Climate, type Gender } from '@/lib/HydrationEngine';
 import { normalizeActivity, normalizeClimate } from '@/lib/profileNormalization';
+import type { Profile } from '@/models';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 interface UseHydrationControllerOptions {
-  profile: any;
-  setProfile: React.Dispatch<React.SetStateAction<any>>;
+  profile: Record<string, unknown> | null;
+  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   view: string;
   weatherData: { temp?: number } | null | undefined;
   isWeatherSynced: boolean;
@@ -64,7 +65,7 @@ export function useHydrationController({
     startFasting,
     stopFasting,
   } = useFastingAndReports({
-    userId: profile?.id,
+    userId: profile?.id as string | undefined,
     isPremium,
     setShowPremiumModal,
   });
@@ -72,31 +73,32 @@ export function useHydrationController({
   const hydrationResult = useMemo(() => {
     if (!profile) return null;
 
+    const p = profile as Record<string, unknown>;
     const genderMap: Record<string, Gender> = { Nam: 'male', Nữ: 'female' };
-    const mappedGender = genderMap[profile.gender] || 'other';
-    const mappedActivity = normalizeActivity(profile.activity) as ActivityLevel;
-    const mappedClimate = normalizeClimate(profile.climate) as Climate;
+    const mappedGender = genderMap[String(p.gender)] || 'other';
+    const mappedActivity = normalizeActivity(String(p.activity)) as ActivityLevel;
+    const mappedClimate = normalizeClimate(String(p.climate)) as Climate;
 
     return calculateWaterIntake({
-      weightKg: profile.weight || 60,
-      heightCm: profile.height || 170,
-      ageYears: profile.age || 20,
+      weightKg: Number(p.weight) || 60,
+      heightCm: Number(p.height) || 170,
+      ageYears: Number(p.age) || 20,
       gender: mappedGender,
       activityLevel: mappedActivity,
       climate: mappedClimate,
       healthCondition: 'none',
       dietFactors: [],
       currentTempC: isWeatherSynced ? weatherData?.temp : undefined,
-      exerciseMinutes: isWatchConnected ? Math.round((watchData?.steps || 0) / 120) : 0,
+      exerciseMinutes: isWatchConnected ? Math.round((Number(watchData?.steps) || 0) / 120) : 0,
       isFasting: isFastingMode,
-      wakeUpTime: profile.wakeUp || '07:00',
-      bedTime: profile.bedTime || '23:00',
-      avgHeartRate: isWatchConnected ? watchData?.heartRate : 0,
+      wakeUpTime: String(p.wakeUp) || '07:00',
+      bedTime: String(p.bedTime) || '23:00',
+      avgHeartRate: isWatchConnected ? Number(watchData?.heartRate) : 0,
     });
   }, [profile, weatherData, isWeatherSynced, watchData, isWatchConnected, isFastingMode]);
 
   const waterGoal = hydrationResult?.goalMl || 2000;
-  const smartBottle = useSmartBottle(profile?.id, 'DW-PRO-1', 750);
+  const smartBottle = useSmartBottle(profile?.id as string | undefined, 'DW-PRO-1', 750);
 
   const {
     refetchProfile,
@@ -118,7 +120,7 @@ export function useHydrationController({
     hasPendingCloudSync = false,
     isSyncing = false,
     refetchWater = async () => {},
-  } = useWaterData(profile, handleWaterSync, {
+  } = useWaterData(profile as unknown as (Profile & { water_today?: number }) | null, handleWaterSync, {
     tempC: isWeatherSynced ? weatherData?.temp : undefined,
     exerciseMins: isWatchConnected ? Math.round((watchData?.steps || 0) / 120) : 0,
     isFasting: isFastingMode,
@@ -143,8 +145,12 @@ export function useHydrationController({
   const handleAddWater = useCallback(async (amount: number, factor: number, name: string) => {
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
     const waterInLastHour = waterEntries
-      .filter((entry: any) => new Date(entry.created_at || entry.timestamp).getTime() > oneHourAgo)
-      .reduce((sum: number, entry: any) => sum + (entry.amount || 0), 0);
+      .filter((entry: { created_at?: string; timestamp?: string; amount?: number }) => {
+        const dateStr = entry.created_at || entry.timestamp;
+        if (!dateStr) return false;
+        return new Date(dateStr).getTime() > oneHourAgo;
+      })
+      .reduce((sum: number, entry: { amount?: number }) => sum + (entry.amount || 0), 0);
 
     if (waterInLastHour + amount > 1000) {
       toast.error(`Cảnh báo: Bạn đã uống ${waterInLastHour}ml trong 1 giờ qua. Tránh nạp quá 1000ml/giờ để không gây ngộ độc nước (hạ natri máu)!`, { duration: 6000 });
@@ -162,7 +168,7 @@ export function useHydrationController({
   });
 
   const { streak, streakFreezes, needsFreeze, useStreakFreeze } = useStreak(
-    profile?.id,
+    profile?.id as string | undefined,
     waterGoal,
     waterIntake,
     isPremium,
@@ -183,10 +189,10 @@ export function useHydrationController({
     waterIntake,
     waterGoal,
     streak,
-    waterEntries,
+    waterEntries: waterEntries as unknown as Record<string, unknown>[],
     weeklyHistory,
     weeklyLogCount,
-    watchData,
+    watchData: watchData as unknown as Record<string, unknown> | null,
     setShowPremiumModal,
   });
 
@@ -206,14 +212,14 @@ export function useHydrationController({
       streak,
       progress,
       isWatchConnected,
-      watchData,
-      weeklyChartData: weeklyHistory,
-      waterEntries,
+      watchData: watchData as unknown as Record<string, unknown> | null,
+      weeklyChartData: weeklyHistory as unknown as { d: string; ml: number }[],
+      waterEntries: waterEntries as unknown as Record<string, unknown>[],
       avgWeekly: weeklyHistory.length > 0 
-        ? Math.round(weeklyHistory.reduce((s: number, d: any) => s + d.ml, 0) / weeklyHistory.length) 
+        ? Math.round(weeklyHistory.reduce((s: number, d: { ml: number }) => s + d.ml, 0) / weeklyHistory.length) 
         : 0,
       completionRate: weeklyHistory.length > 0 
-        ? Math.round((weeklyHistory.filter((d: any) => d.ml >= waterGoal).length / weeklyHistory.length) * 100) 
+        ? Math.round((weeklyHistory.filter((d: { ml: number }) => d.ml >= waterGoal).length / weeklyHistory.length) * 100) 
         : 0,
     });
   }, [exportReportPdf, isWatchConnected, profile, progress, streak, watchData, waterGoal, waterIntake, weeklyHistory, waterEntries]);
@@ -224,8 +230,8 @@ export function useHydrationController({
       waterIntake,
       waterGoal,
       streak,
-      weeklyChartData: weeklyHistory,
-      waterEntries,
+      weeklyChartData: weeklyHistory as unknown as { d: string; ml: number }[],
+      waterEntries: waterEntries as unknown as Record<string, unknown>[],
     });
   }, [exportReportCsv, profile, waterIntake, waterGoal, streak, weeklyHistory, waterEntries]);
 

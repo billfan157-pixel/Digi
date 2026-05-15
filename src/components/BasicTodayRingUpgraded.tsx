@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { 
   Droplets, Sparkles, Target, Flame, TrendingUp, TrendingDown, 
-  Award, Zap, Trophy, ChevronDown, ChevronUp, Activity, Clock
+  Award, Zap, ChevronDown, ChevronUp, Clock
 } from 'lucide-react';
 
 interface BasicTodayRingProps {
@@ -138,34 +138,6 @@ function MetricRow({
   );
 }
 
-// Mini sparkline component
-function MiniSparkline({ data, color }: { data: number[]; color: string }) {
-  if (!data || data.length === 0) return null;
-  
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-  
-  return (
-    <div className="flex items-end gap-0.5 h-5" aria-hidden="true">
-      {data.map((value, i) => {
-        const height = ((value - min) / range) * 20;
-        return (
-          <div
-            key={i}
-            className="w-1 rounded-full transition-all duration-200"
-            style={{
-              height: `${Math.max(height, 2)}px`,
-              backgroundColor: color,
-              opacity: i === data.length - 1 ? 1 : 0.4,
-            }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
 // Streak badge with proper styling
 function StreakBadge({ streak }: { streak: number }) {
   if (streak < 3) return null;
@@ -248,9 +220,9 @@ export default function BasicTodayRingUltimate({
 
   useEffect(() => {
     if (isCompleted && !prevCompletedRef.current) {
-      setShowCelebration(true);
-      const t = window.setTimeout(() => setShowCelebration(false), 2000);
-      return () => window.clearTimeout(t);
+      const t1 = window.setTimeout(() => setShowCelebration(true), 0);
+      const t2 = window.setTimeout(() => setShowCelebration(false), 2000);
+      return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
     }
     prevCompletedRef.current = isCompleted;
   }, [isCompleted]);

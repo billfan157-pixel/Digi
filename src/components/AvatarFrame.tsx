@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
@@ -138,13 +139,6 @@ const sizeClasses = {
   xl: "w-32 h-32",
 };
 
-const imageSizeClasses = {
-  sm: "w-full h-full",
-  md: "w-full h-full",
-  lg: "w-full h-full",
-  xl: "w-full h-full",
-};
-
 // Component chính
 export default function AvatarFrame({ level, avatarUrl, size = 'md', showBadge = true, nickname, frameId }: AvatarFrameProps) {
   const levelConfig = getFrameEffects(level);
@@ -155,7 +149,6 @@ export default function AvatarFrame({ level, avatarUrl, size = 'md', showBadge =
   const effects = customFrame ? customFrame.effects : levelConfig.effects;
   const { badgeColor, textColor } = levelConfig;
   const currentSize = sizeClasses[size];
-  const imageSize = imageSizeClasses[size];
 
   return (
     <div className={`relative ${currentSize} flex items-center justify-center`}>

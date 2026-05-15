@@ -1,14 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import { X, Send, Droplets } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '../../../store/useUIStore';
 import { useAiSocial } from '../../../context/AiSocialContext';
 import TypingIndicator from '../../TypingIndicator';
-
-const QUICK_ACTIONS = [
-  { icon: Droplets, label: 'Uống 250ml', amount: 250 },
-  { icon: Droplets, label: 'Uống 500ml', amount: 500 },
-];
 
 export default function AICoachModal() {
   const { showAiChat, setShowAiChat } = useUIStore();
@@ -58,7 +53,7 @@ export default function AICoachModal() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-            {chatMessages.map((msg: any, index: number) => (
+            {chatMessages.map((msg: { role: string; content: string }, index: number) => (
               <motion.div
                 key={`ai-msg-${index}`}
                 initial={{ opacity: 0, y: 10 }}

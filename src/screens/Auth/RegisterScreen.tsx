@@ -81,8 +81,8 @@ export default function RegisterScreen({ onBack, onSuccess }: RegisterScreenProp
       if (!authData.session) { 
         onSuccess(regEmail); 
       }
-    } catch (err: any) {
-      toast.error(err.message || "Lỗi đăng ký!", { id: toastId });
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Lỗi đăng ký!", { id: toastId });
     } finally { setIsSubmittingReg(false); }
   };
 

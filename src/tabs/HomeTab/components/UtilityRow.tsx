@@ -1,6 +1,5 @@
 import { LayoutGrid, Clock, Droplets, CloudOff } from 'lucide-react';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
 
 interface UtilityRowProps {
@@ -15,7 +14,6 @@ const actions = [
 ];
 
 const UtilityRow = React.memo(function UtilityRow({ onHistory, onDrinkMenu }: UtilityRowProps) {
-  const { t } = useTranslation();
   const hasPendingCloudSync = useAppStore((s) => s.hasPendingCloudSync);
 
   const handleAction = (action: 'history' | 'menu' | 'drink') => {

@@ -1,5 +1,4 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart3, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useMemo } from 'react';
 
 export interface WeeklyHistoryPoint {

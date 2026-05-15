@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Timer, Flame, Coffee, Droplet, Info } from 'lucide-react';
+import { X, Timer, Flame, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { useUIStore } from '../../store/useUIStore';
@@ -24,13 +24,13 @@ export default function FastingModal() {
 
   useEffect(() => {
     if (isOpen && isFastingMode) {
-      setNow(Date.now());
+      setTimeout(() => setNow(Date.now()), 0);
       const timer = setInterval(() => setNow(Date.now()), 1000);
       return () => clearInterval(timer);
     }
 
     if (isOpen) {
-      setNow(0);
+      setTimeout(() => setNow(0), 0);
     }
   }, [isOpen, isFastingMode]);
 

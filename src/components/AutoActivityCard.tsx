@@ -1,14 +1,4 @@
-
-interface AutoActivityCardProps {
-  isWatchConnected: boolean;
-  isCalendarSynced: boolean;
-  watchData: { heartRate: number; steps: number };
-  calendarEvents: any[];
-  currentActivity: 'chill' | 'light' | 'hard';
-  setCurrentActivity: (activity: 'chill' | 'light' | 'hard') => void;
-}
-
-const AutoActivityCard = (_props: AutoActivityCardProps) => {
+const AutoActivityCard = () => {
   return (
     <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-4">
       <div className="flex items-center justify-between">

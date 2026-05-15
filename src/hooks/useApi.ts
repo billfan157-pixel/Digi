@@ -1,6 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
-import { supabase } from '@/lib/supabase';
 
 /**
  * Custom hook for fetching data with React Query

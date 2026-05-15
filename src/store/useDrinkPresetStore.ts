@@ -23,7 +23,7 @@ interface DrinkPresetState {
 
   loadDrinkPresets: () => void;
   saveDrinkPresets: () => void;
-  handleUpdatePreset: (index: number, field: keyof DrinkPreset, value: any) => void;
+  handleUpdatePreset: (index: number, field: keyof DrinkPreset, value: unknown) => void;
 }
 
 export const useDrinkPresetStore = create<DrinkPresetState>((set, get) => ({

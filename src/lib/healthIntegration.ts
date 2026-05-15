@@ -41,9 +41,9 @@ export async function requestHealthReadStepsAndHeartRate(): Promise<boolean> {
     }
 
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[healthIntegration]', error);
-    if (error?.message?.includes?.('denied')) {
+    if (error instanceof Error && error.message?.includes?.('denied')) {
       toast.error('Quyền đọc sức khỏe bị từ chối. Kiểm tra Cài đặt → Quyền riêng tư.');
     } else {
       toast.error('Không kết nối được Apple Health / Health Connect.');

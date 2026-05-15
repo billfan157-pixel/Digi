@@ -2,7 +2,7 @@ import React from 'react';
 import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
 import { RefreshCcw, AlertTriangle } from 'lucide-react';
 
-function ErrorFallback({ error, resetErrorBoundary }: { error: any; resetErrorBoundary: () => void }) {
+function ErrorFallback({ error, resetErrorBoundary }: { error: unknown; resetErrorBoundary: () => void }) {
   return (
     <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center p-6 text-center">
       <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center mb-6">
@@ -12,7 +12,7 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: any; resetErrorBo
         Đã có lỗi xảy ra
       </h3>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-[280px]">
-        {error.message || 'Màn hình này tạm thời không thể hiển thị do lỗi kĩ thuật.'}
+        {error instanceof Error ? error.message : 'Màn hình này tạm thời không thể hiển thị do lỗi kĩ thuật.'}
       </p>
       <button
         onClick={resetErrorBoundary}

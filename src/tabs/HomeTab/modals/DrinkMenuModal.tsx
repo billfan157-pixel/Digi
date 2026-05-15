@@ -30,7 +30,7 @@ const DEFAULT_GRID_DRINKS: GridDrink[] = [
   { id: 'default-5', name: 'Bia/Rượu', amount: 250, factor: -0.5, icon: 'Wine', bg: 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20', color: 'text-rose-400' },
 ];
 
-const renderIcon = (iconName: string, props?: any) => {
+const renderIcon = (iconName: string, props?: Record<string, unknown>) => {
   const icons: Record<string, React.ReactNode> = {
     Droplet: <Droplet {...props} />,
     Coffee: <Coffee {...props} />,

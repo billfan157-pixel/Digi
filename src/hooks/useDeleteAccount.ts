@@ -46,9 +46,10 @@ export const useDeleteAccount = () => {
 
       return { success: true };
 
-    } catch (err: any) {
-      setError(err.message || 'Đã xảy ra lỗi.');
-      return { success: false, message: err.message };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Đã xảy ra lỗi.';
+      setError(message);
+      return { success: false, message };
     } finally {
       setIsDeleting(false);
     }

@@ -10,7 +10,7 @@ export interface WeeklyHistoryPoint {
 }
 
 interface UseWeeklyHistoryOptions {
-  profile: any;
+  profile: Record<string, unknown> | null;
   waterIntake: number;
   waterEntriesCount: number;
 }
@@ -57,7 +57,7 @@ export function useWeeklyHistory({
             const parsedCache = JSON.parse(cached);
             parsedCache[6].ml = waterIntake;
             setWeeklyHistory(parsedCache);
-          } catch {}
+          } catch (e) { console.error('Failed to parse cache:', e); }
         }
 
         const { data: cloudData, error } = await supabase
@@ -72,7 +72,7 @@ export function useWeeklyHistory({
         const dataMap = new Map<string, number>();
         const logCountMap = new Map<string, number>();
 
-        cloudData?.forEach((row: any) => {
+        cloudData?.forEach((row: { day: string; amount: number }) => {
           if (!row.day) return;
           dataMap.set(row.day, (dataMap.get(row.day) || 0) + (row.amount || 0));
           logCountMap.set(row.day, (logCountMap.get(row.day) || 0) + 1);

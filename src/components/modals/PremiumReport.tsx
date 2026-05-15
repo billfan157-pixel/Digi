@@ -1,6 +1,6 @@
 import React from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ComposedChart, Legend, CartesianGrid } from 'recharts';
-import { Sparkles, TrendingUp, DollarSign, BrainCircuit } from 'lucide-react';
+import { Line, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ComposedChart, CartesianGrid } from 'recharts';
+import { Sparkles, TrendingUp, BrainCircuit } from 'lucide-react';
 
 const mockData = [
   { day: 'T2', water: 2100, heartRate: 72 },
@@ -12,7 +12,7 @@ const mockData = [
   { day: 'CN', water: 2600, heartRate: 71 },
 ];
 
-export default function PremiumReport({ reportData = mockData }: { reportData?: any[] }) {
+export default function PremiumReport({ reportData = mockData }: { reportData?: Record<string, unknown>[] }) {
   const cardClass = "bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-xl p-6";
 
   return (

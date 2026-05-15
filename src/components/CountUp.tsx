@@ -4,7 +4,7 @@ export default function CountUp({ value }: { value: number }) {
   const [displayValue, setDisplayValue] = useState(value);
 
   useEffect(() => {
-    let start = displayValue;
+    const start = displayValue;
     const end = value;
     if (start === end) return;
 

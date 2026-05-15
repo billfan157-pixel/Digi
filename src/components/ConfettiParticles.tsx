@@ -24,7 +24,7 @@ export const ConfettiParticles: React.FC<ConfettiParticlesProps> = ({ trigger })
         rotateEnd: Math.random() * 720,
       }));
       
-      setParticles(newParticles);
+      setTimeout(() => setParticles(newParticles), 0);
       
       // Tự động dọn dẹp particles sau 3 giây để tối ưu bộ nhớ
       const timer = setTimeout(() => setParticles([]), 3000);
@@ -57,4 +57,5 @@ export const ConfettiParticles: React.FC<ConfettiParticlesProps> = ({ trigger })
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export default ConfettiParticles;

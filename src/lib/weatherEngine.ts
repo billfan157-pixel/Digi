@@ -14,7 +14,20 @@ type WeatherLookup = {
   };
 };
 
-function mapWeatherData(data: any): WeatherData {
+interface WeatherApiResponse {
+  main: {
+    temp: number;
+    feels_like: number;
+    humidity: number;
+  };
+  weather?: Array<{
+    description?: string;
+    main?: string;
+  }>;
+  name?: string;
+}
+
+function mapWeatherData(data: WeatherApiResponse): WeatherData {
   return {
     temp: data.main.temp,
     feels_like: data.main.feels_like,

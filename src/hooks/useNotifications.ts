@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 // Hàm tổng hợp âm thanh "Ting" bằng Web Audio API (không cần file mp3)
 const playTingSound = () => {
   try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
     const osc = ctx.createOscillator();
@@ -22,12 +22,12 @@ const playTingSound = () => {
     osc.start();
     osc.stop(ctx.currentTime + 0.3);
   } catch (e) {
-    // Bỏ qua lỗi nếu trình duyệt chặn tự động phát âm thanh khi user chưa tương tác với trang
+    console.warn('Audio playback failed (user may not have interacted yet):', e);
   }
 };
 
 export function useNotifications(currentUserId: string | undefined) {
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Record<string, unknown>[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
@@ -44,7 +44,7 @@ export function useNotifications(currentUserId: string | undefined) {
       if (error) throw error;
       if (data) {
         setNotifications(data);
-        setUnreadCount(data.filter((n: any) => !n.is_read).length);
+        setUnreadCount(data.filter((n: { is_read: boolean }) => !n.is_read).length);
       }
     } catch (err) {
       console.error('[useNotifications] Fetch error:', err);
@@ -90,7 +90,7 @@ export function useNotifications(currentUserId: string | undefined) {
   const markAllRead = async () => {
     if (!currentUserId) return;
     setUnreadCount(0);
-    setNotifications(prev => prev.map((n: any) => ({ ...n, is_read: true })));
+    setNotifications(prev => prev.map((n: Record<string, unknown>) => ({ ...n, is_read: true })));
     try {
       await supabase
         .from('notifications')

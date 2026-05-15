@@ -6,7 +6,7 @@ interface ExportData {
   waterGoal: number;
   streak: number;
   weeklyChartData: { d: string; ml: number }[];
-  waterEntries: any[];
+  waterEntries: Record<string, unknown>[];
 }
 
 export function exportToCSV(data: ExportData, filename: string = 'digifile-hydration-report.csv') {
@@ -33,7 +33,7 @@ export function exportToCSV(data: ExportData, filename: string = 'digifile-hydra
     ...rows,
     '',
     `Tổng số lần uống: ${waterEntries.length}`,
-    `Tổng lượng nước: ${waterEntries.reduce((s: number, e: any) => s + (e.amount || 0), 0)}ml`
+    `Tổng lượng nước: ${waterEntries.reduce((s: number, e: { amount?: number }) => s + (e.amount || 0), 0)}ml`
   ].join('\n');
   
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -53,7 +53,7 @@ export async function exportDetailedPDF(params: {
   waterGoal: number;
   streak: number;
   weeklyChartData: { d: string; ml: number }[];
-  waterEntries: any[];
+  waterEntries: Record<string, unknown>[];
   avgWeekly: number;
   completionRate: number;
 }) {
@@ -61,7 +61,7 @@ export async function exportDetailedPDF(params: {
   
   const todayLabel = new Date().toLocaleDateString('vi-VN');
   const totalEntries = waterEntries.length;
-  const totalWater = waterEntries.reduce((s: number, e: any) => s + (e.amount || 0), 0);
+  const totalWater = waterEntries.reduce((s: number, e: { amount?: number }) => s + (e.amount || 0), 0);
   
   const html = `<!doctype html>
 <html lang="vi">

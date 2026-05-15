@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { 
   Camera, Loader2, RefreshCw, Repeat2, X, Zap, ZapOff, 
-  Grid as GridIcon, Maximize2, Timer, Settings, Check
+  Grid as GridIcon, Timer, Settings, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';

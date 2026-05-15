@@ -9,8 +9,8 @@ interface RecentActivityProps {
   setShowHistory: (show: boolean) => void;
 }
 
-const formatWaterEntryTime = (entry: Pick<WaterLog, 'timestamp' | 'created_at'>) => {
-  const rawTime = entry.timestamp ?? entry.created_at;
+const formatWaterEntryTime = (entry: Pick<WaterLog, 'created_at'>) => {
+  const rawTime = entry.created_at;
   if (!rawTime) return '--:--';
   const parsed = new Date(rawTime);
   if (Number.isNaN(parsed.getTime())) return '--:--';
@@ -24,7 +24,7 @@ const presetStyles: Record<string, { bg: string; border: string; text: string }>
   red: { bg: 'bg-red-500/20', border: 'border-red-500/30', text: 'text-red-400' }
 };
 
-const renderIcon = (iconName: string, props?: any): React.ReactNode => {
+const renderIcon = (iconName: string, props?: Record<string, unknown>): React.ReactNode => {
   const icons: Record<string, React.ReactNode> = {
     Droplet: <Droplet {...props} />,
     Coffee: <Coffee {...props} />,
@@ -38,7 +38,7 @@ const RecentActivity = React.memo(function RecentActivity({ waterEntries, handle
 
   const recentEntries = useMemo(() => {
     return [...(waterEntries || [])]
-      .sort((a, b) => new Date(b.timestamp || b.created_at).getTime() - new Date(a.timestamp || a.created_at).getTime())
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 4);
   }, [waterEntries]);
 
@@ -67,11 +67,15 @@ const RecentActivity = React.memo(function RecentActivity({ waterEntries, handle
       </div>
       
       <div className="space-y-2">
-        {recentEntries.map((entry: WaterLog, index: number) => (
+        {recentEntries.map((entry: WaterLog, index: number) => {
+          const entryRecord = entry as unknown as Record<string, unknown>;
+          const entryColor = String(entryRecord.color || 'cyan');
+          const entryIcon = String(entryRecord.icon || 'Droplet');
+          return (
           <div key={entry.id || `recent-${index}`} className="group flex items-center justify-between p-3 bg-gradient-to-r from-slate-100/50 to-slate-50/30 dark:from-slate-900/50 dark:to-slate-800/30 backdrop-blur-sm border border-slate-300/50 dark:border-white/10 rounded-[1.25rem] hover:from-cyan-500/10 hover:to-cyan-400/5 dark:hover:from-cyan-500/15 dark:hover:to-cyan-600/10 hover:border-cyan-500/40 dark:hover:border-cyan-500/30 transition-all shadow-[0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_6px_rgba(255,255,255,0.01)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.12)]">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-110 ${presetStyles[entry.color || 'cyan']?.bg || presetStyles.cyan.bg} border ${presetStyles[entry.color || 'cyan']?.border || presetStyles.cyan.border} shadow-[0_2px_8px_rgba(0,0,0,0.08)]`}>
-                {renderIcon(entry.icon || 'Droplet', { size: 19, className: presetStyles[entry.color || 'cyan']?.text || presetStyles.cyan.text })}
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-110 ${presetStyles[entryColor]?.bg || presetStyles.cyan.bg} border ${presetStyles[entryColor]?.border || presetStyles.cyan.border} shadow-[0_2px_8px_rgba(0,0,0,0.08)]`}>
+                {renderIcon(entryIcon, { size: 19, className: presetStyles[entryColor]?.text || presetStyles.cyan.text })}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -97,7 +101,8 @@ const RecentActivity = React.memo(function RecentActivity({ waterEntries, handle
               </button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

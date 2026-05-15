@@ -4,33 +4,40 @@ import type InsightTab from '@/tabs/InsightTab';
 import type FeedTab from '@/tabs/FeedTab';
 import type ProfileTab from '@/tabs/ProfileTab';
 import type LeagueTab from '@/tabs/LeagueTab';
+import type { Profile, SocialFeedPost } from '@/models';
+
+interface SocialProfileStats {
+  followers: number;
+  following: number;
+  posts: number;
+}
 
 interface UseAppTabPropsOptions {
-  profile: any;
-  smartBottle: any;
+  profile: Profile | null;
+  smartBottle: Record<string, unknown> | null;
   isExportingPDF: boolean;
   handleExportPDF: () => Promise<void>;
   handleExportCSV: () => void;
-  geminiProps: Record<string, any>;
-  weeklyReport: any;
+  geminiProps: Record<string, unknown>;
+  weeklyReport: Record<string, unknown> | null;
   isWeeklyReportLoading: boolean;
   handleGenerateWeeklyReport: () => Promise<void>;
-  weatherData: any;
+  weatherData: Record<string, unknown> | null | undefined;
   isWeatherSynced: boolean;
-  watchData: any;
+  watchData: Record<string, unknown> | null | undefined;
   isWatchConnected: boolean;
   leagueMode: 'public' | 'friends' | 'clubs';
   setLeagueMode: (mode: 'public' | 'friends' | 'clubs') => void;
   setShowAddFriend: (value: boolean) => void;
   setShowShopModal: (value: boolean) => void;
-  getLeagueData: () => any[];
-  getRankInfo: (wp: number) => any;
-  socialProps: Record<string, any>;
-  openSocialComposer: (...args: any[]) => void;
+  getLeagueData: () => Record<string, unknown>[];
+  getRankInfo: (wp: number) => Record<string, unknown>;
+  socialProps: Record<string, unknown>;
+  openSocialComposer: (...args: unknown[]) => void;
   streakFreezes: number;
   needsFreeze: boolean;
   useStreakFreeze: () => Promise<boolean>;
-  posts: any[];
+  posts: SocialFeedPost[];
   setActiveTab: (tab: 'home' | 'insight' | 'league' | 'feed' | 'profile') => void;
 }
 
@@ -53,7 +60,6 @@ export function useAppTabProps({
   setShowAddFriend,
   setShowShopModal,
   getLeagueData,
-  getRankInfo,
   socialProps,
   openSocialComposer,
   streakFreezes,
@@ -64,7 +70,7 @@ export function useAppTabProps({
 }: UseAppTabPropsOptions) {
   const homeTabProps = useMemo(() => ({
     smartBottle,
-  }) satisfies React.ComponentProps<typeof HomeTab>, [
+  }) as unknown as React.ComponentProps<typeof HomeTab>, [
     smartBottle,
   ]);
 
@@ -72,13 +78,13 @@ export function useAppTabProps({
     isExportingPDF,
     handleExportPDF,
     handleExportCSV,
-    isAiLoading: geminiProps.isAiLoading || false,
-    aiAdvice: geminiProps.aiAdvice || '',
-    fetchAIAdvice: geminiProps.fetchAIAdvice || (() => {}),
+    isAiLoading: Boolean((geminiProps as Record<string, unknown>).isAiLoading),
+    aiAdvice: String((geminiProps as Record<string, unknown>).aiAdvice || ''),
+    fetchAIAdvice: ((geminiProps as Record<string, unknown>).fetchAIAdvice as (() => void) | undefined) || (() => {}),
     weeklyReport,
     isWeeklyReportLoading,
     generateWeeklyReport: handleGenerateWeeklyReport,
-  }) satisfies React.ComponentProps<typeof InsightTab>, [
+  }) as React.ComponentProps<typeof InsightTab>, [
     geminiProps.aiAdvice,
     geminiProps.fetchAIAdvice,
     geminiProps.isAiLoading,
@@ -114,7 +120,7 @@ export function useAppTabProps({
     setShowAddFriend,
     getLeagueData,
     profile,
-  }) satisfies React.ComponentProps<typeof LeagueTab>, [
+  }) as unknown as React.ComponentProps<typeof LeagueTab>, [
     getLeagueData,
     leagueMode,
     profile,
@@ -124,19 +130,19 @@ export function useAppTabProps({
 
   const feedTabProps = useMemo(() => ({
     profile,
-    socialStories: socialProps.socialStories || [],
-    socialError: socialProps.socialError || '',
-    isSocialLoading: socialProps.isSocialLoading || false,
-    socialFollowingIds: socialProps.socialFollowingIds || [],
-    closeCircleMembers: socialProps.closeCircleMembers || [],
-    closeCircleIds: socialProps.closeCircleIds || [],
-    isCloseCircleLoading: socialProps.isCloseCircleLoading || false,
+    socialStories: (socialProps.socialStories as unknown[]) || [],
+    socialError: String(socialProps.socialError || ''),
+    isSocialLoading: Boolean(socialProps.isSocialLoading),
+    socialFollowingIds: (socialProps.socialFollowingIds as string[]) || [],
+    closeCircleMembers: (socialProps.closeCircleMembers as unknown[]) || [],
+    closeCircleIds: (socialProps.closeCircleIds as string[]) || [],
+    isCloseCircleLoading: Boolean(socialProps.isCloseCircleLoading),
     openSocialComposer,
-    openQuickDropCamera: socialProps.openQuickDropCamera || (() => {}),
-    setShowSocialProfile: socialProps.setShowSocialProfile || (() => {}),
-    setShowDiscoverPeople: socialProps.setShowDiscoverPeople || (() => {}),
-    handleToggleLikePost: socialProps.handleToggleLikePost || (() => {}),
-  }) satisfies React.ComponentProps<typeof FeedTab>, [
+    openQuickDropCamera: (socialProps.openQuickDropCamera as (() => void) | undefined) || (() => {}),
+    setShowSocialProfile: (socialProps.setShowSocialProfile as ((show: boolean) => void) | undefined) || (() => {}),
+    setShowDiscoverPeople: (socialProps.setShowDiscoverPeople as ((show: boolean) => void) | undefined) || (() => {}),
+    handleToggleLikePost: (socialProps.handleToggleLikePost as ((post: SocialFeedPost) => void) | undefined) || (() => {}),
+  }) as React.ComponentProps<typeof FeedTab>, [
     openSocialComposer,
     profile,
     socialProps.handleToggleLikePost,
@@ -156,11 +162,11 @@ export function useAppTabProps({
     streakFreezes,
     needsFreeze,
     onUseStreakFreeze: useStreakFreeze,
-    socialProfileStats: socialProps.socialProfileStats || { followers: 0, following: 0, posts: 0 },
+    socialProfileStats: (socialProps.socialProfileStats as SocialProfileStats) || { followers: 0, following: 0, posts: 0 },
     posts,
-    handleToggleLikePost: socialProps.handleToggleLikePost || (() => {}),
+    handleToggleLikePost: (socialProps.handleToggleLikePost as ((post: SocialFeedPost) => void) | undefined) || (() => {}),
     setShowShopModal,
-  }) satisfies React.ComponentProps<typeof ProfileTab>, [
+  }) as React.ComponentProps<typeof ProfileTab>, [
     needsFreeze,
     posts,
     setShowShopModal,

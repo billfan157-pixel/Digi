@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 export function usePreviousWeekData(userId: string | undefined, enabled: boolean = true) {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Record<string, unknown>[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export function usePreviousWeekData(userId: string | undefined, enabled: boolean
         
         // Aggregate by day
         const dayMap: Record<string, number> = {};
-        (result || []).forEach((log: any) => {
+        (result || []).forEach((log: { day: string; amount: number }) => {
           if (log.day) {
             dayMap[log.day] = (dayMap[log.day] || 0) + (log.amount || 0);
           }

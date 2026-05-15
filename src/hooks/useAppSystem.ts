@@ -12,6 +12,7 @@ import {
   useCalendarSync,
 } from './useCalendarSync';
 import { useDeviceHealth } from './useDeviceHealth';
+import type { Session } from '@supabase/supabase-js';
 import { appQueryKeys } from '@/lib/queryKeys';
 import { queryClient } from '@/lib/queryClient';
 import { ensureProfileExists, fetchProfileById } from '@/services/profile.service';
@@ -23,17 +24,17 @@ import {
 
 export function useAppSystem() {
   const [view, setView] = useState<'welcome' | 'login' | 'register' | 'app' | 'locked'>('welcome');
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [loginPrefill, setLoginPrefill] = useState('');
   const profileIdRef = useRef<string | undefined>(undefined);
 
   // ✅ Khởi tạo các hooks con (bao gồm useWeatherSync đã fix)
   const weatherHook = useWeatherSync();
   const calendarHook = useCalendarSync();
-  const healthHook = useDeviceHealth(profile?.id);
+  const healthHook = useDeviceHealth(profile?.id as string | undefined);
 
   useEffect(() => {
-    profileIdRef.current = profile?.id;
+    profileIdRef.current = profile?.id as string | undefined;
   }, [profile?.id]);
 
   const loadProfileForCurrentUser = async () => {
@@ -46,7 +47,7 @@ export function useAppSystem() {
         queryKey: appQueryKeys.profile(userId),
         queryFn: () => fetchProfileById(userId),
       });
-    } catch { return null; }
+    } catch (e) { console.error(e); return null; }
   };
 
   useEffect(() => {
@@ -105,7 +106,7 @@ export function useAppSystem() {
     let isMounted = true;
     let timeoutId: ReturnType<typeof setTimeout>;
 
-    const { data: sub } = supabase!.auth.onAuthStateChange(async (event: string, session: any) => {
+    const { data: sub } = supabase!.auth.onAuthStateChange(async (event: string, session: Session | null) => {
       if (!isMounted) return;
       try {
         if (session) {
@@ -120,8 +121,8 @@ export function useAppSystem() {
                 const defaultName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
                 p = await ensureProfileExists(session.user.id, defaultName);
               }
-              if (p && isMounted) {
-                setProfile(p);
+               if (p && isMounted) {
+                 setProfile(p as unknown as Record<string, unknown> | null);
                 const isBiometricEnabled = await getBiometricEnabled(p.id);
                 setView(isBiometricEnabled ? 'login' : 'app');
               }

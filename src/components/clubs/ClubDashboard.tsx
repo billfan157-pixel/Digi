@@ -28,15 +28,17 @@ interface Club {
   id: string;
   name: string;
   description?: string;
-  weekly_goal_ml?: number;
   owner_id: string;
   min_level_required: number;
+  member_count?: number;
+  total_wp?: number;
 }
 
 interface Leader {
   user_id: string;
-  total_ml: number;
   role: string;
+  club_id: string;
+  joined_at: string;
   profiles?: {
     nickname?: string;
     avatar_url?: string;
@@ -92,11 +94,11 @@ export default function ClubDashboard({
 
   const isAdmin = currentUserRole === 'owner' || currentUserRole === 'deputy';
 
-  const goal = club?.weekly_goal_ml || 100000;
+  const goal = 100000; // Default 100L goal — weekly_goal_ml column not in DB
 
   const totalMl = useMemo(() => {
-    return leaders.reduce((sum, item) => sum + item.total_ml, 0);
-  }, [leaders]);
+    return 0; // total_ml column not in club_members
+  }, []);
 
   const progress = Math.min((totalMl / goal) * 100, 100);
 
@@ -106,8 +108,8 @@ export default function ClubDashboard({
     try {
       // Sử dụng Promise.allSettled để tất cả các API đều chạy, kể cả khi một trong số chúng lỗi
       const results = await Promise.allSettled([
-        supabase.from("clubs").select("id,name,description,weekly_goal_ml,owner_id,min_level_required").eq("id", clubId).maybeSingle(),
-        supabase.from('club_members').select('user_id, role, total_ml, profiles:public_profiles!club_members_user_public_profile_fkey(nickname, avatar_url)').eq('club_id', clubId).order('total_ml', { ascending: false }).limit(50),
+        supabase.from("clubs").select("id,name,description,owner_id,min_level_required,member_count,total_wp").eq("id", clubId).maybeSingle(),
+        supabase.from('club_members').select('user_id, role, club_id, joined_at, profiles:public_profiles!club_members_user_public_profile_fkey(nickname, avatar_url)').eq('club_id', clubId).order('joined_at', { ascending: false }).limit(50),
         supabase.from("club_activity").select(`id, message, amount, created_at, profiles:public_profiles!club_activity_user_public_profile_fkey (nickname)`).eq("club_id", clubId).order("created_at", { ascending: false }).limit(20),
         supabase.from('club_admin_logs').select(`id, created_at, action`).eq('club_id', clubId).order('created_at', { ascending: false }).limit(50),
         supabase.rpc('get_club_level', { p_club_id: clubId })
@@ -152,8 +154,8 @@ export default function ClubDashboard({
         setClubLevel(1); // Fallback
       }
 
-    } catch (err: any) {
-      setError(err.message || "Đã có lỗi xảy ra khi tải dữ liệu bang hội.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra khi tải dữ liệu bang hội.");
       toast.error("Không thể tải dashboard bang hội.");
     } finally {
       setLoading(false);
@@ -207,8 +209,8 @@ export default function ClubDashboard({
       setShowEditModal(false);
       // Cập nhật UI ngay lập tức
       setClub(prev => prev ? { ...prev, name: trimmedName, description: trimmedDesc, min_level_required: editingClubMinLevel } : null);
-    } catch (err: any) {
-      toast.error("Lỗi: " + err.message, { id: toastId });
+    } catch (err: unknown) {
+      toast.error("Lỗi: " + (err instanceof Error ? err.message : String(err)), { id: toastId });
     } finally {
       setIsUpdating(false);
     }
@@ -239,9 +241,9 @@ export default function ClubDashboard({
 
       toast.success(`Bang hội "${club.name}" đã được giải tán.`, { id: toastId });
       onBack(); // Quay về trang danh sách clubs
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Lỗi giải tán bang:", err);
-      toast.error("Không thể giải tán bang lúc này: " + err.message, { id: toastId });
+      toast.error("Không thể giải tán bang lúc này: " + (err instanceof Error ? err.message : String(err)), { id: toastId });
     } finally {
       setIsDisbanding(false);
     }
@@ -276,8 +278,8 @@ export default function ClubDashboard({
       toast.success("Cập nhật vai trò thành công!", { id: toastId });
       setManagingMember(null); // Close the menu
       fetchDashboard();
-    } catch (err: any) {
-      toast.error("Lỗi: " + err.message, { id: toastId });
+    } catch (err: unknown) {
+      toast.error("Lỗi: " + (err instanceof Error ? err.message : String(err)), { id: toastId });
     }
   };
 
@@ -310,8 +312,8 @@ export default function ClubDashboard({
       toast.success(`Đã mời "${targetUserName}" ra khỏi bang.`, { id: toastId });
       setManagingMember(null);
       fetchDashboard();
-    } catch (err: any) {
-      toast.error("Lỗi: " + err.message, { id: toastId });
+    } catch (err: unknown) {
+      toast.error("Lỗi: " + (err instanceof Error ? err.message : String(err)), { id: toastId });
     }
   };
 
@@ -328,7 +330,7 @@ export default function ClubDashboard({
           table: "club_activity",
           filter: `club_id=eq.${clubId}`,
         },
-        (payload: any) => {
+        (payload: Record<string, unknown>) => {
           console.log('New activity received!', payload);
           fetchDashboard(); // Refetch all for simplicity, can be optimized later
         }
@@ -341,7 +343,7 @@ export default function ClubDashboard({
           table: "club_admin_logs",
           filter: `club_id=eq.${clubId}`,
         },
-        (payload: any) => {
+        (payload: Record<string, unknown>) => {
           console.log('New admin log received!', payload);
           fetchDashboard(); // Refetch all
         }
@@ -499,7 +501,7 @@ export default function ClubDashboard({
                           {user.role === 'deputy' && <Shield size={14} className="text-cyan-400" />}
                         </p>
                         <p className="text-xs text-cyan-400 font-medium">
-                          {user.total_ml.toLocaleString()} ml
+                          {user.role === 'owner' ? 'Bang chủ' : user.role === 'deputy' ? 'Phó bang' : 'Thành viên'}
                         </p>
                       </div>
                     </div>

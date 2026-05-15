@@ -1,4 +1,3 @@
-import React from 'react';
 import { Target, Droplets, TrendingUp, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -11,7 +10,7 @@ interface AdvancedStatsGridProps {
   weeklyTotal: number;
   monthlyTotal: number;
   stats: Stats;
-  weeklyChartData: any[];
+  weeklyChartData: Array<{ ml: number }>;
 }
 
 const AdvancedStatsGrid: React.FC<AdvancedStatsGridProps> = ({

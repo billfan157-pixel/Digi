@@ -29,7 +29,6 @@ export default function GlobalModalManager() {
   } = useModalStore();
 
   const profile = useAppStore(s => s.profile);
-  const isPremium = useAppStore(s => s.isPremium);
   const waterEntries = useAppStore(s => s.waterEntries);
   const waterIntake = useAppStore(s => s.waterIntake);
   const waterGoal = useAppStore(s => s.waterGoal);
@@ -43,8 +42,7 @@ export default function GlobalModalManager() {
   const setEditAmount = useModalStore(s => s.setEditAmount);
   const handleDeleteEntry = useAppStore(s => s.actions.handleDeleteEntry);
 
-  const { geminiProps, socialProps } = useAiSocial();
-  const { chatMessages, isChatLoading, chatInput, setChatInput, handleSendChatMessage } = geminiProps;
+  const { socialProps } = useAiSocial();
   const {
     socialComposer,
     setSocialComposer,
@@ -266,10 +264,10 @@ export default function GlobalModalManager() {
           handleUnfollowUser={handleUnfollowUser || (() => {})}
           handleFollowUser={handleFollowUser || (() => {})}
         />
-        {activeCommentPost && (
+        {activeCommentPost != null && (
           <CommentsView
-            post={activeCommentPost}
-            currentUserId={profile?.id}
+            post={activeCommentPost as import('@/models').SocialFeedPost}
+            currentUserId={String(profile?.id ?? '')}
             onClose={() => setActiveCommentPost(null)}
           />
         )}

@@ -10,7 +10,7 @@ export interface QuestProgressContext {
   level?: number;
 }
 
-interface QuestLike {
+export interface QuestLike {
   type?: string | null;
   condition_type?: string | null;
   condition_value?: number | string | null;

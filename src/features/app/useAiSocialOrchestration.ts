@@ -30,12 +30,12 @@ export function useAiSocialOrchestration() {
   const toggleFastingMode = () => { toast.success('Fasting Mode Triggered') };
 
   const socialProps = useSocialData({
-    profile,
+    profile: profile as unknown as Record<string, unknown> | null,
     waterIntake,
     waterGoal,
     streak,
     activeTab,
-    setActiveTab,
+    setActiveTab: setActiveTab as (tab: string) => void,
   }) || {};
 
   const geminiProps = useGeminiAI({

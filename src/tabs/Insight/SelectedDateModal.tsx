@@ -53,11 +53,11 @@ export default function SelectedDateModal({
               const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
               const isSelectedToday = selectedDateModal.date === todayStr;
               
-              const entriesInStore = waterEntries?.filter((e: any) => e.day === selectedDateModal.date) || [];
+              const entriesInStore = waterEntries?.filter((e: { day: string }) => e.day === selectedDateModal.date) || [];
               const hasEntriesInStore = entriesInStore.length > 0;
               
               const displayLogs = hasEntriesInStore ? entriesInStore : dayLogs;
-              const displayTotalMl = hasEntriesInStore ? entriesInStore.reduce((sum: number, e: any) => sum + (e.amount || 0), 0) : (isSelectedToday ? waterIntake : selectedDateModal.ml);
+              const displayTotalMl = hasEntriesInStore ? entriesInStore.reduce((sum: number, e: { amount: number }) => sum + (e.amount || 0), 0) : (isSelectedToday ? waterIntake : selectedDateModal.ml);
               
               if (isDayLogsLoading) {
                 return (
@@ -86,8 +86,8 @@ export default function SelectedDateModal({
               return (
                 <>
                   <div className="space-y-3 overflow-y-auto pr-2 scrollbar-hide flex-1">
-                    {displayLogs.map((entry: any, index: number) => {
-                      const timeStr = new Date(entry.created_at || entry.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                    {displayLogs.map((entry: WaterLog, index: number) => {
+                      const timeStr = new Date(entry.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
                       const amount = entry.amount || 0;
 
                       return (

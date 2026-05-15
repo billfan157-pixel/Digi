@@ -56,14 +56,14 @@ export const syncWeatherAndWaterGoal = async (userId: string) => {
 
     return newGoal;
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('❌ Lỗi đồng bộ thời tiết:', err);
     
     // Xử lý các lỗi cụ thể
-    if (err.message?.includes('permission') || err.code === 'UNAVAILABLE') {
+    if ((err as Error).message?.includes('permission') || (err as Record<string, unknown>).code === 'UNAVAILABLE') {
       toast.error('Bạn chưa cấp quyền vị trí. Vui lòng vào Cài đặt > DigiWell > Vị trí để bật.');
     } else {
-      toast.error('Lỗi: ' + (err.message || 'Không xác định'));
+      toast.error('Lỗi: ' + ((err as Error).message || 'Không xác định'));
     }
     
     return null;

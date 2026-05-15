@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
@@ -180,7 +181,6 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase.from('profiles').update({ google_refresh_token: session.provider_refresh_token }).eq('id', user.id);
-      await supabase.from('public_profiles').update({ is_calendar_synced: true }).eq('id', user.id);
     }
   }
 
@@ -231,12 +231,6 @@ export function useCalendarSync() {
   const setIsCalendarSynced = useCallback((synced: boolean) => {
     useAppStore.getState().setAppState({ isCalendarSynced: synced });
     localStorage.setItem(CALENDAR_SYNCED_KEY, synced ? 'true' : 'false');
-    
-    // Lưu vào DB để ghi nhớ vĩnh viễn
-    const userId = useAppStore.getState().profile?.id;
-    if (userId) {
-      supabase.from('public_profiles').update({ is_calendar_synced: synced }).eq('id', userId).then();
-    }
   }, []);
 
   const clearRetry = useCallback(() => {
@@ -287,7 +281,6 @@ export function useCalendarSync() {
         .filter((event): event is CalendarEventItem => !!event);
 
       const store = useAppStore.getState();
-      const currentEventsStr = JSON.stringify(store.calendarEvents);
       const newEventsStr = JSON.stringify(events);
 
       // Cập nhật dữ liệu mới nhất
@@ -359,12 +352,9 @@ export function useCalendarSync() {
         return;
       }
 
-      // Kiểm tra trạng thái đồng bộ từ DB (Ghi nhớ xuyên trình duyệt)
-      const profileSynced = profile?.is_calendar_synced;
-      if (cachedSynced || profileSynced) {
-        if (profileSynced && !cachedSynced) {
-           useAppStore.getState().setAppState({ isCalendarSynced: true });
-        }
+      // Kiểm tra trạng thái đồng bộ từ localStorage
+      const cachedSynced = localStorage.getItem(CALENDAR_SYNCED_KEY) === 'true';
+      if (cachedSynced) {
         await syncCalendar({ silent: true, startOAuthIfNeeded: false });
       }
     };
@@ -378,7 +368,7 @@ export function useCalendarSync() {
       window.removeEventListener(CALENDAR_TOKEN_UPDATED_EVENT, handleTokenUpdated);
       clearRetry();
     };
-  }, [profile?.id, profile?.is_calendar_synced]); // Chạy lại khi Profile tải xong
+  }, [profile?.id]); // Chạy lại khi Profile tải xong
 
   return { isCalendarSynced, setIsCalendarSynced, calendarEvents, syncCalendar, isSyncing };
 }

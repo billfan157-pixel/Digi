@@ -16,36 +16,16 @@ export const useFeedFiltering = (
     if (!posts || posts.length === 0) return [];
 
     const normalizedPosts: SocialFeedPost[] = posts
-      .filter((p: any) => p.post_kind !== 'story')
-      .map((p: any) => ({
+      .filter((p: SocialFeedPost) => p.post_kind !== 'story')
+      .map((p: SocialFeedPost) => ({
         ...p,
-        type: (() => {
-          switch (p.post_kind) {
-            case 'checkin':
-              return 'daily_goal';
-            case 'challenge':
-              return 'challenge';
-            case 'milestone':
-              return 'milestone';
-            case 'progress':
-              return p.streak_snapshot > 0 ? 'milestone' : 'daily_goal';
-            default:
-              return 'status';
-          }
-        })(),
-        value: p.hydration_ml || p.streak_snapshot || 0,
-        likes: p.likes_count || 0,
-        comments: p.comments_count || 0,
-        temperature: p.temperature,
-        heart_rate: p.heart_rate,
-        drink_type: p.drink_type,
-        pulse_count: p.pulse_count || 0,
+        likes: p.like_count || 0,
       }));
 
     let ranked: SocialFeedPost[] =
       feedMode === 'latest'
         ? sortPostsByLatest(normalizedPosts)
-        : (rankFeedPosts(normalizedPosts, socialFollowingIds, profile) as SocialFeedPost[]);
+        : (rankFeedPosts(normalizedPosts as unknown as Parameters<typeof rankFeedPosts>[0], socialFollowingIds, profile as unknown as Parameters<typeof rankFeedPosts>[2]) as unknown as SocialFeedPost[]);
 
     if (accountabilityPodIds.length > 0) {
       const podRank = new Map(accountabilityPodIds.map((id, index) => [id, index]));
@@ -62,11 +42,11 @@ export const useFeedFiltering = (
     }
 
     if (feedFilter === 'checkins') {
-      ranked = ranked.filter(p => p.type === 'daily_goal' || p.type === 'status');
+      ranked = ranked.filter(p => p.post_kind === 'status' || p.post_kind === 'progress');
     } else if (feedFilter === 'milestones') {
-      ranked = ranked.filter(p => p.type === 'milestone');
+      ranked = ranked.filter(p => p.post_kind === 'milestone');
     } else if (feedFilter === 'challenges') {
-      ranked = ranked.filter(p => p.type === 'challenge');
+      ranked = ranked.filter(p => p.post_kind === 'challenge');
     } else if (feedFilter === 'photos') {
       ranked = ranked.filter(p => !!p.image_url);
     }
@@ -76,8 +56,7 @@ export const useFeedFiltering = (
       ranked = ranked.filter(post => {
         const author = post.author?.nickname?.toLowerCase() || '';
         const content = post.content?.toLowerCase() || '';
-        const drink = post.drink_type?.toLowerCase() || '';
-        return author.includes(search) || content.includes(search) || drink.includes(search);
+        return author.includes(search) || content.includes(search);
       });
     }
 

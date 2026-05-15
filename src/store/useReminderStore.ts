@@ -94,8 +94,8 @@ export const useReminderStore = create<ReminderState>((set, get) => ({
       const result = await scheduleHydrationReminders(reminderSettings, { dailyGoal: waterGoal, nickname: nickname });
       toast.success(result.scheduled ? `Đã lên lịch ${result.count} lời nhắc uống nước mỗi ngày!` : 'Đã tắt lịch nhắc uống nước định kỳ.');
       get().saveReminderSettingsToLocal(profileId, reminderSettings); // Save after successful application
-    } catch (err: any) {
-      toast.error(err.message || 'Không thể cập nhật lịch nhắc uống nước.');
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Không thể cập nhật lịch nhắc uống nước.');
     } finally {
       set({ isApplyingReminderSettings: false });
     }

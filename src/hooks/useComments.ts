@@ -1,28 +1,45 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
+import type { SocialComment } from '../models';
+
+interface SocialCommentRow {
+  id: string;
+  post_id: string;
+  author_id: string;
+  content: string;
+  like_count: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export function useComments(postId: string, currentUserId: string | undefined) {
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<SocialComment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchComments = useCallback(async () => {
     setIsLoading(true);
     const { data, error } = await supabase
       .from('social_comments')
-      .select('id, post_id, author_id, content, created_at')
+      .select('id, post_id, author_id, content, like_count, created_at, updated_at')
       .eq('post_id', postId)
       .order('created_at', { ascending: true })
       .limit(100);
 
     if (!error && data) {
-      const authorIds = Array.from(new Set(data.map((comment: any) => comment.author_id).filter(Boolean)));
+      const authorIds = Array.from(new Set(data.map((comment: SocialCommentRow) => comment.author_id).filter(Boolean)));
       const { data: authors } = authorIds.length > 0
-        ? await supabase.from('public_profiles').select('id, nickname, avatar_url').in('id', authorIds)
+        ? await supabase.from('profiles').select('id, nickname, avatar_url').in('id', authorIds)
         : { data: [] };
-      const authorMap = new Map((authors || []).map((author: any) => [author.id, author]));
-      setComments(data.map((comment: any) => ({
-        ...comment,
+      const authorMap = new Map((authors || []).map((author: { id: string; nickname: string; avatar_url?: string | null }) => [author.id, author]));
+      setComments(data.map((comment: SocialCommentRow) => ({
+        id: comment.id,
+        post_id: comment.post_id,
+        author_id: comment.author_id,
+        content: comment.content,
+        like_count: comment.like_count,
+        created_at: comment.created_at,
+        updated_at: comment.updated_at,
         author: authorMap.get(comment.author_id) || { nickname: 'Người dùng' },
       })));
     }
@@ -30,7 +47,7 @@ export function useComments(postId: string, currentUserId: string | undefined) {
   }, [postId]);
 
   useEffect(() => {
-    fetchComments();
+    setTimeout(() => fetchComments(), 0);
   }, [fetchComments]);
 
   const addComment = async (content: string) => {
@@ -40,17 +57,17 @@ export function useComments(postId: string, currentUserId: string | undefined) {
     }
     if (!content.trim()) return;
     const tempId = `temp-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-    const newComment = { id: tempId, post_id: postId, author_id: currentUserId, content, created_at: new Date().toISOString(), author: { nickname: 'Bạn' } };
+    const newComment: SocialComment = { id: tempId, post_id: postId, author_id: currentUserId, content, like_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), author: { nickname: 'Bạn' } };
 
-    setComments(prev => [...prev, newComment]); // Optimistic
+    setComments(prev => [...prev, newComment]);
 
-    const { data, error } = await supabase.from('social_comments').insert({ post_id: postId, author_id: currentUserId, content }).select('id, post_id, author_id, content, created_at').single();
+    const { data, error } = await supabase.from('social_comments').insert({ post_id: postId, author_id: currentUserId, content }).select('id, post_id, author_id, content, like_count, created_at, updated_at').single();
 
     if (error) {
       setComments(prev => prev.filter(c => c.id !== tempId));
       toast.error(error.message === 'JWT expired' ? 'Phiên đăng nhập hết hạn' : 'Gửi bình luận thất bại');
     } else if (data) {
-      const { data: author } = await supabase.from('public_profiles').select('id, nickname, avatar_url').eq('id', currentUserId).maybeSingle();
+      const { data: author } = await supabase.from('profiles').select('id, nickname, avatar_url').eq('id', currentUserId).maybeSingle();
       setComments(prev => prev.map(c => c.id === tempId ? { ...data, author: author || { nickname: 'Bạn' } } : c));
     }
   };

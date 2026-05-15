@@ -31,8 +31,8 @@ export default function MockPayosTrigger({ userId }: MockPayosTriggerProps) {
       const resData = await response.json();
       if (response.ok) toast.success(`Mock Payment Success! Expires: ${resData.new_end}`);
       else toast.error(`Mock Error: ${resData.error}`);
-    } catch (err: any) {
-      toast.error(`Fetch failed: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Fetch failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsFiring(false);
     }

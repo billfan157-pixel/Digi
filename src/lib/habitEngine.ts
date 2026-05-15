@@ -13,14 +13,6 @@ export interface Nudge {
   tint: 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
 }
 
-function getTimeOfDay(hour: number): Nudge['tint'] {
-  if (hour >= 5 && hour < 9) return 'morning';
-  if (hour >= 9 && hour < 13) return 'noon';
-  if (hour >= 13 && hour < 18) return 'afternoon';
-  if (hour >= 18 && hour < 22) return 'evening';
-  return 'night';
-}
-
 export function getTimeBasedNudge(params: {
   hour: number;
   waterIntake: number;
@@ -30,7 +22,6 @@ export function getTimeBasedNudge(params: {
 }): Nudge {
   const { hour, waterIntake, waterGoal, streak, isFirstOpen } = params;
   const pct = waterGoal > 0 ? Math.min((waterIntake / waterGoal) * 100, 100) : 0;
-  const tint = getTimeOfDay(hour);
   const remaining = Math.max(0, waterGoal - waterIntake);
 
   // ── Morning: First open of the day ──

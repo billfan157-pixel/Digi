@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Plus, Trash2, Save, ChevronUp, ChevronDown, Settings2, Sparkles, AlertTriangle } from 'lucide-react';
+import { Clock, Trash2, Save, ChevronUp, ChevronDown, Settings2, Sparkles, AlertTriangle } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ interface ScheduleItem {
 }
 
 interface ScheduleManagerProps {
-  profile: any;
+  profile: Record<string, unknown> | null;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   alwaysExpanded?: boolean;
@@ -33,7 +33,6 @@ interface ScheduleManagerProps {
 export default function ScheduleManager({ 
   profile, 
   isOpen = false, 
-  onOpenChange,
   alwaysExpanded = false,
   aiSchedule = null,
   waterGoal = 2000,
@@ -41,7 +40,7 @@ export default function ScheduleManager({
   dateKey = 'today',
   waterEntries = [],
 }: ScheduleManagerProps) {
-  const [isScheduleOpen, setIsScheduleOpen] = useState(alwaysExpanded || isOpen);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(isOpen);
   const [customSchedule, setCustomSchedule] = useState<ScheduleItem[]>([]);
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
 
@@ -51,13 +50,14 @@ export default function ScheduleManager({
     
     const saved = AppStorage.getItem(`digiwell_custom_schedule_${key}`);
     if (saved) {
-      try { 
-        setCustomSchedule(JSON.parse(saved)); 
-      } catch(e) {
-        setCustomSchedule([]);
+      try {
+        const parsed = JSON.parse(saved);
+        setTimeout(() => setCustomSchedule(parsed), 0);
+      } catch {
+        setTimeout(() => setCustomSchedule([]), 0);
       }
     } else {
-      setCustomSchedule([]);
+      setTimeout(() => setCustomSchedule([]), 0);
     }
   }, [profile?.id, dateKey]);
 
@@ -106,7 +106,7 @@ export default function ScheduleManager({
     }
   };
 
-  const handleUpdateScheduleItem = (index: number, field: string, value: any) => {
+  const handleUpdateScheduleItem = (index: number, field: string, value: unknown) => {
     const newSchedule = [...customSchedule];
     newSchedule[index] = { ...newSchedule[index], [field]: value };
     setCustomSchedule(newSchedule);
@@ -117,10 +117,11 @@ export default function ScheduleManager({
   };
 
   const handleAddScheduleItem = () => {
-    const newSchedule = [...customSchedule].sort((a, b) => a.time.localeCompare(b.time));
-    const lastTime = newSchedule.length > 0 ? newSchedule[newSchedule.length - 1].time : "08:00";
-    let [h, m] = lastTime.split(':').map(Number);
-    h = (h + 1) % 24;
+    const newSchedule = [...customSchedule];
+    const lastItem = newSchedule.length > 0 ? newSchedule[newSchedule.length - 1] : { time: "08:00" };
+    const parts = lastItem.time.split(':').map(Number);
+    const h = (parts[0] + 1) % 24;
+    const m = parts[1];
     const nextTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     setCustomSchedule([...customSchedule, { time: nextTime, amount: 200, label: 'Mốc mới' }]);
   };
@@ -169,7 +170,7 @@ export default function ScheduleManager({
           title: `DigiWell - Lịch ${dayLabel}`,
           body: item.note || `Đã đến mốc ${item.time}. Hãy uống ${item.amount}ml nước.`,
           schedule: { at: scheduleDate, allowWhileIdle: true },
-          sound: equippedSound,
+          sound: String(equippedSound),
           extra: { amount: item.amount, name: item.note || item.label || 'Nước lọc' }
         };
       });
@@ -178,7 +179,7 @@ export default function ScheduleManager({
         await LocalNotifications.schedule({ notifications: notificationsToSchedule });
       }
       toast.success(`Đã bật ${notificationsToSchedule.length} nhắc nhở cho ${dayLabel.toLowerCase()}.`);
-    } catch (err) {
+    } catch {
       toast.error("Lỗi cài đặt thông báo.");
     }
   };

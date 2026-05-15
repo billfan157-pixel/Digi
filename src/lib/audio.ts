@@ -2,7 +2,7 @@
 
 // Helper để tái sử dụng AudioContext
 const getAudioContext = () => {
-  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+  const AudioContextClass = window.AudioContext || (window as unknown as Record<string, unknown>).webkitAudioContext as typeof AudioContext | undefined;
   if (!AudioContextClass) return null;
   return new AudioContextClass();
 };
@@ -88,7 +88,9 @@ export const playHoverSound = () => {
     gain.connect(ctx.destination);
     osc.start(now);
     osc.stop(now + 0.05);
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Audio hover error:', e);
+  }
 };
 
 // Hiệu ứng "Ting Ting" sáng và đã tai khi nhận thưởng (Claim)
@@ -118,7 +120,9 @@ export const playClaimSound = () => {
     playNote(880, 0);        // A5
     playNote(1108.73, 0.1);  // C#6
     playNote(1318.51, 0.2);  // E6 (Tạo thành hợp âm A Major sáng chói)
-  } catch(e) {}
+  } catch(e) {
+    console.warn('Audio claim error:', e);
+  }
 };
 
 // Hiệu ứng "Siêu năng lượng" (Power-up) khi nhận thưởng Hyper (Critical Hit)
@@ -143,11 +147,13 @@ export const playHyperSound = () => {
     gain.connect(ctx.destination);
     osc.start(now);
     osc.stop(now + 0.6);
-  } catch(e) {}
+  } catch(e) {
+    console.warn('Audio hyper error:', e);
+  }
 };
 
 // Cổng điều hướng đa năng (Dành cho QuestCard và các module khác gọi)
-export const playSound = (name: string, volume: number = 0.5) => {
+export const playSound = (name: string) => {
   switch(name) {
     case 'success': case 'levelup': playSuccessSound(); break;
     case 'drop': case 'click': playWaterDropSound(); break;

@@ -39,7 +39,7 @@ export function useFollow(targetUserId: string, currentUserId: string | undefine
           .eq('following_id', targetUserId);
         if (error) throw error;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsFollowing(prev);
       toast.error('Lỗi thao tác, thử lại sau');
       console.error('[useFollow] Toggle error:', err);

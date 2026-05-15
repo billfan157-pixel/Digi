@@ -124,7 +124,7 @@ export const FeedHeader = ({
                 {onlineFriendsCount} Online
              </p>
              <div className="flex p-1 bg-slate-900/60 rounded-xl border border-white/5">
-                {modeOptions.map(({ key, label, icon: Icon }) => {
+                 {modeOptions.map(({ key, label }) => {
                   const isActive = feedMode === key;
                   return (
                     <button

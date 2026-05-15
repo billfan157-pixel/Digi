@@ -53,7 +53,7 @@ export default function AiChatModal() {
           <button onClick={() => setShowAiChat(false)} className="p-2 bg-white/5 rounded-xl text-slate-400"><X /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {chatMessages.map((msg: any, index: number) => (
+          {chatMessages.map((msg: { role: string; content: string }, index: number) => (
             <div key={`global-chat-msg-${index}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] p-4 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-cyan-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none border border-white/5'}`}>{msg.content}</div>
             </div>

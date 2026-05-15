@@ -82,7 +82,7 @@ export default function GachaMachine({ profile }: GachaProps) {
           // Cập nhật lại UI thông qua Event Listener của App.tsx
           window.dispatchEvent(new CustomEvent('hydrationEvent', { detail: { refresh_profile: true } }));
         }
-      } catch(e) {}
+      } catch(e) { console.error(e); }
 
       confetti({
         particleCount: selectedPrize.value >= 100 ? 150 : 80,

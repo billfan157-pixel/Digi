@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';

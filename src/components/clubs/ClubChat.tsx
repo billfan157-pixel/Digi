@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { Send, Loader2, Sparkles } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import AvatarFrame, { getFrameEffects, getRankTitle } from "../AvatarFrame";
 
@@ -8,7 +8,7 @@ interface Message {
   id: string;
   club_id: string;
   user_id: string;
-  message: string;
+  content: string;
   message_type: 'text' | 'system';
   created_at: string;
   profiles?: {
@@ -71,7 +71,7 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
           table: "club_messages",
           filter: `club_id=eq.${clubId}`,
         },
-        (payload: any) => {
+        (payload: { new: { id: string } }) => {
           // GỌI HÀM NÀY THAY VÌ FETCH TOÀN BỘ
           fetchNewMessage(payload.new.id);
         }
@@ -94,8 +94,8 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
     const { error } = await supabase.from("club_messages").insert({
       club_id: clubId,
       user_id: userId,
-      message: tempText,
-      message_type: 'text' // Mặc định là text
+      content: tempText,
+      message_type: 'text'
     });
 
     if (error) {
@@ -118,7 +118,7 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
             return (
               <div key={msg.id} className="flex justify-center my-2">
                 <span className="bg-white/10 text-slate-400 text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-full font-bold">
-                  {msg.message}
+                  {msg.content}
                 </span>
               </div>
             );
@@ -151,7 +151,7 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
                     </span>
                   </div>
                 )}
-                <p className="text-sm leading-relaxed">{msg.message}</p>
+                <p className="text-sm leading-relaxed">                  {msg.content}</p>
               </div>
             </div>
           );

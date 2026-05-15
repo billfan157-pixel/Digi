@@ -29,20 +29,16 @@ export interface Profile {
   mood_tracking?: boolean;
   sync_wellness_data?: boolean;
   energy_tracking?: boolean;
-  is_calendar_synced?: boolean;
 }
 
 export interface WaterLog {
   id: string;
   user_id: string;
-  amount_ml: number;
-  amount?: number;
-  drink_type: string;
+  amount: number;
+  name: string | null;
+  exp: number;
+  day: string;
   created_at: string;
-  timestamp?: string;
-  name?: string;
-  color?: string;
-  icon?: string;
 }
 
 // =================== SHOP ===================
@@ -53,7 +49,7 @@ export interface ShopItem {
   price: number;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   category: 'bottle' | 'theme' | 'frame' | 'sound' | 'consumable';
-  meta_value: any;
+  meta_value: unknown;
   image_url: string | null;
   preview_color: string | null;
   is_active: boolean;
@@ -82,35 +78,25 @@ export interface SocialFeedPost {
   author_id: string;
   content: string;
   image_url: string | null;
-  post_kind: 'checkin' | 'status' | 'progress' | 'story' | 'milestone' | 'challenge' | 'achievement' | 'compare' | 'tip' | 'poll' | 'photo' | 'water_log' | 'daily_goal';
-  visibility: 'public' | 'followers';
+  post_kind: 'status' | 'progress' | 'story' | 'challenge' | 'milestone';
+  visibility: 'public' | 'followers' | 'circle';
   hydration_ml: number | null;
   streak_snapshot: number | null;
-  cheers_count: number;
-  comments_count: number;
-  drops_count: number;
-  likes_count?: number;
-  pulse_count?: number;
+  like_count: number;
   created_at: string;
   expires_at: string | null;
+  event_type: string | null;
+  reference_id: string | null;
+  is_squad_highlight: boolean;
   
   // Joined data
   author?: Partial<Profile>;
   cheeredByMe?: boolean;
 
-  // Client-side computed or demo data
-  type: 'status' | 'daily_goal' | 'milestone' | 'challenge' | 'achievement' | 'compare' | 'water_log' | 'tip' | 'poll' | 'photo';
+  // Client-side computed (not in DB)
+  type?: 'status' | 'daily_goal' | 'milestone' | 'challenge' | 'achievement' | 'compare' | 'water_log' | 'tip' | 'poll' | 'photo';
   value?: number | string;
-  temperature?: number;
-  heart_rate?: number;
-  drink_type?: string;
-  
-  // Additional properties used in components
-  tip_category?: string;
-  poll_options?: PostPollOption[];
-  voted_option_id?: string;
-  compare_avatar?: string;
-  compare_name?: string;
+  comments_count?: number;
 }
 
 export interface Battle {
@@ -133,7 +119,9 @@ export interface PostComment {
   post_id: string;
   author_id: string;
   content: string;
+  like_count: number;
   created_at: string;
+  updated_at: string;
   author?: Partial<Profile>;
 }
 
@@ -163,7 +151,9 @@ export interface WaterEntry {
   user_id: string;
   amount?: number;
   amount_ml?: number;
-  name?: string;
+  name?: string | null;
+  exp?: number;
+  day?: string;
   created_at?: string;
   timestamp?: string;
   color?: string;

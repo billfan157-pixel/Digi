@@ -21,7 +21,7 @@ interface LeagueTabProps {
   profile?: Profile | null;
 }
 
-const MODE_META: Record<LeagueMode, { label: string; accent: string; icon: any }> = {
+const MODE_META: Record<LeagueMode, { label: string; accent: string; icon: React.ComponentType<{ size?: number }> }> = {
   public: { label: 'Cộng đồng', accent: 'text-cyan-300', icon: Trophy },
   friends: { label: 'Bạn bè', accent: 'text-emerald-300', icon: Users },
   clubs: { label: 'Câu lạc bộ', accent: 'text-purple-300', icon: Users },
@@ -38,7 +38,7 @@ const LeagueTab = memo(function LeagueTab({
   const [leagueView, setLeagueView] = useState<LeagueView>('all');
   const isPremium = useAppStore(useShallow(s => s.isPremium));
 
-  useEffect(() => { setSearchQuery(''); setLeagueView('all'); }, [leagueMode]);
+  useEffect(() => { const t = window.setTimeout(() => { setSearchQuery(''); setLeagueView('all'); }, 0); return () => window.clearTimeout(t); }, [leagueMode]);
 
   const leagueData = useMemo(() => getLeagueData(), [getLeagueData]);
 

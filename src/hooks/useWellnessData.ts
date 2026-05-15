@@ -28,10 +28,10 @@ interface UseWellnessDataReturn {
 
 interface UseWellnessDataProps {
   daysBack?: number;
-  profile?: any;
+  profile?: Record<string, unknown> | null;
 }
 
-export function useWellnessData({ daysBack = 7, profile: externalProfile }: UseWellnessDataProps = {}): UseWellnessDataReturn {
+export function useWellnessData({ profile: externalProfile }: UseWellnessDataProps = {}): UseWellnessDataReturn {
   const internalProfile = useAppStore((state) => state.profile);
   const profile = externalProfile || internalProfile;
 
@@ -39,7 +39,7 @@ export function useWellnessData({ daysBack = 7, profile: externalProfile }: UseW
   const waterGoal = useAppStore((state) => state.waterGoal);
   const weeklyHistory = useAppStore((state) => state.weeklyHistory);
 
-  const { settings } = useSettings(profile);
+  const { settings } = useSettings(profile as unknown as Record<string, unknown> | null);
 
   // 1. HYDRATION SCORE
   const hydrationScore = useMemo(() => {
@@ -62,7 +62,7 @@ export function useWellnessData({ daysBack = 7, profile: externalProfile }: UseW
   const activityData: ActivityData = useMemo(() => {
     const steps = 0; // TODO: wire to health data
     const activeMinutes = 0; // TODO: derive from health data
-    const intensity = profile?.activity || 'sedentary';
+    const intensity = String((profile as Record<string, unknown>)?.activity || 'sedentary') as ActivityData['intensity'];
     return { steps, activeMinutes, intensity };
   }, [profile]);
 

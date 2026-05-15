@@ -30,9 +30,9 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
     currentUserId,
     postId: post.id,
     postAuthorId: post.author_id,
-    initialCheersCount: post.cheers_count || 0,
-    initialDropsCount: post.drops_count || 0,
-    initialCheered: post.cheeredByMe || false,
+    initialCheersCount: post.like_count || 0,
+    initialDropsCount: 0,
+    initialCheered: (post as unknown as Record<string, unknown>).cheeredByMe as boolean || false,
   });
 
   const {
@@ -51,15 +51,13 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
   const isMyPost = currentUserId === post.author_id;
   const isSaved = savedPosts.has(post.id);
 
-const isChallenge = post.type === 'challenge';
-   const isMilestone = post.type === 'milestone';
-   const isAchievement = post.type === 'achievement';
-   const isCompare = post.type === 'compare';
-   const isTip = post.type === 'tip';
-   const isPoll = post.type === 'poll';
-   const isWaterLog = post.type === 'water_log'
-     || post.type === 'daily_goal'
-     || (!isTip && !isPoll && !isChallenge && (post.hydration_ml || 0) > 0);
+ const isChallenge = post.post_kind === 'challenge';
+   const isMilestone = post.post_kind === 'milestone';
+   const isAchievement = false;
+   const isCompare = false;
+   const isTip = false;
+   const isPoll = false;
+   const isWaterLog = (post.hydration_ml || 0) > 0;
    const isDrop = post.post_kind === 'story';
 
   if (isDeleted) return null;
@@ -122,7 +120,7 @@ const isChallenge = post.type === 'challenge';
       id={`post-${post.id}`}
       initial={{ opacity: 0, y: 25, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4, type: 'spring', bounce: 0.3 } as any}
+      transition={{ duration: 0.4, type: 'spring', bounce: 0.3 }}
       className={`transition-all duration-500 bg-slate-900/50 rounded-3xl shadow-lg p-5 border backdrop-blur-sm relative overflow-hidden ${borderClass}`}
     >
       {/* Header */}
@@ -182,50 +180,50 @@ const isChallenge = post.type === 'challenge';
             Chuỗi {post.streak_snapshot}
           </motion.span>
         )}
-        {isTip && post.tip_category && (
-          <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
-            <Lightbulb size={10} />
-            {post.tip_category === 'science' ? 'Khoa học' : post.tip_category === 'recipe' ? 'Công thức' : 'Mẹo vặt'}
-          </span>
-        )}
-        {isPoll && (
-          <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold flex items-center gap-1">
-            <BarChart3 size={10} />Khảo sát
-          </span>
-        )}
-        {post.temperature && (
-          <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold">
-            {post.temperature}°C
-          </span>
-        )}
-        {post.heart_rate && (
-          <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold">
-            {post.heart_rate} nhịp/phút
-          </span>
-        )}
-        {post.drink_type && (
-          <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold">
-            {post.drink_type}
-          </span>
-        )}
-      </div>
+         {isTip && (post as unknown as Record<string, unknown>).tip_category && (
+           <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+             <Lightbulb size={10} />
+             {String((post as unknown as Record<string, unknown>).tip_category) === 'science' ? 'Khoa học' : String((post as unknown as Record<string, unknown>).tip_category) === 'recipe' ? 'Công thức' : 'Mẹo vặt'}
+           </span>
+         )}
+         {isPoll && (
+           <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold flex items-center gap-1">
+             <BarChart3 size={10} />Khảo sát
+           </span>
+         )}
+          {Boolean((post as unknown as Record<string, unknown>).temperature) && (
+            <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold">
+              {String((post as unknown as Record<string, unknown>).temperature)}°C
+            </span>
+          )}
+          {Boolean((post as unknown as Record<string, unknown>).heart_rate) && (
+            <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold">
+              {String((post as unknown as Record<string, unknown>).heart_rate)} nhịp/phút
+            </span>
+          )}
+          {Boolean((post as unknown as Record<string, unknown>).drink_type) && (
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+              {String((post as unknown as Record<string, unknown>).drink_type)}
+            </span>
+          )}
+       </div>
 
-      {/* Social Hydration Pulse */}
-      {(post.pulse_count || 0) > 0 && (
-        <motion.div
-          initial={{ opacity: 0.8 }}
-          whileHover={{ opacity: 1, scale: 1.01 }}
-          className="flex items-center gap-2.5 mb-4 relative z-10 px-3 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent border border-blue-500/20 overflow-hidden"
-        >
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-l-xl shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
-          <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-            <Droplets size={12} className="text-cyan-400" />
-          </div>
-          <p className="text-xs text-slate-300 font-medium">
-            <span className="font-black text-cyan-400">{post.pulse_count} người bạn</span> đã nạp nước sau khi xem.
-          </p>
-        </motion.div>
-      )}
+       {/* Social Hydration Pulse */}
+       {Number((post as unknown as Record<string, unknown>).pulse_count || 0) > 0 && (
+         <motion.div
+           initial={{ opacity: 0.8 }}
+           whileHover={{ opacity: 1, scale: 1.01 }}
+           className="flex items-center gap-2.5 mb-4 relative z-10 px-3 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent border border-blue-500/20 overflow-hidden"
+         >
+           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-l-xl shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
+           <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+             <Droplets size={12} className="text-cyan-400" />
+           </div>
+           <p className="text-xs text-slate-300 font-medium">
+             <span className="font-black text-cyan-400">{String((post as unknown as Record<string, unknown>).pulse_count)} người bạn</span> đã nạp nước sau khi xem.
+           </p>
+         </motion.div>
+       )}
 
       {/* Action Bar with new interaction system */}
       <PostActionBar

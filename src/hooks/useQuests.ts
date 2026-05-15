@@ -4,7 +4,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
 import { claimQuestReward, provisionUserQuests, syncLevelQuestProgress } from '@/lib/questEngine';
 import type { UserQuest, QuestType } from '../config/questConfig';
 import { resolveQuestProgress } from '@/lib/questProgress';
@@ -25,7 +24,7 @@ export function useQuests(userId: string | undefined, userLevel: number = 1) {
       } else {
         setLoading(true);
       }
-    } catch(e) {}
+    } catch(e) { console.error('Failed to load cached quests:', e); }
 
     try {
       // 2. Fetch fresh data ngầm
@@ -99,26 +98,15 @@ export function useQuests(userId: string | undefined, userLevel: number = 1) {
 
 function normalizeFetchedQuests(rows: UserQuest[], userLevel: number): UserQuest[] {
   return rows.map((uq) => {
-    const quest = Array.isArray((uq as any).quest) ? (uq as any).quest[0] : uq.quest;
+    const quest = Array.isArray((uq as unknown as { quest: unknown }).quest)
+      ? (uq as unknown as { quest: unknown[] }).quest[0]
+      : (uq as unknown as { quest: Record<string, unknown> }).quest;
     if (!quest) return uq;
 
-    const resolved = resolveQuestProgress(quest, { level: userLevel });
+    const resolved = resolveQuestProgress(quest as Record<string, unknown>, { level: userLevel });
     const isLevelQuest = resolved.normalizedType === 'level';
 
-    return {
-      ...uq,
-      progress: isLevelQuest ? Math.max(Number(uq.progress || 0), resolved.progress) : Number(uq.progress || 0),
-      status: uq.status === 'claimed'
-        ? 'claimed'
-        : isLevelQuest && resolved.completed
-          ? 'completed'
-          : uq.status,
-      quest: {
-        ...quest,
-        condition_type: resolved.normalizedType as any,
-        condition_value: resolved.target,
-      },
-    };
+      return { ...uq, progress: isLevelQuest ? Math.max(Number(uq.progress || 0), resolved.progress) : Number(uq.progress || 0), status: (uq.status === 'claimed' ? 'claimed' : isLevelQuest && resolved.completed ? 'completed' : uq.status) as UserQuest['status'], quest: { ...(quest as Record<string, unknown>), condition_type: resolved.normalizedType as string, condition_value: resolved.target } } as unknown as UserQuest;
   });
 }
 

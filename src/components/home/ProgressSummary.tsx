@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Droplets, Zap, Flame } from 'lucide-react';
+import { Zap, Flame } from 'lucide-react';
 
 interface ProgressSummaryProps {
   level: number;
@@ -13,9 +13,8 @@ interface ProgressSummaryProps {
 }
 
 export default function ProgressSummary({
-  level, exp, streak, waterIntake, waterGoal,
-  onLevelClick, onQuickDrink,
-}: ProgressSummaryProps) {
+  level, streak, waterIntake, waterGoal, onLevelClick,
+}: Omit<ProgressSummaryProps, 'exp' | 'onQuickDrink'>) {
   const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
 
   return (

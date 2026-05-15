@@ -1,7 +1,7 @@
 // --- CODE BẮT LỖI MÀN HÌNH TRẮNG (THÊM VÀO ĐẦU FILE) ---
 if (typeof window !== 'undefined') {
-  window.onerror = function (msg, url, line, col, error) {
-    const message = `LỖI NGHIÊM TRỌNG:\n${msg}\n\nDòng: ${line}\nFile: ${url}`;
+  window.onerror = function (msg, _url, line) {
+    const message = `LỖI NGHIÊM TRỌNG:\n${msg}\n\nDòng: ${line}\nFile: ${_url}`;
     console.error(message);
     
     // Tạo hộp đỏ hiển thị lỗi trên màn hình

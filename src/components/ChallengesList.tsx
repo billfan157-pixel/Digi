@@ -48,7 +48,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
 
       setChallenges(challengesRes.data || []);
       setUserChallenges(userChallengesRes.data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching challenges:", error);
       toast.error("Không thể tải danh sách thử thách");
     } finally {
@@ -93,7 +93,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
       if (refetchError) throw refetchError;
       setUserChallenges(updatedUserChallenges || []);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error joining challenge:", error);
       toast.error("Lỗi khi tham gia thử thách. Vui lòng thử lại.", { id: toastId });
     } finally {

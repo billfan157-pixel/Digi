@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Droplets, Sparkles, CalendarDays, TrendingUp, Info, Check } from 'lucide-react';
+import { TrendingUp, Info, Check } from 'lucide-react';
 
 interface CalendarCell {
   dayNum: number | null;

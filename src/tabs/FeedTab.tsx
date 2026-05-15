@@ -41,7 +41,7 @@ const FeedTab = memo(function FeedTab({
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
   const [feedMode, setFeedMode] = useState<FeedMode>('smart');
   const [feedSearch, setFeedSearch] = useState('');
-  const { activeCommentPost, setActiveCommentPost } = useUIStore();
+  const { setActiveCommentPost } = useUIStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
   const onlineFriendsCount = useMemo(
@@ -57,16 +57,6 @@ const FeedTab = memo(function FeedTab({
     socialFollowingIds,
     profile
   );
-  const feedModeLabel = feedMode === 'smart' ? 'Thông minh' : feedMode === 'latest' ? 'Mới nhất' : 'Đang follow';
-  const feedFilterLabel = {
-    all: 'Tất cả',
-    checkins: 'Pulse',
-    drops: 'Drop',
-    milestones: 'Peak',
-    challenges: 'Duel',
-    photos: 'Proof',
-  }[feedFilter];
-
   const handleNextStory = () => {
     setActiveStoryIndex(prev => {
       if (prev === null) return null;
@@ -170,7 +160,7 @@ const FeedTab = memo(function FeedTab({
 
         <AnimatePresence>
           {showNotifications && (
-            <NotificationsView key="notifications-view-modal" notifications={notifications} unreadCount={unreadCount} markAllRead={markAllRead} markAsRead={markAsRead} onClose={() => setShowNotifications(false)} />
+            <NotificationsView key="notifications-view-modal" notifications={notifications as unknown as import('@/models').SocialNotification[]} unreadCount={unreadCount} markAllRead={markAllRead} markAsRead={markAsRead} onClose={() => setShowNotifications(false)} />
           )}
         </AnimatePresence>
 

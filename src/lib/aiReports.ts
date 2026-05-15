@@ -108,7 +108,8 @@ const normalizeReport = (value: unknown): HealthReport | null => {
       recommendations: report.recommendations ?? [],
       generatedAt: report.generatedAt ?? '',
     };
-  } catch {
+  } catch (err) {
+    console.error('[normalizeReport]', err);
     return null;
   }
 };
@@ -131,7 +132,7 @@ export async function getLatestHealthReport(
 }
 
 async function generateAiAnalysis(
-  stats: any,
+  stats: unknown,
   entries: DailyEntry[],
   periodLabel: string,
   profile?: { nickname?: string; goal?: string; activity?: string; avgHeartRate?: number },
@@ -150,7 +151,8 @@ async function generateAiAnalysis(
       analysis: response.analysis || '',
       recommendations: response.recommendations || [],
     };
-  } catch {
+  } catch (err) {
+    console.error('[generateAiAnalysis]', err);
     return { analysis: 'Lỗi xử lý AI', recommendations: [] };
   }
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Droplets, CheckCircle2, Flame } from 'lucide-react';
+import { CheckCircle2, Flame } from 'lucide-react';
 
 interface SimpleProgressRingProps {
   waterIntake: number;
@@ -14,9 +14,7 @@ export default function SimpleProgressRing({
   waterIntake,
   waterGoal,
   streak,
-  completionRate,
-  onClick,
-}: SimpleProgressRingProps) {
+}: Omit<SimpleProgressRingProps, 'completionRate' | 'onClick'>) {
   const progress = waterGoal > 0 ? Math.min((waterIntake / waterGoal) * 100, 100) : 0;
   const isComplete = progress >= 100;
   const isStreakActive = streak >= 7;

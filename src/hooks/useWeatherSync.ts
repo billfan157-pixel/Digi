@@ -1,9 +1,9 @@
 // src/hooks/useWeatherSync.ts
 import { Geolocation } from '@capacitor/geolocation';
-import { getWeatherData, calculateWeatherAdjustment, type WeatherData } from '@/lib/weatherEngine';
+import { getWeatherData, calculateWeatherAdjustment } from '@/lib/weatherEngine';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useAppStore } from '../store/useAppStore';
 
@@ -43,7 +43,7 @@ export const syncWeatherAndWaterGoal = async () => {
         });
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
-      } catch (geoError: any) {
+      } catch {
         toast.error('Không thể lấy vị trí.', {
           id: WEATHER_SYNC_TOAST_ID,
           duration: WEATHER_SYNC_RESULT_DURATION,
@@ -71,7 +71,7 @@ export const syncWeatherAndWaterGoal = async () => {
         });
         latitude = coordinates.coords.latitude;
         longitude = coordinates.coords.longitude;
-      } catch (nativeError: any) {
+      } catch {
         toast.error('Không thể lấy vị trí.', {
           id: WEATHER_SYNC_TOAST_ID,
           duration: WEATHER_SYNC_RESULT_DURATION,
@@ -128,8 +128,8 @@ export const syncWeatherAndWaterGoal = async () => {
     
     return weather;
 
-  } catch (error: any) {
-    toast.error('Lỗi: ' + (error.message || 'Không xác định'), {
+  } catch (error: unknown) {
+    toast.error('Lỗi: ' + (error instanceof Error ? error.message : 'Không xác định'), {
       id: WEATHER_SYNC_TOAST_ID,
       duration: WEATHER_SYNC_RESULT_DURATION,
     });
@@ -153,7 +153,7 @@ export function useWeatherSync() {
     if (weather) {
       setAppState({ 
         isWeatherSynced: true,
-        weatherData: weather as any
+        weatherData: weather as { temp: number; status?: string; location?: string }
       });
       localStorage.setItem(WEATHER_SYNCED_KEY, 'true');
       return true;

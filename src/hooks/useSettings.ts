@@ -60,7 +60,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   energyTracking: true,
 };
 
-export function useSettings(profile: any) {
+export function useSettings(profile: Record<string, unknown> | null) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -72,28 +72,30 @@ export function useSettings(profile: any) {
     let isCancelled = false;
 
     const loadSettings = async () => {
-      const localKey = `digiwell_settings_${profile.id}`;
+      const p = profile as Record<string, unknown>;
+      const profileId = String(p.id);
+      const localKey = `digiwell_settings_${profileId}`;
       const cached = localStorage.getItem(localKey);
-      const biometricEnabled = await getBiometricEnabled(profile.id);
+      const biometricEnabled = await getBiometricEnabled(profileId);
 
       if (isCancelled) return;
 
       if (cached) {
         const parsedCache = JSON.parse(cached);
-        const normalizedActivity = normalizeActivity(profile.activity || parsedCache.activity || DEFAULT_SETTINGS.activity);
-        const normalizedClimate = normalizeClimate(profile.climate || parsedCache.climate || DEFAULT_SETTINGS.climate);
+        const normalizedActivity = normalizeActivity(String(p.activity) || parsedCache.activity || DEFAULT_SETTINGS.activity);
+        const normalizedClimate = normalizeClimate(String(p.climate) || parsedCache.climate || DEFAULT_SETTINGS.climate);
         const normalizedSettings = {
           ...DEFAULT_SETTINGS,
           ...parsedCache,
-          displayName: profile.nickname || profile.name || '',
-          avatarUrl: profile.avatar_url || parsedCache.avatarUrl || '',
-          weight: profile.weight || 60,
-          height: profile.height || 170,
-          age: profile.age || 20,
-          gender: profile.gender || 'Nam',
+          displayName: String(p.nickname) || String(p.name) || '',
+          avatarUrl: String(p.avatar_url) || parsedCache.avatarUrl || '',
+          weight: Number(p.weight) || 60,
+          height: Number(p.height) || 170,
+          age: Number(p.age) || 20,
+          gender: String(p.gender) || 'Nam',
           activity: normalizedActivity,
           climate: normalizedClimate,
-          waterGoal: profile.water_goal || parsedCache.waterGoal || 2000,
+          waterGoal: Number(p.water_goal) || parsedCache.waterGoal || 2000,
           biometricEnabled,
         };
 
@@ -107,22 +109,22 @@ export function useSettings(profile: any) {
 
        setSettings(prev => ({
          ...prev,
-         displayName: profile.nickname || profile.name || '',
-         avatarUrl: profile.avatar_url || '',
-         weight: profile.weight || 60,
-         height: profile.height || 170,
-         age: profile.age || 20,
-         gender: profile.gender || 'Nam',
-         activity: normalizeActivity(profile.activity || DEFAULT_SETTINGS.activity),
-         climate: normalizeClimate(profile.climate || DEFAULT_SETTINGS.climate),
+         displayName: String(p.nickname) || String(p.name) || '',
+         avatarUrl: String(p.avatar_url) || '',
+         weight: Number(p.weight) || 60,
+         height: Number(p.height) || 170,
+         age: Number(p.age) || 20,
+         gender: String(p.gender) || 'Nam',
+         activity: String(normalizeActivity(String(p.activity) || DEFAULT_SETTINGS.activity)),
+         climate: String(normalizeClimate(String(p.climate) || DEFAULT_SETTINGS.climate)),
          biometricEnabled,
-         waterGoal: profile.water_goal || 2000,
-         // Wellness fields (with defaults if missing)
-         sleepHours: (profile as any)?.sleep_hours || DEFAULT_SETTINGS.sleepHours,
-         sleepQuality: (profile as any)?.sleep_quality || DEFAULT_SETTINGS.sleepQuality,
-         moodTracking: (profile as any)?.mood_tracking ?? DEFAULT_SETTINGS.moodTracking,
-         syncWellnessData: (profile as any)?.sync_wellness_data || DEFAULT_SETTINGS.syncWellnessData,
-         energyTracking: (profile as any)?.energy_tracking ?? DEFAULT_SETTINGS.energyTracking,
+          waterGoal: Number(profile.water_goal) || 2000,
+          // Wellness fields (with defaults if missing)
+           sleepHours: Number((profile as Record<string, unknown>)?.sleep_hours) || DEFAULT_SETTINGS.sleepHours,
+           sleepQuality: Number((profile as Record<string, unknown>)?.sleep_quality) || DEFAULT_SETTINGS.sleepQuality,
+           moodTracking: Boolean((profile as Record<string, unknown>)?.mood_tracking) ?? DEFAULT_SETTINGS.moodTracking,
+           syncWellnessData: Boolean((profile as Record<string, unknown>)?.sync_wellness_data) || DEFAULT_SETTINGS.syncWellnessData,
+           energyTracking: Boolean((profile as Record<string, unknown>)?.energy_tracking) ?? DEFAULT_SETTINGS.energyTracking,
        }));
     };
 
@@ -167,9 +169,9 @@ export function useSettings(profile: any) {
 
        // 2. Sync to Supabase in background
        try {
-         // Đẩy đầy đủ các field quan trọng lên database
-         if (options?.syncProfile !== false) {
-           await updateProfileFields(profile.id, {
+           // Đẩy đầy đủ các field quan trọng lên database
+           if (options?.syncProfile !== false) {
+             await updateProfileFields(String((profile as Record<string, unknown>).id), {
              avatar_url: updatedSettings.avatarUrl,
              nickname: updatedSettings.displayName,
              weight: updatedSettings.weight,
@@ -189,7 +191,7 @@ export function useSettings(profile: any) {
            });
          }
       setLastSync(new Date());
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Lỗi đồng bộ Settings:', error);
       toast.message('Đã lưu cục bộ — sẽ đồng bộ khi có mạng', {
         description: 'Dữ liệu của bạn được an toàn.',

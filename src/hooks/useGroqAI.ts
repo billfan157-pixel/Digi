@@ -7,7 +7,6 @@ import {
   type DigiwellAiContext,
   type AiAdviceResponse 
 } from '../lib/ai';
-import { useAppStore } from '../store/useAppStore';
 
 export interface UseGeminiAIProps {
   profile: { id?: string; nickname?: string; goal?: string; activity?: string; climate?: string } | null;
@@ -118,7 +117,7 @@ export function useGeminiAI(props: UseGeminiAIProps) {
           setAiResponse(response);
           return;
         }
-      } catch (e) {}
+      } catch (e) { console.error(e); }
     }
 
     void fetchAIAdvice();
@@ -159,7 +158,7 @@ export function useGeminiAI(props: UseGeminiAIProps) {
         p.setShowAiChat?.(false);
         p.toggleFastingMode?.();
       }
-    } catch (error: unknown) {
+    } catch {
       toast.error('AI đang bận hớp nước, đệ thử lại sau nhé!');
     } finally {
       setIsChatLoading(false);

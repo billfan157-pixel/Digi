@@ -1,26 +1,19 @@
 import React, { useMemo } from 'react';
-import { Activity, CloudSun, Moon, Droplets, Zap, Heart } from 'lucide-react';
+import { Activity, CloudSun, Moon, Droplets } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface HydrationContextCardProps {
-  profile: any;
+  profile: Record<string, unknown> | null;
   waterIntake: number;
   waterGoal: number;
   isWatchConnected: boolean;
   isWeatherSynced: boolean;
   isCalendarSynced: boolean;
-  weeklyChartData: any[];
+  weeklyChartData: Record<string, unknown>[];
 }
 
-export default function HydrationContextCard({
-  profile,
-  waterIntake,
-  waterGoal,
-  isWatchConnected,
-  isWeatherSynced,
-  isCalendarSynced,
-  weeklyChartData
-}: HydrationContextCardProps) {
+export default function HydrationContextCard(props: HydrationContextCardProps) {
+  const { profile, waterIntake, waterGoal, weeklyChartData } = props;
 
   const contextAnalysis = useMemo(() => {
     // Activity level impact
@@ -95,7 +88,7 @@ export default function HydrationContextCard({
       {
         icon: Activity,
         label: 'Hoạt động',
-        value: activityLevel.replace('_', ' '),
+        value: String(activityLevel).replace('_', ' '),
         impact: activityAdjusted > baseGoal ? '+' + (activityAdjusted - baseGoal) : '0',
         color: 'text-blue-400'
       },
@@ -207,7 +200,7 @@ export default function HydrationContextCard({
                 </div>
                 <div>
                   <p className="text-xs font-bold text-white">{factor.label}</p>
-                  <p className="text-[10px] text-slate-500 capitalize">{factor.value}</p>
+                  <p className="text-[10px] text-slate-500 capitalize">{String(factor.value)}</p>
                 </div>
               </div>
               <div className="text-right">

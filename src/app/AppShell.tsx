@@ -68,7 +68,6 @@ export default function AppShell({
   devSyncProps,
 }: AppShellProps) {
   const tabFallback = <div className="h-40 rounded-3xl bg-slate-900/40 border border-white/5 animate-pulse" />;
-  const bottleDemoEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_BOTTLE_DEMO === 'true';
 
   if (view === 'welcome') {
     return <WelcomeScreen onNavigate={(nextView: 'login' | 'register') => setView(nextView)} />;

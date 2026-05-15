@@ -14,7 +14,7 @@ interface CommentsViewProps {
   onClose: () => void;
 }
 
-export const CommentsView = ({ post, currentUserId, onClose }: CommentsViewProps) => {
+export const CommentsView = ({   post, currentUserId, onClose }: CommentsViewProps) => {
   const { comments, isLoading, addComment } = useComments(post.id, currentUserId);
   const [text, setText] = useState('');
   const [hiddenComments, setHiddenComments] = useState<Set<string>>(new Set());
@@ -51,7 +51,7 @@ export const CommentsView = ({ post, currentUserId, onClose }: CommentsViewProps
       if (error) throw error;
       setHiddenComments(prev => new Set(prev).add(commentId));
       toast.success('Đã xóa bình luận', { id: tid });
-    } catch (err: any) {
+    } catch {
       toast.error('Lỗi khi xóa bình luận', { id: tid });
     }
   };

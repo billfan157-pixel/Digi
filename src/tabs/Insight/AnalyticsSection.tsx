@@ -13,27 +13,26 @@ interface AnalyticsSectionProps {
   calendarDate: Date;
   handlePrevMonth: () => void;
   handleNextMonth: () => void;
-  calendarCells: any[];
+  calendarCells: Array<{ dayNum: number | null; ml: number; isFuture: boolean; isToday: boolean; isEmptySlot: boolean; fullDate: string }>;
   currentMonthName: string;
   waterGoal: number;
-  weeklyChartData: any[];
-  previousWeekData: any;
-  selectedWeekDay: any;
-  setSelectedWeekDay: (day: any) => void;
-  selectedCalendarCell: any;
-  setSelectedCalendarCell: (cell: any) => void;
+  weeklyChartData: Array<{ d: string; ml: number; isToday: boolean }>;
+  previousWeekData: Array<{ d: string; ml: number }> | null;
+  selectedWeekDay: { d: string; ml: number } | null;
+  setSelectedWeekDay: (day: { d: string; ml: number } | null) => void;
+  selectedCalendarCell: { dayNum: number; ml: number; fullDate: string } | null;
+  setSelectedCalendarCell: (cell: { dayNum: number; ml: number; fullDate: string } | null) => void;
   handleDayClick: (dateStr: string, totalMl: number) => void;
   monthlyTotal: number;
   stats: { avg: number; completed: number };
-  profile: any;
+  profile: { id?: string } | null;
   weeklyTotal: number;
-  patterns: any[]; // Added from hook
+  patterns: Array<Record<string, unknown>>;
 }
 
 export default function AnalyticsSection({
   timeRange,
   setTimeRange,
-  calendarDate,
   handlePrevMonth,
   handleNextMonth,
   calendarCells,
@@ -114,7 +113,7 @@ export default function AnalyticsSection({
                 waterGoal={waterGoal}
                 selectedWeekDay={selectedWeekDay}
                 onSelectDay={setSelectedWeekDay}
-                previousWeekData={previousWeekData}
+                previousWeekData={previousWeekData as import('@/features/hydration/useWeeklyHistory').WeeklyHistoryPoint[] | undefined}
               />
             </motion.div>
           ) : (
@@ -141,7 +140,7 @@ export default function AnalyticsSection({
       {/* Behavior Insights Section */}
       {patterns.length > 0 && (
         <section className="px-6">
-          <BehaviorInsightCards patterns={patterns} />
+          <BehaviorInsightCards patterns={patterns as unknown as import('@/hooks/useBehaviorAnalysis').BehaviorPattern[]} />
         </section>
       )}
 

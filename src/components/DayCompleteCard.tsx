@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Sparkles, Target, ChevronRight } from 'lucide-react';
+import { Target } from 'lucide-react';
 import { generateEveningSummary } from '../utils/healthMath';
 import StreakTierBadge from './StreakTierBadge';
 

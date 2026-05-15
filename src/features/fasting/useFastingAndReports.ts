@@ -5,6 +5,7 @@ import { exportHealthReportPDF } from '@/lib/pdfExport';
 import { exportToCSV, exportDetailedPDF } from '@/lib/exportUtils';
 import { useUIStore } from '@/store/useUIStore';
 
+import type { Profile } from '@/models';
 import { AppStorage } from '@/lib/storage';
 
 interface UseFastingAndReportsOptions {
@@ -14,26 +15,26 @@ interface UseFastingAndReportsOptions {
 }
 
 interface ExportPdfOptions {
-  profile: any;
+  profile: Record<string, unknown> | null;
   waterIntake: number;
   waterGoal: number;
   streak: number;
   progress: number;
   isWatchConnected: boolean;
-  watchData: any;
-  weeklyChartData?: any[];
-  waterEntries?: any[];
+  watchData: Record<string, unknown> | null;
+  weeklyChartData?: Record<string, unknown>[];
+  waterEntries?: Record<string, unknown>[];
   avgWeekly?: number;
   completionRate?: number;
 }
 
 interface ExportCsvOptions {
-  profile: any;
+  profile: Record<string, unknown> | null;
   waterIntake: number;
   waterGoal: number;
   streak: number;
   weeklyChartData: { d: string; ml: number }[];
-  waterEntries: any[];
+  waterEntries: Record<string, unknown>[];
 }
 
 const FASTING_PLAN_PREFIX = 'digiwell_fasting_plan_';
@@ -114,7 +115,7 @@ export function useFastingAndReports({
       if (fastingNotifs.length > 0) {
         await LocalNotifications.cancel({ notifications: fastingNotifs });
       }
-    } catch {}
+    } catch (e) { console.error('Failed to cancel notifications:', e); }
   }, []);
 
 const exportReportPdf = useCallback(async ({
@@ -138,21 +139,21 @@ const exportReportPdf = useCallback(async ({
      setIsExportingPDF(true);
      const toastId = toast.loading('Đang tạo báo cáo Y khoa PDF...');
 
-     try {
-       if (weeklyChartData && waterEntries) {
-         await exportDetailedPDF({
-           profile,
-           waterIntake,
-           waterGoal,
-           streak,
-           weeklyChartData,
-           waterEntries,
-           avgWeekly: avgWeekly || 0,
-           completionRate: completionRate || 0,
-         });
-       } else {
-         await exportHealthReportPDF({
-           profile,
+      try {
+        if (weeklyChartData && waterEntries) {
+          await exportDetailedPDF({
+            profile: profile as unknown as Profile | null,
+            waterIntake,
+            waterGoal,
+            streak,
+            weeklyChartData: weeklyChartData as unknown as { d: string; ml: number }[],
+            waterEntries: waterEntries as unknown as Record<string, unknown>[],
+            avgWeekly: avgWeekly || 0,
+            completionRate: completionRate || 0,
+          });
+        } else {
+          await exportHealthReportPDF({
+            profile: profile as unknown as Profile | null,
            waterIntake,
            waterGoal,
            streak,
@@ -183,9 +184,9 @@ const exportReportPdf = useCallback(async ({
        return;
      }
 
-     try {
-       exportToCSV({
-         profile,
+      try {
+        exportToCSV({
+          profile: profile as unknown as Profile | null,
          waterIntake,
          waterGoal,
          streak,
@@ -249,7 +250,7 @@ const exportReportPdf = useCallback(async ({
           },
         ],
       });
-    } catch {}
+    } catch (e) { console.error('Failed to schedule notifications:', e); }
   }, [cancelFastingNotifications, userId]);
 
   const stopFasting = useCallback(async () => {

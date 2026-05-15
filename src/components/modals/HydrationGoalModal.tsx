@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Target, Droplet } from 'lucide-react';
+import { X, Target } from 'lucide-react';
 import WaterBreakdown from '../WaterBreakdown';
 import HydrationTimeline from '../HydrationTimeline';
 
@@ -8,12 +8,13 @@ interface HydrationGoalModalProps {
   isOpen: boolean;
   onClose: () => void;
   waterIntake: number;
-  hydrationResult: any; // From HydrationEngine
+  hydrationResult: Record<string, unknown> | null; // From HydrationEngine
 }
 
 export default function HydrationGoalModal({ isOpen, onClose, waterIntake, hydrationResult }: HydrationGoalModalProps) {
   const { goalMl, progress, remaining, breakdownData, scheduleData } = useMemo(() => {
-    const goal = hydrationResult?.goalMl || 0;
+    const hr = hydrationResult as Record<string, unknown> | null;
+    const goal = Number(hr?.goalMl) || 0;
     const prog = goal > 0 ? (waterIntake / goal) * 100 : 0;
     const rem = Math.max(0, goal - waterIntake);
 
@@ -21,8 +22,8 @@ export default function HydrationGoalModal({ isOpen, onClose, waterIntake, hydra
       goalMl: goal, 
       progress: prog, 
       remaining: rem, 
-      breakdownData: hydrationResult?.breakdown || null,
-      scheduleData: hydrationResult?.schedule || null
+      breakdownData: hr?.breakdown as Record<string, unknown> | null,
+      scheduleData: hr?.schedule as unknown[] | null
     };
   }, [hydrationResult, waterIntake]);
 
@@ -92,8 +93,8 @@ export default function HydrationGoalModal({ isOpen, onClose, waterIntake, hydra
               {breakdownData && (
                 /* THẦN CHÚ SỐ 2: Thêm overscroll-contain và touch-pan-y để mượt mà trên iOS */
                 <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y scrollbar-hide pr-2 -mr-2 space-y-8 pb-10 sm:pb-4 border-t border-white/5 pt-5 mt-2">
-                  <WaterBreakdown breakdown={breakdownData} />
-                  {scheduleData && <HydrationTimeline schedule={scheduleData} />}
+                  <WaterBreakdown breakdown={breakdownData as unknown as import('@/lib/HydrationEngine').WaterIntakeBreakdown} />
+                  {scheduleData && <HydrationTimeline schedule={scheduleData as unknown as import('@/lib/HydrationEngine').HydrationSchedule[]} />}
                 </div>
               )}
             </div>

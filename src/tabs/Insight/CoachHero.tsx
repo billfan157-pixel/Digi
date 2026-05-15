@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Cpu, Sparkles, Zap, ChevronRight } from 'lucide-react';
+import { Cpu, Sparkles, ChevronRight } from 'lucide-react';
 
 interface CoachHeroProps {
   greeting: string;
@@ -9,7 +9,7 @@ interface CoachHeroProps {
     title: string;
     action: string;
     ml: number;
-    icon: any;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
     color: string;
     bg: string;
   };

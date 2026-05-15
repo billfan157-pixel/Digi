@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { LogOut, BatteryFull, RefreshCw, Bluetooth, Droplet, Coffee, Activity, Wine, Zap } from 'lucide-react';
+import { RefreshCw, Bluetooth } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { useUIStore } from '../../store/useUIStore';
 import LevelDetailModal from '../LevelDetailModal';
-import CountUp from '../../components/CountUp';
 import HomeHydrationHero from '../../components/home/HomeHydrationHero';
 import HydrationGoalModal from '../../components/modals/HydrationGoalModal';
 import AnimatedCounter from '../../components/AnimatedCounter';
@@ -18,7 +17,6 @@ import DayCompleteCard from '../../components/DayCompleteCard';
 import ProgressSummary from '../../components/home/ProgressSummary';
 import { useShallow } from 'zustand/react/shallow';
 
-import Card from '../../components/ui/Card';
 import { HomeHeader, QuickAddSection, TelemetryGrid } from './components';
 import { MainMenuSidebar, QuickAmountsEditor, DrinkMenuModal } from './modals';
 
@@ -26,7 +24,7 @@ interface SmartBottleProps {
   isSyncing: boolean;
   isConnected: boolean;
   metrics?: { currentVolume?: number; batteryLevel?: number };
-  equippedBottle: any;
+  equippedBottle: unknown;
   connectDevice: () => void;
   disconnectDevice: () => void;
   forceSync: () => void;
@@ -41,26 +39,21 @@ const HomeTab = React.memo((props: HomeTabProps) => {
   
   const { 
     setActiveTab, setShowHistory, setShowProfileSettings,
-    setShowShopModal, setShowBattleArena, setShowQuestModal
   } = useUIStore(useShallow((state) => ({
     setActiveTab: state.setActiveTab,
     setShowHistory: state.setShowHistory,
     setShowProfileSettings: state.setShowProfileSettings,
-    setShowShopModal: state.setShowShopModal,
-    setShowBattleArena: state.setShowBattleArena,
-    setShowQuestModal: state.setShowQuestModal,
   })));
 
   const {
-    profile, streak, waterIntake, waterGoal, waterEntries,
+    profile, streak, waterIntake, waterGoal,
     weatherData, watchData, hydrationResult,
-    actions: { handleAddWater: _rawAddWater, handleLogout, handleDeleteEntry }
+    actions: { handleAddWater: _rawAddWater, handleLogout }
   } = useAppStore(useShallow((state) => ({
     profile: state.profile,
     streak: state.streak,
     waterIntake: state.waterIntake,
     waterGoal: state.waterGoal,
-    waterEntries: state.waterEntries,
     weatherData: state.weatherData,
     watchData: state.watchData,
     hydrationResult: state.hydrationResult,
@@ -155,13 +148,11 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       {/* 2. Progress Summary (merged LevelBar + HabitNudgeBar) */}
       {profile ? (
         <ProgressSummary
-          level={profile.level || 1}
-          exp={profile.total_exp || 0}
+          level={Number((profile as unknown as Record<string, unknown>).level) || 1}
           streak={streak}
           waterIntake={waterIntake}
           waterGoal={waterGoal}
           onLevelClick={() => setShowLevelDetail(true)}
-          onQuickDrink={(amount) => handleAddWater(amount, 1, t('home.pure_water'))}
         />
       ) : (
         <div className="mx-6 h-[120px] bg-gradient-to-br from-slate-900/60 to-slate-800/40 border border-white/10 rounded-[1.75rem] p-5 animate-pulse" />
@@ -211,7 +202,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
           isConnected={effectiveIsConnected}
           isConnecting={isConnecting}
           metrics={metrics}
-          equippedBottleSkin={equippedBottle}
+          equippedBottleSkin={equippedBottle as import('@/hooks/useSmartBottle').EquippedBottleSkin | null}
           waterIntake={waterIntake}
           waterGoal={waterGoal}
           progress={progress}

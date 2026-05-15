@@ -11,7 +11,6 @@ import {
   Target,
   TrendingDown,
   TrendingUp,
-  Trophy,
   HeartPulse,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';

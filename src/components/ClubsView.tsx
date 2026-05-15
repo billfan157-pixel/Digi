@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import {
   Users,
-  Plus,
-  CheckCircle2,
   Shield,
   X,
   Loader2,
@@ -105,7 +103,7 @@ export default function ClubsView({ userId }: { userId: string }) {
       });
       setMyRoles(rolesMap);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error("Không thể kết nối với bộ não Bang hội");
     } finally {
@@ -130,8 +128,8 @@ export default function ClubsView({ userId }: { userId: string }) {
 
       toast.success("Chào mừng đồng chí gia nhập bang! 🤝");
       await fetchData(); 
-    } catch (err: any) {
-      toast.error("Không thể gia nhập: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Không thể gia nhập: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setJoiningId(null);
     }
@@ -212,8 +210,8 @@ export default function ClubsView({ userId }: { userId: string }) {
       setNewClubDesc("");
       setNewClubMinLevel(1);
       await fetchData(); 
-    } catch (err: any) {
-      toast.error(err.message || "Lỗi tạo bang hội.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Lỗi tạo bang hội.");
     } finally {
       setIsCreating(false);
     }

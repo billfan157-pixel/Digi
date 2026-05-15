@@ -15,15 +15,16 @@ import {
 } from '../lib/social';
 
 interface UseSocialDataProps {
-  profile: any;
-  waterIntake: number;
-  waterGoal: number;
-  streak: number;
-  activeTab: string;
-  setActiveTab: (tab: any) => void;
+  profile: Record<string, unknown> | null;
+  tab?: string;
+  setActiveTab?: (tab: string) => void;
+  waterIntake?: number;
+  waterGoal?: number;
+  streak?: number;
+  activeTab?: string;
 }
 
-export function useSocialData({ profile, waterIntake, waterGoal, streak, activeTab, setActiveTab }: UseSocialDataProps) {
+export function useSocialData({ profile, tab, setActiveTab, waterIntake, waterGoal, streak, activeTab: _activeTab }: UseSocialDataProps) {
   const [showSocialComposer, setShowSocialComposer] = useState(false);
   const [showDiscoverPeople, setShowDiscoverPeople] = useState(false);
   const [showSocialProfile, setShowSocialProfile] = useState(false);
@@ -64,10 +65,10 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
   }, [profile?.id]);
 
   useEffect(() => {
-    if (activeTab === 'feed' && profile?.id) {
+    if (_activeTab === 'feed' && profile?.id) {
       void refreshSocialFeed();
     }
-  }, [activeTab, profile?.id]);
+  }, [_activeTab, profile?.id]);
 
   useEffect(() => {
     if (showDiscoverPeople && profile?.id) {
@@ -119,7 +120,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       if (error) throw error;
 
       const partnerRows = rows || [];
-      const partnerIds = partnerRows.map((row: any) => row.following_id).filter(Boolean);
+      const partnerIds = partnerRows.map((row: { following_id: string }) => row.following_id).filter(Boolean);
       if (partnerIds.length === 0) {
         setCloseCircleMembers([]);
         setSocialFollowingIds([]);
@@ -131,17 +132,17 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
         .select('id, nickname, avatar_url, level, water_today, water_goal')
         .in('id', partnerIds);
       if (profilesError) throw profilesError;
+      const profileMap = new Map((profiles || []).map((row: { id: string; nickname: string; avatar_url?: string | null; level: number | null; water_today: number | null; water_goal: number | null }) => [row.id, row]));
 
-      const profileMap = new Map((profiles || []).map((row: any) => [row.id, row]));
-      const members = partnerRows.map((row: any, index: number) => {
-        const partner = profileMap.get(row.following_id) || {};
+      const members = partnerRows.map((row: { following_id: string; priority?: number }, index: number) => {
+        const partner = profileMap.get(row.following_id);
         return {
           id: row.following_id,
-          nickname: partner.nickname || 'Bạn DigiWell',
-          avatar_url: partner.avatar_url ?? null,
-          level: partner.level ?? null,
-          water_today: partner.water_today ?? null,
-          water_goal: partner.water_goal ?? null,
+          nickname: partner?.nickname || 'Bạn DigiWell',
+          avatar_url: partner?.avatar_url ?? null,
+          level: partner?.level ?? null,
+          water_today: partner?.water_today ?? null,
+          water_goal: partner?.water_goal ?? null,
           priority: row.priority ?? index + 1,
           is_pinned: false,
         } satisfies CloseCircleMember;
@@ -150,8 +151,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       setCloseCircleMembers(members);
       setSocialFollowingIds(members.map(member => member.id));
       return members;
-    } catch (err: any) {
-      const friendlyMessage = getSocialErrorMessage(err.message);
+    } catch (err: unknown) {
+      const friendlyMessage = getSocialErrorMessage(err instanceof Error ? err.message : String(err));
       setSocialError(friendlyMessage);
       if (!options?.silent) toast.error(friendlyMessage);
       return [];
@@ -167,17 +168,17 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
     }
 
     if (kind === 'story') {
-      setActiveTab('feed');
+      setActiveTab?.('feed');
       setShowQuickDropCamera(true);
       return;
     }
 
     const content = kind === 'progress'
       ? buildProgressShareText({
-        nickname: profile.nickname,
-        waterIntake,
-        waterGoal,
-        streak,
+        nickname: profile?.nickname as string | undefined,
+        waterIntake: waterIntake ?? 0,
+        waterGoal: waterGoal ?? 2000,
+        streak: streak ?? 0,
       })
       : '';
 
@@ -188,7 +189,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       postKind: kind === 'progress' ? 'status' : kind,
       visibility: 'followers',
     });
-    setActiveTab('feed');
+    setActiveTab?.('feed');
     setShowSocialComposer(true);
     useUIStore.getState().setShowSocialComposer(true);
   };
@@ -230,7 +231,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
 
       const circleSet = new Set(closeCircleIds);
       setSocialError('');
-      setSocialSearchResults((data || []).map((user: any, index: number) => ({
+      setSocialSearchResults((data || []).map((user: { id: string; nickname: string; avatar_url?: string | null; level?: number | null; water_today?: number | null; water_goal?: number | null }, index: number) => ({
         id: user.id || `search-user-fallback-${index}`,
         nickname: user.nickname || 'Người dùng DigiWell',
         isFollowing: socialFollowingIds.includes(user.id),
@@ -240,8 +241,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
         water_today: user.water_today ?? null,
         water_goal: user.water_goal ?? null,
       })));
-    } catch (err: any) {
-      const friendlyMessage = getSocialErrorMessage(err.message);
+    } catch (err: unknown) {
+      const friendlyMessage = getSocialErrorMessage(err instanceof Error ? err.message : String(err));
       setSocialError(friendlyMessage);
       toast.error(friendlyMessage);
     } finally {
@@ -290,14 +291,14 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
 
       if (postsError) throw postsError;
 
-      const validRows = (postRows || []).filter((row: any) => {
+      const validRows = (postRows || []).filter((row: { post_kind: string; expires_at: string | null }) => {
         if (row.post_kind !== 'story') return true;
         if (!row.expires_at) return false;
         return new Date(row.expires_at).getTime() > Date.now();
       });
 
-      const authorIds = Array.from(new Set(validRows.map((row: any) => row.author_id)));
-      const postIds = validRows.map((row: any) => row.id);
+      const authorIds = Array.from(new Set(validRows.map((row: { author_id: string }) => row.author_id)));
+      const postIds = validRows.map((row: { id: string }) => row.id);
 
       const [profilesRes, likesRes] = await Promise.all([
         authorIds.length > 0
@@ -311,7 +312,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       if (profilesRes.error) throw profilesRes.error;
       if (likesRes.error) throw likesRes.error;
 
-      const profileMap = new Map((profilesRes.data || []).map((row: any) => [row.id, {
+      const profileMap = new Map((profilesRes.data || []).map((row: { id: string; nickname: string; avatar_url?: string | null; level?: number | null; water_today?: number | null; water_goal?: number | null }) => [row.id, {
         id: row.id,
         nickname: row.nickname || 'Người dùng DigiWell',
         avatar_url: row.avatar_url ?? null,
@@ -319,17 +320,33 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
         water_today: row.water_today ?? null,
         water_goal: row.water_goal ?? null,
       }]));
-      const likedPostIds = new Set((likesRes.data || []).map((row: any) => row.post_id));
+      const likedPostIds = new Set((likesRes.data || []).map((row: { post_id: string }) => row.post_id));
 
-      const mappedPosts: SocialFeedPost[] = validRows.map((row: any, index: number) => ({
-        ...row,
-        id: row.id || `post-fallback-${index}`,
-        author: profileMap.get(row.author_id) || {
-          id: row.author_id,
-          nickname: row.author_id === profile.id ? (profile.nickname || 'Bạn') : 'Người dùng DigiWell',
-        },
-        likedByMe: likedPostIds.has(row.id),
-      }));
+      const mappedPosts: SocialFeedPost[] = validRows.map((row: Record<string, unknown>, index: number) => {
+        const rowId = String(row.id || `post-fallback-${index}`);
+        const authorId = String(row.author_id || '');
+        return {
+          id: rowId,
+          author_id: authorId,
+          content: String(row.content || ''),
+          image_url: (row.image_url as string | null) ?? null,
+          post_kind: (row.post_kind as SocialFeedPost['post_kind']) || 'status',
+          visibility: (row.visibility as SocialFeedPost['visibility']) || 'public',
+          hydration_ml: (row.hydration_ml as number | null) ?? null,
+          streak_snapshot: (row.streak_snapshot as number | null) ?? null,
+          like_count: Number(row.like_count || 0),
+          created_at: String(row.created_at || ''),
+          expires_at: (row.expires_at as string | null) ?? null,
+          event_type: (row.event_type as string | null) ?? null,
+          reference_id: (row.reference_id as string | null) ?? null,
+          is_squad_highlight: Boolean(row.is_squad_highlight),
+          author: profileMap.get(authorId) || {
+            id: authorId,
+            nickname: authorId === profile?.id ? String(profile.nickname || 'Bạn') : 'Người dùng DigiWell',
+          },
+          likedByMe: likedPostIds.has(rowId),
+        };
+      });
 
       const storyMap = new Map<string, SocialFeedPost>();
       const latestStories = mappedPosts
@@ -344,8 +361,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       setSocialStories(latestStories);
       setSocialPosts(mappedPosts.filter(post => post.post_kind !== 'story'));
       setSocialError('');
-    } catch (err: any) {
-      const friendlyMessage = getSocialErrorMessage(err.message);
+    } catch (err: unknown) {
+      const friendlyMessage = getSocialErrorMessage(err instanceof Error ? err.message : String(err));
       setSocialError(friendlyMessage);
       setSocialPosts([]);
       setSocialStories([]);
@@ -390,7 +407,7 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       return;
     }
 
-    setActiveTab('feed');
+    setActiveTab?.('feed');
     setShowQuickDropCamera(true);
   };
 
@@ -426,8 +443,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       toast.success('Drop đã lên sóng.', { id: toastId });
       setShowQuickDropCamera(false);
       await refreshSocialFeed({ silent: true });
-    } catch (err: any) {
-      toast.error(getSocialErrorMessage(err.message), { id: toastId });
+    } catch (err: unknown) {
+      toast.error(getSocialErrorMessage(err instanceof Error ? err.message : String(err)), { id: toastId });
     } finally {
       setIsPublishingQuickDrop(false);
     }
@@ -464,8 +481,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       toast.success(`Đã thêm ${nickname} vào bạn bè.`, { id: toastId });
       await loadCloseCircle({ silent: true });
       await refreshSocialFeed({ silent: true });
-    } catch (err: any) {
-      toast.error(getSocialErrorMessage(err.message), { id: toastId });
+    } catch (err: unknown) {
+      toast.error(getSocialErrorMessage(err instanceof Error ? err.message : String(err)), { id: toastId });
     }
   };
 
@@ -487,8 +504,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       toast.success(`Đã gỡ ${nickname} khỏi bạn bè.`, { id: toastId });
       await loadCloseCircle({ silent: true });
       await refreshSocialFeed({ silent: true });
-    } catch (err: any) {
-      toast.error(getSocialErrorMessage(err.message), { id: toastId });
+    } catch (err: unknown) {
+      toast.error(getSocialErrorMessage(err instanceof Error ? err.message : String(err)), { id: toastId });
     }
   };
 
@@ -525,10 +542,10 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
           .eq('user_id', profile.id);
         if (error) throw error;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setSocialPosts((prev: SocialFeedPost[]) => prev.map(item => item.id === post.id ? post : item));
       setSocialStories((prev: SocialFeedPost[]) => prev.map(item => item.id === post.id ? post : item));
-      toast.error(getSocialErrorMessage(err.message));
+      toast.error(getSocialErrorMessage(err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -584,8 +601,8 @@ export function useSocialData({ profile, waterIntake, waterGoal, streak, activeT
       toast.success(successMessage, { id: toastId });
       closeSocialComposer();
       await refreshSocialFeed({ silent: true });
-    } catch (err: any) {
-      toast.error(getSocialErrorMessage(err.message), { id: toastId });
+    } catch (err: unknown) {
+      toast.error(getSocialErrorMessage(err instanceof Error ? err.message : String(err)), { id: toastId });
     } finally {
       setIsPublishingSocialPost(false);
     }

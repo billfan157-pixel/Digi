@@ -32,7 +32,7 @@ export function useAdaptiveHydration(
 
       // Tìm các entries rơi vào khoảng +/- 60 phút của slot này
       const matchingEntries = recentEntries.filter(entry => {
-        const timestamp = entry.created_at || entry.timestamp;
+        const timestamp = entry.created_at;
         if (!timestamp) return false;
         const d = new Date(timestamp);
         const entryMinutes = d.getHours() * 60 + d.getMinutes();
@@ -42,7 +42,7 @@ export function useAdaptiveHydration(
       if (matchingEntries.length >= 3) {
         // Tính độ lệch trung bình
         const avgEntryMinutes = matchingEntries.reduce((sum, e) => {
-          const timestamp = e.created_at || e.timestamp;
+          const timestamp = e.created_at;
           if (!timestamp) return sum;
           const d = new Date(timestamp);
           return sum + (d.getHours() * 60 + d.getMinutes());

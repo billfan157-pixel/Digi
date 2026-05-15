@@ -5,45 +5,47 @@ import type { ThemeEffect } from '@/config/themes';
 
 const DynamicOverlay: React.FC<{ effect: ThemeEffect; accent: string }> = ({ effect, accent }) => {
   // Fix React Purity: Use State + Effect to generate random values safely after mount
-  const [stars, setStars] = useState<any[]>([]);
-  const [embers, setEmbers] = useState<any[]>([]);
-  const [particles, setParticles] = useState<any[]>([]);
-  const [ripples, setRipples] = useState<any[]>([]);
+  const [stars, setStars] = useState<Array<Record<string, string>>>([]);
+  const [embers, setEmbers] = useState<Array<Record<string, string>>>([]);
+  const [particles, setParticles] = useState<Array<Record<string, string>>>([]);
+  const [ripples, setRipples] = useState<Array<Record<string, string>>>([]);
 
   useEffect(() => {
     // Generate only once on mount
-    setStars([...Array(50)].map(() => ({
-      width: Math.random() * 3 + 'px',
-      height: Math.random() * 3 + 'px',
-      top: Math.random() * 100 + '%',
-      left: Math.random() * 100 + '%',
-      delay: Math.random() * 5 + 's',
-      opacity: Math.random()
-    })));
+    setTimeout(() => {
+      setStars([...Array(50)].map(() => ({
+        width: Math.random() * 3 + 'px',
+        height: Math.random() * 3 + 'px',
+        top: Math.random() * 100 + '%',
+        left: Math.random() * 100 + '%',
+        delay: Math.random() * 5 + 's',
+        opacity: String(Math.random())
+      })) as Record<string, string>[]);
 
-    setEmbers([...Array(20)].map(() => ({
-      width: Math.random() * 6 + 'px',
-      height: Math.random() * 6 + 'px',
-      left: Math.random() * 100 + '%',
-      duration: (Math.random() * 5 + 5) + 's',
-      delay: (Math.random() * 10) + 's',
-    })));
+      setEmbers([...Array(20)].map(() => ({
+        width: Math.random() * 6 + 'px',
+        height: Math.random() * 6 + 'px',
+        left: Math.random() * 100 + '%',
+        duration: (Math.random() * 5 + 5) + 's',
+        delay: (Math.random() * 10) + 's',
+      })));
 
-    setParticles([...Array(15)].map(() => ({
-      width: Math.random() * 10 + 5 + 'px',
-      height: Math.random() * 10 + 5 + 'px',
-      top: Math.random() * 100 + '%',
-      left: Math.random() * 100 + '%',
-      duration: (Math.random() * 10 + 10) + 's',
-      delay: (Math.random() * 5) + 's',
-    })));
+      setParticles([...Array(15)].map(() => ({
+        width: Math.random() * 10 + 5 + 'px',
+        height: Math.random() * 10 + 5 + 'px',
+        top: Math.random() * 100 + '%',
+        left: Math.random() * 100 + '%',
+        duration: (Math.random() * 10 + 10) + 's',
+        delay: (Math.random() * 5) + 's',
+      })));
 
-    setRipples([...Array(10)].map(() => ({
-      top: Math.random() * 100 + '%',
-      left: Math.random() * 100 + '%',
-      duration: (Math.random() * 4 + 4) + 's',
-      delay: (Math.random() * 8) + 's',
-    })));
+      setRipples([...Array(10)].map(() => ({
+        top: Math.random() * 100 + '%',
+        left: Math.random() * 100 + '%',
+        duration: (Math.random() * 4 + 4) + 's',
+        delay: (Math.random() * 8) + 's',
+      })));
+    }, 0);
   }, []);
 
   if (effect === 'none') return null;

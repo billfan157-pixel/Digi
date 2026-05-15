@@ -21,8 +21,8 @@ export function useGamification(userId: string | undefined) {
 
       if (error) throw error;
       if (data) setAvailableChallenges(data as Challenge[]);
-    } catch (err: any) {
-      toast.error(err.message || 'Lỗi tải danh sách thử thách');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Lỗi tải danh sách thử thách');
     } finally {
       setIsLoading(false);
     }
@@ -41,8 +41,8 @@ export function useGamification(userId: string | undefined) {
 
       if (error) throw error;
       if (data) setUserChallenges(data as UserChallenge[]);
-    } catch (err: any) {
-      console.error('Lỗi tải thử thách của user:', err.message);
+    } catch (err: unknown) {
+      console.error('Lỗi tải thử thách của user:', err instanceof Error ? err.message : String(err));
     }
   }, [userId]);
 
@@ -58,8 +58,8 @@ export function useGamification(userId: string | undefined) {
 
       if (error) throw error;
       if (data) setUserBadges(data as UserBadge[]);
-    } catch (err: any) {
-      console.error('Lỗi tải huy hiệu:', err.message);
+    } catch (err: unknown) {
+      console.error('Lỗi tải huy hiệu:', err instanceof Error ? err.message : String(err));
     }
   }, [userId]);
 
@@ -99,8 +99,8 @@ export function useGamification(userId: string | undefined) {
         }, ...prev]);
       }
       return true;
-    } catch (err: any) {
-      toast.error(err.message || 'Lỗi khi tham gia thử thách', { id: toastId });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Lỗi khi tham gia thử thách', { id: toastId });
       return false;
     }
   };

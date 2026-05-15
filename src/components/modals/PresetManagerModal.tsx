@@ -1,13 +1,14 @@
 import React from 'react';
 import { Plus, X } from 'lucide-react';
-import { type DrinkPreset, renderIcon, presetStyles } from '../../tabs/HomeTab';
+import { type DrinkPreset } from '../../models';
+import { renderIcon, presetStyles } from '../../tabs/HomeTab/components/homeHeaderUtils';
 
 interface PresetManagerModalProps {
   showPresetManager: boolean;
   setShowPresetManager: (show: boolean) => void;
   editingPresets: DrinkPreset[];
   setEditingPresets: (presets: DrinkPreset[]) => void;
-  handleUpdatePreset: (index: number, field: string, value: any) => void;
+  handleUpdatePreset: (index: number, field: string, value: unknown) => void;
   savePresets: () => void;
 }
 

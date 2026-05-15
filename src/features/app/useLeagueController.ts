@@ -3,7 +3,7 @@ import type { TabType } from '@/components/layout/BottomNav';
 import { useLeagueData } from '@/features/league/useLeagueData';
 
 interface UseLeagueControllerOptions {
-  profile: any;
+  profile: Record<string, unknown> | null;
   activeTab: TabType;
   streak: number;
   setShowAddFriend: (value: boolean) => void;
@@ -20,7 +20,7 @@ export function useLeagueController({
 
   useEffect(() => {
     if (profile?.wp !== undefined) {
-      setWp(profile.wp);
+      setTimeout(() => setWp(Number(profile.wp)), 0);
     }
   }, [profile?.wp]);
 
@@ -42,7 +42,7 @@ export function useLeagueController({
     };
 
     if (leagueMode === 'public') {
-      const currentUserInList = publicLeaderboard.some((user: any) => user.isMe);
+      const currentUserInList = publicLeaderboard.some((user: { isMe: boolean }) => user.isMe);
       if (!currentUserInList && profile) {
         return [...publicLeaderboard, myData];
       }

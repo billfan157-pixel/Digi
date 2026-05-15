@@ -1,5 +1,6 @@
 import { Home, BarChart2, Trophy, Rss, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import React from 'react';
 
 export type TabType = 'home' | 'insight' | 'league' | 'feed' | 'profile' | 'bottle';
 
@@ -9,7 +10,7 @@ interface BottomNavProps {
 }
 
 const BottomNav = (props: BottomNavProps) => {
-  const navItems: { id: TabType; icon: any; label: string }[] = [
+  const navItems: { id: TabType; icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; label: string }[] = [
     { id: 'home', icon: Home, label: 'Nhà' },
     { id: 'insight', icon: BarChart2, label: 'Coach' },
     { id: 'league', icon: Trophy, label: 'BXH' },

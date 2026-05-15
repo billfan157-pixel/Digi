@@ -7,7 +7,8 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import type { UserQuest, UserChallenge, ConditionType } from '../config/questConfig';
+import type { UserQuest, UserChallenge } from '../config/questConfig';
+import type { QuestLike } from './questProgress';
 import { normalizeQuestConditionType, resolveQuestProgress } from './questProgress';
 
 // ── Context truyền vào engine ──────────────────────────────
@@ -32,7 +33,7 @@ const challengeEngineQueuedCtx = new Map<string, QuestEngineContext>();
 // ── Check một điều kiện ────────────────────────────────────
 
 function checkCondition(
-  questData: any,
+  questData: QuestLike,
   ctx: QuestEngineContext
 ): { progress: number; completed: boolean } {
   const result = resolveQuestProgress(questData, ctx);
@@ -72,13 +73,22 @@ export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
 
     const newlyCompleted: UserQuest[] = [];
 
-    for (const uq of userQuests as any[]) {
+    interface UserQuestRow {
+      id: string;
+      quest_id: string;
+      status: string;
+      progress: number;
+      completed_at: string | null;
+      quest: Record<string, unknown> | Array<Record<string, unknown>>;
+    }
+
+    for (const uq of (userQuests ?? []) as unknown as UserQuestRow[]) {
       // AN TOÀN: Bỏ qua nhiệm vụ bị xóa khỏi DB để tránh lỗi Null Pointer Exception
       const questData = Array.isArray(uq.quest) ? uq.quest[0] : uq.quest;
       if (!questData) continue;
 
       const { progress, completed } = checkCondition(
-        questData,
+        questData as QuestLike,
         ctx
       );
 
@@ -95,7 +105,7 @@ export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
         });
 
         if (completed && uq.status === 'active') {
-          newlyCompleted.push({ ...uq, quest: questData });
+          newlyCompleted.push({ ...uq, quest: questData } as unknown as UserQuest);
         }
       }
     }
@@ -148,7 +158,7 @@ export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
 export async function claimQuestReward(
   userId: string,
   userQuestId: string,
-): Promise<any> {
+): Promise<Record<string, unknown> | null> {
   // Validate inputs
   if (!userId || userId === 'undefined' || !userQuestId || userQuestId === 'undefined') {
     console.error('[QuestEngine] Invalid parameters:', { userId, userQuestId });
@@ -332,9 +342,10 @@ async function updateTimeLimitedChallenge(
 
   const totalsByDay = new Map<string, number>();
   for (const log of logs ?? []) {
-    const dayKey = String((log as any).day || '');
+    const logRow = log as { day: string; amount: number };
+    const dayKey = String(logRow.day || '');
     if (!dayKey) continue;
-    totalsByDay.set(dayKey, (totalsByDay.get(dayKey) || 0) + Number((log as any).amount || 0));
+    totalsByDay.set(dayKey, (totalsByDay.get(dayKey) || 0) + Number(logRow.amount || 0));
   }
 
   const dayKeys: string[] = [];
@@ -396,7 +407,7 @@ async function updateTimeLimitedChallenge(
 export async function claimChallengeReward(
   userId: string,
   userChallengeId: string,
-): Promise<any> {
+): Promise<Record<string, unknown> | null> {
   const { error } = await supabase.rpc('claim_challenge_reward', {
     p_user_id:              userId,
     p_user_challenge_id:    userChallengeId,
@@ -444,7 +455,7 @@ export async function provisionUserQuests(userId: string, userLevel: number): Pr
       .select('quest_id, reset_date')
       .eq('user_id', userId);
       
-    const existingSet = new Set((existing || []).map((uq: any) => `${uq.quest_id}-${uq.reset_date || 'null'}`));
+    const existingSet = new Set((existing || []).map((uq: { quest_id: string; reset_date: string | null }) => `${uq.quest_id}-${uq.reset_date || 'null'}`));
 
     const rows = [];
     for (const q of quests as QuestRow[]) {
@@ -498,9 +509,16 @@ export async function syncLevelQuestProgress(userId: string, userLevel: number):
 
     if (error || !userQuests) return;
 
-    const updates = (userQuests as any[])
+    interface SyncQuestRow {
+      id: string;
+      status: string;
+      progress: number;
+      completed_at: string | null;
+      quest: Record<string, unknown> | Array<Record<string, unknown>>;
+    }
+    const updates = (userQuests as SyncQuestRow[])
       .map((uq) => {
-        const questData = Array.isArray(uq.quest) ? uq.quest[0] : uq.quest;
+      const questData = (Array.isArray(uq.quest) ? uq.quest[0] : uq.quest) as QuestLike | undefined;
         if (!questData) return null;
 
         const normalizedType = normalizeQuestConditionType(questData.condition_type, questData.title);

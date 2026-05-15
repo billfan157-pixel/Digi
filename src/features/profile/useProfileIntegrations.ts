@@ -16,15 +16,15 @@ interface EditProfileData {
 }
 
 interface UseProfileIntegrationsOptions {
-  profile: any;
-  setProfile: React.Dispatch<React.SetStateAction<any>>;
+  profile: Record<string, unknown> | null;
+  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   setShowEditProfile: (value: boolean) => void;
   isWeatherSynced: boolean;
-  syncWeather: (arg?: any, options?: any) => any;
+  syncWeather: (arg?: unknown, options?: unknown) => unknown;
   isCalendarSynced: boolean;
-  syncCalendar: () => any;
+  syncCalendar: () => unknown;
   isWatchConnected: boolean;
-  toggleHealthConnection: () => any;
+  toggleHealthConnection: () => unknown;
 }
 
 export function useProfileIntegrations({
@@ -53,15 +53,16 @@ export function useProfileIntegrations({
   const openEditProfile = useCallback(() => {
     if (!profile) return;
 
+    const p = profile as Record<string, unknown>;
     setEditProfileData({
-      nickname: profile.nickname || '',
-      gender: profile.gender || 'Nam',
-      age: profile.age || 20,
-      height: profile.height || 170,
-      weight: profile.weight || 60,
-      activity: profile.activity || 'sedentary',
-      climate: profile.climate || 'temperate',
-      goal: profile.goal || 'Sức khỏe tổng quát',
+      nickname: String(p.nickname || ''),
+      gender: String(p.gender || 'Nam'),
+      age: Number(p.age) || 20,
+      height: Number(p.height) || 170,
+      weight: Number(p.weight) || 60,
+      activity: String(p.activity || 'sedentary'),
+      climate: String(p.climate || 'temperate'),
+      goal: String(p.goal || 'Sức khỏe tổng quát'),
     });
     setShowEditProfile(true);
   }, [profile, setShowEditProfile]);
@@ -80,7 +81,7 @@ export function useProfileIntegrations({
         climate: normalizeClimate(editProfileData.climate),
       };
 
-      const updatedProfile = await updateProfileFields(profile.id, {
+      const updatedProfile = await updateProfileFields(profile.id as string, {
         nickname: normalizedProfileData.nickname,
         gender: normalizedProfileData.gender,
         age: normalizedProfileData.age,
@@ -93,11 +94,11 @@ export function useProfileIntegrations({
       });
 
       setEditProfileData(normalizedProfileData);
-      setProfile(updatedProfile);
+      setProfile(updatedProfile as unknown as Record<string, unknown> | null);
       toast.success('Cập nhật hồ sơ thành công! ✅', { id: toastId });
       setShowEditProfile(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Lỗi cập nhật hồ sơ!', { id: toastId });
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Lỗi cập nhật hồ sơ!', { id: toastId });
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -168,7 +169,7 @@ export function useProfileIntegrations({
       athlete: 'Vận động viên',
     };
 
-    return activityLabelMap[profile?.activity || ''] || profile?.activity || '--';
+    return activityLabelMap[String(profile?.activity || '')] || String(profile?.activity || '--');
   }, [profile?.activity]);
 
   return {

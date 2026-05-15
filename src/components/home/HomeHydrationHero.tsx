@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Bluetooth } from 'lucide-react';
 import CountUp from '../CountUp';
 import { BottleVisualizer } from '../DeviceComponents';
@@ -69,7 +69,6 @@ export default function HomeHydrationHero({
               currentVolume={metrics?.currentVolume || 0}
               capacity={bottleCapacity}
               fillPercentage={bottleFillPercentage}
-              equippedBottle={equippedBottleSkin}
             />
           </button>
         ) : (

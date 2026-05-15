@@ -6,7 +6,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
-// @ts-ignore: Bỏ qua lỗi check type của TypeScript cho plugin này
+// @ts-ignore - Plugin không có type definitions
 import { NativeBiometric } from '@capgo/capacitor-native-biometric';
 import {
   clearBiometricEnabled,
@@ -49,7 +49,7 @@ export function useBiometric() {
       await setBiometricEnabled(userId, true);
       toast.success('✅ Bật khóa sinh trắc học thành công!');
       return true;
-    } catch (error: any) {
+    } catch {
       toast.error('Thiết lập thất bại hoặc đã bị hủy.');
       return false;
     } finally {
@@ -74,7 +74,7 @@ export function useBiometric() {
       });
       
       return true;
-    } catch (error: any) {
+    } catch {
       toast.error('Xác thực không thành công.');
       return false;
     } finally {

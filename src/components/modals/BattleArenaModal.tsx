@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Swords, Coins, Shield, UserPlus, Flame, Loader2, Trophy, Zap, Target } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { X, Swords, Coins, Shield, Loader2, Trophy, Zap, Target } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 import type { Profile, Battle } from '../../models';
@@ -8,9 +8,6 @@ import type { Profile, Battle } from '../../models';
 import { useUIStore } from '../../store/useUIStore';
 import { useAppStore } from '../../store/useAppStore';
 import AvatarFrame from '../AvatarFrame';
-
-// UNLOCKED FOR PRESTIGE VERSION
-const RELEASE_BATTLE_ACTIONS_ENABLED = true;
 
 export default function BattleArenaModal() {
   const isOpen = useUIStore(s => s.showBattleArena);
@@ -93,7 +90,7 @@ export default function BattleArenaModal() {
       if (error) throw error;
       toast.success('Đã gửi thách đấu!', { id: tid });
       loadArenaData();
-    } catch (err) {
+    } catch {
       toast.error('Lỗi gửi thách đấu', { id: tid });
     }
   };
@@ -112,7 +109,7 @@ export default function BattleArenaModal() {
       if (error) throw error;
       toast.success('🔥 Bắt đầu cuộc đua!', { id: tid });
       loadArenaData();
-    } catch (err) {
+    } catch {
       toast.error('Lỗi vào trận', { id: tid });
     }
   };

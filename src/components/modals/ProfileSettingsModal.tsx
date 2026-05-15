@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit2, Droplets, Moon, Sparkles } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile } from '../../models';
 
@@ -31,14 +31,6 @@ export default function ProfileSettingsModal({
 }: ProfileSettingsModalProps) {
   
    const card = "bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl";
-
-   // Helper to get current setting value from profile or settings
-   const getWellnessValue = <T,>(key: string, fallback: T): T => {
-     if ((profile as any)?.[key] !== undefined) {
-       return (profile as any)[key] as T;
-     }
-     return fallback;
-   };
 
   return (
     <AnimatePresence mode="wait">

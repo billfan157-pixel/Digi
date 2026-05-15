@@ -10,7 +10,7 @@ interface LeaderboardRowProps {
   isPremium: boolean;
 }
 
-export const LeaderboardRow = ({ item, actualRank, gap, isPremium }: LeaderboardRowProps) => {
+export const LeaderboardRow = ({ item, actualRank, gap }: LeaderboardRowProps) => {
   const isMe = item.isMe;
   const isHotGap = gap > 0 && gap < 300; // Closer gap for rivalry pulse
   

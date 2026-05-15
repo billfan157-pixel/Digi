@@ -59,7 +59,7 @@ export const WaterSplashEffect: React.FC<WaterSplashEffectProps> = ({ trigger, a
   }, [amount]);
 
   useEffect(() => {
-    if (trigger > 0) spawn();
+    if (trigger > 0) setTimeout(() => spawn(), 0);
   }, [trigger, spawn]);
 
   return (

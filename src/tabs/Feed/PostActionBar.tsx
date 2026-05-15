@@ -96,7 +96,7 @@ export const PostActionBar = ({
       >
         <motion.div
           animate={isSaved ? { scale: [1, 1.3, 1], y: [0, -4, 0] } : { scale: 1 }}
-          transition={{ duration: 0.3 } as any}
+          transition={{ duration: 0.3 }}
         >
           <Bookmark
             size={16}
