@@ -53,6 +53,7 @@ export default defineConfig({
   build: {
     minify: 'terser',
     rollupOptions: {
+      external: ['@capacitor/haptics', '@capacitor/share', '@capacitor/local-notifications'],
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
