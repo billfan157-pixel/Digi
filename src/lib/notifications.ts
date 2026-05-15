@@ -1,4 +1,3 @@
-import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 
 export type NotificationSchedule = 'daily' | 'hourly' | 'weekly';
@@ -20,6 +19,7 @@ const DEFAULT_REMINDERS = [
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return true;
+  const { LocalNotifications } = await import('@capacitor/local-notifications');
   const { granted } = await LocalNotifications.requestPermissions();
   return granted;
 }
@@ -31,6 +31,7 @@ export async function scheduleHydrationReminders(options: HydrationReminderOptio
   if (!granted) return;
 
   const reminders = options.length > 0 ? options : DEFAULT_REMINDERS;
+  const { LocalNotifications } = await import('@capacitor/local-notifications');
 
   await LocalNotifications.schedule({
     notifications: reminders.map((r, i) => ({
@@ -51,6 +52,7 @@ export async function scheduleHydrationReminders(options: HydrationReminderOptio
 
 export async function cancelAllReminders() {
   if (!Capacitor.isNativePlatform()) return;
+  const { LocalNotifications } = await import('@capacitor/local-notifications');
   const { notifications } = await LocalNotifications.getPending();
   if (notifications.length > 0) {
     await LocalNotifications.cancel({ notifications });
@@ -59,6 +61,7 @@ export async function cancelAllReminders() {
 
 export async function getPendingReminders() {
   if (!Capacitor.isNativePlatform()) return [];
+  const { LocalNotifications } = await import('@capacitor/local-notifications');
   const { notifications } = await LocalNotifications.getPending();
   return notifications;
 }

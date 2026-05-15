@@ -1,24 +1,27 @@
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
+
+async function getHaptics() {
+  if (!Capacitor.isNativePlatform()) return null;
+  const { Haptics, ImpactStyle, NotificationType } = await import('@capacitor/haptics');
+  return { Haptics, ImpactStyle, NotificationType };
+}
 
 export function impact(style: 'light' | 'medium' | 'heavy' = 'medium') {
   if (!Capacitor.isNativePlatform()) return;
-  const styleMap = { light: ImpactStyle.Light, medium: ImpactStyle.Medium, heavy: ImpactStyle.Heavy };
-  Haptics.impact({ style: styleMap[style] }).catch(() => {});
+  getHaptics().then(h => h?.Haptics.impact({ style: h.ImpactStyle[style] })).catch(() => {});
 }
 
 export function selection() {
   if (!Capacitor.isNativePlatform()) return;
-  Haptics.selection().catch(() => {});
+  getHaptics().then(h => h?.Haptics.selection()).catch(() => {});
 }
 
 export function notify(type: 'success' | 'warning' | 'error' = 'success') {
   if (!Capacitor.isNativePlatform()) return;
-  const typeMap = { success: NotificationType.Success, warning: NotificationType.Warning, error: NotificationType.Error };
-  Haptics.notification({ type: typeMap[type] }).catch(() => {});
+  getHaptics().then(h => h?.Haptics.notification({ type: h.NotificationType[type] })).catch(() => {});
 }
 
 export function vibrate(ms = 50) {
   if (!Capacitor.isNativePlatform()) return;
-  Haptics.vibrate({ duration: ms }).catch(() => {});
+  getHaptics().then(h => h?.Haptics.vibrate({ duration: ms })).catch(() => {});
 }

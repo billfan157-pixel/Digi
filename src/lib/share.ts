@@ -1,4 +1,3 @@
-import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
 
 interface ShareHydrationStatsOptions {
@@ -25,6 +24,7 @@ export async function shareHydrationStats(options: ShareHydrationStatsOptions) {
   ].filter(Boolean).join('\n');
 
   if (Capacitor.isNativePlatform()) {
+    const { Share } = await import('@capacitor/share');
     await Share.share({
       title: 'DigiWell - Hydration Stats',
       text,
@@ -40,6 +40,7 @@ export async function shareHydrationStats(options: ShareHydrationStatsOptions) {
 
 export async function shareApp() {
   if (Capacitor.isNativePlatform()) {
+    const { Share } = await import('@capacitor/share');
     await Share.share({
       title: 'DigiWell - Hydration Tracker',
       text: 'Theo dõi lượng nước uống hàng ngày với AI insights và gamification!',
