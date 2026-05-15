@@ -29,14 +29,20 @@ export interface Profile {
   mood_tracking?: boolean;
   sync_wellness_data?: boolean;
   energy_tracking?: boolean;
+  is_calendar_synced?: boolean;
 }
 
 export interface WaterLog {
   id: string;
   user_id: string;
   amount_ml: number;
+  amount?: number;
   drink_type: string;
   created_at: string;
+  timestamp?: string;
+  name?: string;
+  color?: string;
+  icon?: string;
 }
 
 // =================== SHOP ===================
@@ -83,6 +89,7 @@ export interface SocialFeedPost {
   cheers_count: number;
   comments_count: number;
   drops_count: number;
+  likes_count?: number;
   pulse_count?: number;
   created_at: string;
   expires_at: string | null;
@@ -97,6 +104,13 @@ export interface SocialFeedPost {
   temperature?: number;
   heart_rate?: number;
   drink_type?: string;
+  
+  // Additional properties used in components
+  tip_category?: string;
+  poll_options?: PostPollOption[];
+  voted_option_id?: string;
+  compare_avatar?: string;
+  compare_name?: string;
 }
 
 export interface Battle {
@@ -108,6 +122,10 @@ export interface Battle {
   created_at: string;
   challenger?: Partial<Profile>;
   opponent?: Partial<Profile>;
+  yourProgress?: number;
+  opponentProgress?: number;
+  mode?: string;
+  winner_id?: string;
 }
 
 export interface PostComment {
@@ -117,4 +135,65 @@ export interface PostComment {
   content: string;
   created_at: string;
   author?: Partial<Profile>;
+}
+
+// =================== EXTENDED TYPES ===================
+export interface SocialComment extends PostComment {
+  user_id?: string;
+}
+
+export interface SocialNotification {
+  id: string;
+  user_id: string;
+  type: 'cheer' | 'comment' | 'follow' | 'battle' | 'league';
+  data: Record<string, unknown>;
+  read?: boolean;
+  is_read?: boolean;
+  reference_id?: string;
+  actor?: {
+    nickname: string;
+    avatar_url?: string;
+  };
+  content?: string;
+  created_at: string;
+}
+
+export interface WaterEntry {
+  id: string;
+  user_id: string;
+  amount?: number;
+  amount_ml?: number;
+  name?: string;
+  created_at?: string;
+  timestamp?: string;
+  color?: string;
+  icon?: string;
+  drink_type?: string;
+}
+
+export interface Friend {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: 'pending' | 'accepted';
+  created_at: string;
+  friend?: Partial<Profile>;
+}
+
+export interface SearchResult {
+  id: string;
+  nickname: string;
+  avatar_url: string | null;
+  level: number;
+}
+
+export interface DrinkPreset {
+  id: string;
+  name: string;
+  amount: number;
+  icon: string;
+  color: string;
+  description?: string;
+  factor?: number;
+  bg?: string;
 }

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Plus, X, Edit2, Droplet, Coffee, Wine, Activity, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDrinkGrid } from '../hooks/useDrinkGrid';
+import type { DrinkPreset } from '@/models';
 
 interface DrinkMenuModalProps {
   isOpen: boolean;
@@ -15,9 +16,9 @@ interface GridDrink {
   id: string;
   name: string;
   amount: number;
-  factor: number;
+  factor?: number;
   icon: string;
-  bg: string;
+  bg?: string;
   color: string;
 }
 
@@ -87,7 +88,15 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
     onClose();
   };
 
-  const drinks = drinkGridList.length > 0 ? drinkGridList : DEFAULT_GRID_DRINKS;
+  function getDrinkFactor(drink: GridDrink | DrinkPreset): number {
+    return 'factor' in drink ? (drink.factor ?? 1) : 1;
+  }
+
+  function getDrinkBg(drink: GridDrink | DrinkPreset): string {
+    return 'bg' in drink && drink.bg ? drink.bg : 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20';
+  }
+
+  const drinks: (GridDrink | DrinkPreset)[] = drinkGridList.length > 0 ? drinkGridList : DEFAULT_GRID_DRINKS;
 
   return (
     <AnimatePresence>
@@ -215,17 +224,17 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
                     <div key={drink.id || `fallback-drink-grid-${index}`} className="relative h-full group">
                       <button
                         onClick={() => {
-                          handleAddWater(drink.amount || 250, drink.factor, drink.name);
+                          handleAddWater(drink.amount || 250, getDrinkFactor(drink), drink.name);
                           onClose();
                         }}
-                        className={`w-full h-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 ease-out active:scale-95 hover:scale-105 ${drink.bg} shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.2)]`}
+                        className={`w-full h-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 ease-out active:scale-95 hover:scale-105 ${getDrinkBg(drink)} shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.2)]`}
                       >
                         <div className="mb-2.5 group-hover:scale-120 transition-transform">
                           {renderIcon(drink.icon, { size: 26, className: drink.color })}
                         </div>
                         <span className="text-white text-xs font-bold w-full text-center truncate leading-tight">{drink.name}</span>
                         <span className="text-slate-300 text-[9px] mt-1 font-semibold opacity-75">
-                          {(drink.factor > 0 ? '+' : '') + drink.factor.toFixed(1)}x
+                          {(getDrinkFactor(drink) > 0 ? '+' : '') + getDrinkFactor(drink).toFixed(1)}x
                         </span>
                       </button>
                       <button
@@ -234,7 +243,7 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
                           setEditingDrinkId(drink.id);
                           setCustomName(drink.name);
                           setCustomVolume(drink.amount || 250);
-                          setCustomFactor(drink.factor);
+                          setCustomFactor(getDrinkFactor(drink));
                           setIsCustomMode(true);
                         }}
                         className="absolute -top-2 right-6 w-7 h-7 rounded-full bg-slate-800/80 border border-slate-600 flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all z-10 shadow-lg active:scale-90"

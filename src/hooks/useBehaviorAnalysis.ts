@@ -1,10 +1,5 @@
 import { useMemo, useCallback } from 'react';
-
-interface WaterLog {
-  day: string;
-  amount: number;
-  created_at?: string;
-}
+import type { WaterLog } from '../models';
 
 interface BehaviorPattern {
   pattern: string;

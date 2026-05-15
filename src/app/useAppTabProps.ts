@@ -113,11 +113,9 @@ export function useAppTabProps({
     setLeagueMode,
     setShowAddFriend,
     getLeagueData,
-    getRankInfo,
     profile,
   }) satisfies React.ComponentProps<typeof LeagueTab>, [
     getLeagueData,
-    getRankInfo,
     leagueMode,
     profile,
     setLeagueMode,

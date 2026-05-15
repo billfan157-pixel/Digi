@@ -125,6 +125,11 @@ const FeedTab = memo(function FeedTab({
         onModeChange={setFeedMode}
         onFilterChange={setFeedFilter}
         onSearchChange={setFeedSearch}
+        profile={profile}
+        unreadCount={unreadCount}
+        onOpenNotifications={() => setShowNotifications(true)}
+        onOpenProfile={() => setShowSocialProfile(true)}
+        onOpenDiscoverPeople={() => setShowDiscoverPeople(true)}
       />
       
       <PullToRefresh onRefresh={refetch} />

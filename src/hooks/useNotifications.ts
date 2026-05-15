@@ -91,22 +91,28 @@ export function useNotifications(currentUserId: string | undefined) {
     if (!currentUserId) return;
     setUnreadCount(0);
     setNotifications(prev => prev.map((n: any) => ({ ...n, is_read: true })));
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('recipient_id', currentUserId)
-      .eq('is_read', false)
-      .catch(err => console.error('[useNotifications] Mark all read error:', err));
+    try {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('recipient_id', currentUserId)
+        .eq('is_read', false);
+    } catch (err) {
+      console.error('[useNotifications] Mark all read error:', err);
+    }
   };
 
   const markAsRead = async (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', id)
-      .catch(err => console.error('[useNotifications] Mark read error:', err));
+    try {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', id);
+    } catch (err) {
+      console.error('[useNotifications] Mark read error:', err);
+    }
   };
 
   return { notifications, unreadCount, markAllRead, markAsRead };

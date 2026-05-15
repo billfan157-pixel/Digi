@@ -3,13 +3,22 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { calculateWP } from '@/utils/healthMath';
 import type { Friend, SearchResult } from '@/models';
+import type { TabType } from '@/components/layout/BottomNav';
+
+interface LeagueEntry {
+  id: string;
+  name: string;
+  dept: string;
+  wp: number;
+  streak: number;
+  isMe: boolean;
+}
 
 type LeagueMode = 'public' | 'friends' | 'clubs';
-type ActiveTab = 'home' | 'insight' | 'league' | 'feed' | 'profile';
 
 interface UseLeagueDataOptions {
   profile: { id?: string | null } | null;
-  activeTab: ActiveTab;
+  activeTab: TabType;
   leagueMode: LeagueMode;
   setShowAddFriend: (show: boolean) => void;
 }
@@ -21,10 +30,10 @@ export function useLeagueData({
   setShowAddFriend,
 }: UseLeagueDataOptions) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [friendsList, setFriendsList] = useState<Friend[]>([]);
+  const [friendsList, setFriendsList] = useState<LeagueEntry[]>([]);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [publicLeaderboard, setPublicLeaderboard] = useState<Friend[]>([]);
+  const [publicLeaderboard, setPublicLeaderboard] = useState<LeagueEntry[]>([]);
 
   const fetchFriendsData = useCallback(async () => {
     if (!profile?.id || profile.id === 'undefined') return;
@@ -125,9 +134,11 @@ export function useLeagueData({
 
     if (!error && data) {
       setSearchResults(
-        data.map((user: SearchResult) => ({
-          ...user,
+        data.map((user: { id: string; nickname: string; avatar_url?: string | null; level?: number }) => ({
+          id: user.id,
           nickname: user.nickname || 'Người dùng',
+          avatar_url: user.avatar_url ?? null,
+          level: user.level ?? 1,
         })),
       );
     }

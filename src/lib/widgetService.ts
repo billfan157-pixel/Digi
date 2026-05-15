@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Capacitor } from '@capacitor/core';
+// @ts-expect-error - Capacitor Filesystem types may not be installed
 import { Filesystem, Directory } from '@capacitor/filesystem';
 
 // Interface dữ liệu gửi sang Native

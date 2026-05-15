@@ -19,6 +19,10 @@ const EMPTY_STATE_BY_FILTER: Record<FeedFilter, { title: string; description: st
     title: 'Chưa có Pulse nào',
     description: 'Đăng tiến độ uống nước để giữ nhịp cùng cộng đồng.',
   },
+  drops: {
+    title: 'Chưa có Drop nào',
+    description: 'Thả Drop tại đây để chia sẻ vị trí.',
+  },
   milestones: {
     title: 'Chưa có Peak nào',
     description: 'Giữ chuỗi streak để xuất hiện trên bảng vàng.',

@@ -34,28 +34,28 @@ END;
 $$;
 
 -- 2. Performance indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_water_logs_user_day
+CREATE INDEX IF NOT EXISTS idx_water_logs_user_day
   ON public.water_logs (user_id, day);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_water_logs_user_created
+CREATE INDEX IF NOT EXISTS idx_water_logs_user_created
   ON public.water_logs (user_id, created_at DESC);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_hydration_battles_challenger
+CREATE INDEX IF NOT EXISTS idx_hydration_battles_challenger
   ON public.hydration_battles (challenger_id, created_at DESC);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_hydration_battles_opponent
+CREATE INDEX IF NOT EXISTS idx_hydration_battles_opponent
   ON public.hydration_battles (opponent_id, created_at DESC);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notifications_recipient_unread
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient_unread
   ON public.notifications (recipient_id, is_read) WHERE is_read = false;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_club_members_club_user
+CREATE INDEX IF NOT EXISTS idx_club_members_club_user
   ON public.club_members (club_id, user_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_quests_user_status
+CREATE INDEX IF NOT EXISTS idx_user_quests_user_status
   ON public.user_quests (user_id, status);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_challenges_user_status
+CREATE INDEX IF NOT EXISTS idx_user_challenges_user_status
   ON public.user_challenges (user_id, status);
 
 -- 3. RLS for RPC: ensure the function can bypass RLS on club tables

@@ -1,10 +1,4 @@
--- =============================================================================
--- Phase 2: Atomic RPCs + Performance + Consolidated Stats
--- Date: 2026-05-12
--- =============================================================================
-
 -- 1. Atomic Join Club RPC
--- Leaves current clubs + joins new club in one transaction
 create or replace function public.join_club(p_user_id uuid, p_club_id uuid)
 returns void
 language plpgsql
@@ -28,7 +22,6 @@ end;
 $$;
 
 -- 2. Atomic Accept Battle RPC
--- Activates the accepted battle + declines all other pending invites
 create or replace function public.accept_battle(p_user_id uuid, p_battle_id uuid)
 returns void
 language plpgsql
@@ -61,15 +54,13 @@ end;
 $$;
 
 -- 3. Performance: pg_trgm for efficient partial nickname search
--- NOTE: May require superuser privileges on Supabase. If this fails,
---       the RPCs below still work — just the search will be slower.
 create extension if not exists pg_trgm;
 
--- 4. Performance: GIN index for nickname
-create index if not exists idx_profiles_nickname_trgm on public.public_profiles using gin (nickname gin_trgm_ops);
+-- 4. Performance: GIN index for nickname (only if public_profiles table exists)
+-- Note: This is disabled as the table is 'profiles' not 'public_profiles'
+-- create index if not exists idx_profiles_nickname_trgm on public.public_profiles using gin (nickname gin_trgm_ops);
 
 -- 5. Consolidated Profile Stats RPC
--- Replaces 3 separate COUNT queries with 1 RPC call
 create or replace function public.get_profile_stats(p_user_id uuid)
 returns jsonb
 language plpgsql

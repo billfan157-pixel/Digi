@@ -1,13 +1,7 @@
 import React from 'react';
 import { History, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-export interface WaterEntry {
-  id: string;
-  name: string;
-  amount: number;
-  created_at: string;
-}
+import type { WaterEntry } from '@/models';
 
 interface HistoryModalProps {
   showHistory: boolean;
@@ -52,10 +46,10 @@ export default function HistoryModal({ showHistory, setShowHistory, waterEntries
           <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
             {waterEntries?.length > 0 ? waterEntries.map((entry, index) => (
               <div key={entry.id || `global-history-item-${index}`} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                <div><div className="text-white font-bold">{entry.name}</div><div className="text-xs text-slate-400">{new Date(entry.created_at).toLocaleTimeString('vi-VN')}</div></div>
+                <div><div className="text-white font-bold">{entry.name}</div><div className="text-xs text-slate-400">{entry.created_at ? new Date(entry.created_at).toLocaleTimeString('vi-VN') : ''}</div></div>
                 <div className="flex items-center gap-4">
                   <span className="text-cyan-400 font-black">+{entry.amount}ml</span>
-                  <button onClick={() => handleDeleteEntry(entry.id, entry.amount)} className="text-rose-500/50 hover:text-rose-500"><X size={18} /></button>
+                  <button onClick={() => handleDeleteEntry(entry.id, entry.amount ?? entry.amount_ml ?? 0)} className="text-rose-500/50 hover:text-rose-500"><X size={18} /></button>
                 </div>
               </div>
             )) : (<div className="text-center py-12 text-slate-500 italic">Chưa có dữ liệu hôm nay đệ ơi!</div>)}

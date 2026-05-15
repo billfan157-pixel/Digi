@@ -14,7 +14,7 @@ export function useFollow(targetUserId: string, currentUserId: string | undefine
       .eq('following_id', targetUserId)
       .maybeSingle()
       .then(({ data }) => setIsFollowing(!!data))
-      .catch(err => console.error('[useFollow] Check error:', err));
+      .then(undefined, (err: unknown) => console.error('[useFollow] Check error:', err));
   }, [targetUserId, currentUserId]);
 
   const toggleFollow = useCallback(async () => {
