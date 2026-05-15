@@ -9,6 +9,7 @@ import type { Profile } from '../../models';
 import type { SignaturePostKind } from './types';
 import { QuickStatusComposer } from './QuickStatusComposer';
 import { QuickChallengeComposer } from './QuickChallengeComposer';
+import { sanitizeInput } from '@/lib/sanitize';
 
 interface FeedComposerProps {
   profile: Profile | null;
@@ -59,9 +60,10 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
       }
 
       const persistedPostKind = postData.postKind === 'pulse' ? 'status' : 'challenge';
+      const sanitizedContent = sanitizeInput(postData.content, 500);
       const { data, error } = await supabase.from('social_posts').insert({
         author_id: profile.id,
-        content: postData.content,
+        content: sanitizedContent,
         image_url: finalImageUrl,
         post_kind: persistedPostKind,
         hydration_ml: waterIntake,

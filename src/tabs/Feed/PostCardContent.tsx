@@ -1,9 +1,10 @@
 import { Droplets, Flame, Swords, Trophy, Sparkles, Zap, Lightbulb, BarChart3 } from 'lucide-react';
 import type { SocialFeedPost } from '../../models';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface PostCardContentProps {
   post: SocialFeedPost;
-  postContent: string;
+  safeContent: string;
   isAchievement: boolean;
   isCompare: boolean;
   isChallenge: boolean;
@@ -15,7 +16,7 @@ interface PostCardContentProps {
 
 export const PostCardContent = ({
   post,
-  postContent,
+  safeContent,
   isAchievement,
   isCompare,
   isChallenge,
@@ -24,6 +25,7 @@ export const PostCardContent = ({
   isDrop,
   handleJoinChallenge,
 }: PostCardContentProps) => {
+  const safeContent = sanitizeHtml(safeContent);
   if (isAchievement) {
     return (
       <div className="group flex flex-col items-center justify-center p-8 border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-slate-900/40 to-slate-950 rounded-[2rem] text-center relative overflow-hidden">
@@ -75,7 +77,7 @@ export const PostCardContent = ({
            </div>
            <p className="text-purple-400 text-[10px] font-black uppercase tracking-widest">Thử thách chung</p>
         </div>
-        <p className="text-white text-xl font-black leading-tight mb-6">{postContent}</p>
+        <p className="text-white text-xl font-black leading-tight mb-6">{safeContent}</p>
         <button
           onClick={handleJoinChallenge}
           className="w-full bg-white text-purple-950 font-black py-3.5 rounded-2xl hover:bg-slate-100 active:scale-[0.98] transition-all shadow-xl shadow-purple-500/10"
@@ -94,7 +96,7 @@ export const PostCardContent = ({
         </div>
         <p className="text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Peak Mới</p>
         <h4 className="text-white text-3xl font-black mb-2 tracking-tight">Chuỗi {post.value || post.streak_snapshot || 0} ngày</h4>
-        {postContent && <p className="text-slate-400 text-sm font-medium">{postContent}</p>}
+        {safeContent && <p className="text-slate-400 text-sm font-medium">{safeContent}</p>}
       </div>
     );
   }
@@ -136,9 +138,9 @@ export const PostCardContent = ({
                   />
                </div>
 
-               {postContent && (
+               {safeContent && (
                  <p className="mt-3 text-xs text-slate-200 font-medium line-clamp-2 italic">
-                   "{postContent}"
+                   "{safeContent}"
                  </p>
                )}
             </div>
@@ -157,7 +159,7 @@ export const PostCardContent = ({
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
                   <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${progress}%` }} />
                 </div>
-                <p className="mt-3 text-sm text-slate-400 font-medium">{postContent || 'Đã nạp thêm nước cho cơ thể.'}</p>
+                <p className="mt-3 text-sm text-slate-400 font-medium">{safeContent || 'Đã nạp thêm nước cho cơ thể.'}</p>
               </div>
             </div>
           </div>
@@ -182,7 +184,7 @@ export const PostCardContent = ({
             <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-lg text-[9px] font-bold ${categoryColor}`}>{categoryLabel}</span>
           </div>
         </div>
-        {postContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap">{postContent}</p>}
+        {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap">{safeContent}</p>}
         {post.image_url && (
           <div className="rounded-2xl overflow-hidden bg-slate-950 mt-3 border border-white/5">
             <img src={post.image_url} alt="" loading="lazy" className="w-full max-h-[400px] object-cover" />
@@ -205,7 +207,7 @@ export const PostCardContent = ({
           </div>
           <div>
             <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest">Khảo sát</p>
-            <p className="text-white font-bold text-lg mt-0.5">{postContent}</p>
+            <p className="text-white font-bold text-lg mt-0.5">{safeContent}</p>
           </div>
         </div>
         <div className="space-y-2">
@@ -257,7 +259,7 @@ export const PostCardContent = ({
              Drop
            </span>
          </div>
-         {postContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap">{postContent}</p>}
+         {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap">{safeContent}</p>}
          {post.image_url && (
            <div className="rounded-2xl overflow-hidden bg-slate-950 border border-white/5">
              <img src={post.image_url} alt="Drop" loading="lazy" className="w-full max-h-[300px] object-cover"
@@ -270,7 +272,7 @@ export const PostCardContent = ({
 
    return (
      <>
-       {postContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap mb-3">{postContent}</p>}
+       {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap mb-3">{safeContent}</p>}
        {post.image_url && (
          <div className="rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border border-white/5">
            <img src={post.image_url} alt="Ảnh bài viết" loading="lazy" className="w-full max-h-[500px] object-cover"

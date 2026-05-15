@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useComments } from '../../hooks/useComments';
 import { getRelativeTimeLabel } from '../../lib/social';
 import type { SocialFeedPost, SocialComment } from '../../models';
+import { sanitizeInput, sanitizeHtml } from '@/lib/sanitize';
 
 interface CommentsViewProps {
   post: SocialFeedPost;
@@ -25,7 +26,8 @@ export const CommentsView = ({ post, currentUserId, onClose }: CommentsViewProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim() || isSubmitting) return;
-    const finalContent = replyTo && !text.startsWith(`@${replyTo.name}`) ? `@${replyTo.name} ${text}` : text;
+    const sanitized = sanitizeInput(text, 500);
+    const finalContent = replyTo && !sanitized.startsWith(`@${replyTo.name}`) ? `@${replyTo.name} ${sanitized}` : sanitized;
     setIsSubmitting(true);
     try {
       await addComment(finalContent);
@@ -71,9 +73,10 @@ const handleDeleteComment = async (commentId: string) => {
             comments.length === 0 ? <p className="text-slate-400 text-center text-sm py-8">Chưa có bình luận nào. Hãy là người đầu tiên!</p> :
             comments.map((c: SocialComment, index: number) => {
               const isReply = c.content.trim().startsWith('@');
-              const contentParts = c.content.split(' ');
+              const sanitizedContent = sanitizeHtml(c.content);
+              const contentParts = sanitizedContent.split(' ');
               const mentionedUser = isReply ? contentParts[0].substring(1) : null;
-              const actualContent = isReply ? contentParts.slice(1).join(' ') : c.content;
+              const actualContent = isReply ? contentParts.slice(1).join(' ') : sanitizedContent;
               
               return (
                 <div key={c.id || `comment-${index}`} className={`flex gap-3 relative group ${isReply ? 'ml-8 mt-1' : 'mt-4'}`}>
