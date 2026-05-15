@@ -4,7 +4,7 @@ import { sanitizeHtml } from '@/lib/sanitize';
 
 interface PostCardContentProps {
   post: SocialFeedPost;
-  safeContent: string;
+  postContent: string;
   isAchievement: boolean;
   isCompare: boolean;
   isChallenge: boolean;
@@ -16,7 +16,7 @@ interface PostCardContentProps {
 
 export const PostCardContent = ({
   post,
-  safeContent,
+  postContent,
   isAchievement,
   isCompare,
   isChallenge,
@@ -25,7 +25,7 @@ export const PostCardContent = ({
   isDrop,
   handleJoinChallenge,
 }: PostCardContentProps) => {
-  const safeContent = sanitizeHtml(safeContent);
+  const safeContent = sanitizeHtml(postContent);
   if (isAchievement) {
     return (
       <div className="group flex flex-col items-center justify-center p-8 border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-slate-900/40 to-slate-950 rounded-[2rem] text-center relative overflow-hidden">
