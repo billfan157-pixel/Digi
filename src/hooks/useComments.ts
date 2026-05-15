@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 import type { SocialComment } from '../models';
@@ -16,6 +16,7 @@ interface SocialCommentRow {
 export function useComments(postId: string, currentUserId: string | undefined) {
   const [comments, setComments] = useState<SocialComment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const fetchComments = useCallback(async () => {
     setIsLoading(true);
@@ -49,6 +50,66 @@ export function useComments(postId: string, currentUserId: string | undefined) {
   useEffect(() => {
     setTimeout(() => fetchComments(), 0);
   }, [fetchComments]);
+
+  // Supabase Realtime cho bình luận mới / xóa
+  useEffect(() => {
+    if (!postId) return;
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    const channel = supabase.channel(`comments-${postId}-${Date.now()}`);
+    channelRef.current = channel;
+
+    channel
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'social_comments', filter: `post_id=eq.${postId}` },
+        async (payload) => {
+          const newComment = payload.new as SocialCommentRow;
+          if (newComment.author_id === currentUserId) return;
+
+          const { data: author } = await supabase
+            .from('profiles')
+            .select('id, nickname, avatar_url')
+            .eq('id', newComment.author_id)
+            .maybeSingle();
+
+          setComments(prev => [...prev, {
+            id: newComment.id,
+            post_id: newComment.post_id,
+            author_id: newComment.author_id,
+            content: newComment.content,
+            like_count: newComment.like_count,
+            created_at: newComment.created_at,
+            updated_at: newComment.updated_at,
+            author: author || { nickname: 'Người dùng' },
+          }]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'social_comments', filter: `post_id=eq.${postId}` },
+        (payload) => {
+          setComments(prev => prev.filter(c => c.id !== payload.old.id));
+        }
+      );
+
+    const subTimeout = setTimeout(() => {
+      if (channelRef.current === channel) {
+        channel.subscribe();
+      }
+    }, 50);
+
+    return () => {
+      clearTimeout(subTimeout);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [postId, currentUserId]);
 
   const addComment = async (content: string) => {
     if (!currentUserId) {

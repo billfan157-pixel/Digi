@@ -5,6 +5,7 @@ import type FeedTab from '@/tabs/FeedTab';
 import type ProfileTab from '@/tabs/ProfileTab';
 import type LeagueTab from '@/tabs/LeagueTab';
 import type { Profile, SocialFeedPost } from '@/models';
+import type { CalendarEventItem } from '@/hooks/useCalendarSync';
 
 interface SocialProfileStats {
   followers: number;
@@ -39,6 +40,8 @@ interface UseAppTabPropsOptions {
   useStreakFreeze: () => Promise<boolean>;
   posts: SocialFeedPost[];
   setActiveTab: (tab: 'home' | 'insight' | 'league' | 'feed' | 'profile') => void;
+  calendarEvents: CalendarEventItem[];
+  syncCalendar: (options?: { silent?: boolean; startOAuthIfNeeded?: boolean }) => Promise<number | false>;
 }
 
 export function useAppTabProps({
@@ -67,6 +70,8 @@ export function useAppTabProps({
   useStreakFreeze,
   posts,
   setActiveTab,
+  calendarEvents,
+  syncCalendar,
 }: UseAppTabPropsOptions) {
   const homeTabProps = useMemo(() => ({
     smartBottle,
@@ -84,6 +89,8 @@ export function useAppTabProps({
     weeklyReport,
     isWeeklyReportLoading,
     generateWeeklyReport: handleGenerateWeeklyReport,
+    calendarEvents,
+    syncCalendar,
   }) as React.ComponentProps<typeof InsightTab>, [
     geminiProps.aiAdvice,
     geminiProps.fetchAIAdvice,
@@ -94,6 +101,8 @@ export function useAppTabProps({
     isExportingPDF,
     isWeeklyReportLoading,
     weeklyReport,
+    calendarEvents,
+    syncCalendar,
   ]);
 
   const bottleTabProps = useMemo(() => ({

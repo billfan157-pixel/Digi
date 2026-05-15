@@ -1,3 +1,8 @@
+// --- SENTRY ERROR TRACKING ---
+import { initSentry } from './lib/sentry';
+initSentry();
+// --- HẾT SENTRY ---
+
 // --- CODE BẮT LỖI MÀN HÌNH TRẮNG (THÊM VÀO ĐẦU FILE) ---
 if (typeof window !== 'undefined') {
   window.onerror = function (msg, _url, line) {

@@ -3,7 +3,6 @@ import { Cpu, Activity, Calendar, ChevronRight, RefreshCw, ChevronDown, ChevronU
 import { motion, AnimatePresence } from 'framer-motion';
 import ScheduleManager from '../../components/ScheduleManager';
 import { useAppStore } from '../../store/useAppStore';
-import { useCalendarSync } from '../../hooks/useCalendarSync';
 import type { HydrationSchedule } from '../../lib/HydrationEngine';
 import type { CalendarEventItem } from '../../hooks/useCalendarSync';
 
@@ -14,6 +13,8 @@ interface SystemSectionProps {
   handleExportPDF: () => void;
   handleExportCSV: () => void;
   setShowPremiumModal: (show: boolean) => void;
+  calendarEvents: CalendarEventItem[];
+  syncCalendar: (options?: { silent?: boolean; startOAuthIfNeeded?: boolean }) => Promise<number | false>;
 }
 
 function getLocalDateKey(date: Date) {
@@ -79,6 +80,8 @@ export default function SystemSection({
   handleExportPDF,
   handleExportCSV,
   setShowPremiumModal,
+  calendarEvents,
+  syncCalendar,
 }: SystemSectionProps) {
   // Lấy lịch đề xuất từ AI & mục tiêu nước
   const hydrationResult = useAppStore(s => s.hydrationResult);
@@ -86,9 +89,7 @@ export default function SystemSection({
   const waterEntries = useAppStore(s => s.waterEntries);
   const aiSchedule: HydrationSchedule[] | null = hydrationResult?.schedule ?? null;
 
-  // Calendar — dùng state từ hook (real-time), không dùng prop (stale sau OAuth reload)
-  const { calendarEvents: rawCalendarEvents, syncCalendar, isCalendarSynced: calendarSynced } = useCalendarSync();
-  const calendarEvents = rawCalendarEvents as CalendarEventItem[];
+  const isCalendarSynced = calendarEvents.length > 0;
 
   const todayKey = getLocalDateKey(new Date());
   const tomorrow = new Date();
@@ -121,7 +122,7 @@ export default function SystemSection({
       {/* Calendar Events Section */}
       <div className="px-6">
         {/* Connect button when not synced */}
-        {!calendarSynced && (
+        {!isCalendarSynced && (
           <button
             onClick={handleCalendarSync}
             className="w-full p-4 rounded-2xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20 text-white flex items-center justify-between hover:from-violet-500/20 hover:to-purple-500/20 transition-all active:scale-[0.98] mb-4"
@@ -140,7 +141,7 @@ export default function SystemSection({
         )}
 
         {/* Events list */}
-        {calendarSynced && (
+        {isCalendarSynced && (
           <div className="space-y-4 mb-4">
             {/* Hôm nay */}
             <div>
@@ -254,7 +255,7 @@ export default function SystemSection({
           waterGoal={waterGoal}
           dateKey={selectedDay}
           waterEntries={waterEntries}
-          calendarEvents={calendarSynced ? (selectedDay === 'today' ? todayEvents : tomorrowEvents) : []}
+          calendarEvents={isCalendarSynced ? (selectedDay === 'today' ? todayEvents : tomorrowEvents) : []}
         />
       </div>
 

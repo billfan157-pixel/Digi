@@ -9,7 +9,10 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
-    "smoke": "node scripts/release-smoke.mjs"
+    "smoke": "node scripts/release-smoke.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
@@ -24,6 +27,7 @@
     "@capacitor/preferences": "^8.0.1",
     "@capgo/capacitor-health": "^8.4.8",
     "@capgo/capacitor-native-biometric": "^8.4.2",
+    "@sentry/react": "^10.53.1",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
     "@tanstack/react-query": "^5.99.2",
@@ -50,16 +54,21 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@tailwindcss/postcss": "^4.2.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.6",
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "happy-dom": "^20.9.0",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.8",
     "supabase": "^2.98.0",
     "tailwindcss": "^3.4.19",
@@ -68,7 +77,8 @@
     "typescript-eslint": "^8.57.0",
     "vconsole": "^3.15.1",
     "vite": "^8.0.1",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.1.6"
   },
   "overrides": {
     "vite-plugin-pwa": {

@@ -174,18 +174,24 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
     return { events: [], needs_reauth: true };
   }
 
+  // Trên native, provider tokens được AppBootstrap lưu vào sessionStorage
+  // vì supabase.auth.setSession() KHÔNG lưu provider_token/provider_refresh_token vào session object
+  const storedProviderToken = sessionStorage.getItem('digiwell_provider_token') || '';
+  const storedProviderRefreshToken = sessionStorage.getItem('digiwell_google_refresh_token') || '';
+
   // 1. Persist refresh_token khi có (chỉ xuất hiện lần đầu sau OAuth)
-  if (session.provider_refresh_token) {
-    localStorage.setItem(CALENDAR_REFRESH_TOKEN_KEY, session.provider_refresh_token);
+  const refreshTokenFromSession = session.provider_refresh_token || storedProviderRefreshToken;
+  if (refreshTokenFromSession) {
+    localStorage.setItem(CALENDAR_REFRESH_TOKEN_KEY, refreshTokenFromSession);
     // Lưu lên DB để đồng bộ xuyên thiết bị
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from('profiles').update({ google_refresh_token: session.provider_refresh_token }).eq('id', user.id);
+      await supabase.from('profiles').update({ google_refresh_token: refreshTokenFromSession }).eq('id', user.id);
     }
   }
 
-  // 2. Lấy refresh token (Ưu tiên local -> rồi đến DB)
-  let refreshToken = session.provider_refresh_token || localStorage.getItem(CALENDAR_REFRESH_TOKEN_KEY);
+  // 2. Lấy refresh token (Ưu tiên session -> stored -> local -> DB)
+  let refreshToken = session.provider_refresh_token || storedProviderRefreshToken || localStorage.getItem(CALENDAR_REFRESH_TOKEN_KEY);
   
   if (!refreshToken) {
     const { data: profile } = await supabase.from('profiles').select('google_refresh_token').single();
@@ -201,7 +207,7 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
       maxResults: 50,
       daysAhead: 7,
       timeMin: timeMin.toISOString(),
-      providerToken: session.provider_token || '',
+      providerToken: session.provider_token || storedProviderToken || '',
       providerRefreshToken: refreshToken,
     },
   });
@@ -368,7 +374,7 @@ export function useCalendarSync() {
       window.removeEventListener(CALENDAR_TOKEN_UPDATED_EVENT, handleTokenUpdated);
       clearRetry();
     };
-  }, [profile?.id]); // Chạy lại khi Profile tải xong
+  }, [profile?.id, clearRetry, scheduleRetry, syncCalendar]);
 
   return { isCalendarSynced, setIsCalendarSynced, calendarEvents, syncCalendar, isSyncing };
 }

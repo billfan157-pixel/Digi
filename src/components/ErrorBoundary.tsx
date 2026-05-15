@@ -1,8 +1,15 @@
 import React from 'react';
 import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
 import { RefreshCcw, AlertTriangle } from 'lucide-react';
+import { Sentry } from '@/lib/sentry';
 
 function ErrorFallback({ error, resetErrorBoundary }: { error: unknown; resetErrorBoundary: () => void }) {
+  React.useEffect(() => {
+    if (Sentry.getCurrentScope()) {
+      Sentry.captureException(error);
+    }
+  }, [error]);
+
   return (
     <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center p-6 text-center">
       <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center mb-6">

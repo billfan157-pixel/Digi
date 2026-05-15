@@ -1,12 +1,13 @@
 import React from 'react';
 import { Activity, Camera, Clock3, Droplets, Flame, Send, Swords, X } from 'lucide-react';
 
-import HistoryModal from './HistoryModal';
-import SmartHubModal from './SmartHubModal';
-import AiChatModal from './AiChatModal';
 import { useModalStore } from '../../store/useModalStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useAiSocial } from '../../context/AiSocialContext';
+
+const HistoryModal = React.lazy(() => import('./HistoryModal'));
+const SmartHubModal = React.lazy(() => import('./SmartHubModal'));
+const AiChatModal = React.lazy(() => import('./AiChatModal'));
 
 const UpgradeModal = React.lazy(() => import('./UpgradeModal'));
 const LevelUpModal = React.lazy(() => import('../clubs/LevelUpModal'));
@@ -82,17 +83,19 @@ export default function GlobalModalManager() {
 
   return (
     <>
-      <HistoryModal 
-        showHistory={showHistory} 
-        setShowHistory={setShowHistory} 
-        waterEntries={waterEntries} 
-        waterIntake={waterIntake} 
-        setEditingEntry={setEditingEntry} 
-        setEditAmount={setEditAmount} 
-        handleDeleteEntry={handleDeleteEntry} 
-      />
-      <SmartHubModal weatherData={weatherData} watchData={watchData} isWeatherSynced={isWeatherSynced} isWatchConnected={isWatchConnected} />
-      <AiChatModal />
+      <React.Suspense fallback={null}>
+        <HistoryModal 
+          showHistory={showHistory} 
+          setShowHistory={setShowHistory} 
+          waterEntries={waterEntries} 
+          waterIntake={waterIntake} 
+          setEditingEntry={setEditingEntry} 
+          setEditAmount={setEditAmount} 
+          handleDeleteEntry={handleDeleteEntry} 
+        />
+        <SmartHubModal weatherData={weatherData} watchData={watchData} isWeatherSynced={isWeatherSynced} isWatchConnected={isWatchConnected} />
+        <AiChatModal />
+      </React.Suspense>
 
       {/* 4. MODAL SOCIAL COMPOSER (Đăng bài) */}
       {showSocialComposer && (

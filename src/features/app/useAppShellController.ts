@@ -12,7 +12,6 @@ import { useReminderStore } from '@/store/useReminderStore';
 import { useDrinkPresetStore } from '@/store/useDrinkPresetStore';
 import { useAppStore } from '@/store/useAppStore';
 import type { Profile } from '@/models';
-import type { SocialComposerState } from '@/lib/social';
 import { getRankInfo } from '@/utils/healthMath';
 
 export function useAppShellController(): AppShellProps {
@@ -29,6 +28,8 @@ export function useAppShellController(): AppShellProps {
     weatherData,
     isCalendarSynced = false,
     setIsCalendarSynced = () => { },
+    calendarEvents = [],
+    syncCalendar = async () => false,
     isWatchConnected = false,
     watchData,
   } = useAppSystem() || {};
@@ -171,12 +172,14 @@ export function useAppShellController(): AppShellProps {
     getLeagueData: league.getLeagueData,
     getRankInfo: (wp: number) => getRankInfo(wp) as unknown as Record<string, unknown>,
     socialProps,
-    openSocialComposer: ((kind?: SocialComposerState['postKind']) => void 0) as (...args: unknown[]) => void,
+    openSocialComposer: (() => void 0) as (...args: unknown[]) => void,
     streakFreezes: hydration.streakFreezes,
     needsFreeze: hydration.needsFreeze,
     useStreakFreeze: hydration.useStreakFreeze,
     posts,
     setActiveTab,
+    calendarEvents,
+    syncCalendar,
   });
 
   return {

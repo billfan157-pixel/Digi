@@ -19,6 +19,8 @@ import AnalyticsSection from './Insight/AnalyticsSection';
 import SystemSection from './Insight/SystemSection';
 import SelectedDateModal from './Insight/SelectedDateModal';
 
+import type { CalendarEventItem } from '../hooks/useCalendarSync';
+
 interface InsightTabProps {
    isExportingPDF: boolean;
    handleExportPDF: () => void;
@@ -26,14 +28,17 @@ interface InsightTabProps {
    isAiLoading: boolean;
    aiAdvice: string;
    fetchAIAdvice: () => void;
+   calendarEvents: CalendarEventItem[];
+   syncCalendar: (options?: { silent?: boolean; startOAuthIfNeeded?: boolean }) => Promise<number | false>;
  }
 
 const InsightTab = memo(function InsightTab({
    isExportingPDF, handleExportPDF, handleExportCSV,
    isAiLoading, aiAdvice, fetchAIAdvice,
+   calendarEvents, syncCalendar,
  }: InsightTabProps) {
   
-  const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, hydrationResult, waterIntake, waterEntries, isWatchConnected, isWeatherSynced, isCalendarSynced, actions } = useAppStore(useShallow((state: AppState) => ({
+  const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, hydrationResult, waterIntake, waterEntries, actions } = useAppStore(useShallow((state: AppState) => ({
     profile: state.profile,
     isPremium: state.isPremium,
     waterGoal: state.waterGoal,
@@ -42,9 +47,6 @@ const InsightTab = memo(function InsightTab({
     hydrationResult: state.hydrationResult,
     waterIntake: state.waterIntake,
     waterEntries: state.waterEntries,
-    isWatchConnected: state.isWatchConnected,
-    isWeatherSynced: state.isWeatherSynced,
-    isCalendarSynced: state.isCalendarSynced,
     actions: state.actions,
   })));
   const { setShowPremiumModal } = useUIStore(useShallow((state) => ({
@@ -317,6 +319,8 @@ const InsightTab = memo(function InsightTab({
               handleExportPDF={handleExportPDF}
               handleExportCSV={handleExportCSV}
               setShowPremiumModal={setShowPremiumModal}
+              calendarEvents={calendarEvents}
+              syncCalendar={syncCalendar}
             />
           </motion.div>
         )}
