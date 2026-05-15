@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
+import { impact } from '@/lib/haptics';
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>;
@@ -32,6 +33,7 @@ export const PullToRefresh = ({ onRefresh }: PullToRefreshProps) => {
 
   const handleTouchEnd = useCallback(async () => {
     if (pullDistance >= threshold && !isRefreshing) {
+      impact('medium');
       setIsRefreshing(true);
       try {
         await onRefresh();

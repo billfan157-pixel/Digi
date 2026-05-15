@@ -1,6 +1,7 @@
 import { Home, BarChart2, Trophy, Rss, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import React from 'react';
+import { impact } from '@/lib/haptics';
 
 export type TabType = 'home' | 'insight' | 'league' | 'feed' | 'profile' | 'bottle';
 
@@ -29,7 +30,7 @@ const BottomNav = (props: BottomNavProps) => {
               role="tab"
               aria-selected={isActive}
               aria-current={isActive ? 'page' : undefined}
-              onClick={() => props.setActiveTab(id)}
+              onClick={() => { impact('light'); props.setActiveTab(id); }}
               aria-label={label}
               className="relative flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-colors duration-200 group z-10"
             >

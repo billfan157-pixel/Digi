@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { RefreshCw, Bluetooth } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { impact } from '@/lib/haptics';
 
 import { useUIStore } from '../../store/useUIStore';
 import LevelDetailModal from '../LevelDetailModal';
@@ -68,6 +69,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     async (amount: number, factor: number, name: string) => {
       setSplashAmount(amount);
       setSplashTrigger(prev => prev + 1);
+      impact('light');
       return _rawAddWater(amount, factor, name);
     },
     [_rawAddWater]

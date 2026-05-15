@@ -1,5 +1,5 @@
 import React, { useState, useMemo, memo } from 'react';
-import { Sparkles, Trophy, Zap, UserPlus, Settings, Flame, Lock, BarChart2, Grid, Droplets, Target, Award, Shield, Heart, Crown } from 'lucide-react';
+import { Sparkles, Trophy, Zap, UserPlus, Settings, Flame, Lock, BarChart2, Grid, Droplets, Target, Award, Shield, Heart, Crown, Share2 } from 'lucide-react';
 import TabHeader from '../components/layout/TabHeader';
 import { PostCard } from './FeedTab';
 import BadgesGrid from '../components/BadgesGrid';
@@ -11,6 +11,8 @@ import { useAppStore } from '../store/useAppStore';
 import { useUIStore } from '../store/useUIStore';
 import { getRankInfo } from '../utils/healthMath';
 import { useShallow } from 'zustand/react/shallow';
+import { shareHydrationStats } from '@/lib/share';
+import { impact } from '@/lib/haptics';
 
 interface SocialProfileStats {
   followers: number;
@@ -167,7 +169,24 @@ const ProfileTab = memo(function ProfileTab({
         <div className={`${card} p-5`}>
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-white text-lg font-black">Tiến độ tuần này</h3>
-            <button onClick={() => setActiveTab('insight')} className="px-4 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all hover:hover:bg-white/10">Chi tiết</button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  impact('light');
+                  shareHydrationStats({
+                    streak,
+                    waterIntake,
+                    waterGoal,
+                    level: Number((profile as unknown as Record<string, unknown>).level) || 1,
+                    coins: Number((profile as unknown as Record<string, unknown>).coins) || 0,
+                  });
+                }}
+                className="px-3 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all hover:bg-white/10 flex items-center gap-1"
+              >
+                <Share2 size={12} /> Chia sẻ
+              </button>
+              <button onClick={() => setActiveTab('insight')} className="px-4 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all hover:bg-white/10">Chi tiết</button>
+            </div>
           </div>
           <div className="flex items-end justify-between gap-1.5 h-24">
             {weeklyHistory.map((item, index) => {

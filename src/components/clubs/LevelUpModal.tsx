@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUp, Award } from 'lucide-react';
+import { notify } from '@/lib/haptics';
 
 import { useUIStore } from '../../store/useUIStore';
 
@@ -11,6 +12,9 @@ export default function LevelUpModal() {
   
   if (!showLevelUp || !info) return null;
   const { fromLevel, toLevel } = info;
+
+  notify('success');
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" />
