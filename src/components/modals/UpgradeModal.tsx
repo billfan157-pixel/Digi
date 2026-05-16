@@ -1,14 +1,22 @@
-import React from 'react';
-import { Sparkles, X, CheckCircle2, ShieldAlert } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
+import React, { useState } from 'react';
+import { Sparkles, X, Loader2 } from 'lucide-react';
 
 import { useUIStore } from '../../store/useUIStore';
+import { redirectToCheckout } from '../../lib/stripe';
+import { PREMIUM_HIGHLIGHTS } from '../../config/premium';
 
 export default function UpgradeModal() {
   const open = useUIStore(s => s.showPremiumModal);
   const onClose = () => useUIStore.getState().setShowPremiumModal(false);
+  const [loading, setLoading] = useState<'monthly' | 'yearly' | null>(null);
+
   if (!open) return null;
-  const isNativeBuild = Capacitor.isNativePlatform();
+
+  const handleCheckout = async (plan: 'monthly' | 'yearly') => {
+    setLoading(plan);
+    await redirectToCheckout(plan);
+    setLoading(null);
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
@@ -19,7 +27,6 @@ export default function UpgradeModal() {
           <X size={18} />
         </button>
 
-        {/* Left Column - Features */}
         <div className="w-full p-6 bg-slate-950/50 border-b border-slate-800 flex flex-col justify-center relative shrink-0">
           <div className="absolute -top-10 -left-10 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl pointer-events-none"></div>
           <div className="flex items-center gap-3 mb-4 relative z-10 mt-4">
@@ -30,47 +37,54 @@ export default function UpgradeModal() {
           </div>
           <p className="text-slate-400 text-sm leading-relaxed mb-6 relative z-10">Nâng cấp để mở khóa toàn bộ tính năng thông minh và tối ưu hóa sức khỏe của bạn.</p>
           
-          <ul className="space-y-3 relative z-10">
-            {[
-              'Xuất báo cáo PDF chuẩn Y khoa',
-              'Chế độ Nhịn ăn gián đoạn (Fasting)',
-              'AI Analytics chuyên sâu phân tích thói quen',
-              'Không giới hạn lưu trữ dữ liệu'
-            ].map((ft, index) => (
+          <ul className="space-y-2 relative z-10">
+            {PREMIUM_HIGHLIGHTS.slice(0, 6).map((ft, index) => (
               <li key={`feat-${index}`} className="flex items-center gap-3 text-sm text-slate-300">
-                <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 size={12} className="text-amber-400" />
+                <div className="w-6 h-6 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0 text-xs">
+                  {ft.icon}
                 </div>
-                {ft}
+                <div className="flex-1 min-w-0">
+                  <span className="text-slate-200 font-bold text-xs">{ft.title}</span>
+                  <p className="text-[10px] text-slate-500 leading-tight">{ft.description}</p>
+                </div>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="w-full p-6 relative flex flex-col justify-center shrink-0">
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 text-amber-300 flex items-center justify-center shrink-0">
-              <ShieldAlert size={20} />
-            </div>
-            <div>
-              <h3 className="text-white font-black text-base">Premium purchase đang bị tắt</h3>
-              <p className="text-slate-300 text-sm mt-2 leading-relaxed">
-                Build hiện tại không mở thanh toán cho tính năng số trong app. Điều này tránh rủi ro vi phạm chính sách App Store trước khi có luồng In-App Purchase chuẩn.
-              </p>
-            </div>
-          </div>
+        <div className="w-full p-6 relative flex flex-col justify-center shrink-0 space-y-3">
+          <button
+            onClick={() => handleCheckout('monthly')}
+            disabled={loading !== null}
+            className="w-full py-4 rounded-xl font-black text-sm active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2 border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+          >
+            {loading === 'monthly' ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Sparkles size={18} />
+            )}
+            {loading === 'monthly' ? 'Đang kết nối...' : 'Đăng ký Pro Tháng — 29.000₫/tháng'}
+          </button>
 
-          <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 space-y-3 text-sm text-slate-300">
-            <p>{isNativeBuild ? 'iOS/Android build:' : 'Build hiện tại:'} Premium vẫn được giữ ở trạng thái giới thiệu tính năng.</p>
-            <p>Luồng QR trực tiếp và checkout ngoài app cho digital premium đã bị loại khỏi màn hình này.</p>
-            <p>Khi cần phát hành thanh toán, nên thay bằng StoreKit / App Store In-App Purchase và luồng tương đương trên Android.</p>
-          </div>
+          <button
+            onClick={() => handleCheckout('yearly')}
+            disabled={loading !== null}
+            className="w-full py-4 rounded-xl font-black text-sm active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2 relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)' }}
+          >
+            {loading === 'yearly' ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Sparkles size={18} />
+            )}
+            {loading === 'yearly' ? 'Đang kết nối...' : 'Đăng ký Pro Năm — 199.000₫/năm (Tiết kiệm 43%)'}
+          </button>
 
           <button
             onClick={onClose}
-            className="w-full mt-6 py-4 rounded-xl bg-slate-800 text-white font-black text-sm active:scale-95 transition-transform border border-slate-700"
+            className="w-full py-3 rounded-xl text-slate-400 text-xs font-bold hover:bg-slate-800 transition-colors"
           >
-            Đóng
+            Để sau
           </button>
         </div>
       </div>

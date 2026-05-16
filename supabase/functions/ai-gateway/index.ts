@@ -101,13 +101,6 @@ function buildContextSummary(context: DigiwellAiContext): string {
     .join('\n');
 }
 
-function normalizeDrinkFactor(name: string): number {
-  const normalized = name.toLowerCase();
-  if (/(bia|rượu|cocktail|whisky|vodka|cồn|alcohol|wine|beer)/.test(normalized)) return -0.5;
-  if (/(cà phê|coffee|espresso|trà|tea|bò húc|nước tăng lực|energy drink)/.test(normalized)) return 0.8;
-  if (/(sữa|milk|bù khoáng|điện giải|orezôn|revive|pocari)/.test(normalized)) return 1.1;
-  return 1.0;
-}
 
 function clampWaterAction(action: Partial<WaterAction>): WaterAction | undefined {
   const amount = Math.round(Number(action.amount));

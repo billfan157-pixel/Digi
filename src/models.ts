@@ -29,6 +29,9 @@ export interface Profile {
   mood_tracking?: boolean;
   sync_wellness_data?: boolean;
   energy_tracking?: boolean;
+  // Subscription / Premium
+  subscription_tier?: 'free' | 'premium';
+  subscription_end?: string;
 }
 
 export interface WaterLog {

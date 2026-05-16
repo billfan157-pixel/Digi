@@ -6,7 +6,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
-// @ts-ignore - Plugin không có type definitions
 import { NativeBiometric } from '@capgo/capacitor-native-biometric';
 import {
   clearBiometricEnabled,

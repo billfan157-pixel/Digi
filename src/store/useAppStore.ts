@@ -12,7 +12,7 @@ export interface AppState {
   weeklyHistory: { d: string; ml: number; isToday: boolean }[];
 
   // ── Integrations ──
-  weatherData: { temp: number; status?: string; location?: string } | null;
+  weatherData: { temp: number; humidity: number; feelsLike: number; status?: string; location?: string } | null;
   watchData: { heartRate: number; steps: number } | null;
   isWeatherSynced: boolean;
   isCalendarSynced: boolean;

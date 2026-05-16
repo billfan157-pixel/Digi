@@ -21,6 +21,7 @@ const devError = (...args: unknown[]) => {
 // ── Constants ──────────────────────────────────────────────
 
 const OFFLINE_QUEUE_KEY = 'digiwell_offline_water_queue';
+const MAX_SYNC_RETRIES = 3;
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -47,6 +48,7 @@ interface OfflineQueueItem {
   isFasting?: boolean;
   logSynced?: boolean;
   progressionSynced?: boolean;
+  retryCount?: number;
 }
 
 // ── Pure helpers ───────────────────────────────────────────
@@ -115,22 +117,6 @@ function pushOfflineQueue(item: OfflineQueueItem) {
   const queue = readScopedOfflineQueue(item.user_id);
   queue.push(item);
   localStorage.setItem(getOfflineQueueKey(item.user_id), JSON.stringify(queue));
-}
-
-function updateOfflineQueueItem(userId: string, tempId: string, patch: Partial<OfflineQueueItem>) {
-  const queue = readOfflineQueue(userId).map(item => (
-    item.tempId === tempId ? { ...item, ...patch } : item
-  ));
-  writeOfflineQueue(userId, queue);
-}
-
-function removeOfflineQueueItem(userId: string, tempId: string) {
-  const queue = readOfflineQueue(userId).filter(item => item.tempId !== tempId);
-  writeOfflineQueue(userId, queue);
-}
-
-function clearOfflineQueue(userId: string) {
-  writeOfflineQueue(userId, []);
 }
 
 // ── Hook ───────────────────────────────────────────────────
@@ -454,10 +440,14 @@ export function useWaterData(
 
     devLog('Syncing offline queue:', queue.length, 'items');
 
-    try {
-      let syncedCount = 0;
+    let syncedCount = 0;
+    let failedCount = 0;
+    const remaining: OfflineQueueItem[] = [];
 
-      for (const item of queue) {
+    for (const item of queue) {
+      const retryCount = item.retryCount ?? 0;
+
+      try {
         if (!item.logSynced) {
           const { data: existingLog, error: existingLogError } = await supabase
             .from('water_logs')
@@ -475,16 +465,19 @@ export function useWaterData(
           }
 
           if (!existingLog) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { tempId: _t, tempC: _tc, exerciseMins: _em, isFasting: _if, logSynced: _ls, progressionSynced: _ps, ...payload } = item;
-            const { error: insertError } = await supabase.from('water_logs').insert(payload);
+            const { error: insertError } = await supabase.from('water_logs').insert({
+              user_id: item.user_id,
+              amount: item.amount,
+              name: item.name,
+              exp: item.exp,
+              day: item.day,
+              created_at: item.created_at,
+            });
             if (insertError) {
               devError('Insert error:', insertError);
               throw insertError;
             }
           }
-
-          updateOfflineQueueItem(profile.id, item.tempId, { logSynced: true });
         }
 
         if (!item.progressionSynced) {
@@ -500,25 +493,38 @@ export function useWaterData(
             devError('RPC process_hydration_event error:', rpcError);
             throw rpcError;
           }
-
-          updateOfflineQueueItem(profile.id, item.tempId, { progressionSynced: true });
         }
 
-        removeOfflineQueueItem(profile.id, item.tempId);
         syncedCount += 1;
-      }
+      } catch (err) {
+        devError('sync item failed:', item.tempId, err);
 
-      clearOfflineQueue(profile.id);
-      setHasPendingCloudSync(false);
-      if (syncedCount > 0) {
-        toast.success(`Đã đồng bộ ${syncedCount} mục offline.`);
-        await onWaterLogged?.();
-        fetchAllWater();
+        if (retryCount >= MAX_SYNC_RETRIES) {
+          devLog('Dropping item after max retries:', item.tempId);
+        } else {
+          remaining.push({ ...item, retryCount: retryCount + 1 });
+          failedCount += 1;
+        }
       }
-    } catch (err) {
-      devError('syncOfflineLogs:', err);
-      setHasPendingCloudSync(readOfflineQueue(profile.id).length > 0);
-      toast.error('Không thể đồng bộ dữ liệu offline. Kiểm tra mạng.');
+    }
+
+    // Re-read queue before writing to preserve items added during sync
+    const processedIds = new Set(queue.map(item => item.tempId));
+    const currentQueue = readOfflineQueue(profile.id);
+    const newItems = currentQueue.filter(item => !processedIds.has(item.tempId));
+    const finalQueue = [...remaining, ...newItems];
+
+    writeOfflineQueue(profile.id, finalQueue);
+    setHasPendingCloudSync(finalQueue.length > 0);
+
+    if (syncedCount > 0) {
+      toast.success(`Đã đồng bộ ${syncedCount} mục offline.`);
+      await onWaterLogged?.();
+      fetchAllWater();
+    }
+
+    if (failedCount > 0 && remaining.length > 0) {
+      toast.info(`Còn ${remaining.length} mục chờ đồng bộ.`);
     }
   }, [profile?.id, onWaterLogged]);
 

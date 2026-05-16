@@ -280,6 +280,8 @@ const InsightTab = memo(function InsightTab({
             transition={{ duration: 0.2 }}
           >
             <AnalyticsSection
+              isPremium={isPremium}
+              setShowPremiumModal={setShowPremiumModal}
               timeRange={timeRange}
               setTimeRange={setTimeRange}
               calendarDate={calendarDate}

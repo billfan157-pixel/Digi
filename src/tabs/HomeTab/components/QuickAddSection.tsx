@@ -1,5 +1,5 @@
 import { Droplet, SlidersHorizontal, Clock, LayoutGrid, CloudOff } from 'lucide-react';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
@@ -22,6 +22,10 @@ const QuickAddSection = React.memo(function QuickAddSection({
   const { t } = useTranslation();
   const hasPendingCloudSync = useAppStore((s) => s.hasPendingCloudSync);
 
+  const onQuickAdd = useCallback((amount: number) => {
+    handleAddWater(amount, 1, t('home.pure_water'));
+  }, [handleAddWater, t]);
+
   return (
     <div className="px-5 mt-3 mb-6 space-y-3">
       {/* Quick add buttons */}
@@ -34,8 +38,8 @@ const QuickAddSection = React.memo(function QuickAddSection({
               <motion.button
                 key={index}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-                onClick={() => handleAddWater(amount, 1, t('home.pure_water'))}
+                transition={{ duration: 0.1 }}
+                onClick={() => onQuickAdd(amount)}
                 className="relative flex-1 h-[86px] rounded-[22px] overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-white/[0.03] border border-white/[0.04] group-hover:bg-cyan-400/[0.06] group-hover:border-cyan-300/[0.10] transition-all duration-300" />
@@ -51,6 +55,7 @@ const QuickAddSection = React.memo(function QuickAddSection({
 
           <motion.button
             whileTap={{ scale: 0.92 }}
+            transition={{ duration: 0.1 }}
             onClick={onEditQuickAmounts}
             className="relative shrink-0 w-[68px] h-[86px] rounded-[22px] overflow-hidden group"
           >

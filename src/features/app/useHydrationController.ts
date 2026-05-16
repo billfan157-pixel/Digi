@@ -18,7 +18,7 @@ interface UseHydrationControllerOptions {
   profile: Record<string, unknown> | null;
   setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   view: string;
-  weatherData: { temp?: number } | null | undefined;
+  weatherData: { temp?: number; humidity?: number; feelsLike?: number; status?: string; location?: string } | null | undefined;
   isWeatherSynced: boolean;
   setIsWeatherSynced: (value: boolean) => void;
   isCalendarSynced: boolean;

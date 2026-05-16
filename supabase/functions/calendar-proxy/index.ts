@@ -73,6 +73,7 @@ async function refreshGoogleAccessToken(refreshToken: string): Promise<string | 
  */
 async function resolveGoogleAccessToken(
   // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   userSupabase: any,
   userId: string,
   providerToken = '',
@@ -186,7 +187,9 @@ async function fetchAllCalendarEvents(
   const listData = listResp.ok ? await listResp.json() : { items: [] };
   // Only fetch from "selected" calendars to match what the user sees in their UI
   const calendarIds = listData.items
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ?.filter((c: any) => c.selected)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((c: any) => c.id) || ['primary'];
 
   if (calendarIds.length === 0) calendarIds.push('primary');
@@ -228,6 +231,7 @@ async function fetchAllCalendarEvents(
 
   // 4. Deduplicate and global sort
   const seen = new Set();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const unique = flattened.filter((item: any) => {
     if (!item.id || seen.has(item.id)) return false;
     seen.add(item.id);
@@ -235,11 +239,13 @@ async function fetchAllCalendarEvents(
   });
 
   return unique
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .sort((a: any, b: any) => {
       const startA = a.start?.dateTime || a.start?.date || '';
       const startB = b.start?.dateTime || b.start?.date || '';
       return startA.localeCompare(startB);
     })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((event: any) => ({
       id: event.id,
       summary: event.summary,

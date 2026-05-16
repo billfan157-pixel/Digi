@@ -3,12 +3,13 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
-import { Target } from 'lucide-react';
+import { Toaster, toast } from 'sonner';
+import { Target, Sparkles } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeProvider';
 import { queryClient } from '@/lib/queryClient';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { readCheckoutResult, clearCheckoutResult } from '@/lib/stripe';
 
 function MissingConfigScreen() {
   return (
@@ -63,20 +64,47 @@ function AppChrome({ children }: { children: React.ReactNode }) {
 
 export default function AppBootstrap({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // ── XỬ LÝ DEEP LINK TRÊN NATIVE (FIX CALENDAR SYNC) ──
+    const handleCheckoutResult = (result: { status: 'success' | 'cancel'; sessionId: string | null }) => {
+      if (result.status === 'success') {
+        toast.success('Bạn đã trở thành DigiWell PRO!', {
+          icon: <Sparkles className="text-amber-400" />,
+          duration: 5000,
+        });
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+      } else {
+        toast.info('Thanh toán đã bị hủy. Bạn vẫn có thể nâng cấp sau.');
+      }
+      clearCheckoutResult();
+    };
+
+    // ── WEB: kiểm tra URL params ngay khi mount (Stripe redirect) ──
+    const webResult = readCheckoutResult();
+    if (webResult) {
+      handleCheckoutResult(webResult);
+    }
+
+    // ── NATIVE: lắng nghe deep link từ Stripe redirect ──
     if (Capacitor.isNativePlatform()) {
       const setupDeepLinks = async () => {
-        // Lắng nghe khi App được mở bằng URL (digiwell://...)
         await App.addListener('appUrlOpen', async (data) => {
           const url = new URL(data.url);
-          
-          // Kiểm tra nếu là callback của login/calendar
-          if (url.host === 'login-callback' || url.pathname.includes('login-callback')) {
-            // Đóng trình duyệt Safari nội bộ
+
+          // Stripe checkout callback
+          if (url.pathname.includes('checkout-success') || url.host === 'checkout-success') {
             await Browser.close();
-            
-            // Trích xuất các tham số (access_token, refresh_token, ...)
-            // Supabase handle oauth callback qua URL fragment (#access_token=...)
+            const sessionId = url.searchParams.get('session_id');
+            handleCheckoutResult({ status: 'success', sessionId });
+            return;
+          }
+          if (url.pathname.includes('checkout-cancel') || url.host === 'checkout-cancel') {
+            await Browser.close();
+            handleCheckoutResult({ status: 'cancel', sessionId: null });
+            return;
+          }
+
+          // Login/calendar callback
+          if (url.host === 'login-callback' || url.pathname.includes('login-callback')) {
+            await Browser.close();
             const hash = url.hash.substring(1);
             if (hash) {
               const params = new URLSearchParams(hash);
@@ -86,19 +114,14 @@ export default function AppBootstrap({ children }: { children: React.ReactNode }
               const providerRefreshToken = params.get('provider_refresh_token');
 
               if (accessToken && refreshToken) {
-                // Store provider tokens in sessionStorage (not localStorage for security)
-                // Note: These tokens are passed to calendar-proxy Edge Function server-side
                 if (providerToken) sessionStorage.setItem('digiwell_provider_token', providerToken);
                 if (providerRefreshToken) sessionStorage.setItem('digiwell_google_refresh_token', providerRefreshToken);
 
-                // Nạp session vào Supabase Client của App
                 const { error } = await supabase.auth.setSession({
                   access_token: accessToken,
                   refresh_token: refreshToken,
                 });
-                
                 if (!error) {
-                  // Bắn event để useCalendarSync biết mà chạy lại
                   window.dispatchEvent(new CustomEvent('digiwell:google-provider-token-updated'));
                 }
               }

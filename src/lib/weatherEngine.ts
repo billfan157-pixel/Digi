@@ -37,8 +37,13 @@ function mapWeatherData(data: WeatherApiResponse): WeatherData {
   };
 }
 
-export const getWeatherData = async (lookup: WeatherLookup): Promise<WeatherData | null> => {
+export const getWeatherData = async (lookup: WeatherLookup, signal?: AbortSignal): Promise<WeatherData | null> => {
   try {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      console.warn('[Weather] Offline — skipping fetch');
+      return null;
+    }
+
     const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
     if (!apiKey) {
       console.warn("OpenWeatherMap API key is missing. Please set VITE_OPENWEATHER_API_KEY.");
@@ -56,7 +61,8 @@ export const getWeatherData = async (lookup: WeatherLookup): Promise<WeatherData
     }
 
     const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?${query}&units=metric&appid=${apiKey}`
+      `https://api.openweathermap.org/data/2.5/weather?${query}&units=metric&appid=${apiKey}`,
+      { signal }
     );
 
     if (!response.ok) {
@@ -66,6 +72,7 @@ export const getWeatherData = async (lookup: WeatherLookup): Promise<WeatherData
     const data = await response.json();
     return mapWeatherData(data);
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return null;
     console.error("Error fetching weather data:", error);
     return null;
   }

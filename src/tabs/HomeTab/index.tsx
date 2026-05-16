@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { RefreshCw, Bluetooth } from 'lucide-react';
+import { RefreshCw, Bluetooth, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { impact } from '@/lib/haptics';
+import type { BottleConnectionState } from '@/hooks/useSmartBottle';
 
 import { useUIStore } from '../../store/useUIStore';
 import LevelDetailModal from '../LevelDetailModal';
@@ -22,12 +23,15 @@ import { HomeHeader, QuickAddSection, TelemetryGrid } from './components';
 import { MainMenuSidebar, QuickAmountsEditor, DrinkMenuModal } from './modals';
 
 interface SmartBottleProps {
+  connectionState?: BottleConnectionState;
   isSyncing: boolean;
   isConnected: boolean;
+  lastError?: string | null;
   metrics?: { currentVolume?: number; batteryLevel?: number };
   equippedBottle: unknown;
   connectDevice: () => void;
   disconnectDevice: () => void;
+  retryConnection?: () => void;
   forceSync: () => void;
 }
 
@@ -106,8 +110,8 @@ const HomeTab = React.memo((props: HomeTabProps) => {
 
   const bottleDemoEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_BOTTLE_DEMO === 'true';
 
-  const { isSyncing: isConnecting, isConnected, metrics, connectDevice: connectBottle, disconnectDevice: disconnectBottle, forceSync: syncData, equippedBottle } = props.smartBottle;
-  const effectiveIsConnected = bottleDemoEnabled && isConnected;
+  const { connectionState = 'idle', isSyncing: isConnecting, isConnected, lastError, metrics, connectDevice: connectBottle, disconnectDevice: disconnectBottle, retryConnection: retryBottle, forceSync: syncData } = props.smartBottle;
+  const showBottleHero = bottleDemoEnabled && connectionState !== 'idle';
   const batteryLevel = metrics?.batteryLevel || 0;
 
   useEffect(() => {
@@ -163,7 +167,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       <ConfettiParticles trigger={isGoalReached} />
 
       {/* 3. Hydration Hero */}
-      {!effectiveIsConnected ? (
+      {!showBottleHero ? (
         <div className="relative my-4 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform px-6" onClick={() => setShowGoalDetail(true)}>
           <LiquidProgress percentage={progress} />
           <WaterSplashEffect trigger={splashTrigger} amount={splashAmount} />
@@ -201,33 +205,33 @@ const HomeTab = React.memo((props: HomeTabProps) => {
         </div>
       ) : (
         <HomeHydrationHero
-          isConnected={effectiveIsConnected}
+          isConnected={isConnected}
           isConnecting={isConnecting}
+          connectionState={connectionState}
+          lastError={lastError}
           metrics={metrics}
-          equippedBottleSkin={equippedBottle as import('@/hooks/useSmartBottle').EquippedBottleSkin | null}
           waterIntake={waterIntake}
           waterGoal={waterGoal}
           progress={progress}
           bottleCapacity={750}
           onConnectBottle={connectBottle}
+          onRetryConnection={retryBottle}
           onOpenGoalDetail={() => setShowGoalDetail(true)}
           onOpenBottleDetail={() => setActiveTab('bottle')}
         />
       )}
 
-      {/* 4. Quick Actions (merged QuickAddSection + UtilityRow) */}
-      {!effectiveIsConnected && (
-        <QuickAddSection
-          quickAmounts={quickAmounts}
-          handleAddWater={handleAddWater}
-          onEditQuickAmounts={() => {
-            setDraftAmounts([quickAmounts[0] || 100, quickAmounts[1] || 250, quickAmounts[2] || 500]);
-            setIsEditingQuickAmounts(true);
-          }}
-          onHistory={() => setShowHistory(true)}
-          onDrinkMenu={() => setIsDrinkMenuOpen(true)}
-        />
-      )}
+      {/* 4. Quick Actions — always visible, even when bottle connected */}
+      <QuickAddSection
+        quickAmounts={quickAmounts}
+        handleAddWater={handleAddWater}
+        onEditQuickAmounts={() => {
+          setDraftAmounts([quickAmounts[0] || 100, quickAmounts[1] || 250, quickAmounts[2] || 500]);
+          setIsEditingQuickAmounts(true);
+        }}
+        onHistory={() => setShowHistory(true)}
+        onDrinkMenu={() => setIsDrinkMenuOpen(true)}
+      />
 
       {/* 5. Telemetry Grid */}
       <div className="px-5">
@@ -250,40 +254,75 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       {bottleDemoEnabled && (
         <div className="mx-5 rounded-[1.5rem] bg-slate-900/80 border border-white/10 backdrop-blur-xl p-4 overflow-hidden relative mb-6">
           <div className="absolute -right-10 top-0 w-40 h-40 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-          
+
           <div className="flex items-center justify-between gap-4 relative z-10">
             <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full border flex items-center justify-center shrink-0 ${effectiveIsConnected ? 'bg-cyan-500/12 border-cyan-400/30 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'bg-slate-800/80 border-slate-700 text-slate-500'}`}>
-                <Bluetooth size={20} className={isConnecting ? 'animate-pulse' : ''} />
+              <div className={[
+                'w-12 h-12 rounded-full border flex items-center justify-center shrink-0',
+                connectionState === 'connected' ? 'bg-cyan-500/12 border-cyan-400/30 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : '',
+                connectionState === 'connecting' || connectionState === 'reconnecting' ? 'bg-amber-500/10 border-amber-400/30 text-amber-300' : '',
+                connectionState === 'error' ? 'bg-rose-500/10 border-rose-400/30 text-rose-300' : '',
+                connectionState === 'idle' ? 'bg-slate-800/80 border-slate-700 text-slate-500' : '',
+              ].join(' ')}>
+                {connectionState === 'error' ? (
+                  <AlertTriangle size={20} />
+                ) : (
+                  <Bluetooth size={20} className={connectionState === 'connecting' || connectionState === 'reconnecting' ? 'animate-pulse' : ''} />
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-black text-white tracking-tight">{effectiveIsConnected ? 'DigiBottle Pro' : 'DigiBottle Demo'}</h2>
-                  <div className={`w-1.5 h-1.5 rounded-full ${effectiveIsConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-slate-600'}`} />
+                  <h2 className="text-sm font-black text-white tracking-tight">
+                    {connectionState === 'connected' ? 'DigiBottle Pro' :
+                     connectionState === 'connecting' ? 'DigiBottle' :
+                     connectionState === 'reconnecting' ? 'DigiBottle' :
+                     connectionState === 'error' ? 'DigiBottle' :
+                     'DigiBottle Demo'}
+                  </h2>
+                  <div className={[
+                    'w-1.5 h-1.5 rounded-full',
+                    connectionState === 'connected' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : '',
+                    connectionState === 'connecting' || connectionState === 'reconnecting' ? 'bg-amber-400 animate-pulse' : '',
+                    connectionState === 'error' ? 'bg-rose-400' : '',
+                    connectionState === 'idle' ? 'bg-slate-600' : '',
+                  ].join(' ')} />
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5 max-w-[10rem] truncate">
-                  {effectiveIsConnected ? `Pin ${batteryLevel}% • Live` : (isConnecting ? t('home.finding_device') : 'Sẵn sàng ghép nối')}
+                <p className="text-xs text-slate-400 mt-0.5 max-w-[12rem] truncate">
+                  {connectionState === 'connected' ? `Pin ${batteryLevel}%` :
+                   connectionState === 'connecting' ? 'Đang kết nối...' :
+                   connectionState === 'reconnecting' ? 'Đang kết nối lại...' :
+                   connectionState === 'error' ? lastError || 'Kết nối thất bại' :
+                   'Sẵn sàng ghép nối'}
                 </p>
               </div>
             </div>
 
             <div className="flex gap-2 shrink-0">
-              {effectiveIsConnected ? (
+              {connectionState === 'connected' ? (
                 <>
                   <button onClick={syncData} className="h-9 w-9 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center active:scale-95 transition-all">
-                    <RefreshCw size={14} />
+                    <RefreshCw size={14} className={isConnecting ? 'animate-spin' : ''} />
                   </button>
                   <button onClick={disconnectBottle} className="h-9 px-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-black active:scale-95 transition-all flex items-center gap-1.5">
                     Ngắt
                   </button>
                 </>
+              ) : connectionState === 'error' ? (
+                <button
+                  onClick={retryBottle}
+                  className="h-9 px-4 rounded-full bg-cyan-400 text-slate-950 text-xs font-black shadow-[0_0_20px_rgba(34,211,238,0.3)] active:scale-95 transition-all flex items-center gap-1.5"
+                >
+                  <RefreshCw size={14} /> Thử lại
+                </button>
               ) : (
-                <button 
-                  onClick={connectBottle} 
-                  disabled={isConnecting} 
+                <button
+                  onClick={connectBottle}
+                  disabled={connectionState === 'connecting' || connectionState === 'reconnecting'}
                   className="h-9 px-4 rounded-full bg-cyan-400 text-slate-950 text-xs font-black shadow-[0_0_20px_rgba(34,211,238,0.3)] active:scale-95 transition-all disabled:opacity-60 flex items-center gap-1.5"
                 >
-                  {isConnecting ? <RefreshCw size={14} className="animate-spin" /> : 'Bật'}
+                  {(connectionState === 'connecting' || connectionState === 'reconnecting') ? (
+                    <RefreshCw size={14} className="animate-spin" />
+                  ) : 'Bật'}
                 </button>
               )}
             </div>

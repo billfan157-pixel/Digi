@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Bluetooth } from 'lucide-react';
+import { Bluetooth, AlertTriangle, RefreshCw } from 'lucide-react';
+import type { BottleConnectionState } from '@/hooks/useSmartBottle';
 import CountUp from '../CountUp';
 import { BottleVisualizer } from '../DeviceComponents';
 
@@ -18,6 +19,8 @@ interface EquippedBottleSkin {
 interface HomeHydrationHeroProps {
   isConnected: boolean;
   isConnecting?: boolean;
+  connectionState?: BottleConnectionState;
+  lastError?: string | null;
   metrics?: Partial<BottleMetrics>;
   equippedBottleSkin?: EquippedBottleSkin | null;
   waterIntake: number;
@@ -25,6 +28,7 @@ interface HomeHydrationHeroProps {
   progress: number;
   bottleCapacity: number;
   onConnectBottle: () => void | Promise<void>;
+  onRetryConnection?: () => void;
   onOpenGoalDetail?: () => void;
   onOpenBottleDetail?: () => void;
 }
@@ -33,17 +37,55 @@ interface HomeHydrationHeroProps {
 export default function HomeHydrationHero({
   isConnected,
   isConnecting,
+  connectionState,
+  lastError,
   metrics,
-  equippedBottleSkin,
   waterIntake,
   waterGoal,
   progress,
   bottleCapacity,
   onConnectBottle,
+  onRetryConnection,
   onOpenGoalDetail,
   onOpenBottleDetail,
-}: HomeHydrationHeroProps) {
+}: Omit<HomeHydrationHeroProps, 'equippedBottleSkin'>) {
   const bottleFillPercentage = (metrics?.currentVolume ?? 0) / bottleCapacity * 100;
+  const state = connectionState || (isConnected ? 'connected' : 'idle');
+
+  // Error state banner
+  if (state === 'error') {
+    return (
+      <div className="relative flex flex-col items-center justify-center py-6 px-4">
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-6 text-center w-full max-w-xs">
+          <AlertTriangle size={32} className="mx-auto text-rose-400 mb-3" />
+          <p className="text-sm font-bold text-rose-300 mb-1">Kết nối thất bại</p>
+          <p className="text-xs text-slate-400 mb-4">{lastError || 'Không thể kết nối DigiBottle.'}</p>
+          {onRetryConnection && (
+            <button
+              onClick={onRetryConnection}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-bold active:scale-95 transition-all"
+            >
+              <RefreshCw size={14} /> Thử lại
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Connecting / Reconnecting state
+  if (state === 'connecting' || state === 'reconnecting') {
+    return (
+      <div className="relative flex flex-col items-center justify-center py-8">
+        <div className="w-20 h-20 rounded-full border-2 border-amber-400/30 flex items-center justify-center mb-4">
+          <Bluetooth size={32} className="text-amber-400 animate-pulse" />
+        </div>
+        <p className="text-sm font-bold text-amber-300">
+          {state === 'connecting' ? 'Đang kết nối...' : 'Đang kết nối lại...'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

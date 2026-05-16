@@ -1,6 +1,6 @@
-// @ts-ignore: Deno import
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const Deno: any;
 
 type StripeSubscription = {
@@ -126,7 +126,8 @@ Deno.serve(async (request: Request) => {
 
   const event = JSON.parse(rawBody);
   const eventType = event.type as string;
-  const object = event.data?.object as Record<string, any> | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const object = event.data?.object as Record<string, any> | undefined;
 
   try {
     if (eventType === 'checkout.session.completed' && object) {

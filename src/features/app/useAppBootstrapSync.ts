@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { levelFromExp } from '@/config/questConfig';
 import { readAppPreferences, writeAppPreferences } from '@/services/appPreferences.service';
 import { updateProfileFields } from '@/services/profile.service';
+import { AppStorage } from '@/lib/storage';
+
+const WEATHER_SYNCED_KEY = 'digiwell_weather_synced_flag';
 
 interface UseAppBootstrapSyncOptions {
   profile: Record<string, unknown> | null;
@@ -62,7 +65,7 @@ export function useAppBootstrapSync({
         setProfile((prev: Record<string, unknown> | null) => {
           if (!prev) return prev;
 
-          const updatedExp = new_total_exp ?? Number(prev.total_exp) ?? 0;
+          const updatedExp = new_total_exp ?? (Number(prev.total_exp) || 0);
           const updatedLevel = levelFromExp(updatedExp);
 
           return {
@@ -95,7 +98,8 @@ export function useAppBootstrapSync({
   useEffect(() => {
     if (profile?.id && profile.id !== 'undefined') {
       const prefs = readAppPreferences(profile.id as string);
-      setIsWeatherSynced(!!prefs.weather);
+      const weatherFlag = AppStorage.getItem(WEATHER_SYNCED_KEY);
+      setIsWeatherSynced(weatherFlag === 'true');
       setIsCalendarSynced(!!prefs.calendar);
       loadReminderSettings(profile.id as string);
       loadDrinkPresets();

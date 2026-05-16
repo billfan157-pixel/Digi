@@ -184,7 +184,6 @@ export default function BottleTab({
                 temperature={temperature}
                 onConnect={() => setIsConnected(true)}
                 onDisconnect={() => setIsConnected(false)}
-                equippedBottle={null}
               />
 
               {/* Lab Sub-navigation (Glass Bubbles) */}

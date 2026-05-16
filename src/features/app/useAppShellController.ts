@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { AppShellProps } from '@/app/AppShell';
 import { useAppTabProps } from '@/app/useAppTabProps';
 import type { TabType } from '@/components/layout/BottomNav';
@@ -26,6 +26,7 @@ export function useAppShellController(): AppShellProps {
     isWeatherSynced = false,
     setIsWeatherSynced = () => { },
     weatherData,
+    syncWeather = async () => false,
     isCalendarSynced = false,
     setIsCalendarSynced = () => { },
     calendarEvents = [],
@@ -48,6 +49,15 @@ export function useAppShellController(): AppShellProps {
   const { loadDrinkPresets } = useDrinkPresetStore();
   const setAppState = useAppStore((state) => state.setAppState);
   const setAppActions = useAppStore((state) => state.setActions);
+  const weatherSyncAttemptedRef = useRef(false);
+  const prevProfileIdRef = useRef<unknown>(undefined);
+
+  useEffect(() => {
+    if (prevProfileIdRef.current !== profile?.id) {
+      weatherSyncAttemptedRef.current = false;
+      prevProfileIdRef.current = profile?.id;
+    }
+  }, [profile?.id]);
 
   const hydration = useHydrationController({
     profile,
@@ -90,9 +100,7 @@ export function useAppShellController(): AppShellProps {
       streak: hydration.streak,
       waterEntries: hydration.waterEntries,
       weeklyHistory: hydration.weeklyHistory,
-      weatherData,
       watchData,
-      isWeatherSynced,
       isWatchConnected,
       isSyncing: hydration.isSyncing,
       hasPendingCloudSync: hydration.hasPendingCloudSync,
@@ -114,12 +122,23 @@ export function useAppShellController(): AppShellProps {
     hydration.waterIntake,
     hydration.weeklyHistory,
     isWatchConnected,
-    isWeatherSynced,
     profile,
     setAppState,
     watchData,
-    weatherData,
   ]);
+
+  useEffect(() => {
+    if (!profile?.id || weatherSyncAttemptedRef.current) return;
+    if (!weatherData) {
+      weatherSyncAttemptedRef.current = true;
+      const timer = setTimeout(() => {
+        syncWeather().then((ok) => {
+          if (!ok) weatherSyncAttemptedRef.current = false;
+        });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [profile?.id, weatherData, syncWeather]);
 
   useEffect(() => {
     setAppActions({

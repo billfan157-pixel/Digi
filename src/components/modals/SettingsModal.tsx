@@ -19,7 +19,7 @@ import { registerPlugin } from '@capacitor/core';
 import Cropper from 'react-easy-crop';
 
 import { AppStorage } from '@/lib/storage';
-import { syncWeatherAndWaterGoal } from '@/hooks/useWeatherSync';
+import { useWeatherSync } from '@/hooks/useWeatherSync';
 import { requestHealthReadStepsAndHeartRate } from '@/lib/healthIntegration';
 
 // Khai báo Plugin tự chế
@@ -124,6 +124,7 @@ export default function SettingsModal() {
 
   // BIOMETRIC HOOK
   const { registerBiometric, disableBiometric, isRegistering } = useBiometric();
+  const { syncWeather, isSyncing: isWeatherSyncing } = useWeatherSync();
 
   const handleToggleBiometric = async () => {
     if (!profile?.id) return;
@@ -379,21 +380,26 @@ export default function SettingsModal() {
                    </div>
                  </button>
 
-                 {/* --- THÊM NÚT MỚI NÀY VÀO ĐÂY --- */}
-                <div className="mt-4">
-                  <button
-                    onClick={syncWeatherAndWaterGoal}
-                    className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">🌤️</span>
-                      <div className="text-left">
-                        <p className="font-bold text-sm">Cập nhật theo thời tiết</p>
-                        <p className="text-xs opacity-80">Điều chỉnh mục tiêu nước tự động</p>
-                      </div>
-                    </div>
-                    <svg className="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                  </button>
+                  {/* --- THÊM NÚT MỚI NÀY VÀO ĐÂY --- */}
+                 <div className="mt-4">
+                    <button
+                      disabled={isWeatherSyncing}
+                      onClick={() => { triggerHaptic(); void syncWeather(); }}
+                      className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-60 disabled:active:scale-100"
+                    >
+                     <div className="flex items-center gap-3">
+                       <span className="text-2xl">🌤️</span>
+                       <div className="text-left">
+                         <p className="font-bold text-sm">Cập nhật theo thời tiết</p>
+                         <p className="text-xs opacity-80">{isWeatherSyncing ? 'Đang đồng bộ...' : 'Điều chỉnh mục tiêu nước tự động'}</p>
+                       </div>
+                     </div>
+                     {isWeatherSyncing ? (
+                       <Loader2 size={18} className="animate-spin opacity-70" />
+                     ) : (
+                       <svg className="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                     )}
+                   </button>
                 </div>
                 {/* ---------------------------------- */}
 

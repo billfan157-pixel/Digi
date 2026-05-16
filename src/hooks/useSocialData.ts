@@ -24,7 +24,7 @@ interface UseSocialDataProps {
   activeTab?: string;
 }
 
-export function useSocialData({ profile, tab, setActiveTab, waterIntake, waterGoal, streak, activeTab: _activeTab }: UseSocialDataProps) {
+export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, streak, activeTab: _activeTab }: UseSocialDataProps) {
   const [showSocialComposer, setShowSocialComposer] = useState(false);
   const [showDiscoverPeople, setShowDiscoverPeople] = useState(false);
   const [showSocialProfile, setShowSocialProfile] = useState(false);

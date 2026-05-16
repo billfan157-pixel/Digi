@@ -2,6 +2,15 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 
+// ── State machine ──────────────────────────────────────────
+
+export type BottleConnectionState =
+  | 'idle'          // Not connected, not trying
+  | 'connecting'    // Actively establishing connection
+  | 'connected'     // Connected and ready
+  | 'reconnecting'  // Connection lost, auto-retrying
+  | 'error';        // Failed after retries
+
 interface BottleMetrics {
   currentVolume: number;
   batteryLevel: number;
@@ -42,9 +51,16 @@ const BOTTLE_EQUIPPED_EVENT_NAME = 'bottleEquipped';
 const clampVolume = (volume: number, capacity: number) =>
   Math.min(capacity, Math.max(0, volume));
 
+const RECONNECT_BASE_MS = 1000;
+const RECONNECT_MAX_MS = 16000;
+const RECONNECT_MAX_ATTEMPTS = 5;
+
 export const useSmartBottle = (userId: string | undefined, deviceId: string, capacity: number = 750) => {
-  const [isConnected, setIsConnected] = useState(false);
+  // State machine
+  const [connectionState, setConnectionState] = useState<BottleConnectionState>('idle');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+
   const [equippedBottle, setEquippedBottle] = useState<EquippedBottleSkin | null>(null);
   const [metrics, setMetrics] = useState<BottleMetrics>({
     currentVolume: capacity,
@@ -54,10 +70,96 @@ export const useSmartBottle = (userId: string | undefined, deviceId: string, cap
   });
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
   const metricsRef = useRef(metrics);
+  const mountedRef = useRef(true);
+
+  // Reconnection state
+  const reconnectAttemptRef = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Derived values for backward compatibility
+  const isConnected = connectionState === 'connected';
 
   useEffect(() => {
     metricsRef.current = metrics;
   }, [metrics]);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    cancelReconnect();
+  }, []);
+
+  // ── Reconnection engine ────────────────────────────────
+
+  const cancelReconnect = useCallback(() => {
+    if (reconnectTimerRef.current !== null) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+    reconnectAttemptRef.current = 0;
+  }, []);
+
+  const scheduleReconnect = useCallback(() => {
+    if (!mountedRef.current) return;
+
+    const attempt = reconnectAttemptRef.current + 1;
+
+    if (attempt > RECONNECT_MAX_ATTEMPTS) {
+      setConnectionState('error');
+      setLastError(`Không thể kết nối lại sau ${RECONNECT_MAX_ATTEMPTS} lần thử.`);
+      setIsSyncing(false);
+      return;
+    }
+
+    setConnectionState('reconnecting');
+    reconnectAttemptRef.current = attempt;
+
+    const delay = Math.min(
+      RECONNECT_BASE_MS * Math.pow(2, attempt - 1),
+      RECONNECT_MAX_MS,
+    );
+
+    reconnectTimerRef.current = setTimeout(async () => {
+      if (!mountedRef.current) return;
+
+      setConnectionState('connecting');
+      setIsSyncing(true);
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (!mountedRef.current) return;
+
+        setConnectionState('connected');
+        setMetrics(prev => ({
+          ...prev,
+          batteryLevel: Math.max(20, prev.batteryLevel - 5),
+          signalStrength: 90,
+        }));
+        setLastError(null);
+        cancelReconnect();
+        setIsSyncing(false);
+      } catch {
+        if (!mountedRef.current) return;
+        scheduleReconnect();
+      }
+    }, delay);
+  }, []);
+
+  // ── Simulate periodic signal check (demo mode) ─────────
+
+  useEffect(() => {
+    if (connectionState !== 'connected') return;
+
+    const interval = setInterval(() => {
+      if (connectionState !== 'connected') return;
+      setMetrics(prev => ({
+        ...prev,
+        signalStrength: Math.max(40, prev.signalStrength - Math.floor(Math.random() * 5)),
+        batteryLevel: Math.max(15, prev.batteryLevel - Math.floor(Math.random() * 2)),
+      }));
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [connectionState]);
 
   const fetchEquippedBottle = useCallback(async (equippedBottleId?: string | null) => {
     if (!equippedBottleId) {
@@ -102,7 +204,7 @@ export const useSmartBottle = (userId: string | undefined, deviceId: string, cap
 
         setMetrics(prev => ({ ...prev, currentVolume: nextVolume }));
         await fetchEquippedBottle(profileData?.equipped_bottle_id);
-      } catch (err) {
+    } catch {
         console.error('Lỗi lấy dữ liệu khởi tạo bình:', err);
       }
     };
@@ -124,25 +226,43 @@ export const useSmartBottle = (userId: string | undefined, deviceId: string, cap
   }, [fetchEquippedBottle]);
 
   const connectDevice = useCallback(async () => {
+    if (connectionState === 'connected') return;
+
+    cancelReconnect();
+    setConnectionState('connecting');
     setIsSyncing(true);
+    setLastError(null);
 
     try {
       await new Promise(resolve => setTimeout(resolve, 800));
-      setIsConnected(true);
+      setConnectionState('connected');
       setMetrics(prev => ({ ...prev, batteryLevel: 85, signalStrength: 92, temperature: 20 }));
-      toast.info(`Đã bật ${deviceId} ở chế độ mô phỏng. Build public này chưa ghép nối phần cứng DigiBottle thật.`);
+      toast.info('Đã kết nối DigiBottle (chế độ mô phỏng).');
+    } catch {
+      setConnectionState('error');
+      setLastError('Kết nối thất bại. Vui lòng thử lại.');
     } finally {
       setIsSyncing(false);
     }
-  }, [deviceId]);
+  }, [cancelReconnect, connectionState]);
 
   const disconnectDevice = useCallback(() => {
-    setIsConnected(false);
+    cancelReconnect();
+    setConnectionState('idle');
+    setLastError(null);
+    setIsSyncing(false);
     toast.info('Đã ngắt kết nối bình nước');
-  }, []);
+  }, [cancelReconnect]);
+
+  const retryConnection = useCallback(() => {
+    setConnectionState('idle');
+    setLastError(null);
+    reconnectAttemptRef.current = 0;
+    void connectDevice();
+  }, [connectDevice]);
 
   const handleDrinkEvent = useCallback(async (amount: number) => {
-    if (!isConnected || !userId) {
+    if (connectionState !== 'connected' || !userId) {
       toast.error('Bình chưa được kết nối!');
       return;
     }
@@ -171,10 +291,9 @@ export const useSmartBottle = (userId: string | undefined, deviceId: string, cap
         console.error('Lỗi lưu last_bottle_volume:', profileUpdateError);
       }
 
-      // Ghi lịch sử vào water_logs để đồng bộ với ứng dụng
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      
+
       const { data: insertedLog, error: logError } = await supabase.from('water_logs').insert({
         user_id: userId,
         amount: amount,
@@ -207,13 +326,18 @@ export const useSmartBottle = (userId: string | undefined, deviceId: string, cap
     } catch (error) {
       console.error('Lỗi xử lý uống nước từ RPC:', error);
       toast.error('Không thể đồng bộ DigiBottle. Kiểm tra mạng rồi thử lại.');
+
+      // Simulate connection drop on network failure
+      if (connectionState === 'connected') {
+        scheduleReconnect();
+      }
     } finally {
       setIsSyncing(false);
     }
-  }, [capacity, isConnected, userId]);
+  }, [capacity, connectionState, userId, scheduleReconnect]);
 
   const refillBottle = useCallback(async () => {
-    if (!isConnected || !userId) return;
+    if (connectionState !== 'connected' || !userId) return;
 
     setIsSyncing(true);
 
@@ -228,23 +352,24 @@ export const useSmartBottle = (userId: string | undefined, deviceId: string, cap
     } finally {
       setIsSyncing(false);
     }
-  }, [capacity, isConnected, userId]);
+  }, [capacity, connectionState, userId]);
 
   const forceSync = useCallback(async () => {
     setIsSyncing(true);
-
     setSyncLogs(prev => [{ id: Date.now().toString(), timestamp: new Date(), action: 'sync' }, ...prev]);
-
     setTimeout(() => setIsSyncing(false), 1000);
   }, []);
 
   return {
+    connectionState,
     isConnected,
     isSyncing,
+    lastError,
     metrics,
     syncLogs,
     connectDevice,
     disconnectDevice,
+    retryConnection,
     handleDrinkEvent,
     refillBottle,
     forceSync,

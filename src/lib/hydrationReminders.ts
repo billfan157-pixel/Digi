@@ -128,15 +128,38 @@ const buildReminderSlots = (settings: HydrationReminderSettings): ReminderSlot[]
 const getReminderDescriptors = (): LocalNotificationDescriptor[] =>
   Array.from({ length: REMINDER_ID_COUNT }, (_, index) => ({ id: REMINDER_ID_BASE + index + 1 }));
 
-const createReminderTitle = (nickname?: string) =>
-  nickname ? `${nickname}, đến giờ uống nước rồi` : 'Đến giờ uống nước rồi';
+const createReminderTitle = (nickname?: string, streak?: number) => {
+  if (streak && streak >= 7) {
+    return nickname
+      ? `${nickname}, đừng làm mất chuỗi ${streak} ngày nhé!`
+      : `Đừng làm mất chuỗi ${streak} ngày nhé!`;
+  }
+  if (streak && streak >= 3) {
+    return nickname
+      ? `${nickname}, giữ vững đà ${streak} ngày nhé!`
+      : `Giữ vững đà ${streak} ngày nhé!`;
+  }
+  return nickname
+    ? `${nickname}, đến giờ uống nước rồi`
+    : 'Đến giờ uống nước rồi';
+};
 
-const createReminderBody = (slot: ReminderSlot, dailyGoal: number, slotCount: number) => {
+const REMINDER_BODY_TEMPLATES = [
+  (slot: ReminderSlot, sip: number, goal: number) =>
+    `${slot.label} rồi, uống ${sip}ml để bám sát mục tiêu ${goal}ml hôm nay nhé.`,
+  (slot: ReminderSlot, sip: number, goal: number) =>
+    `${slot.label} — một chút nước sẽ giúp bạn tỉnh táo hơn. Uống ${sip}ml để đạt ${goal}ml nhé.`,
+  (slot: ReminderSlot, sip: number, goal: number) =>
+    `Đã ${slot.label}! Uống khoảng ${sip}ml để duy trì năng lượng và theo kịp mục tiêu ${goal}ml.`,
+  (slot: ReminderSlot, sip: number, goal: number) =>
+    `Nhắc nhở ${slot.label}: uống ${sip}ml để giữ cơ thể đủ nước. Mục tiêu hôm nay: ${goal}ml.`,
+];
+
+const createReminderBody = (slot: ReminderSlot, dailyGoal: number, slotCount: number, slotIndex: number) => {
   const estimatedSip = Math.max(150, Math.round(dailyGoal / Math.max(slotCount + 1, 1) / 10) * 10);
-  const period =
-    slot.hour < 11 ? 'buổi sáng' : slot.hour < 17 ? 'buổi trưa' : 'buổi chiều';
-
-  return `${slot.label} rồi, uống khoảng ${estimatedSip}ml trong ${period} để bám sát mục tiêu ${dailyGoal}ml hôm nay nhé.`;
+  const dayOffset = Math.floor(Date.now() / 86400000);
+  const templateIndex = (slotIndex + dayOffset) % REMINDER_BODY_TEMPLATES.length;
+  return REMINDER_BODY_TEMPLATES[templateIndex](slot, estimatedSip, dailyGoal);
 };
 
 const ensureReminderChannel = async () => {
@@ -193,7 +216,7 @@ export const clearHydrationReminders = async () => {
 
 export const scheduleHydrationReminders = async (
   settings: HydrationReminderSettings,
-  options: { dailyGoal: number; nickname?: string },
+  options: { dailyGoal: number; nickname?: string; streak?: number },
 ) => {
   if (!supportsNativeHydrationReminders()) {
     return { scheduled: false, count: 0 };
@@ -212,8 +235,8 @@ export const scheduleHydrationReminders = async (
 
   const notifications: LocalNotificationSchema[] = slots.map((slot, index) => ({
     id: REMINDER_ID_BASE + index + 1,
-    title: createReminderTitle(options.nickname),
-    body: createReminderBody(slot, options.dailyGoal, slots.length),
+    title: createReminderTitle(options.nickname, options.streak),
+    body: createReminderBody(slot, options.dailyGoal, slots.length, index),
     schedule: {
       on: { hour: slot.hour, minute: slot.minute },
       allowWhileIdle: true,

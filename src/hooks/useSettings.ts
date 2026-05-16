@@ -122,9 +122,9 @@ export function useSettings(profile: Record<string, unknown> | null) {
           // Wellness fields (with defaults if missing)
            sleepHours: Number((profile as Record<string, unknown>)?.sleep_hours) || DEFAULT_SETTINGS.sleepHours,
            sleepQuality: Number((profile as Record<string, unknown>)?.sleep_quality) || DEFAULT_SETTINGS.sleepQuality,
-           moodTracking: Boolean((profile as Record<string, unknown>)?.mood_tracking) ?? DEFAULT_SETTINGS.moodTracking,
+           moodTracking: Boolean((profile as Record<string, unknown>)?.mood_tracking) || DEFAULT_SETTINGS.moodTracking,
            syncWellnessData: Boolean((profile as Record<string, unknown>)?.sync_wellness_data) || DEFAULT_SETTINGS.syncWellnessData,
-           energyTracking: Boolean((profile as Record<string, unknown>)?.energy_tracking) ?? DEFAULT_SETTINGS.energyTracking,
+           energyTracking: Boolean((profile as Record<string, unknown>)?.energy_tracking) || DEFAULT_SETTINGS.energyTracking,
        }));
     };
 

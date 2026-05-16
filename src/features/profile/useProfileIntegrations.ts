@@ -20,7 +20,7 @@ interface UseProfileIntegrationsOptions {
   setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   setShowEditProfile: (value: boolean) => void;
   isWeatherSynced: boolean;
-  syncWeather: (arg?: unknown, options?: unknown) => unknown;
+  syncWeather: () => Promise<boolean>;
   isCalendarSynced: boolean;
   syncCalendar: () => unknown;
   isWatchConnected: boolean;
@@ -114,7 +114,7 @@ export function useProfileIntegrations({
       label: 'Trạm thời tiết',
       sub: 'Đồng bộ theo vị trí hiện tại',
       active: isWeatherSynced,
-      action: () => syncWeather(undefined, { useCurrentLocation: true }),
+      action: () => syncWeather(),
       activeColor: '#f97316',
       activeBg: 'rgba(249,115,22,0.2)',
       activeBorder: 'rgba(249,115,22,0.4)',

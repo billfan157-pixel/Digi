@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { X, Flame, Droplet, Trophy, Users, Target, Shield, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-// @ts-ignore - canvas-confetti has no types
 import confetti from 'canvas-confetti';
 
 import { useUIStore } from '@/store/useUIStore';

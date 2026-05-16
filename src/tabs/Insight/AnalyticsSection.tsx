@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, BarChart2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart2, Lock, Crown } from 'lucide-react';
 import CalendarView from '../../components/insight/CalendarView';
 import HourlyHeatmap from '../../components/HourlyHeatmap';
 import AdvancedStatsGrid from '../AdvancedStatsGrid';
@@ -8,6 +8,8 @@ import WeeklyChart from '../../components/WeeklyChart';
 import BehaviorInsightCards from './BehaviorInsightCards';
 
 interface AnalyticsSectionProps {
+  isPremium: boolean;
+  setShowPremiumModal: (show: boolean) => void;
   timeRange: 'week' | 'month';
   setTimeRange: (range: 'week' | 'month') => void;
   calendarDate: Date;
@@ -31,6 +33,8 @@ interface AnalyticsSectionProps {
 }
 
 export default function AnalyticsSection({
+  isPremium,
+  setShowPremiumModal,
   timeRange,
   setTimeRange,
   handlePrevMonth,
@@ -99,48 +103,86 @@ export default function AnalyticsSection({
           </div>
         )}
 
-        <AnimatePresence mode="wait">
-          {timeRange === 'week' ? (
-            <motion.div
-              key="week-chart"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-            >
-              <WeeklyChart 
-                weeklyChartData={weeklyChartData}
-                waterGoal={waterGoal}
-                selectedWeekDay={selectedWeekDay}
-                onSelectDay={setSelectedWeekDay}
-                previousWeekData={previousWeekData as import('@/features/hydration/useWeeklyHistory').WeeklyHistoryPoint[] | undefined}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="month-chart"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-            >
-              <CalendarView 
-                calendarCells={calendarCells}
-                currentMonthName={currentMonthName}
-                waterGoal={waterGoal}
-                selectedCell={selectedCalendarCell}
-                onSelectCell={setSelectedCalendarCell}
-                onDayClick={handleDayClick}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {isPremium ? (
+          <AnimatePresence mode="wait">
+            {timeRange === 'week' ? (
+              <motion.div
+                key="week-chart"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+              >
+                <WeeklyChart 
+                  weeklyChartData={weeklyChartData}
+                  waterGoal={waterGoal}
+                  selectedWeekDay={selectedWeekDay}
+                  onSelectDay={setSelectedWeekDay}
+                  previousWeekData={previousWeekData as import('@/features/hydration/useWeeklyHistory').WeeklyHistoryPoint[] | undefined}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="month-chart"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+              >
+                <CalendarView 
+                  calendarCells={calendarCells}
+                  currentMonthName={currentMonthName}
+                  waterGoal={waterGoal}
+                  selectedCell={selectedCalendarCell}
+                  onSelectCell={setSelectedCalendarCell}
+                  onDayClick={handleDayClick}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        ) : (
+          <div className="relative rounded-2xl overflow-hidden border border-slate-700/50">
+            <div className="opacity-30 blur-[2px] pointer-events-none p-6 flex items-center justify-center h-48 bg-slate-900/60">
+              <BarChart2 size={48} className="text-slate-600" />
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+              <Lock size={20} className="text-amber-400" />
+              <span className="text-xs font-bold text-slate-400">Biểu đồ chi tiết dành cho Premium</span>
+              <button
+                onClick={() => setShowPremiumModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 active:scale-95 transition-all"
+              >
+                <Crown size={14} />
+                Nâng cấp ngay
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Behavior Insights Section */}
       {patterns.length > 0 && (
         <section className="px-6">
-          <BehaviorInsightCards patterns={patterns as unknown as import('@/hooks/useBehaviorAnalysis').BehaviorPattern[]} />
+          {isPremium ? (
+            <BehaviorInsightCards patterns={patterns as unknown as import('@/hooks/useBehaviorAnalysis').BehaviorPattern[]} />
+          ) : (
+            <div className="relative rounded-2xl overflow-hidden border border-slate-700/50">
+              <div className="opacity-30 blur-[2px] pointer-events-none">
+                <BehaviorInsightCards patterns={patterns as unknown as import('@/hooks/useBehaviorAnalysis').BehaviorPattern[]} />
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                <Lock size={20} className="text-amber-400" />
+                <span className="text-xs font-bold text-slate-400">Phân tích thói quen chỉ dành cho Premium</span>
+                <button
+                  onClick={() => setShowPremiumModal(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 active:scale-95 transition-all"
+                >
+                  <Crown size={14} />
+                  Nâng cấp ngay
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -164,7 +206,26 @@ export default function AnalyticsSection({
           <BarChart2 size={14} className="text-cyan-400" />
           <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Tần suất uống (giờ)</h4>
         </div>
-        <HourlyHeatmap userId={profile?.id} />
+        {isPremium ? (
+          <HourlyHeatmap userId={profile?.id} />
+        ) : (
+          <div className="relative rounded-2xl overflow-hidden border border-slate-700/50">
+            <div className="opacity-30 blur-[2px] pointer-events-none p-6 flex items-center justify-center h-32 bg-slate-900/60">
+              <BarChart2 size={36} className="text-slate-600" />
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+              <Lock size={20} className="text-amber-400" />
+              <span className="text-xs font-bold text-slate-400">Heatmap chỉ dành cho Premium</span>
+              <button
+                onClick={() => setShowPremiumModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 active:scale-95 transition-all"
+              >
+                <Crown size={14} />
+                Nâng cấp ngay
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
