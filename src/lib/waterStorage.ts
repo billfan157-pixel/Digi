@@ -49,7 +49,7 @@ const writePendingWaterSyncMap = (value: Record<string, PendingWaterSync>) => {
   AppStorage.setItem(PENDING_WATER_SYNC_STORAGE_KEY, JSON.stringify(value));
 };
 
-const buildPendingWaterSyncKey = (userId: string, day: string) => `${userId}:${day}`;
+export const buildPendingWaterSyncKey = (userId: string, day: string) => `${userId}:${day}`;
 
 export const getPendingWaterSync = (userId: string, day = getTodayWaterDay()) => {
   const syncs = readPendingWaterSyncMap();

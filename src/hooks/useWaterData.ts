@@ -53,17 +53,17 @@ interface OfflineQueueItem {
 
 // ── Pure helpers ───────────────────────────────────────────
 
-const isRealUser = (id: unknown): id is string =>
+export const isRealUser = (id: unknown): id is string =>
   typeof id === 'string' && id.length >= 30;
 
-const toDateStr = (d = new Date()): string =>
+export const toDateStr = (d = new Date()): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; // Local date
 const uuid = (): string =>
   typeof crypto?.randomUUID === 'function'
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-const normalizeRow = (row: Record<string, unknown>): WaterLog => {
+export const normalizeRow = (row: Record<string, unknown>): WaterLog => {
   const createdAt = String(row.created_at ?? new Date().toISOString());
   return {
     id:         String(row.id ?? uuid()),
@@ -78,7 +78,7 @@ const normalizeRow = (row: Record<string, unknown>): WaterLog => {
 
 // ── Offline queue helpers ──────────────────────────────────
 
-function getOfflineQueueKey(userId: string) {
+export function getOfflineQueueKey(userId: string) {
   return `${OFFLINE_QUEUE_KEY}_${userId}`;
 }
 
