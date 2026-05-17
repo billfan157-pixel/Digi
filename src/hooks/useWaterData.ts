@@ -1,10 +1,17 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { playWaterDropSound } from '@/lib/audio';
 import type { Profile } from '@/models';
 import { expGainedForWater } from '@/config/questConfig';
+import {
+  useWaterLogsQuery,
+  useAddWaterMutation,
+  useProcessHydrationMutation,
+  useDeleteWaterMutation,
+  useUpdateWaterMutation,
+} from './useWaterQueries';
+import { fetchUserClubs, incrementClubIntake, insertClubActivity, findExistingWaterLog, insertWaterLog } from '@/services/water.service';
 
 // ── Dev-only logger ────────────────────────────────────────
 const devLog = (...args: unknown[]) => {
@@ -135,27 +142,26 @@ export function useWaterData(
   const [isSyncing,           setIsSyncing]           = useState(false);
   const [hasPendingCloudSync, setHasPendingCloudSync] = useState(false);
 
-  const mountedRef      = useRef(true);
   const waterIntakeRef  = useRef(0);
   const waterEntriesRef = useRef<WaterLog[]>([]);
 
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  const today = toDateStr();
+  const waterQuery = useWaterLogsQuery(isRealUser(profile?.id) ? profile.id : undefined, today);
+  const addWaterMutation = useAddWaterMutation();
+  const processHydrationMutation = useProcessHydrationMutation();
+  const deleteWaterMutation = useDeleteWaterMutation();
+  const updateWaterMutation = useUpdateWaterMutation();
 
-  // FIX 1: Calculate from waterEntries with fallback to profile
-  // Primary: sum of today's waterEntries
-  // Fallback: profile.water_today if entries empty (fetch failed)
-  const waterIntake = useMemo(() => {
-    const fromEntries = waterEntries.reduce((sum, e) => sum + e.amount, 0);
-    const fromProfile = profile?.water_today || 0;
-    return fromEntries > 0 ? fromEntries : fromProfile;
-  }, [waterEntries, profile?.water_today]);
-
-
-
+  // Sync React Query data → local state (initial load + refetch)
   useEffect(() => {
-    waterIntakeRef.current  = waterIntake;
-    waterEntriesRef.current = waterEntries;
-  }, [waterEntries, waterIntake]);
+    if (waterQuery.data && waterQuery.isSuccess) {
+      setWaterEntries(waterQuery.data);
+      setIsSyncing(false);
+    }
+  }, [waterQuery.data, waterQuery.isSuccess]);
+
+  useEffect(() => { waterIntakeRef.current = waterIntake; }, [waterIntake]);
+  useEffect(() => { waterEntriesRef.current = waterEntries; }, [waterEntries]);
 
   useEffect(() => {
     if (!isRealUser(profile?.id)) {
@@ -175,37 +181,14 @@ export function useWaterData(
       return;
     }
 
-    const today = toDateStr();
-    devLog('Fetching water for today:', today);
-
     setIsSyncing(true);
-    try {
-      const { data, error } = await supabase
-        .from('water_logs')
-        .select('*')
-        .eq('user_id', profile.id)
-        .eq('day', today)  // Only today's entries
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        devError('fetchAllWater error:', error);
-        throw error;
-      }
-
-      devLog('Fetched raw data:', data?.length || 0, 'records for today');
-      const normalized = (data ?? []).map(normalizeRow);
-      devLog('Normalized entries:', normalized.length, normalized.slice(0, 3).map((e: WaterLog) => ({ amount: e.amount, name: e.name })));
-
-      setWaterEntries(normalized);
-      devLog('Updated waterEntries state with', normalized.length, 'entries');
-    } catch (err) {
-      devError('fetchAllWater exception:', err);
+    const result = await waterQuery.refetch();
+    if (result.error) {
+      devError('fetchAllWater error:', result.error);
       toast.error('Không thể tải nhật ký nước. Kiểm tra kết nối.');
-      setWaterEntries([]);
-    } finally {
-      if (mountedRef.current) setIsSyncing(false);
     }
-  }, [profile?.id]);
+    setIsSyncing(false);
+  }, [profile?.id, waterQuery]);
 
   // Auto fetch water data on mount/profile change
   useEffect(() => {
@@ -275,29 +258,26 @@ export function useWaterData(
       }
 
       try {
-        const { data, error } = await supabase
-          .from('water_logs')
-          .insert({ user_id: profile.id, amount: actualAmount, name, exp, day: today })
-          .select('id')
-          .single();
-
-        if (error) throw error;
+        const data = await addWaterMutation.mutateAsync({
+          userId: profile.id,
+          amount: actualAmount,
+          name,
+          exp,
+          day: today,
+        });
 
         // [QUAN TRỌNG] Gọi RPC để backend tự cộng EXP, Level và Coin an toàn tuyệt đối
-        const rpcRes = await supabase.rpc('process_hydration_event', {
+        await processHydrationMutation.mutateAsync({
           p_user_id: profile.id,
           p_amount_ml: actualAmount,
           p_temp_c: tempC || null,
           p_exercise_mins: exerciseMins || 0,
-          p_is_fasting: isFasting || false
+          p_is_fasting: isFasting || false,
         });
-        if (rpcRes.error) {
-          devError('RPC process_hydration_event error:', rpcRes.error);
-        }
 
         // Swap tempId -> real ID, không cần refetch toàn bộ
         setWaterEntries(prev =>
-          prev.map(e => e.id === tempId ? { ...e, id: String(data.id) } : e),
+          prev.map(e => e.id === tempId ? { ...e, id: data.id } : e),
         );
 
         toast.success(`Đã ghi nhận +${actualAmount}ml.`);
@@ -347,15 +327,7 @@ export function useWaterData(
 
       try {
         devLog('Deleting entry from DB:', id);
-        const { error } = await supabase
-          .from('water_logs')
-          .delete()
-          .eq('id', id)
-          .eq('user_id', profile.id);
-        if (error) {
-          devError('Delete error:', error);
-          throw error;
-        }
+        await deleteWaterMutation.mutateAsync({ id, userId: profile.id, day: today });
 
         devLog('Delete successful, notifying parent');
         // Notify với số âm để parent trừ đúng delta
@@ -418,13 +390,13 @@ export function useWaterData(
     if (!isRealUser(profile?.id) || id.startsWith('temp-')) return;
 
     try {
-      const { error } = await supabase
-        .from('water_logs')
-        .update({ amount: newAmount, exp: newExp })
-        .eq('id', id)
-        .eq('user_id', profile.id);
-
-      if (error) throw error;
+      await updateWaterMutation.mutateAsync({
+        id,
+        userId: profile.id,
+        day: today,
+        amount: newAmount,
+        exp: newExp,
+      });
 
       toast.success('Đã cập nhật lượng nước!');
       if (deltaAmount !== 0) await onWaterLogged?.(deltaAmount, deltaExp);
@@ -454,50 +426,33 @@ export function useWaterData(
 
       try {
         if (!item.logSynced) {
-          const { data: existingLog, error: existingLogError } = await supabase
-            .from('water_logs')
-            .select('id')
-            .eq('user_id', item.user_id)
-            .eq('day', item.day)
-            .eq('amount', item.amount)
-            .eq('name', item.name)
-            .eq('created_at', item.created_at)
-            .maybeSingle();
-
-          if (existingLogError) {
-            devError('Existing log lookup error:', existingLogError);
-            throw existingLogError;
-          }
+          const existingLog = await findExistingWaterLog({
+            user_id: item.user_id,
+            day: item.day,
+            amount: item.amount,
+            name: item.name,
+            created_at: item.created_at,
+          });
 
           if (!existingLog) {
-            const { error: insertError } = await supabase.from('water_logs').insert({
+            await insertWaterLog({
               user_id: item.user_id,
               amount: item.amount,
               name: item.name,
               exp: item.exp,
               day: item.day,
-              created_at: item.created_at,
             });
-            if (insertError) {
-              devError('Insert error:', insertError);
-              throw insertError;
-            }
           }
         }
 
         if (!item.progressionSynced) {
-          const { error: rpcError } = await supabase.rpc('process_hydration_event', {
+          await processHydrationMutation.mutateAsync({
             p_user_id: item.user_id,
             p_amount_ml: item.amount,
             p_temp_c: item.tempC || null,
             p_exercise_mins: item.exerciseMins || 0,
-            p_is_fasting: item.isFasting || false
+            p_is_fasting: item.isFasting || false,
           });
-
-          if (rpcError) {
-            devError('RPC process_hydration_event error:', rpcError);
-            throw rpcError;
-          }
         }
 
         syncedCount += 1;
@@ -557,20 +512,17 @@ export function useWaterData(
 // ── Club sync (fire & forget) ──────────────────────────────
 
 async function syncToClubs(userId: string, amountMl: number) {
-  const { data: clubs } = await supabase
-    .from('club_members')
-    .select('club_id')
-    .eq('user_id', userId);
+  const clubs = await fetchUserClubs(userId);
 
   if (!clubs?.length) return;
 
   await Promise.allSettled(
-    clubs.map(({ club_id }: { club_id: string }) =>
+    clubs.map(({ club_id }) =>
       Promise.all([
-        supabase.rpc('increment_club_member_intake', {
+        incrementClubIntake({
           p_user_id: userId, p_club_id: club_id, p_amount_to_add: amountMl,
         }),
-        supabase.from('club_activity').insert({
+        insertClubActivity({
           club_id, user_id: userId,
           activity_type: 'drink',
           message: `da nap them ${amountMl}ml nuoc`,
