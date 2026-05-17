@@ -1,5 +1,6 @@
 // deno-lint-ignore no-import-prefix
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
+import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimit.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -286,6 +287,14 @@ Deno.serve(async (request: Request) => {
 
   if (authError || !user) {
     return json({ error: 'Unauthorized.' }, 401);
+  }
+
+  // Rate limit: max 30 calendar requests per minute per user (protect Google API quota)
+  const rateLimit = await checkRateLimit(`calendar-proxy:${user.id}`, RATE_LIMITS.calendarProxy);
+  if (!rateLimit.allowed) {
+    return json({
+      error: `Too many calendar requests. Try again in ${rateLimit.retryAfterSeconds} seconds.`,
+    }, 429);
   }
 
   try {

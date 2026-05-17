@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
+import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimit.ts';
 
 type BillingPlan = 'monthly' | 'yearly';
 
@@ -59,6 +60,14 @@ Deno.serve(async (request) => {
 
   if (authError || !user) {
     return json({ error: 'Unauthorized.' }, 401);
+  }
+
+  // Rate limit: max 5 checkout sessions per minute per user
+  const rateLimit = await checkRateLimit(`stripe-checkout:${user.id}`, RATE_LIMITS.stripeCheckout);
+  if (!rateLimit.allowed) {
+    return json({
+      error: `Too many checkout attempts. Try again in ${rateLimit.retryAfterSeconds} seconds.`,
+    }, 429);
   }
 
   const body = (await request.json()) as CheckoutRequest;

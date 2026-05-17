@@ -63,15 +63,13 @@ class StorageManager {
 
   static setItem(key: string, value: string) {
     this.cache[key] = value;
-    // Async write to native storage (fire-and-forget với error handling)
     Preferences.set({ key, value }).catch(err => {
       console.error(`[AppStorage] Preferences.set failed for ${key}:`, err);
     });
-    // Fallback: also write to localStorage for web redundancy
     try {
       localStorage.setItem(key, value);
     } catch (e) {
-      console.error('[AppStorage] setItem fallback error:', e);
+      console.warn('[AppStorage] localStorage fallback failed, data only in memory cache', e);
     }
   }
 

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { TabType } from '@/components/layout/BottomNav';
 import { useLeagueData } from '@/features/league/useLeagueData';
+import type { AppProfile } from '@/services/profile.service';
 
 interface UseLeagueControllerOptions {
-  profile: Record<string, unknown> | null;
+  profile: AppProfile | null;
   activeTab: TabType;
   streak: number;
   setShowAddFriend: (value: boolean) => void;

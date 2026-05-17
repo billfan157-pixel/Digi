@@ -428,8 +428,4 @@ export function recalculateWithWeather(
   return calculateWaterIntake({ ...input, currentTempC: newTempC });
 }
 
-export function quickEstimate(weightKg: number, gender: Gender = 'other'): number {
-  const base = weightKg * 35;
-  const genderBonus = gender === 'male' ? 300 : 0;
-  return Math.round((base + genderBonus) / 50) * 50;
-}
+

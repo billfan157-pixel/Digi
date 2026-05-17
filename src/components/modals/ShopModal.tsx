@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import CountUp from '../CountUp';
 import GachaMachine from '../GachaMachine';
+import type { AppProfile } from '@/services/profile.service';
 import type { Profile, ShopItem } from '../../models';
 import { appQueryKeys } from '@/lib/queryKeys';
 import { fetchProfileById } from '@/services/profile.service';
@@ -198,7 +199,7 @@ export default function ShopModal() {
   const setProfile = (newProfileOrUpdater: unknown) => {
        const currentProfile = useAppStore.getState().profile;
        const newProfile = typeof newProfileOrUpdater === 'function' ? (newProfileOrUpdater as (prev: typeof currentProfile) => typeof currentProfile)(currentProfile) : newProfileOrUpdater;
-       setAppState({ profile: newProfile as import('@/models').Profile | null });
+       setAppState({ profile: newProfile as AppProfile | null });
   };
   
   const onSpendCoins = async (amount: number) => {

@@ -30,7 +30,7 @@ export function useAiSocialOrchestration() {
   const toggleFastingMode = () => { toast.success('Tính năng chế độ nhịn ăn đang phát triển') };
 
   const socialProps = useSocialData({
-    profile: profile as unknown as Record<string, unknown> | null,
+    profile,
     waterIntake,
     waterGoal,
     streak,

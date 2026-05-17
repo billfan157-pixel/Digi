@@ -7,10 +7,11 @@ import {
   fetchProfileById,
   updateProfileFields,
 } from '@/services/profile.service';
+import type { AppProfile } from '@/services/profile.service';
 
 interface UseProfileSyncOptions {
-  profile: Record<string, unknown> | null;
-  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
+  profile: AppProfile | null;
+  setProfile: React.Dispatch<React.SetStateAction<AppProfile | null>>;
   isEnabled: boolean;
 }
 
@@ -24,7 +25,7 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
         queryKey: appQueryKeys.profile(profileId),
         queryFn: () => fetchProfileById(profileId),
       });
-      setProfile(nextProfile as unknown as Record<string, unknown> | null);
+      setProfile(nextProfile);
     } catch (error) {
       console.error('Error refetching profile:', error);
       const cachedProfile = queryClient.getQueryData<Record<string, unknown>>(appQueryKeys.profile(profileId));
@@ -33,7 +34,7 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
       setProfile({
         ...cachedProfile,
         level: levelFromExp(Number(cachedProfile.total_exp) || 0),
-      });
+      } as AppProfile);
     }
   }, [isEnabled, profile, setProfile]);
 
@@ -51,11 +52,10 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
 
     if (!profile?.id || profile.id === 'undefined') return;
 
-    const p = profile as Record<string, unknown>;
     // NOTE: EXP, coins, và level đã được backend xử lý trong RPC process_hydration_event.
     // Frontend chỉ sync water_today và total_water để tránh double EXP.
-    const newWaterToday = (Number(p.water_today) || 0) + optimisticAmount;
-    const newTotalWater = (Number(p.total_water) || 0) + optimisticAmount;
+    const newWaterToday = (profile.water_today || 0) + optimisticAmount;
+    const newTotalWater = (profile.total_water || 0) + optimisticAmount;
 
     const updatedProfile = {
       ...profile,

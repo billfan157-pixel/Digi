@@ -133,7 +133,7 @@ async function runQuestEngineOnce(ctx: QuestEngineContext): Promise<void> {
     }
 
     if (updates.length > 0) {
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         updates.map(async (u) => {
           const { data, error } = await supabase.from('user_quests').update({
             progress:     u.progress,
@@ -141,12 +141,15 @@ async function runQuestEngineOnce(ctx: QuestEngineContext): Promise<void> {
             completed_at: u.completed_at,
           }).eq('id', u.id).select('id');
           
-          if (error) console.error('[QuestEngine] Lỗi Update DB:', error.message);
-          else if (!data || data.length === 0) {
-            console.error(`[QuestEngine] RLS chặn update quest ${u.id}!`);
-          }
+          if (error) throw new Error(`Update quest ${u.id} failed: ${error.message}`);
+          if (!data || data.length === 0) throw new Error(`RLS chặn update quest ${u.id}`);
+          return u.id;
         })
       );
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.error(`[QuestEngine] ${failures.length}/${updates.length} quest updates failed`);
+      }
     }
 
     for (const uq of newlyCompleted) {
@@ -314,11 +317,20 @@ async function updateMilestoneChallenge(
     });
 
     if (m.badge_id) {
+      const { data: existingBadge } = await supabase
+        .from('user_badges')
+        .select('id')
+        .eq('user_id', ctx.userId)
+        .eq('badge_id', m.badge_id)
+        .maybeSingle();
+      
+      if (existingBadge) continue;
+
       const { error: badgeError } = await supabase
         .from('user_badges')
         .insert({ user_id: ctx.userId, badge_id: m.badge_id });
       
-      if (badgeError && badgeError.code !== '23505') {
+      if (badgeError) {
         console.error('[ChallengeEngine] Lỗi cấp huy hiệu:', badgeError);
       }
     }

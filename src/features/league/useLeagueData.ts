@@ -128,7 +128,7 @@ export function useLeagueData({
     const { data, error } = await supabase!
       .from('public_profiles')
       .select('id, nickname')
-      .ilike('nickname', `%${query}%`)
+      .ilike('nickname', `%${query.replace(/[%_\\]/g, '\\$&')}%`)
       .neq('id', profile?.id)
       .limit(5);
 

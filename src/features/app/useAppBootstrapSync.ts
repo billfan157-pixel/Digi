@@ -3,12 +3,13 @@ import { levelFromExp } from '@/config/questConfig';
 import { readAppPreferences, writeAppPreferences } from '@/services/appPreferences.service';
 import { updateProfileFields } from '@/services/profile.service';
 import { AppStorage } from '@/lib/storage';
+import type { AppProfile } from '@/services/profile.service';
 
 const WEATHER_SYNCED_KEY = 'digiwell_weather_synced_flag';
 
 interface UseAppBootstrapSyncOptions {
-  profile: Record<string, unknown> | null;
-  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
+  profile: AppProfile | null;
+  setProfile: React.Dispatch<React.SetStateAction<AppProfile | null>>;
   refetchProfile: () => Promise<void>;
   refetchWater: () => Promise<void>;
   setIsWeatherSynced: (value: boolean) => void;
@@ -62,7 +63,7 @@ export function useAppBootstrapSync({
       const { amount_ml = 0, new_total_exp, new_coins, refresh_profile, refresh_water } = customEvent.detail || {};
 
       if (new_total_exp !== undefined || new_coins !== undefined || amount_ml > 0) {
-        setProfile((prev: Record<string, unknown> | null) => {
+        setProfile((prev) => {
           if (!prev) return prev;
 
           const updatedExp = new_total_exp ?? (Number(prev.total_exp) || 0);
@@ -124,12 +125,11 @@ export function useAppBootstrapSync({
 
   useEffect(() => {
     if (!profile?.id || profile.id === 'undefined') return;
-    const p = profile as Record<string, unknown>;
-    if (p.onboarding_completed) return;
+    if (profile.onboarding_completed) return;
 
-    if (p.weight && p.water_goal) {
+    if (profile.weight && profile.water_goal) {
       updateProfileFields(profile.id as string, { onboarding_completed: true })
-        .then((updatedProfile) => setProfile(updatedProfile as unknown as Record<string, unknown> | null))
+        .then((updatedProfile) => setProfile(updatedProfile))
         .catch(() => {});
       return;
     }
@@ -137,9 +137,9 @@ export function useAppBootstrapSync({
     setShowOnboarding(true);
   }, [
     profile?.id,
-    (profile as Record<string, unknown>)?.onboarding_completed,
-    (profile as Record<string, unknown>)?.weight,
-    (profile as Record<string, unknown>)?.water_goal,
+    profile?.onboarding_completed,
+    profile?.weight,
+    profile?.water_goal,
     setProfile,
     setShowOnboarding,
   ]);
@@ -161,7 +161,7 @@ export function useAppBootstrapSync({
 
     const refreshForNewDay = async () => {
       lastDayRef.current = getDayKey(new Date());
-      setProfile((prev: Record<string, unknown> | null) => prev ? {
+      setProfile((prev) => prev ? {
         ...prev,
         water_today: 0,
       } : prev);

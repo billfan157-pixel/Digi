@@ -8,12 +8,13 @@ import { playSuccessSound } from '@/lib/audio';
 import confetti from 'canvas-confetti';
 
 import { AppStorage } from '@/lib/storage';
+import type { AppProfile } from '@/services/profile.service';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 interface UsePremiumGamificationOptions {
-  profile: Record<string, unknown> | null;
-  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
+  profile: AppProfile | null;
+  setProfile: React.Dispatch<React.SetStateAction<AppProfile | null>>;
   isPremium: boolean;
   setIsPremium: (value: boolean) => void;
   waterIntake: number;
@@ -270,9 +271,9 @@ export function usePremiumGamification({
 
     try {
       const report = await generateWeeklyReport(profile.id as string, {
-        nickname: String((profile as Record<string, unknown>).nickname || ''),
-        goal: String((profile as Record<string, unknown>).goal || ''),
-        activity: String((profile as Record<string, unknown>).activity || ''),
+        nickname: profile.nickname || '',
+        goal: profile.goal || '',
+        activity: profile.activity || '',
         avgHeartRate: Number(watchData?.heartRate) || 0,
       });
 

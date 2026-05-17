@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
+import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimit.ts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const Deno: any;
@@ -46,12 +47,23 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+    // Rate limit: max 1 delete attempt per hour per user
+    const rateLimit = await checkRateLimit(`delete-account:${user.id}`, RATE_LIMITS.deleteAccount);
+    if (!rateLimit.allowed) {
+      return new Response(JSON.stringify({
+        error: `Too many delete attempts. Try again in ${rateLimit.retryAfterSeconds} seconds.`,
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    if (deleteError) {
-      console.error('delete-account error:', deleteError.message);
-      return new Response(JSON.stringify({ error: deleteError.message }), {
+    // Use RPC that cascades from auth.users → profiles → all related tables
+    const { error: rpcError } = await supabase.rpc('delete_account_and_auth');
+
+    if (rpcError) {
+      console.error('delete-account error:', rpcError.message);
+      return new Response(JSON.stringify({ error: rpcError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

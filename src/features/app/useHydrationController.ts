@@ -11,12 +11,12 @@ import { useStreak } from '@/hooks/useStreak';
 import { useWaterData } from '@/hooks/useWaterData';
 import { calculateWaterIntake, type ActivityLevel, type Climate, type Gender } from '@/lib/HydrationEngine';
 import { normalizeActivity, normalizeClimate } from '@/lib/profileNormalization';
-import type { Profile } from '@/models';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import type { AppProfile } from '@/services/profile.service';
 
 interface UseHydrationControllerOptions {
-  profile: Record<string, unknown> | null;
-  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
+  profile: AppProfile | null;
+  setProfile: React.Dispatch<React.SetStateAction<AppProfile | null>>;
   view: string;
   weatherData: { temp?: number; humidity?: number; feelsLike?: number; status?: string; location?: string } | null | undefined;
   isWeatherSynced: boolean;
@@ -73,16 +73,15 @@ export function useHydrationController({
   const hydrationResult = useMemo(() => {
     if (!profile) return null;
 
-    const p = profile as Record<string, unknown>;
     const genderMap: Record<string, Gender> = { Nam: 'male', Nữ: 'female' };
-    const mappedGender = genderMap[String(p.gender)] || 'other';
-    const mappedActivity = normalizeActivity(String(p.activity)) as ActivityLevel;
-    const mappedClimate = normalizeClimate(String(p.climate)) as Climate;
+    const mappedGender = genderMap[profile.gender] || 'other';
+    const mappedActivity = normalizeActivity(profile.activity) as ActivityLevel;
+    const mappedClimate = normalizeClimate(profile.climate) as Climate;
 
     return calculateWaterIntake({
-      weightKg: Number(p.weight) || 60,
-      heightCm: Number(p.height) || 170,
-      ageYears: Number(p.age) || 20,
+      weightKg: profile.weight || 60,
+      heightCm: profile.height || 170,
+      ageYears: profile.age || 20,
       gender: mappedGender,
       activityLevel: mappedActivity,
       climate: mappedClimate,
@@ -92,8 +91,8 @@ export function useHydrationController({
       currentHumidity: isWeatherSynced ? weatherData?.humidity : undefined,
       exerciseMinutes: isWatchConnected ? Math.round((Number(watchData?.steps) || 0) / 120) : 0,
       isFasting: isFastingMode,
-      wakeUpTime: String(p.wakeUp) || '07:00',
-      bedTime: String(p.bedTime) || '23:00',
+      wakeUpTime: profile.wakeUp || '07:00',
+      bedTime: profile.bedTime || '23:00',
       avgHeartRate: isWatchConnected ? Number(watchData?.heartRate) : 0,
     });
   }, [profile, weatherData, isWeatherSynced, watchData, isWatchConnected, isFastingMode]);
@@ -121,7 +120,7 @@ export function useHydrationController({
     hasPendingCloudSync = false,
     isSyncing = false,
     refetchWater = async () => {},
-  } = useWaterData(profile as unknown as (Profile & { water_today?: number }) | null, handleWaterSync, {
+  } = useWaterData(profile, handleWaterSync, {
     tempC: isWeatherSynced ? weatherData?.temp : undefined,
     exerciseMins: isWatchConnected ? Math.round((watchData?.steps || 0) / 120) : 0,
     isFasting: isFastingMode,

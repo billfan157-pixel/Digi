@@ -1,21 +1,19 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
-import { useUIStore } from '../store/useUIStore';
 import {
-  buildProgressShareText,
-  DEFAULT_SOCIAL_COMPOSER,
   DEFAULT_SOCIAL_PROFILE_STATS,
   isMissingSocialSchemaError,
-  type SocialComposerState,
   type CloseCircleMember,
   type SocialDiscoverProfile,
   type SocialFeedPost,
   type SocialProfileStats,
 } from '../lib/social';
+import { useSocialComposer } from './useSocialComposer';
+import type { AppProfile } from '@/services/profile.service';
 
 interface UseSocialDataProps {
-  profile: Record<string, unknown> | null;
+  profile: AppProfile | null;
   tab?: string;
   setActiveTab?: (tab: string) => void;
   waterIntake?: number;
@@ -25,10 +23,8 @@ interface UseSocialDataProps {
 }
 
 export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, streak, activeTab: _activeTab }: UseSocialDataProps) {
-  const [showSocialComposer, setShowSocialComposer] = useState(false);
   const [showDiscoverPeople, setShowDiscoverPeople] = useState(false);
   const [showSocialProfile, setShowSocialProfile] = useState(false);
-  const [socialComposer, setSocialComposer] = useState<SocialComposerState>({ ...DEFAULT_SOCIAL_COMPOSER });
   const [socialPosts, setSocialPosts] = useState<SocialFeedPost[]>([]);
   const [socialStories, setSocialStories] = useState<SocialFeedPost[]>([]);
   const [socialSearchQuery, setSocialSearchQuery] = useState('');
@@ -39,18 +35,19 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
   const [socialProfileStats, setSocialProfileStats] = useState<SocialProfileStats>(DEFAULT_SOCIAL_PROFILE_STATS);
   const [socialError, setSocialError] = useState('');
   const [isSocialLoading, setIsSocialLoading] = useState(false);
-  const [isPublishingSocialPost, setIsPublishingSocialPost] = useState(false);
   const [isSocialSearching, setIsSocialSearching] = useState(false);
-  const [socialImageFile, setSocialImageFile] = useState<File | null>(null);
-  const [socialImagePreview, setSocialImagePreview] = useState('');
-  const socialImageInputRef = useRef<HTMLInputElement>(null);
-  const [showQuickDropCamera, setShowQuickDropCamera] = useState(false);
-  const [isPublishingQuickDrop, setIsPublishingQuickDrop] = useState(false);
+
+  const composer = useSocialComposer({
+    profile,
+    setActiveTab,
+    waterIntake,
+    waterGoal,
+    streak,
+    onPostPublished: () => { void refreshSocialFeed({ silent: true }); },
+  });
 
   useEffect(() => {
     if (!profile?.id) {
-      setShowSocialComposer(false);
-      setShowQuickDropCamera(false);
       setShowDiscoverPeople(false);
       setShowSocialProfile(false);
       setSocialPosts([]);
@@ -60,7 +57,7 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
       setCloseCircleMembers([]);
       setSocialProfileStats(DEFAULT_SOCIAL_PROFILE_STATS);
       setSocialError('');
-      resetSocialComposer();
+      composer.resetSocialComposer();
     }
   }, [profile?.id]);
 
@@ -76,12 +73,6 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
     }
   }, [showDiscoverPeople, profile?.id]);
 
-  useEffect(() => () => {
-    if (socialImagePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(socialImagePreview);
-    }
-  }, [socialImagePreview]);
-
   const getSocialErrorMessage = (message?: string) => {
     if (!message) return 'Không thể tải tính năng cộng đồng lúc này.';
     if (isMissingSocialSchemaError(message)) {
@@ -91,21 +82,6 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
   };
 
   const closeCircleIds = useMemo(() => closeCircleMembers.map(member => member.id), [closeCircleMembers]);
-
-  const resetSocialComposer = useCallback(() => {
-    if (socialImagePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(socialImagePreview);
-    }
-    setSocialComposer({ ...DEFAULT_SOCIAL_COMPOSER });
-    setSocialImageFile(null);
-    setSocialImagePreview('');
-  }, [socialImagePreview]);
-
-  const closeSocialComposer = () => {
-    resetSocialComposer();
-    setShowSocialComposer(false);
-    useUIStore.getState().setShowSocialComposer(false);
-  };
 
   const loadCloseCircle = async (options?: { silent?: boolean }): Promise<CloseCircleMember[]> => {
     if (!profile?.id) return [];
@@ -161,54 +137,6 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
     }
   };
 
-  const openSocialComposer = (kind: SocialComposerState['postKind'] = 'status') => {
-    if (!profile?.id) {
-      toast.error('Vui lòng đăng nhập lại để đăng bài.');
-      return;
-    }
-
-    if (kind === 'story') {
-      setActiveTab?.('feed');
-      setShowQuickDropCamera(true);
-      return;
-    }
-
-    const content = kind === 'progress'
-      ? buildProgressShareText({
-        nickname: profile?.nickname as string | undefined,
-        waterIntake: waterIntake ?? 0,
-        waterGoal: waterGoal ?? 2000,
-        streak: streak ?? 0,
-      })
-      : '';
-
-    resetSocialComposer();
-    setSocialComposer({
-      content,
-      imageUrl: '',
-      postKind: kind === 'progress' ? 'status' : kind,
-      visibility: 'followers',
-    });
-    setActiveTab?.('feed');
-    setShowSocialComposer(true);
-    useUIStore.getState().setShowSocialComposer(true);
-  };
-
-  const uploadSocialImage = async (file: File) => {
-    if (!profile?.id) throw new Error('Vui lòng đăng nhập lại.');
-
-    const extension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'jpg';
-    const safeExtension = extension || 'jpg';
-    const filePath = `${profile.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExtension}`;
-    const { error } = await supabase!.storage.from('social-media').upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: file.type || undefined,
-    });
-    if (error) throw error;
-    return supabase!.storage.from('social-media').getPublicUrl(filePath).data.publicUrl;
-  };
-
   const loadSocialDirectory = async (query: string) => {
     if (!profile?.id) return;
 
@@ -221,7 +149,8 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
         .neq('id', profile.id);
 
       if (keyword) {
-        request = request.filter('nickname', 'ilike', `%${keyword}%`);
+        const escaped = keyword.replace(/[%_\\]/g, '\\$&');
+        request = request.filter('nickname', 'ilike', `%${escaped}%`);
       } else {
         request = request.order('nickname', { ascending: true });
       }
@@ -374,82 +303,6 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
     }
   };
 
-  const handleSocialImagePicked = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Chỉ hỗ trợ ảnh JPG, PNG, WEBP hoặc HEIC.');
-      event.target.value = '';
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ảnh tối đa 5MB để upload nhanh hơn.');
-      event.target.value = '';
-      return;
-    }
-
-    if (socialImagePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(socialImagePreview);
-    }
-
-    const previewUrl = URL.createObjectURL(file);
-    setSocialImageFile(file);
-    setSocialImagePreview(previewUrl);
-    setSocialComposer((prev: SocialComposerState) => ({ ...prev, imageUrl: '' }));
-    event.target.value = '';
-  };
-
-  const openQuickDropCamera = () => {
-    if (!profile?.id) {
-      toast.error('Vui lòng đăng nhập lại để đăng Drop.');
-      return;
-    }
-
-    setActiveTab?.('feed');
-    setShowQuickDropCamera(true);
-  };
-
-  const closeQuickDropCamera = () => {
-    setShowQuickDropCamera(false);
-  };
-
-  const handleQuickDropCapture = async (blob: Blob) => {
-    if (!profile?.id) {
-      toast.error('Vui lòng đăng nhập lại để đăng Drop.');
-      return;
-    }
-
-    const file = new File([blob], `drop-${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' });
-    setIsPublishingQuickDrop(true);
-    const toastId = toast.loading('Đang đăng Drop...');
-    try {
-      const imageUrl = await uploadSocialImage(file);
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase!.from('social_posts').insert({
-        author_id: profile.id,
-        content: '',
-        image_url: imageUrl,
-        post_kind: 'story',
-        visibility: 'followers',
-        hydration_ml: waterIntake,
-        streak_snapshot: streak,
-        expires_at: expiresAt,
-      }).select('id').single();
-      if (error) throw error;
-      if (!data?.id) throw new Error('Không nhận được Drop vừa tạo.');
-
-      toast.success('Drop đã lên sóng.', { id: toastId });
-      setShowQuickDropCamera(false);
-      await refreshSocialFeed({ silent: true });
-    } catch (err: unknown) {
-      toast.error(getSocialErrorMessage(err instanceof Error ? err.message : String(err)), { id: toastId });
-    } finally {
-      setIsPublishingQuickDrop(false);
-    }
-  };
-
   const handleSearchSocialUsers = async (query: string) => {
     setSocialSearchQuery(query);
     await loadSocialDirectory(query);
@@ -549,70 +402,9 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
     }
   };
 
-  const handlePublishSocialPost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!profile?.id) return;
-
-    const trimmedContent = socialComposer.content.trim();
-    const trimmedImageUrl = socialComposer.imageUrl.trim();
-
-    if (socialComposer.postKind === 'story' && !trimmedImageUrl && !socialImageFile) {
-      toast.error('Drop cần ảnh chụp nhanh trước khi đăng.');
-      return;
-    }
-
-    if (socialComposer.postKind !== 'story' && !trimmedContent && !trimmedImageUrl && !socialImageFile) {
-      toast.error('Viết gì đó hoặc thêm ảnh trước khi đăng.');
-      return;
-    }
-
-    setIsPublishingSocialPost(true);
-    const toastId = toast.loading(socialComposer.postKind === 'story' ? 'Đang đăng story...' : 'Đang đăng bài...');
-
-    try {
-      let imageUrl = trimmedImageUrl || null;
-      if (socialImageFile) {
-        imageUrl = await uploadSocialImage(socialImageFile);
-      }
-
-      const expiresAt = socialComposer.postKind === 'story'
-        ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        : null;
-
-      const persistedPostKind = socialComposer.postKind === 'progress' ? 'status' : socialComposer.postKind;
-      const { data, error } = await supabase!.from('social_posts').insert({
-        author_id: profile.id,
-        content: socialComposer.postKind === 'story' ? '' : trimmedContent,
-        image_url: imageUrl,
-        post_kind: persistedPostKind,
-        visibility: socialComposer.visibility,
-        hydration_ml: waterIntake,
-        streak_snapshot: streak,
-        expires_at: expiresAt,
-      }).select('id').single();
-      if (error) throw error;
-      if (!data?.id) throw new Error('Không nhận được bài viết vừa tạo.');
-
-      const successMessage = socialComposer.postKind === 'story'
-        ? 'Drop đã lên sóng.'
-        : socialComposer.postKind === 'challenge'
-          ? 'Duel đã lên feed.'
-          : 'Pulse đã xuất hiện trên feed.';
-      toast.success(successMessage, { id: toastId });
-      closeSocialComposer();
-      await refreshSocialFeed({ silent: true });
-    } catch (err: unknown) {
-      toast.error(getSocialErrorMessage(err instanceof Error ? err.message : String(err)), { id: toastId });
-    } finally {
-      setIsPublishingSocialPost(false);
-    }
-  };
-
   return {
-    showSocialComposer, setShowSocialComposer,
     showDiscoverPeople, setShowDiscoverPeople,
     showSocialProfile, setShowSocialProfile,
-    socialComposer, setSocialComposer,
     socialPosts, setSocialPosts,
     socialStories, setSocialStories,
     socialSearchQuery, setSocialSearchQuery,
@@ -624,26 +416,14 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
     socialProfileStats, setSocialProfileStats,
     socialError, setSocialError,
     isSocialLoading, setIsSocialLoading,
-    isPublishingSocialPost, setIsPublishingSocialPost,
-    showQuickDropCamera, setShowQuickDropCamera,
-    isPublishingQuickDrop,
     isSocialSearching, setIsSocialSearching,
-    socialImageFile, setSocialImageFile,
-    socialImagePreview, setSocialImagePreview,
-    socialImageInputRef,
-    closeSocialComposer,
-    openSocialComposer,
-    openQuickDropCamera,
-    closeQuickDropCamera,
     loadCloseCircle,
-    handleSocialImagePicked,
-    handleQuickDropCapture,
     handleSearchSocialUsers,
     handleAddCircleMember,
     handleRemoveCircleMember,
     handleFollowUser,
     handleUnfollowUser,
     handleToggleLikePost,
-    handlePublishSocialPost
+    ...composer,
   };
 }

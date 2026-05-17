@@ -3,11 +3,17 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { visualizer } from 'rollup-plugin-visualizer'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    process.env.SENTRY_AUTH_TOKEN ? sentryVitePlugin({
+      org: 'digiwell',
+      project: 'digiwell-app',
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+    }) : null,
     process.env.CAPACITOR_BUILD !== 'true' ? VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
@@ -51,7 +57,7 @@ export default defineConfig({
     },
   },
   build: {
-    minify: 'terser',
+    sourcemap: true,
     rollupOptions: {
       external: process.env.CAPACITOR_BUILD === 'true' ? ['@capacitor/haptics', '@capacitor/share', '@capacitor/local-notifications'] : [],
       output: {

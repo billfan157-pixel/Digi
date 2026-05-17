@@ -16,6 +16,7 @@ import {
 import { claimChallengeReward, claimQuestReward } from '@/lib/questEngine';
 
 import { AppStorage } from '@/lib/storage';
+import type { AppProfile } from '@/services/profile.service';
 
 type PendingHydrationAction = {
   userId: string;
@@ -78,7 +79,7 @@ function writePendingHydrationActions(actions: PendingHydrationAction[]) {
 }
 
 interface UseHydrationNotificationsOptions {
-  profile: Record<string, unknown> | null;
+  profile: AppProfile | null;
   view: string;
   waterGoal: number;
   handleAddWater: (amount: number, factor: number, name: string) => Promise<void>;
@@ -104,8 +105,8 @@ export function useHydrationNotifications({
   });
   const waterGoalRef = useRef(waterGoal);
   waterGoalRef.current = waterGoal;
-  const nicknameRef = useRef<string>(String((profile as unknown as Record<string, unknown>)?.nickname || ''));
-  nicknameRef.current = String((profile as unknown as Record<string, unknown>)?.nickname || '');
+  const nicknameRef = useRef<string>(profile?.nickname || '');
+  nicknameRef.current = profile?.nickname || '';
 
   // Load current reminder settings from store (non-reactive ref)
   useEffect(() => {
@@ -226,7 +227,7 @@ export function useHydrationNotifications({
       await scheduleHydrationSnooze({
         minutes: intent.minutes,
         dailyGoal: waterGoal,
-        nickname: String((profile as unknown as Record<string, unknown>)?.nickname || ''),
+        nickname: profile?.nickname || '',
       });
       toast.info(`Đã nhắc lại sau ${intent.minutes} phút.`);
       return;

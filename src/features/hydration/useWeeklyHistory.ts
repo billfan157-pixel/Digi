@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 import { AppStorage } from '@/lib/storage';
+import type { AppProfile } from '@/services/profile.service';
 
 export interface WeeklyHistoryPoint {
   d: string;
@@ -10,7 +11,7 @@ export interface WeeklyHistoryPoint {
 }
 
 interface UseWeeklyHistoryOptions {
-  profile: Record<string, unknown> | null;
+  profile: AppProfile | null;
   waterIntake: number;
   waterEntriesCount: number;
 }

@@ -351,16 +351,16 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
               <p className="text-slate-400 text-sm truncate">{postContent || 'Vừa nạp thêm nước cho cơ thể.'}</p>
             </div>
           </div>
-        ) : (
-          <>
-            {postContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap mb-3">{postContent}</p>}
-            {post.image_url && (
-              <div className="rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border border-white/5">
-                <img src={post.image_url} alt="Ảnh bài viết" loading="lazy" className="w-full max-h-[500px] object-cover" />
-              </div>
-            )}
-          </>
-        )}
+         ) : (
+           <>
+             {postContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap mb-3">{postContent}</p>}
+             {post.image_url && (
+               <div className="rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border border-white/5">
+                 <img src={post.image_url} alt="Ảnh bài viết" loading="lazy" className="w-full max-h-[500px] object-cover" />
+               </div>
+             )}
+           </>
+         )}
       </div>
 
       {/* Action Bar */}

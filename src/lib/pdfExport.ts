@@ -1,4 +1,5 @@
 import type { Profile } from '@/models';
+import { sanitizeHtml } from './sanitize';
 
 type ExportHealthReportParams = {
   profile: Profile | null;
@@ -9,18 +10,6 @@ type ExportHealthReportParams = {
   isWatchConnected: boolean;
   watchData?: { heartRate?: number; steps?: number } | null;
 };
-
-function escapeHtml(text: string) {
-  return String(text).replace(/[&<>"']/g, (match) => (
-    {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    }[match] || match
-  ));
-}
 
 function buildReportHtml({
   profile,
@@ -93,24 +82,24 @@ function buildReportHtml({
   <body>
     <main class="report">
       <h1>BAO CAO SUC KHOE DIGIWELL</h1>
-      <p class="subtitle">Ngay xuat: ${escapeHtml(todayLabel)} - Thu thap boi DigiCoach AI</p>
+      <p class="subtitle">Ngay xuat: ${sanitizeHtml(todayLabel)} - Thu thap boi DigiCoach AI</p>
       <hr />
       <h2>1. Thong tin ca nhan</h2>
       <ul>
-        <li><strong>Ho va ten:</strong> ${escapeHtml(profile?.nickname || 'Khach')}</li>
-        <li><strong>The trang:</strong> ${escapeHtml(profile?.age?.toString() || '--')} tuoi, ${escapeHtml(profile?.height?.toString() || '--')} cm, ${escapeHtml(profile?.weight?.toString() || '--')} kg</li>
-        <li><strong>Muc tieu suc khoe:</strong> ${escapeHtml(profile?.goal || '--')}</li>
+        <li><strong>Ho va ten:</strong> ${sanitizeHtml(profile?.nickname || 'Khach')}</li>
+        <li><strong>The trang:</strong> ${sanitizeHtml(profile?.age?.toString() || '--')} tuoi, ${sanitizeHtml(profile?.height?.toString() || '--')} cm, ${sanitizeHtml(profile?.weight?.toString() || '--')} kg</li>
+        <li><strong>Muc tieu suc khoe:</strong> ${sanitizeHtml(profile?.goal || '--')}</li>
       </ul>
       <h2>2. Thong ke nuoc hom nay</h2>
       <ul>
-        <li><strong>Da uong:</strong> ${escapeHtml(waterIntake.toString())} ml / ${escapeHtml(waterGoal.toString())} ml (Hoan thanh ${escapeHtml(Math.round(progress).toString())}%)</li>
-        <li><strong>Chuoi hien tai:</strong> ${escapeHtml(streak.toString())} ngay lien tiep</li>
+        <li><strong>Da uong:</strong> ${sanitizeHtml(waterIntake.toString())} ml / ${sanitizeHtml(waterGoal.toString())} ml (Hoan thanh ${sanitizeHtml(Math.round(progress).toString())}%)</li>
+        <li><strong>Chuoi hien tai:</strong> ${sanitizeHtml(streak.toString())} ngay lien tiep</li>
       </ul>
       <h2>3. Nhip sinh hoc va hoat dong</h2>
       <ul>
-        <li><strong>Muc do van dong:</strong> ${escapeHtml(profile?.activity || '--')}</li>
-        <li><strong>Nhip tim gan nhat:</strong> ${escapeHtml(isWatchConnected ? `${watchData?.heartRate?.toString() ?? '--'} BPM` : 'Chua dong bo')}</li>
-        <li><strong>So buoc chan:</strong> ${escapeHtml(isWatchConnected ? (watchData?.steps?.toString() ?? '--') : 'Chua dong bo')}</li>
+        <li><strong>Muc do van dong:</strong> ${sanitizeHtml(profile?.activity || '--')}</li>
+        <li><strong>Nhip tim gan nhat:</strong> ${sanitizeHtml(isWatchConnected ? `${watchData?.heartRate?.toString() ?? '--'} BPM` : 'Chua dong bo')}</li>
+        <li><strong>So buoc chan:</strong> ${sanitizeHtml(isWatchConnected ? (watchData?.steps?.toString() ?? '--') : 'Chua dong bo')}</li>
       </ul>
       <p class="footer">Tai lieu nay duoc tao tu dong. Khong dung de thay the chan doan y te chuyen sau.</p>
     </main>

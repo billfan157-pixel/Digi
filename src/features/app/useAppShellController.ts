@@ -11,7 +11,7 @@ import { useAppSystem } from '@/hooks/useAppSystem';
 import { useReminderStore } from '@/store/useReminderStore';
 import { useDrinkPresetStore } from '@/store/useDrinkPresetStore';
 import { useAppStore } from '@/store/useAppStore';
-import type { Profile } from '@/models';
+import type { AppProfile } from '@/services/profile.service';
 import { getRankInfo } from '@/utils/healthMath';
 
 export function useAppShellController(): AppShellProps {
@@ -94,7 +94,7 @@ export function useAppShellController(): AppShellProps {
   // ── Sync hydration data to Zustand store ──
   useEffect(() => {
     setAppState({
-      profile: profile as unknown as Profile | null,
+      profile,
       waterIntake: hydration.waterIntake,
       waterGoal: hydration.waterGoal,
       streak: hydration.streak,
@@ -152,7 +152,7 @@ export function useAppShellController(): AppShellProps {
       handleDeleteEntry: hydration.handleDeleteEntry,
       handleEditEntry: hydration.handleEditEntry,
       handleLogout,
-    openSocialComposer: openSocialComposer as unknown as (...args: unknown[]) => void,
+    openSocialComposer,
       startFasting: hydration.startFasting,
       stopFasting: hydration.stopFasting,
     });
@@ -177,7 +177,7 @@ export function useAppShellController(): AppShellProps {
 
   // ── Sync tab props ──
   const tabProps = useAppTabProps({
-    profile: profile as unknown as Profile | null,
+    profile,
     smartBottle: hydration.smartBottle,
     isExportingPDF: hydration.isExportingPDF,
     handleExportPDF: hydration.handleExportPDF,
@@ -215,7 +215,7 @@ export function useAppShellController(): AppShellProps {
       setLoginPrefill(email);
       setView('login');
     },
-    profile: profile as unknown as Profile | null,
+    profile,
     handleLogout,
     quickDropCameraProps: {
       isOpen: !!socialProps.showQuickDropCamera,
@@ -223,16 +223,19 @@ export function useAppShellController(): AppShellProps {
       onCapture: socialProps.handleQuickDropCapture || (async () => {}),
       onClose: socialProps.closeQuickDropCamera || (() => {}),
     },
-    onboardingProps: profile && !(profile as Record<string, unknown>).onboarding_completed ? {
-      profile: profile as unknown as Profile,
+    onboardingProps: profile && !profile.onboarding_completed ? {
+      profile,
       onComplete: async (weight: number, onboardingWaterGoal: number, name: string) => {
-        setProfile((prev: Record<string, unknown> | null) => ({
-          ...prev,
-          weight,
-          water_goal: onboardingWaterGoal,
-          nickname: name,
-          onboarding_completed: true,
-        }));
+        setProfile((prev: AppProfile | null) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            weight,
+            water_goal: onboardingWaterGoal,
+            nickname: name,
+            onboarding_completed: true,
+          };
+        });
         await updateProfileFields(profile.id as string, {
           nickname: name.trim(),
           onboarding_completed: true,
@@ -243,7 +246,7 @@ export function useAppShellController(): AppShellProps {
     } : null,
     activeTab: activeTab as TabType,
     setActiveTab,
-    homeTabProps: tabProps.homeTabProps as unknown as typeof tabProps.homeTabProps,
+    homeTabProps: tabProps.homeTabProps,
     insightTabProps: tabProps.insightTabProps,
     bottleTabProps: tabProps.bottleTabProps as unknown as AppShellProps['bottleTabProps'],
     leagueTabProps: tabProps.leagueTabProps,

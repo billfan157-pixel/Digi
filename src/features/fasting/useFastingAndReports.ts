@@ -7,6 +7,7 @@ import { useUIStore } from '@/store/useUIStore';
 
 import type { Profile } from '@/models';
 import { AppStorage } from '@/lib/storage';
+import type { AppProfile } from '@/services/profile.service';
 
 interface UseFastingAndReportsOptions {
   userId: string | undefined;
@@ -15,7 +16,7 @@ interface UseFastingAndReportsOptions {
 }
 
 interface ExportPdfOptions {
-  profile: Record<string, unknown> | null;
+  profile: AppProfile | null;
   waterIntake: number;
   waterGoal: number;
   streak: number;
@@ -29,7 +30,7 @@ interface ExportPdfOptions {
 }
 
 interface ExportCsvOptions {
-  profile: Record<string, unknown> | null;
+  profile: AppProfile | null;
   waterIntake: number;
   waterGoal: number;
   streak: number;
@@ -142,7 +143,7 @@ const exportReportPdf = useCallback(async ({
       try {
         if (weeklyChartData && waterEntries) {
           await exportDetailedPDF({
-            profile: profile as unknown as Profile | null,
+            profile,
             waterIntake,
             waterGoal,
             streak,
@@ -153,7 +154,7 @@ const exportReportPdf = useCallback(async ({
           });
         } else {
           await exportHealthReportPDF({
-            profile: profile as unknown as Profile | null,
+            profile,
            waterIntake,
            waterGoal,
            streak,
@@ -186,7 +187,7 @@ const exportReportPdf = useCallback(async ({
 
       try {
         exportToCSV({
-          profile: profile as unknown as Profile | null,
+          profile,
          waterIntake,
          waterGoal,
          streak,

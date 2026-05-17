@@ -16,6 +16,7 @@ import type { Session } from '@supabase/supabase-js';
 import { appQueryKeys } from '@/lib/queryKeys';
 import { queryClient } from '@/lib/queryClient';
 import { ensureProfileExists, fetchProfileById } from '@/services/profile.service';
+import type { AppProfile } from '@/services/profile.service';
 import {
   clearUserSessionArtifacts,
   getBiometricEnabled,
@@ -24,7 +25,7 @@ import {
 
 export function useAppSystem() {
   const [view, setView] = useState<'welcome' | 'login' | 'register' | 'app' | 'locked'>('welcome');
-  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
+  const [profile, setProfile] = useState<AppProfile | null>(null);
   const [loginPrefill, setLoginPrefill] = useState('');
   const profileIdRef = useRef<string | undefined>(undefined);
 
@@ -122,7 +123,7 @@ export function useAppSystem() {
                 p = await ensureProfileExists(session.user.id, defaultName);
               }
                if (p && isMounted) {
-                 setProfile(p as unknown as Record<string, unknown> | null);
+                 setProfile(p);
                 const isBiometricEnabled = await getBiometricEnabled(p.id);
                 setView(isBiometricEnabled ? 'login' : 'app');
               }
@@ -145,7 +146,12 @@ export function useAppSystem() {
   const handleLogout = async () => {
     const { confirmDialog } = await import('@/store/useConfirmDialog');
     const ok = await confirmDialog({ title: 'Đăng xuất', message: 'Xác nhận đăng xuất an toàn?', confirmLabel: 'Đăng xuất', variant: 'danger' });
-    if (ok) { await supabase!.auth.signOut(); }
+    if (ok) {
+      const { clearSessionActivity, clearUserSessionArtifacts } = await import('@/lib/sessionSecurity');
+      clearSessionActivity();
+      if (profile?.id) clearUserSessionArtifacts(profile.id);
+      await supabase!.auth.signOut();
+    }
   };
 
   // ✅ Trả về đầy đủ các giá trị, bao gồm spread từ các hook con

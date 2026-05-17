@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import type { Profile, WaterLog } from '../models';
+import type { AppProfile } from '@/services/profile.service';
 import type { WaterIntakeResult } from '../lib/HydrationEngine';
+import type { CalendarEventItem } from '../hooks/useCalendarSync';
 
 export interface AppState {
   // ── Core Data ──
-  profile: Profile | null;
+  profile: AppProfile | null;
   waterIntake: number;
   waterGoal: number;
   streak: number;
@@ -17,7 +19,7 @@ export interface AppState {
   watchData: { heartRate: number; steps: number } | null;
   isWeatherSynced: boolean;
   isCalendarSynced: boolean;
-  calendarEvents: unknown[]; // Or import CalendarEventItem if available
+  calendarEvents: CalendarEventItem[];
   isWatchConnected: boolean;
   isSyncing: boolean;
   hasPendingCloudSync: boolean;

@@ -18,6 +18,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { registerPlugin } from '@capacitor/core';
 import Cropper from 'react-easy-crop';
 
+import type { AppProfile } from '@/services/profile.service';
 import { AppStorage } from '@/lib/storage';
 import { useWeatherSync } from '@/hooks/useWeatherSync';
 import { requestHealthReadStepsAndHeartRate } from '@/lib/healthIntegration';
@@ -95,7 +96,7 @@ export default function SettingsModal() {
   const isOpen = useUIStore(s => s.showProfileSettings);
   const onClose = () => useUIStore.getState().setShowProfileSettings(false);
   const profile = useAppStore(s => s.profile);
-  const setProfile = (newProfile: Profile | null) => useAppStore.getState().setAppState({ profile: newProfile });
+  const setProfile = (newProfile: typeof profile) => useAppStore.getState().setAppState({ profile: newProfile });
   const handleLogout = useAppStore(s => s.actions.handleLogout);
 
   const { settings, updateSettings, isSaving, lastSync, triggerHaptic } = useSettings(profile as unknown as Record<string, unknown> | null);
@@ -228,7 +229,7 @@ export default function SettingsModal() {
 
       if (error) throw error;
       
-      setProfile({ ...profile, ...formData, nickname: formData.nickname.trim() } as unknown as Profile);
+      setProfile({ ...profile, ...formData, nickname: formData.nickname.trim() } as AppProfile);
       updateSettings({
         displayName: formData.nickname.trim(),
         weight: formData.weight,
