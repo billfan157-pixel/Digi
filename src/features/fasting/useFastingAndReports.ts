@@ -5,7 +5,6 @@ import { exportHealthReportPDF } from '@/lib/pdfExport';
 import { exportToCSV, exportDetailedPDF } from '@/lib/exportUtils';
 import { useUIStore } from '@/store/useUIStore';
 
-import type { Profile } from '@/models';
 import { AppStorage } from '@/lib/storage';
 import type { WaterLog } from '@/hooks/useWaterData';
 import type { AppProfile } from '@/services/profile.service';
@@ -36,7 +35,7 @@ interface ExportCsvOptions {
   waterGoal: number;
   streak: number;
   weeklyChartData: { d: string; ml: number }[];
-  waterEntries: Record<string, unknown>[];
+  waterEntries: WaterLog[];
 }
 
 const FASTING_PLAN_PREFIX = 'digiwell_fasting_plan_';

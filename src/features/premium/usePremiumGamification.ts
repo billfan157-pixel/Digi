@@ -24,7 +24,7 @@ interface UsePremiumGamificationOptions {
   waterEntries: WaterLog[];
   weeklyHistory: { d: string; ml: number; isToday: boolean }[];
   weeklyLogCount: number;
-  watchData: { heartRate?: number; steps?: number } | null;
+  watchData: { heartRate?: number; steps?: number } | null | undefined;
   setShowPremiumModal: (value: boolean) => void;
 }
 

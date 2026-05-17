@@ -212,7 +212,7 @@ export function useHydrationController({
       streak,
       progress,
       isWatchConnected,
-      watchData,
+      watchData: watchData ?? null,
       weeklyChartData: weeklyHistory,
       waterEntries,
       avgWeekly: weeklyHistory.length > 0 

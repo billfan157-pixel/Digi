@@ -6,6 +6,7 @@ import HourlyHeatmap from '../../components/HourlyHeatmap';
 import AdvancedStatsGrid from '../AdvancedStatsGrid';
 import WeeklyChart from '../../components/WeeklyChart';
 import BehaviorInsightCards from './BehaviorInsightCards';
+import type { BehaviorPattern } from '@/hooks/useBehaviorAnalysis';
 
 interface AnalyticsSectionProps {
   isPremium: boolean;
@@ -165,7 +166,9 @@ export default function AnalyticsSection({
         <section className="px-6">
           {isPremium ? (
             <BehaviorInsightCards patterns={patterns} />
-
+          ) : (
+            <div className="relative rounded-2xl overflow-hidden border border-slate-700/50">
+              <div className="opacity-30 blur-[2px] pointer-events-none p-6 flex items-center justify-center h-48 bg-slate-900/60">
                 <BehaviorInsightCards patterns={patterns} />
               </div>
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
