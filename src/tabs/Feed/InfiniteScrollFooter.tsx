@@ -9,11 +9,9 @@ interface InfiniteScrollFooterProps {
 
 export const InfiniteScrollFooter = forwardRef<HTMLDivElement, InfiniteScrollFooterProps>(
   ({ hasPosts, isFetchingMore, hasMore }, ref) => {
-    if (!hasPosts) return null;
-
     return (
       <div ref={ref} className="py-8 text-center">
-        {isFetchingMore ? (
+        {!hasPosts ? null : isFetchingMore ? (
           <Loader2 size={24} className="text-slate-500 animate-spin mx-auto" />
         ) : hasMore ? (
           <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Đang tải thêm...</p>

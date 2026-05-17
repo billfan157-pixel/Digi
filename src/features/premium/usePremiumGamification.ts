@@ -9,7 +9,7 @@ import confetti from 'canvas-confetti';
 
 import { AppStorage } from '@/lib/storage';
 import type { AppProfile } from '@/services/profile.service';
-import type { WaterLog } from '@/hooks/useWaterData';
+import type { WaterLog } from '@/models';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

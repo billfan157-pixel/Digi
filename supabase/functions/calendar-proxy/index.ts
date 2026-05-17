@@ -148,7 +148,7 @@ async function resolveGoogleAccessToken(
       const { data: adminUser, error: adminError } = await adminClient.auth.admin.getUserById(userId);
 
       if (!adminError && adminUser?.user) {
-        const rawMeta = (adminUser.user as unknown as Record<string, unknown>).raw_app_meta_data as Record<string, unknown> | undefined;
+        const rawMeta = (adminUser.user as unknown as { raw_app_meta_data?: Record<string, unknown> }).raw_app_meta_data;
         const refreshToken = (rawMeta?.provider_refresh_token as string) || '';
 
         if (refreshToken) {

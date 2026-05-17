@@ -13,7 +13,6 @@ import { useSettings } from '../../hooks/useSettings';
 import { useBiometric } from '../../hooks/useBiometric';
 import { useDeleteAccount } from '../../hooks/useDeleteAccount';
 import type { DeleteOption } from '../../hooks/useDeleteAccount';
-import type { Profile } from '../../models';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { registerPlugin } from '@capacitor/core';
 import Cropper from 'react-easy-crop';
@@ -24,7 +23,11 @@ import { useWeatherSync } from '@/hooks/useWeatherSync';
 import { requestHealthReadStepsAndHeartRate } from '@/lib/healthIntegration';
 
 // Khai báo Plugin tự chế
-const WidgetPlugin = registerPlugin<Record<string, unknown>>('WidgetPlugin');
+interface WidgetPluginType {
+  syncData: (data: { water_today: number; water_goal: number; themeColor: string }) => Promise<void>;
+}
+
+const WidgetPlugin = registerPlugin<WidgetPluginType>('WidgetPlugin');
 
 // ================= BUTTON VARIANTS =================
 const btnIcon = "p-2 rounded-full hover:bg-slate-300 dark:hover:bg-white/10 active:scale-95 transition-all text-slate-700 dark:text-white/80";
@@ -674,8 +677,7 @@ export default function SettingsModal() {
                 
                 // Đẩy dữ liệu xuyên qua màng Native iOS
                 try {
-                  const widgetPlugin = WidgetPlugin as unknown as Record<string, (data: unknown) => Promise<void>>;
-                  await widgetPlugin.syncData({
+                  await WidgetPlugin.syncData({
                     water_today: Number(profile?.water_today) || 0,
                     water_goal: settings.waterGoal || 2000,
                     themeColor: settings.themeColor || '#06b6d4'

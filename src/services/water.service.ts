@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { WaterLog } from '@/hooks/useWaterData';
+import type { WaterLog } from '@/models';
 
 export async function fetchWaterLogs(userId: string, day: string): Promise<WaterLog[]> {
   const { data, error } = await supabase

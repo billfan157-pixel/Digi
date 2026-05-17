@@ -6,7 +6,7 @@ import { exportToCSV, exportDetailedPDF } from '@/lib/exportUtils';
 import { useUIStore } from '@/store/useUIStore';
 
 import { AppStorage } from '@/lib/storage';
-import type { WaterLog } from '@/hooks/useWaterData';
+import type { WaterLog } from '@/models';
 import type { AppProfile } from '@/services/profile.service';
 
 interface UseFastingAndReportsOptions {

@@ -8,7 +8,6 @@ import {
   deleteWaterLog,
   updateWaterLog,
 } from '@/services/water.service';
-import type { WaterLog } from './useWaterData';
 
 const todayFn = () => toDateStr();
 

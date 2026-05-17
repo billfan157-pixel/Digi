@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { playWaterDropSound } from '@/lib/audio';
-import type { Profile } from '@/models';
+import type { Profile, WaterLog } from '@/models';
 import { expGainedForWater } from '@/config/questConfig';
 import {
   useWaterLogsQuery,
@@ -31,16 +31,6 @@ const OFFLINE_QUEUE_KEY = 'digiwell_offline_water_queue';
 const MAX_SYNC_RETRIES = 3;
 
 // ── Types ──────────────────────────────────────────────────
-
-export interface WaterLog {
-  id:         string;
-  user_id:    string;
-  amount:     number;
-  name:       string | null;
-  exp:        number;
-  day:        string;
-  created_at: string;
-}
 
 interface OfflineQueueItem {
   tempId:     string;
