@@ -32,7 +32,7 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
     postAuthorId: post.author_id,
     initialCheersCount: post.like_count || 0,
     initialDropsCount: 0,
-    initialCheered: (post as unknown as Record<string, unknown>).cheeredByMe as boolean || false,
+    initialCheered: post.cheeredByMe || false,
   });
 
   const {
@@ -180,36 +180,36 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
             Chuỗi {post.streak_snapshot}
           </motion.span>
         )}
-         {isTip && (post as unknown as Record<string, unknown>).tip_category && (
-           <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
-             <Lightbulb size={10} />
-             {String((post as unknown as Record<string, unknown>).tip_category) === 'science' ? 'Khoa học' : String((post as unknown as Record<string, unknown>).tip_category) === 'recipe' ? 'Công thức' : 'Mẹo vặt'}
-           </span>
-         )}
+        {post.tip_category && (
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+              <Lightbulb size={10} />
+              {post.tip_category === 'science' ? 'Khoa học' : post.tip_category === 'recipe' ? 'Công thức' : 'Mẹo vặt'}
+            </span>
+          )}
          {isPoll && (
            <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold flex items-center gap-1">
              <BarChart3 size={10} />Khảo sát
            </span>
          )}
-          {Boolean((post as unknown as Record<string, unknown>).temperature) && (
+          {post.temperature && (
             <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold">
-              {String((post as unknown as Record<string, unknown>).temperature)}°C
+              {post.temperature}°C
             </span>
           )}
-          {Boolean((post as unknown as Record<string, unknown>).heart_rate) && (
+          {post.heart_rate && (
             <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold">
-              {String((post as unknown as Record<string, unknown>).heart_rate)} nhịp/phút
+              {post.heart_rate} nhịp/phút
             </span>
           )}
-          {Boolean((post as unknown as Record<string, unknown>).drink_type) && (
+          {post.drink_type && (
             <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold">
-              {String((post as unknown as Record<string, unknown>).drink_type)}
+              {post.drink_type}
             </span>
           )}
        </div>
 
        {/* Social Hydration Pulse */}
-       {Number((post as unknown as Record<string, unknown>).pulse_count || 0) > 0 && (
+        {Number(post.pulse_count || 0) > 0 && (
          <motion.div
            initial={{ opacity: 0.8 }}
            whileHover={{ opacity: 1, scale: 1.01 }}
@@ -220,7 +220,7 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
              <Droplets size={12} className="text-cyan-400" />
            </div>
            <p className="text-xs text-slate-300 font-medium">
-             <span className="font-black text-cyan-400">{String((post as unknown as Record<string, unknown>).pulse_count)} người bạn</span> đã nạp nước sau khi xem.
+              <span className="font-black text-cyan-400">{post.pulse_count} người bạn</span> đã nạp nước sau khi xem.
            </p>
          </motion.div>
        )}

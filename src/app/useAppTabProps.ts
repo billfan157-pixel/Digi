@@ -6,6 +6,7 @@ import type ProfileTab from '@/tabs/ProfileTab';
 import type LeagueTab from '@/tabs/LeagueTab';
 import type { Profile, SocialFeedPost } from '@/models';
 import type { CalendarEventItem } from '@/hooks/useCalendarSync';
+import type { RankInfo } from '@/tabs/League/types';
 
 interface SocialProfileStats {
   followers: number;
@@ -32,7 +33,7 @@ interface UseAppTabPropsOptions {
   setShowAddFriend: (value: boolean) => void;
   setShowShopModal: (value: boolean) => void;
   getLeagueData: () => Record<string, unknown>[];
-  getRankInfo: (wp: number) => Record<string, unknown>;
+  getRankInfo: (wp: number) => RankInfo;
   socialProps: Record<string, unknown>;
   openSocialComposer: (...args: unknown[]) => void;
   streakFreezes: number;

@@ -160,6 +160,12 @@ export function useWaterData(
     }
   }, [waterQuery.data, waterQuery.isSuccess]);
 
+  const waterIntake = useMemo(() => {
+    const fromEntries = waterEntries.reduce((sum, e) => sum + e.amount, 0);
+    const fromProfile = profile?.water_today || 0;
+    return fromEntries > 0 ? fromEntries : fromProfile;
+  }, [waterEntries, profile?.water_today]);
+
   useEffect(() => { waterIntakeRef.current = waterIntake; }, [waterIntake]);
   useEffect(() => { waterEntriesRef.current = waterEntries; }, [waterEntries]);
 

@@ -26,9 +26,11 @@ interface UseWellnessDataReturn {
   insights: WellnessCorrelation[];
 }
 
+import type { AppProfile } from '@/services/profile.service';
+
 interface UseWellnessDataProps {
   daysBack?: number;
-  profile?: Record<string, unknown> | null;
+  profile?: AppProfile | null;
 }
 
 export function useWellnessData({ profile: externalProfile }: UseWellnessDataProps = {}): UseWellnessDataReturn {
@@ -62,7 +64,7 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
   const activityData: ActivityData = useMemo(() => {
     const steps = 0; // TODO: wire to health data
     const activeMinutes = 0; // TODO: derive from health data
-    const intensity = String((profile as Record<string, unknown>)?.activity || 'sedentary') as ActivityData['intensity'];
+    const intensity = String(profile?.activity || 'sedentary') as ActivityData['intensity'];
     return { steps, activeMinutes, intensity };
   }, [profile]);
 

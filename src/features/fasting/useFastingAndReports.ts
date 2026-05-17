@@ -7,6 +7,7 @@ import { useUIStore } from '@/store/useUIStore';
 
 import type { Profile } from '@/models';
 import { AppStorage } from '@/lib/storage';
+import type { WaterLog } from '@/hooks/useWaterData';
 import type { AppProfile } from '@/services/profile.service';
 
 interface UseFastingAndReportsOptions {
@@ -22,9 +23,9 @@ interface ExportPdfOptions {
   streak: number;
   progress: number;
   isWatchConnected: boolean;
-  watchData: Record<string, unknown> | null;
-  weeklyChartData?: Record<string, unknown>[];
-  waterEntries?: Record<string, unknown>[];
+  watchData: { heartRate?: number; steps?: number } | null;
+  weeklyChartData?: { d: string; ml: number }[];
+  waterEntries?: WaterLog[];
   avgWeekly?: number;
   completionRate?: number;
 }
@@ -147,8 +148,8 @@ const exportReportPdf = useCallback(async ({
             waterIntake,
             waterGoal,
             streak,
-            weeklyChartData: weeklyChartData as unknown as { d: string; ml: number }[],
-            waterEntries: waterEntries as unknown as Record<string, unknown>[],
+            weeklyChartData,
+            waterEntries,
             avgWeekly: avgWeekly || 0,
             completionRate: completionRate || 0,
           });

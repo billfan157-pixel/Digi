@@ -68,9 +68,8 @@ const RecentActivity = React.memo(function RecentActivity({ waterEntries, handle
       
       <div className="space-y-2">
         {recentEntries.map((entry: WaterLog, index: number) => {
-          const entryRecord = entry as unknown as Record<string, unknown>;
-          const entryColor = String(entryRecord.color || 'cyan');
-          const entryIcon = String(entryRecord.icon || 'Droplet');
+          const entryColor = entry.color || 'cyan';
+          const entryIcon = entry.icon || 'Droplet';
           return (
           <div key={entry.id || `recent-${index}`} className="group flex items-center justify-between p-3 bg-gradient-to-r from-slate-100/50 to-slate-50/30 dark:from-slate-900/50 dark:to-slate-800/30 backdrop-blur-sm border border-slate-300/50 dark:border-white/10 rounded-[1.25rem] hover:from-cyan-500/10 hover:to-cyan-400/5 dark:hover:from-cyan-500/15 dark:hover:to-cyan-600/10 hover:border-cyan-500/40 dark:hover:border-cyan-500/30 transition-all shadow-[0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_6px_rgba(255,255,255,0.01)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.12)]">
             <div className="flex items-center gap-3 flex-1 min-w-0">

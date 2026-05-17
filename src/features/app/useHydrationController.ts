@@ -189,10 +189,10 @@ export function useHydrationController({
     waterIntake,
     waterGoal,
     streak,
-    waterEntries: waterEntries as unknown as Record<string, unknown>[],
+    waterEntries,
     weeklyHistory,
     weeklyLogCount,
-    watchData: watchData as unknown as Record<string, unknown> | null,
+    watchData,
     setShowPremiumModal,
   });
 
@@ -212,9 +212,9 @@ export function useHydrationController({
       streak,
       progress,
       isWatchConnected,
-      watchData: watchData as unknown as Record<string, unknown> | null,
-      weeklyChartData: weeklyHistory as unknown as { d: string; ml: number }[],
-      waterEntries: waterEntries as unknown as Record<string, unknown>[],
+      watchData,
+      weeklyChartData: weeklyHistory,
+      waterEntries,
       avgWeekly: weeklyHistory.length > 0 
         ? Math.round(weeklyHistory.reduce((s: number, d: { ml: number }) => s + d.ml, 0) / weeklyHistory.length) 
         : 0,
@@ -230,8 +230,8 @@ export function useHydrationController({
       waterIntake,
       waterGoal,
       streak,
-      weeklyChartData: weeklyHistory as unknown as { d: string; ml: number }[],
-      waterEntries: waterEntries as unknown as Record<string, unknown>[],
+      weeklyChartData: weeklyHistory,
+      waterEntries,
     });
   }, [exportReportCsv, profile, waterIntake, waterGoal, streak, weeklyHistory, waterEntries]);
 

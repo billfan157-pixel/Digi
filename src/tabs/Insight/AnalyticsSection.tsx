@@ -29,7 +29,7 @@ interface AnalyticsSectionProps {
   stats: { avg: number; completed: number };
   profile: { id?: string } | null;
   weeklyTotal: number;
-  patterns: Array<Record<string, unknown>>;
+  patterns: BehaviorPattern[];
 }
 
 export default function AnalyticsSection({
@@ -164,11 +164,9 @@ export default function AnalyticsSection({
       {patterns.length > 0 && (
         <section className="px-6">
           {isPremium ? (
-            <BehaviorInsightCards patterns={patterns as unknown as import('@/hooks/useBehaviorAnalysis').BehaviorPattern[]} />
-          ) : (
-            <div className="relative rounded-2xl overflow-hidden border border-slate-700/50">
-              <div className="opacity-30 blur-[2px] pointer-events-none">
-                <BehaviorInsightCards patterns={patterns as unknown as import('@/hooks/useBehaviorAnalysis').BehaviorPattern[]} />
+            <BehaviorInsightCards patterns={patterns} />
+
+                <BehaviorInsightCards patterns={patterns} />
               </div>
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                 <Lock size={20} className="text-amber-400" />

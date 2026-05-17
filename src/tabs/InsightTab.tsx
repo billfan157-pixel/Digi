@@ -301,7 +301,7 @@ const InsightTab = memo(function InsightTab({
               stats={stats}
               profile={profile}
               weeklyTotal={weeklyTotal}
-              patterns={patterns as unknown as Record<string, unknown>[]}
+              patterns={patterns}
             />
           </motion.div>
         )}

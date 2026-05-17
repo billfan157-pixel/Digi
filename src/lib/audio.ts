@@ -2,7 +2,7 @@
 
 // Helper để tái sử dụng AudioContext
 const getAudioContext = () => {
-  const AudioContextClass = window.AudioContext || (window as unknown as Record<string, unknown>).webkitAudioContext as typeof AudioContext | undefined;
+  const AudioContextClass = window.AudioContext || (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AudioContextClass) return null;
   return new AudioContextClass();
 };

@@ -53,16 +53,15 @@ export function useProfileIntegrations({
   const openEditProfile = useCallback(() => {
     if (!profile) return;
 
-    const p = profile as Record<string, unknown>;
     setEditProfileData({
-      nickname: String(p.nickname || ''),
-      gender: String(p.gender || 'Nam'),
-      age: Number(p.age) || 20,
-      height: Number(p.height) || 170,
-      weight: Number(p.weight) || 60,
-      activity: String(p.activity || 'sedentary'),
-      climate: String(p.climate || 'temperate'),
-      goal: String(p.goal || 'Sức khỏe tổng quát'),
+      nickname: profile.nickname || '',
+      gender: profile.gender || 'Nam',
+      age: profile.age || 20,
+      height: profile.height || 170,
+      weight: profile.weight || 60,
+      activity: profile.activity || 'sedentary',
+      climate: profile.climate || 'temperate',
+      goal: profile.goal || 'Sức khỏe tổng quát',
     });
     setShowEditProfile(true);
   }, [profile, setShowEditProfile]);

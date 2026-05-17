@@ -9,6 +9,7 @@ import confetti from 'canvas-confetti';
 
 import { AppStorage } from '@/lib/storage';
 import type { AppProfile } from '@/services/profile.service';
+import type { WaterLog } from '@/hooks/useWaterData';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -20,10 +21,10 @@ interface UsePremiumGamificationOptions {
   waterIntake: number;
   waterGoal: number;
   streak: number;
-  waterEntries: Record<string, unknown>[];
+  waterEntries: WaterLog[];
   weeklyHistory: { d: string; ml: number; isToday: boolean }[];
   weeklyLogCount: number;
-  watchData: Record<string, unknown> | null;
+  watchData: { heartRate?: number; steps?: number } | null;
   setShowPremiumModal: (value: boolean) => void;
 }
 

@@ -195,7 +195,7 @@ export function useAppShellController(): AppShellProps {
     setShowAddFriend,
     setShowShopModal,
     getLeagueData: league.getLeagueData,
-    getRankInfo: (wp: number) => getRankInfo(wp) as unknown as Record<string, unknown>,
+    getRankInfo: (wp: number) => getRankInfo(wp),
     socialProps,
     openSocialComposer: (..._args: unknown[]) => openSocialComposer(),
     streakFreezes: hydration.streakFreezes,

@@ -42,6 +42,9 @@ export interface WaterLog {
   exp: number;
   day: string;
   created_at: string;
+  color?: string;
+  icon?: string;
+  drink_type?: string;
 }
 
 // =================== SHOP ===================
@@ -100,6 +103,17 @@ export interface SocialFeedPost {
   type?: 'status' | 'daily_goal' | 'milestone' | 'challenge' | 'achievement' | 'compare' | 'water_log' | 'tip' | 'poll' | 'photo';
   value?: number | string;
   comments_count?: number;
+
+  // Polymorphic post data (set client-side by useSocialData mapping)
+  compare_avatar?: string;
+  compare_name?: string;
+  tip_category?: string;
+  poll_options?: Array<{ id: string; text: string; count: number }>;
+  voted_option_id?: string;
+  temperature?: number;
+  heart_rate?: number;
+  drink_type?: string;
+  pulse_count?: number;
 }
 
 export interface Battle {

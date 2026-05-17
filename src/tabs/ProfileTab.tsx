@@ -177,8 +177,8 @@ const ProfileTab = memo(function ProfileTab({
                     streak,
                     waterIntake,
                     waterGoal,
-                    level: profile.level || 1,
-                    coins: profile.coins || 0,
+                    level: profile?.level || 1,
+                    coins: profile?.coins || 0,
                   });
                 }}
                 className="px-3 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all hover:bg-white/10 flex items-center gap-1"
