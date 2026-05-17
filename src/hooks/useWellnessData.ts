@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { useSettings } from '@/hooks/useSettings';
 import type { SleepData, ActivityData, WellnessCorrelation } from '@/utils/wellnessMath';
 import {
   calculateHydrationScore,
@@ -41,20 +40,18 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
   const waterGoal = useAppStore((state) => state.waterGoal);
   const weeklyHistory = useAppStore((state) => state.weeklyHistory);
 
-  const { settings } = useSettings(profile);
-
   // 1. HYDRATION SCORE
   const hydrationScore = useMemo(() => {
     if (!profile) return 0;
     return calculateHydrationScore(waterIntake, waterGoal);
   }, [waterIntake, waterGoal, profile]);
 
-  // 2. SLEEP DATA
+  // 2. SLEEP DATA (read directly from profile to avoid useSettings re-render loop)
   const sleepData: SleepData = useMemo(() => {
-    const hours = settings?.sleepHours || 7;
-    const quality = settings?.sleepQuality || 7;
+    const hours = profile?.sleep_hours || 7;
+    const quality = profile?.sleep_quality || 7;
     return { hours, quality };
-  }, [settings]);
+  }, [profile]);
 
   const sleepScore = useMemo(() => {
     return calculateSleepScore(sleepData.hours, sleepData.quality);

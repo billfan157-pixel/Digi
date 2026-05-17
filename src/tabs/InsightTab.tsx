@@ -21,7 +21,6 @@ import SelectedDateModal from './Insight/SelectedDateModal';
 
 import type { CalendarEventItem } from '../hooks/useCalendarSync';
 import { useContextAwareInsights } from '../hooks/useContextAwareInsights';
-import { useSettings } from '../hooks/useSettings';
 
 interface InsightTabProps {
    isExportingPDF: boolean;
@@ -161,7 +160,6 @@ const InsightTab = memo(function InsightTab({
     waterGoal
   });
 
-  const { settings } = useSettings(profile);
   const { insights: contextInsights, calendarRiskScore, weatherAdjustment } = useContextAwareInsights({
     weeklyData: weeklyChartData,
     waterGoal,
@@ -170,8 +168,8 @@ const InsightTab = memo(function InsightTab({
     isCalendarSynced: calendarEvents.length > 0,
     weatherData: weatherData ?? null,
     isWeatherSynced,
-    sleepHours: settings.sleepHours,
-    sleepQuality: settings.sleepQuality,
+    sleepHours: profile?.sleep_hours ?? 0,
+    sleepQuality: profile?.sleep_quality ?? 0,
   });
 
   const stats = useMemo(() => {
