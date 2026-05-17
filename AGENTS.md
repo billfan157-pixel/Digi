@@ -96,6 +96,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - STOP. Only fix what was asked.
 - If you see a bug unrelated to the task, comment it, don't fix it.
 
+## InsightTab improvements plan
+1. Free analytics summary card — unlock basic stats (streak, completion rate, avg ml, days hit goal) for free users, keep chart/heatmap premium
+2. Correlation card — surface Pearson calculations from useWellnessData (hydration↔sleep, hydration↔mood)
+3. Personalised DigiCoach — feed BehaviorPattern[] into AI advice prompt
+
 **Before any task, state:**
 1. Which files will be changed
 2. Which files will NOT be changed

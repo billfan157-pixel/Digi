@@ -1,12 +1,14 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, BarChart2, Lock, Crown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart2, Lock, Crown, Sparkles, Target, CheckCircle2, Flame, Droplets, TrendingUp } from 'lucide-react';
 import CalendarView from '../../components/insight/CalendarView';
 import HourlyHeatmap from '../../components/HourlyHeatmap';
 import AdvancedStatsGrid from '../AdvancedStatsGrid';
 import WeeklyChart from '../../components/WeeklyChart';
 import BehaviorInsightCards from './BehaviorInsightCards';
+import ContextInsightCard from '../../components/insight/ContextInsightCard';
 import type { BehaviorPattern } from '@/hooks/useBehaviorAnalysis';
+import type { ContextInsight } from '@/hooks/useContextAwareInsights';
 
 interface AnalyticsSectionProps {
   isPremium: boolean;
@@ -31,6 +33,11 @@ interface AnalyticsSectionProps {
   profile: { id?: string } | null;
   weeklyTotal: number;
   patterns: BehaviorPattern[];
+  streak: number;
+  completionRate: number;
+  contextInsights: ContextInsight[];
+  calendarRiskScore: number;
+  weatherAdjustment: number;
 }
 
 export default function AnalyticsSection({
@@ -55,7 +62,14 @@ export default function AnalyticsSection({
   profile,
   weeklyTotal,
   patterns,
+  streak,
+  completionRate,
+  contextInsights,
+  calendarRiskScore,
+  weatherAdjustment,
 }: AnalyticsSectionProps) {
+  const daysInWeek = weeklyChartData.length || 7;
+
   return (
     <div className="mb-20 mt-2 space-y-8 pb-10">
       {/* Header & Range Picker */}
@@ -89,6 +103,37 @@ export default function AnalyticsSection({
           })}
         </div>
       </div>
+      
+      {/* Context-Aware Insights */}
+      {contextInsights.length > 0 && (
+        <section className="px-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles size={14} className="text-cyan-400" />
+            <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+              Insight theo ngữ cảnh
+            </h4>
+            {(calendarRiskScore > 0.5 || weatherAdjustment > 0) && (
+              <div className="ml-auto flex gap-1.5">
+                {calendarRiskScore > 0.5 && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20">
+                    Lịch bận
+                  </span>
+                )}
+                {weatherAdjustment > 0 && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                    +{weatherAdjustment}ml
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="space-y-2.5">
+            {contextInsights.slice(0, 4).map((insight, i) => (
+              <ContextInsightCard key={insight.id} insight={insight} index={i} />
+            ))}
+          </div>
+        </section>
+      )}
       
       {/* Chart Section */}
       <section className="px-6">
@@ -142,20 +187,64 @@ export default function AnalyticsSection({
             )}
           </AnimatePresence>
         ) : (
-          <div className="relative rounded-2xl overflow-hidden border border-slate-700/50">
-            <div className="opacity-30 blur-[2px] pointer-events-none p-6 flex items-center justify-center h-48 bg-slate-900/60">
-              <BarChart2 size={48} className="text-slate-600" />
+          <div className="space-y-3">
+            {/* Summary Card - free user sees this */}
+            <div className="glass-card p-5 rounded-2xl border border-white/5 space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
+                  <Target size={14} className="text-cyan-400" />
+                </div>
+                <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest">Tổng quan tuần này</h4>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-800/60 rounded-xl p-3 flex items-center gap-3">
+                  <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                  <div>
+                    <p className="text-lg font-black text-white">{stats.completed}/{daysInWeek}</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Ngày đạt mục tiêu</p>
+                  </div>
+                </div>
+                <div className="bg-slate-800/60 rounded-xl p-3 flex items-center gap-3">
+                  <Flame size={18} className="text-orange-400 shrink-0" />
+                  <div>
+                    <p className="text-lg font-black text-white">{streak}</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Streak hiện tại</p>
+                  </div>
+                </div>
+                <div className="bg-slate-800/60 rounded-xl p-3 flex items-center gap-3">
+                  <Droplets size={18} className="text-cyan-400 shrink-0" />
+                  <div>
+                    <p className="text-lg font-black text-white">{stats.avg.toLocaleString('vi-VN')}ml</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Trung bình / ngày</p>
+                  </div>
+                </div>
+                <div className="bg-slate-800/60 rounded-xl p-3 flex items-center gap-3">
+                  <TrendingUp size={18} className="text-violet-400 shrink-0" />
+                  <div>
+                    <p className="text-lg font-black text-white">{completionRate}%</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tỉ lệ hoàn thành</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              <Lock size={20} className="text-amber-400" />
-              <span className="text-xs font-bold text-slate-400">Biểu đồ chi tiết dành cho Premium</span>
-              <button
-                onClick={() => setShowPremiumModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 active:scale-95 transition-all"
-              >
-                <Crown size={14} />
-                Nâng cấp ngay
-              </button>
+
+            {/* Chart placeholder - premium upsell */}
+            <div className="relative rounded-2xl overflow-hidden border border-slate-700/50">
+              <div className="opacity-30 blur-[2px] pointer-events-none p-6 flex items-center justify-center h-48 bg-slate-900/60">
+                <BarChart2 size={48} className="text-slate-600" />
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                <Lock size={20} className="text-amber-400" />
+                <span className="text-xs font-bold text-slate-400">Biểu đồ chi tiết dành cho Premium</span>
+                <button
+                  onClick={() => setShowPremiumModal(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 active:scale-95 transition-all"
+                >
+                  <Crown size={14} />
+                  Nâng cấp ngay
+                </button>
+              </div>
             </div>
           </div>
         )}

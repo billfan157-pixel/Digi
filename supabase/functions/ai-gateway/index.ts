@@ -162,6 +162,12 @@ function getErrorMessage(error: unknown): string {
   if (raw.includes('AI server chưa được cấu hình')) {
     return 'AI server chưa được cấu hình.';
   }
+  if (raw.toLowerCase().includes('model') && raw.toLowerCase().includes('not found')) {
+    return 'Mô hình AI không khả dụng trên server.';
+  }
+  if (raw.toLowerCase().includes('invalid') && raw.toLowerCase().includes('json')) {
+    return 'Phản hồi từ AI không đúng định dạng.';
+  }
 
   return raw;
 }
@@ -169,8 +175,10 @@ function getErrorMessage(error: unknown): string {
 function getErrorStatus(error: unknown): number {
   const raw = error instanceof Error ? error.message : String(error);
   if (raw.includes('429') || raw.toLowerCase().includes('rate limit')) return 429;
-  if (raw.includes('401') || raw.toLowerCase().includes('invalid api key')) return 401;
-  if (raw.includes('503') || raw.toLowerCase().includes('unavailable')) return 503;
+  if (raw.includes('401') || raw.toLowerCase().includes('invalid api key') || raw.toLowerCase().includes('unauthorized')) return 401;
+  if (raw.includes('503') || raw.toLowerCase().includes('unavailable') || raw.toLowerCase().includes('timed out') || raw.toLowerCase().includes('timeout')) return 503;
+  if (raw.includes('400') || raw.toLowerCase().includes('bad request')) return 400;
+  if (raw.toLowerCase().includes('model') && raw.toLowerCase().includes('not found')) return 501;
   return 500;
 }
 
@@ -183,7 +191,7 @@ async function enforceRateLimit(
   });
 
   if (error) {
-    console.error('AI usage limit check failed:', error.message, JSON.stringify(error));
+    console.error('[ai-gateway] RPC consume_ai_usage failed:', error.message, JSON.stringify(error));
     return json({ error: `Không thể kiểm tra giới hạn AI: ${error.message}` }, 500);
   }
 
@@ -200,6 +208,8 @@ async function enforceRateLimit(
 }
 
 Deno.serve(async (request) => {
+  console.log('[ai-gateway] Invoked:', request.method, request.url, 'model:', TEXT_MODEL, 'groqKeySet:', !!groqApiKey);
+
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -423,7 +433,13 @@ Trả về JSON thuần:
     return json({ error: `Unsupported action "${action}".` }, 400);
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.error('[ai-gateway] Unhandled error:', msg);
-    return json({ error: getErrorMessage(error) }, getErrorStatus(error));
+    const stack = error instanceof Error ? error.stack?.split('\n').slice(0, 4).join('\n') : '';
+    const name = error instanceof Error ? error.name : typeof error;
+    const status = getErrorStatus(error);
+    console.error(
+      `[ai-gateway] ${status} ${name}: ${msg}` +
+        (stack ? `\n  Stack: ${stack}` : ''),
+    );
+    return json({ error: getErrorMessage(error) }, status);
   }
 });

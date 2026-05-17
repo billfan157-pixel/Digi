@@ -20,6 +20,8 @@ import SystemSection from './Insight/SystemSection';
 import SelectedDateModal from './Insight/SelectedDateModal';
 
 import type { CalendarEventItem } from '../hooks/useCalendarSync';
+import { useContextAwareInsights } from '../hooks/useContextAwareInsights';
+import { useSettings } from '../hooks/useSettings';
 
 interface InsightTabProps {
    isExportingPDF: boolean;
@@ -30,12 +32,16 @@ interface InsightTabProps {
    fetchAIAdvice: () => void;
    calendarEvents: CalendarEventItem[];
    syncCalendar: (options?: { silent?: boolean; startOAuthIfNeeded?: boolean }) => Promise<number | false>;
+   weatherData: { temp?: number; humidity?: number; feelsLike?: number; status?: string } | null | undefined;
+   isWeatherSynced: boolean;
  }
 
 const InsightTab = memo(function InsightTab({
    isExportingPDF, handleExportPDF, handleExportCSV,
    isAiLoading, aiAdvice, fetchAIAdvice,
    calendarEvents, syncCalendar,
+   weatherData,
+   isWeatherSynced,
  }: InsightTabProps) {
   
   const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, hydrationResult, waterIntake, waterEntries, actions } = useAppStore(useShallow((state: AppState) => ({
@@ -153,6 +159,19 @@ const InsightTab = memo(function InsightTab({
   const { patterns } = useBehaviorAnalysis({
     weeklyData: weeklyChartData,
     waterGoal
+  });
+
+  const { settings } = useSettings(profile);
+  const { insights: contextInsights, calendarRiskScore, weatherAdjustment } = useContextAwareInsights({
+    weeklyData: weeklyChartData,
+    waterGoal,
+    waterIntake,
+    calendarEvents,
+    isCalendarSynced: calendarEvents.length > 0,
+    weatherData: weatherData ?? null,
+    isWeatherSynced,
+    sleepHours: settings.sleepHours,
+    sleepQuality: settings.sleepQuality,
   });
 
   const stats = useMemo(() => {
@@ -302,6 +321,11 @@ const InsightTab = memo(function InsightTab({
               profile={profile}
               weeklyTotal={weeklyTotal}
               patterns={patterns}
+              streak={streak}
+              completionRate={completionRate}
+              contextInsights={contextInsights}
+              calendarRiskScore={calendarRiskScore}
+              weatherAdjustment={weatherAdjustment}
             />
           </motion.div>
         )}

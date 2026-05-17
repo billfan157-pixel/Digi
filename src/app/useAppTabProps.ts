@@ -92,6 +92,8 @@ export function useAppTabProps({
     generateWeeklyReport: handleGenerateWeeklyReport,
     calendarEvents,
     syncCalendar,
+    weatherData,
+    isWeatherSynced,
   }) as React.ComponentProps<typeof InsightTab>, [
     geminiProps,
     handleExportPDF,
@@ -102,6 +104,8 @@ export function useAppTabProps({
     weeklyReport,
     calendarEvents,
     syncCalendar,
+    weatherData,
+    isWeatherSynced,
   ]);
 
   const bottleTabProps = useMemo(() => ({
