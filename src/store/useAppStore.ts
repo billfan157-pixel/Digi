@@ -13,6 +13,7 @@ export interface AppState {
 
   // ── Integrations ──
   weatherData: { temp: number; humidity: number; feelsLike: number; status?: string; location?: string } | null;
+  weatherLastUpdatedAt: string | null;
   watchData: { heartRate: number; steps: number } | null;
   isWeatherSynced: boolean;
   isCalendarSynced: boolean;
@@ -51,7 +52,7 @@ export interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   profile: null, waterIntake: 0, waterGoal: 2000, streak: 0, waterEntries: [], weeklyHistory: [],
-  weatherData: null, watchData: null, isWeatherSynced: false, isCalendarSynced: false, calendarEvents: [], isWatchConnected: false,
+  weatherData: null, weatherLastUpdatedAt: null, watchData: null, isWeatherSynced: false, isCalendarSynced: false, calendarEvents: [], isWatchConnected: false,
   isSyncing: false, hasPendingCloudSync: false,
   hydrationResult: null, isPremium: false,
   fastingState: { isFastingMode: false, fastingPlanHours: 16, fastingTotalMs: 16 * 60 * 60 * 1000, fastingStartTime: null },

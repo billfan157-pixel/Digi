@@ -89,6 +89,7 @@ export function useHydrationController({
       healthCondition: 'none',
       dietFactors: [],
       currentTempC: isWeatherSynced ? weatherData?.temp : undefined,
+      currentHumidity: isWeatherSynced ? weatherData?.humidity : undefined,
       exerciseMinutes: isWatchConnected ? Math.round((Number(watchData?.steps) || 0) / 120) : 0,
       isFasting: isFastingMode,
       wakeUpTime: String(p.wakeUp) || '07:00',

@@ -18,7 +18,6 @@ interface AnomalyDetectionPanelProps {
 export default function AnomalyDetectionPanel({
   weeklyChartData,
   waterGoal,
-  waterIntake,
   streak
 }: AnomalyDetectionPanelProps) {
 
@@ -194,7 +193,7 @@ export default function AnomalyDetectionPanel({
       recommendations,
       insights
     };
-  }, [weeklyChartData, waterGoal, waterIntake, streak]);
+  }, [weeklyChartData, waterGoal, streak]);
 
   const habitStrengthConfig: Record<string, { color: string; bgColor: string; label: string }> = {
     excellent: { color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', label: 'Xuất sắc' },

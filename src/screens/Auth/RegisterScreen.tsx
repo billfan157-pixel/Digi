@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { ChevronLeft, ArrowRight } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from 'react-i18next';
 
 interface RegisterScreenProps {
   onBack: () => void;
@@ -11,6 +12,7 @@ interface RegisterScreenProps {
 const card = "bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-xl";
 
 export default function RegisterScreen({ onBack, onSuccess }: RegisterScreenProps) {
+  const { t } = useTranslation();
   const [regData, setRegData] = useState({
     nickname: '', password: '', gender: 'Nam', age: 25,
     height: 172, weight: 68, activity: 'sedentary',
@@ -26,25 +28,22 @@ export default function RegisterScreen({ onBack, onSuccess }: RegisterScreenProp
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmittingReg) return;
-    if (!regEmail || !regData.nickname || !regData.password) { toast.error("Vui lòng điền đầy đủ thông tin!"); return; }
-    if (!isValidEmail(regEmail)) { toast.error("Email không hợp lệ!"); return; }
+    if (!regEmail || !regData.nickname || !regData.password) { toast.error(t('auth.fill_all')); return; }
+    if (!isValidEmail(regEmail)) { toast.error(t('auth.invalid_email')); return; }
     
-    // Password validation: min 8 chars, at least 1 letter and 1 number
     if (regData.password.length < 8) { 
-      toast.error("Mật khẩu tối thiểu 8 ký tự!"); 
+      toast.error(t('auth.password_min_error')); 
       return; 
     }
     if (!/[a-zA-Z]/.test(regData.password) || !/[0-9]/.test(regData.password)) { 
-      toast.error("Mật khẩu cần có ít nhất 1 chữ cái và 1 số!"); 
+      toast.error(t('auth.password_need_letter_number')); 
       return; 
     }
     
     setIsSubmittingReg(true);
-    const toastId = toast.loading("Đang thiết lập Cloud Profile...");
+    const toastId = toast.loading(t('auth.setting_up'));
     
     try {
-      await supabase!.auth.signOut();
-
       const { data: authData, error: authError } = await supabase!.auth.signUp({ 
         email: regEmail.toLowerCase().trim(), 
         password: regData.password,
@@ -73,16 +72,16 @@ export default function RegisterScreen({ onBack, onSuccess }: RegisterScreenProp
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }], { onConflict: 'id' });
-        if (dbError) throw new Error("Lỗi lưu hồ sơ: " + dbError.message);
+        if (dbError) throw new Error(t('auth.error_save_profile') + dbError.message);
       }
       
-      toast.success("Khởi tạo tài khoản thành công! ✅", { id: toastId });
+      toast.success(t('auth.success'), { id: toastId });
       
       if (!authData.session) { 
         onSuccess(regEmail); 
       }
     } catch (err: unknown) {
-      toast.error((err as Error).message || "Lỗi đăng ký!", { id: toastId });
+      toast.error((err as Error).message || t('auth.error'), { id: toastId });
     } finally { setIsSubmittingReg(false); }
   };
 
@@ -93,66 +92,66 @@ export default function RegisterScreen({ onBack, onSuccess }: RegisterScreenProp
         <button onClick={onBack} className="mb-8 p-2 rounded-xl bg-slate-900/60 backdrop-blur-xl border border-white/5 text-slate-400 inline-flex active:scale-95 transition-all duration-200 ease-out hover:text-white">
           <ChevronLeft size={20} />
         </button>
-        <h2 className="text-3xl font-black text-white mb-8">Tạo tài khoản</h2>
+        <h2 className="text-3xl font-black text-white mb-8">{t('auth.register_title')}</h2>
 
         <form onSubmit={handleRegister} className="space-y-5 pb-16">
           <div className={`${card} p-5 space-y-3`}>
-            <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest pb-2 border-b border-slate-700">Tài khoản</p>
-            <input type="email" placeholder="Email" value={regEmail} onChange={e => setRegEmail(e.target.value)} disabled={isSubmittingReg} className="w-full p-3.5 rounded-2xl bg-slate-800/50 border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out text-sm disabled:opacity-50" />
-            <input type="text" placeholder="Nickname" value={regData.nickname} onChange={e => setRegData({ ...regData, nickname: e.target.value })} disabled={isSubmittingReg} className="w-full p-3.5 rounded-2xl bg-slate-800/50 border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out text-sm disabled:opacity-50" />
-            <input type="password" placeholder="Mật khẩu (tối thiểu 6 ký tự)" value={regData.password} onChange={e => setRegData({ ...regData, password: e.target.value })} disabled={isSubmittingReg} className="w-full p-3.5 rounded-2xl bg-slate-800/50 border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out text-sm disabled:opacity-50" />
+            <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest pb-2 border-b border-slate-700">{t('auth.account_section')}</p>
+            <input type="email" placeholder={t('auth.email')} aria-label={t('auth.email')} value={regEmail} onChange={e => setRegEmail(e.target.value)} disabled={isSubmittingReg} className="w-full p-3.5 rounded-2xl bg-slate-800/50 border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out text-sm disabled:opacity-50" />
+            <input type="text" placeholder={t('auth.nickname')} aria-label={t('auth.nickname')} value={regData.nickname} onChange={e => setRegData({ ...regData, nickname: e.target.value })} disabled={isSubmittingReg} className="w-full p-3.5 rounded-2xl bg-slate-800/50 border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out text-sm disabled:opacity-50" />
+            <input type="password" placeholder={t('auth.password_min')} aria-label={t('auth.password')} value={regData.password} onChange={e => setRegData({ ...regData, password: e.target.value })} disabled={isSubmittingReg} className="w-full p-3.5 rounded-2xl bg-slate-800/50 border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out text-sm disabled:opacity-50" />
           </div>
 
           <div className={`${card} p-5 space-y-3`}>
-            <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest pb-2 border-b border-slate-700">Chỉ số cơ thể</p>
+            <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest pb-2 border-b border-slate-700">{t('auth.body_section')}</p>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">Giới tính</label><select value={regData.gender} onChange={e => setRegData({ ...regData, gender: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50"><option>Nam</option><option>Nữ</option><option>Khác</option></select></div>
-              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">Tuổi</label><input type="number" value={regData.age} onChange={e => setRegData({ ...regData, age: +e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
-              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">Chiều cao (cm)</label><input type="number" value={regData.height} onChange={e => setRegData({ ...regData, height: +e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
-              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">Cân nặng (kg)</label><input type="number" value={regData.weight} onChange={e => setRegData({ ...regData, weight: +e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
+              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">{t('auth.gender')}</label><select aria-label={t('auth.gender')} value={regData.gender} onChange={e => setRegData({ ...regData, gender: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50"><option>{t('auth.male')}</option><option>{t('auth.female')}</option><option>{t('auth.other')}</option></select></div>
+              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">{t('auth.age')}</label><input type="number" aria-label={t('auth.age')} value={regData.age} onChange={e => setRegData({ ...regData, age: +e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
+              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">{t('auth.height')}</label><input type="number" aria-label={t('auth.height')} value={regData.height} onChange={e => setRegData({ ...regData, height: +e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
+              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">{t('auth.weight')}</label><input type="number" aria-label={t('auth.weight')} value={regData.weight} onChange={e => setRegData({ ...regData, weight: +e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
             </div>
           </div>
 
           <div className={`${card} p-5 space-y-3`}>
-            <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest pb-2 border-b border-slate-700">Lối sống</p>
+            <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest pb-2 border-b border-slate-700">{t('auth.lifestyle')}</p>
             <div>
-              <label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">Cường độ vận động</label>
-              <select value={regData.activity} onChange={e => setRegData({ ...regData, activity: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50">
-                <option value="sedentary">Ít vận động (Văn phòng)</option>
-                <option value="light">Vận động nhẹ (Đi bộ)</option>
-                <option value="moderate">Vận động vừa (3-5 buổi/tuần)</option>
-                <option value="high">Vận động cao (Hàng ngày)</option>
-                <option value="athlete">Vận động viên</option>
+              <label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">{t('auth.activity_level')}</label>
+              <select aria-label={t('auth.activity_level')} value={regData.activity} onChange={e => setRegData({ ...regData, activity: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50">
+                <option value="sedentary">{t('auth.activity_sedentary')}</option>
+                <option value="light">{t('auth.activity_light')}</option>
+                <option value="moderate">{t('auth.activity_moderate')}</option>
+                <option value="high">{t('auth.activity_high')}</option>
+                <option value="athlete">{t('auth.activity_athlete')}</option>
               </select>
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">Khí hậu nơi sống</label>
-              <select value={regData.climate} onChange={e => setRegData({ ...regData, climate: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50">
-                <option value="temperate">Mát mẻ (20-26°C)</option>
-                <option value="warm">Nóng ấm (26-32°C)</option>
-                <option value="hot">Rất nóng (32-38°C)</option>
-                <option value="tropical">Nhiệt đới ẩm</option>
-                <option value="cold">Lạnh (&lt; 20°C)</option>
+              <label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">{t('auth.climate')}</label>
+              <select aria-label={t('auth.climate')} value={regData.climate} onChange={e => setRegData({ ...regData, climate: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50">
+                <option value="temperate">{t('auth.climate_temperate')}</option>
+                <option value="warm">{t('auth.climate_warm')}</option>
+                <option value="hot">{t('auth.climate_hot')}</option>
+                <option value="tropical">{t('auth.climate_tropical')}</option>
+                <option value="cold">{t('auth.climate_cold')}</option>
               </select>
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">Mục tiêu sức khỏe chính</label>
-              <select value={regData.goal} onChange={e => setRegData({ ...regData, goal: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50">
-                <option value="Giảm mỡ & Tăng cơ">Giảm mỡ & Tăng cơ</option><option value="Sức khỏe tổng quát">Sức khỏe tổng quát</option><option value="Bảo vệ da">Bảo vệ da</option>
+              <label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">{t('auth.health_goal')}</label>
+              <select aria-label={t('auth.health_goal')} value={regData.goal} onChange={e => setRegData({ ...regData, goal: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50">
+                <option value="Giảm mỡ & Tăng cơ">{t('auth.goal_fat_muscle')}</option><option value="Sức khỏe tổng quát">{t('auth.goal_health')}</option><option value="Bảo vệ da">{t('auth.goal_skin')}</option>
               </select>
             </div>
           </div>
 
           <div className={`${card} p-5 space-y-3`}>
-            <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest pb-2 border-b border-slate-700">Nhịp sinh học</p>
+            <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest pb-2 border-b border-slate-700">{t('auth.circadian_section')}</p>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">Giờ thức dậy</label><input type="time" value={regData.wakeUp} onChange={e => setRegData({ ...regData, wakeUp: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
-              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">Giờ đi ngủ</label><input type="time" value={regData.bedTime} onChange={e => setRegData({ ...regData, bedTime: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
+              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">{t('auth.wake_up')}</label><input type="time" aria-label={t('auth.wake_up')} value={regData.wakeUp} onChange={e => setRegData({ ...regData, wakeUp: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
+              <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1.5 block">{t('auth.bed_time')}</label><input type="time" aria-label={t('auth.bed_time')} value={regData.bedTime} onChange={e => setRegData({ ...regData, bedTime: e.target.value })} disabled={isSubmittingReg} className="w-full p-3 rounded-2xl bg-slate-800/50 border border-white/5 text-white text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50" /></div>
             </div>
           </div>
 
           <button type="submit" disabled={isSubmittingReg} className="w-full py-4 rounded-3xl font-semibold text-slate-950 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-all duration-200 ease-out shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]" style={{ background: isSubmittingReg ? '#334155' : '#06b6d4' }}>
-            {isSubmittingReg ? <span className="animate-pulse">Đang xử lý...</span> : <><span>Xác nhận & Bắt đầu</span><ArrowRight size={16} /></>}
+            {isSubmittingReg ? <span className="animate-pulse">{t('auth.processing')}</span> : <><span>{t('auth.confirm_start')}</span><ArrowRight size={16} /></>}
           </button>
         </form>
       </div>

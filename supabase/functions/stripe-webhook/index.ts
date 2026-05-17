@@ -16,8 +16,10 @@ type StripeSubscription = {
   status?: string;
 };
 
+const appUrl = Deno.env.get('APP_URL') ?? 'https://digiwell-app.vercel.app';
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': appUrl,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
 };
 
@@ -56,6 +58,10 @@ const verifyStripeSignature = async (body: string, signatureHeader: string) => {
 
   if (!timestamp || !signature || !stripeWebhookSecret) return false;
 
+  // Prevent replay attack: reject signatures older than 5 minutes
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - Number(timestamp)) > 300) return false;
+
   const key = await crypto.subtle.importKey(
     'raw',
     encoder.encode(stripeWebhookSecret),
@@ -84,7 +90,6 @@ const updateProfileSubscription = async (
     subscriptionEnd: string | null;
     stripeCustomerId?: string | null;
     stripeSubscriptionId?: string | null;
-    stripePriceId?: string | null;
   },
 ) => {
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
@@ -96,7 +101,7 @@ const updateProfileSubscription = async (
       subscription_end: values.subscriptionEnd,
       stripe_customer_id: values.stripeCustomerId ?? null,
       stripe_subscription_id: values.stripeSubscriptionId ?? null,
-      stripe_price_id: values.stripePriceId ?? null,
+      // stripe_price_id omitted — column doesn't exist yet; add via migration if needed
     })
     .eq('id', userId);
 
@@ -144,7 +149,6 @@ const object = event.data?.object as Record<string, any> | undefined;
             : null,
           stripeCustomerId: typeof subscription?.customer === 'string' ? subscription.customer : null,
           stripeSubscriptionId: subscription?.id ?? subscriptionId,
-          stripePriceId: subscription?.items?.data?.[0]?.price?.id ?? null,
         });
       }
     }
@@ -163,13 +167,14 @@ const object = event.data?.object as Record<string, any> | undefined;
             : null,
           stripeCustomerId: typeof subscription.customer === 'string' ? subscription.customer : null,
           stripeSubscriptionId: subscription.id,
-          stripePriceId: subscription.items?.data?.[0]?.price?.id ?? null,
         });
       }
     }
 
     return json({ received: true });
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : 'Webhook processing failed.' }, 500);
+    const message = error instanceof Error ? error.message : typeof error === 'object' && error !== null ? JSON.stringify(error) : String(error);
+    console.error('stripe-webhook error:', message);
+    return json({ error: message }, 500);
   }
 });

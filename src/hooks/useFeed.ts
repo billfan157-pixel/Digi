@@ -88,12 +88,12 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
     }
 
     try {
- const { data, error } = await supabase
+  const { data, error } = await supabase
           .from('social_posts')
           .select(`
             *,
             author:profiles!social_posts_author_id_fkey (id, nickname, avatar_url, level, water_today, water_goal),
-            post_cheers (user_id)
+            social_post_likes (user_id)
           `)
          .order('created_at', { ascending: false })
          .range(offset, offset + PAGE_SIZE - 1);
@@ -109,7 +109,7 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
 
         const formatted: SocialFeedPost[] = visibleRows.map((post: Record<string, unknown>) => ({
           ...(post as unknown as SocialFeedPost),
-          cheeredByMe: (post.post_cheers as Array<{ user_id: string }>)?.some((l) => l.user_id === currentUserId) ?? false,
+          cheeredByMe: (post.social_post_likes as Array<{ user_id: string }>)?.some((l) => l.user_id === currentUserId) ?? false,
         }));
 
         if (isFirstPage) {
@@ -202,7 +202,7 @@ if (data) {
   }, [isLoading, isFetchingMore, hasMore, fetchPosts]);
 
   const showNewPosts = useCallback(() => {
-    const formattedPending = pendingPosts.map(p => ({ ...p, cheeredByMe: false }));
+    const formattedPending = pendingPosts.filter(Boolean).map(p => ({ ...p, cheeredByMe: false }));
     setPosts(prev => {
       const nextPosts = [...formattedPending, ...prev];
       postsLengthRef.current = nextPosts.length;

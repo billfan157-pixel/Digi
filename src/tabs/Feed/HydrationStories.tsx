@@ -32,7 +32,7 @@ export const HydrationStories = ({
                <div className="w-full h-full rounded-full bg-slate-950 p-[2px]">
                   <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
                     {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                      <img src={profile.avatar_url} alt="Avatar của bạn" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                     ) : (
                       <span className="text-xl font-black text-slate-500">{(profile?.nickname || 'U').charAt(0).toUpperCase()}</span>
                     )}
@@ -78,7 +78,7 @@ export const HydrationStories = ({
                   <div className="w-full h-full rounded-full bg-slate-950 p-[2px]">
                     <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
                       {story.author?.avatar_url ? (
-                        <img src={story.author.avatar_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                        <img src={story.author.avatar_url} alt={`Story của ${story.author?.nickname || 'người dùng'}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                       ) : (
                         <span className="text-xl font-black text-white">{(story.author?.nickname || 'U').charAt(0).toUpperCase()}</span>
                       )}

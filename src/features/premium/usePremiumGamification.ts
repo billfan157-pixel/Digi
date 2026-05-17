@@ -9,6 +9,8 @@ import confetti from 'canvas-confetti';
 
 import { AppStorage } from '@/lib/storage';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 interface UsePremiumGamificationOptions {
   profile: Record<string, unknown> | null;
   setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
@@ -76,7 +78,7 @@ export function usePremiumGamification({
 
     setIsPremium(false);
     return false;
-  }, [profile?.id]);
+  }, [profile?.id, setIsPremium]);
 
   useEffect(() => {
     void syncPremiumStatus();
@@ -175,7 +177,7 @@ export function usePremiumGamification({
   }, [profile?.id, waterGoal, waterIntake]);
 
   useEffect(() => {
-    if (!profile?.id || profile.id === 'undefined') return;
+    if (!profile?.id || profile.id === 'undefined' || !UUID_RE.test(String(profile.id))) return;
 
     const assignQuestsIfNeeded = async () => {
       const todayStr = new Date().toISOString().split('T')[0];
@@ -186,7 +188,8 @@ export function usePremiumGamification({
       if (lastCheckDate === todayStr) return;
 
       try {
-        await supabase.rpc('assign_daily_quests', { p_user_id: profileId });
+        const { error } = await supabase.rpc('assign_daily_quests', { p_user_id: profileId });
+        if (error) throw error;
         await provisionUserQuests(profileId, Number(profile.level) || 1);
         AppStorage.setItem(lastCheckKey, todayStr);
       } catch (error) {
@@ -222,22 +225,21 @@ export function usePremiumGamification({
   }, [profile?.id, waterGoal, waterIntake]);
 
   useEffect(() => {
-    if (!profile?.id || !profile.onboarding_completed) return;
-
-    const p = profile as Record<string, unknown>;
     const questCtx = {
-      userId: p.id as string,
+      userId: profile?.id as string,
       waterToday: waterIntake,
       waterGoal,
       streak,
-      totalWater: Number(p.total_water) || 0,
+      totalWater: Number(profile?.total_water) || 0,
       logCountToday: waterEntries.length,
       weeklyDays: weeklyHistory.filter(item => item.ml >= waterGoal).length,
       weeklyWater: weeklyHistory.reduce((sum, item) => sum + item.ml, 0),
       weeklyLogCount,
-      equippedSound: String(p.equipped_notification_sound || ''),
-      level: Number(p.level) || 1,
+      equippedSound: String(profile?.equipped_notification_sound || ''),
+      level: Number(profile?.level) || 1,
     };
+
+    if (!questCtx.userId || !profile?.onboarding_completed) return;
 
     runQuestEngine(questCtx);
     runChallengeEngine(questCtx);

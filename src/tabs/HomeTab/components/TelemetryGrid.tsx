@@ -20,6 +20,7 @@ interface TelemetryGridProps {
     restingHR?: number;
     heartRateTrend?: number[]; // Last 5 readings
   } | null;
+  weatherLastUpdatedAt?: string | null;
 }
 
 // Animated counter hook
@@ -117,7 +118,7 @@ function getWeatherRecommendation(temp: number, uvIndex?: number): { text: strin
   };
 }
 
-const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData }: TelemetryGridProps) {
+const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData, weatherLastUpdatedAt }: TelemetryGridProps) {
   const [isHoveringWeather, setIsHoveringWeather] = useState(false);
   const [isHoveringWatch, setIsHoveringWatch] = useState(false);
   
@@ -175,6 +176,11 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
                   )}
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5 truncate">{weatherData.status || 'Thời tiết hiện tại'}</p>
+                {weatherLastUpdatedAt && (
+                  <p className="text-[9px] text-slate-600 mt-0.5 font-medium">
+                    Cập nhật {new Date(weatherLastUpdatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                )}
                 {/* Additional weather info on hover */}
                 {isHoveringWeather && (
                   <div className="mt-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">

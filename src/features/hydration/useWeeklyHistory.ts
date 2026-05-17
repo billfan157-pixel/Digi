@@ -55,8 +55,10 @@ export function useWeeklyHistory({
         if (cached) {
           try {
             const parsedCache = JSON.parse(cached);
-            parsedCache[6].ml = waterIntake;
-            setWeeklyHistory(parsedCache);
+            if (Array.isArray(parsedCache) && parsedCache.length > 6) {
+              parsedCache[6].ml = waterIntake;
+              setWeeklyHistory(parsedCache);
+            }
           } catch (e) { console.error('Failed to parse cache:', e); }
         }
 

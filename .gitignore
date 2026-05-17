@@ -31,3 +31,7 @@ dist-ssr
 
 # opencode config
 opencode.json
+.opencode/
+
+# AI history
+.history/

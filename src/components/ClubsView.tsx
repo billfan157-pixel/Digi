@@ -295,7 +295,12 @@ export default function ClubsView({ userId }: { userId: string }) {
           </div>
 
           <div className="grid gap-4">
-            {filteredClubs.map((club) => {
+            {filteredClubs.length === 0 ? (
+              <div className="rounded-3xl border border-white/[0.06] bg-gradient-to-br from-slate-900/80 to-slate-900/40 p-8 text-center backdrop-blur-xl">
+                <p className="text-lg font-black text-white">Chưa có bang hội nào</p>
+                <p className="mt-2 text-sm text-slate-400 max-w-xs mx-auto">Hiện tại chưa có bang hội. Hãy tạo bang hội mới để bắt đầu!</p>
+              </div>
+            ) : filteredClubs.map((club) => {
               const myRole = myRoles[club.id]; 
               const isMember = !!myRole; 
               const isOwner = myRole === 'owner' || club.owner_id === userId; 

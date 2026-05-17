@@ -52,7 +52,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
 
   const {
     profile, streak, waterIntake, waterGoal,
-    weatherData, watchData, hydrationResult,
+    weatherData, weatherLastUpdatedAt, watchData, hydrationResult,
     actions: { handleAddWater: _rawAddWater, handleLogout }
   } = useAppStore(useShallow((state) => ({
     profile: state.profile,
@@ -60,6 +60,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     waterIntake: state.waterIntake,
     waterGoal: state.waterGoal,
     weatherData: state.weatherData,
+    weatherLastUpdatedAt: state.weatherLastUpdatedAt,
     watchData: state.watchData,
     hydrationResult: state.hydrationResult,
     actions: state.actions,
@@ -235,7 +236,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
 
       {/* 5. Telemetry Grid */}
       <div className="px-5">
-        <TelemetryGrid weatherData={weatherData} watchData={watchData} />
+        <TelemetryGrid weatherData={weatherData} watchData={watchData} weatherLastUpdatedAt={weatherLastUpdatedAt} />
       </div>
 
       {/* 6. Day Complete + Bottle Demo */}

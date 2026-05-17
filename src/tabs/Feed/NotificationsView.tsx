@@ -72,7 +72,7 @@ export const NotificationsView = ({ notifications, unreadCount, markAllRead, mar
                   className={`flex gap-3 p-3 rounded-2xl transition-colors cursor-pointer ${n.is_read ? 'opacity-70 hover:bg-white/5' : 'bg-cyan-500/10 border border-cyan-500/20'}`}
                 >
                   <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
-                    {n.actor?.avatar_url ? <img src={n.actor.avatar_url} alt="" className="w-full h-full object-cover" /> : (n.actor?.nickname || 'U')[0].toUpperCase()}
+                    {n.actor?.avatar_url ? <img src={n.actor.avatar_url} alt={`Avatar của ${n.actor?.nickname || 'người dùng'}`} className="w-full h-full object-cover" /> : (n.actor?.nickname || 'U')[0].toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-200 leading-snug">

@@ -113,7 +113,7 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
 
         {imagePreview && (
           <div className="relative mt-3 rounded-xl overflow-hidden">
-            <img src={imagePreview} alt="" className="w-full max-h-[300px] object-cover" />
+            <img src={imagePreview} alt="Xem trước ảnh" className="w-full max-h-[300px] object-cover" />
             <button onClick={() => { if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview); setImagePreview(''); }} className="absolute top-2 right-2 w-8 h-8 bg-slate-950/70 rounded-full flex items-center justify-center text-white"><X size={14} /></button>
           </div>
         )}

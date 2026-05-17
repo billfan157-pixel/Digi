@@ -58,10 +58,15 @@ const isRealUser = (id: unknown): id is string =>
 
 const toDateStr = (d = new Date()): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; // Local date
+const uuid = (): string =>
+  typeof crypto?.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
 const normalizeRow = (row: Record<string, unknown>): WaterLog => {
   const createdAt = String(row.created_at ?? new Date().toISOString());
   return {
-    id:         String(row.id ?? crypto.randomUUID()),
+    id:         String(row.id ?? uuid()),
     user_id:    String(row.user_id ?? ''),
     amount:     Number(row.amount ?? 0),
     name:       String(row.name ?? 'Nuoc Loc'),
@@ -124,7 +129,7 @@ function pushOfflineQueue(item: OfflineQueueItem) {
 export function useWaterData(
   profile: (Profile & { water_today?: number }) | null,
   onWaterLogged?: (optimisticAmount?: number, optimisticExp?: number) => void | Promise<void>,
-  envFactors: { tempC?: number; exerciseMins?: number; isFasting?: boolean } = {}
+  { tempC: efTempC, exerciseMins: efExerciseMins, isFasting: efIsFasting }: { tempC?: number; exerciseMins?: number; isFasting?: boolean } = {}
 ) {
   const [waterEntries,        setWaterEntries]        = useState<WaterLog[]>([]);
   const [isSyncing,           setIsSyncing]           = useState(false);
@@ -247,7 +252,7 @@ export function useWaterData(
       const actualAmount = Math.round(amount * factor);
       if (actualAmount <= 0) return;
       
-      const { tempC, exerciseMins, isFasting } = envFactors;
+      const { tempC, exerciseMins, isFasting } = { tempC: efTempC, exerciseMins: efExerciseMins, isFasting: efIsFasting };
 
       const exp    = expGainedForWater(actualAmount, profile.level || 1);
       const now    = new Date().toISOString();
@@ -325,7 +330,7 @@ export function useWaterData(
         setHasPendingCloudSync(true);
       }
     },
-    [profile?.id, onWaterLogged],
+    [profile?.id, profile?.level, onWaterLogged, efTempC, efExerciseMins, efIsFasting],
   );
 
   // ── Delete ─────────────────────────────────────────────
@@ -428,7 +433,7 @@ export function useWaterData(
       setWaterEntries(snapshot);
       toast.error('Không thể cập nhật. Kiểm tra kết nối.');
     }
-  }, [profile?.id, onWaterLogged]);
+  }, [profile?.id, profile?.level, onWaterLogged, fetchAllWater]);
 
   // ── Offline sync ───────────────────────────────────────
 
@@ -526,7 +531,7 @@ export function useWaterData(
     if (failedCount > 0 && remaining.length > 0) {
       toast.info(`Còn ${remaining.length} mục chờ đồng bộ.`);
     }
-  }, [profile?.id, onWaterLogged]);
+  }, [profile?.id, onWaterLogged, fetchAllWater]);
 
   useEffect(() => {
     if (hasPendingCloudSync) syncOfflineLogs();

@@ -40,7 +40,7 @@ export default function ScheduleManager({
   dateKey = 'today',
   waterEntries = [],
 }: ScheduleManagerProps) {
-  const [isScheduleOpen, setIsScheduleOpen] = useState(isOpen);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(isOpen || alwaysExpanded);
   const [customSchedule, setCustomSchedule] = useState<ScheduleItem[]>([]);
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
 

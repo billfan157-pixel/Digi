@@ -27,9 +27,9 @@ export const useDeleteAccount = () => {
       let rpcError;
       
       if (option === 'account-full') {
-        // XÓA LUÔN TÀI KHOẢN (Dùng function đã tạo: delete_account_and_auth)
-        // Function này tự động xóa Storage -> Data -> Auth User
-        const { error } = await supabase.rpc('delete_account_and_auth');
+        // XÓA LUÔN TÀI KHOẢN (Dùng Edge Function: delete-account)
+        // Dùng service_role key, xóa sạch auth + cascade data
+        const { error } = await supabase.functions.invoke('delete-account');
         rpcError = error;
       } else {
         // CHỈ XÓA DỮ LIỆU (Dùng function cũ: delete_all_user_data_secure)

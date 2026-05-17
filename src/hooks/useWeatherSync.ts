@@ -1,7 +1,6 @@
 // src/hooks/useWeatherSync.ts
 import { Geolocation } from '@capacitor/geolocation';
-import { getWeatherData, calculateWeatherAdjustment, type WeatherData } from '@/lib/weatherEngine';
-import { supabase } from '@/lib/supabase';
+import { getWeatherData, type WeatherData } from '@/lib/weatherEngine';
 import { toast } from 'sonner';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
@@ -13,6 +12,16 @@ const WEATHER_SYNC_LOADING_DURATION = 4000;
 const WEATHER_SYNC_RESULT_DURATION = 5000;
 const WEATHER_SYNCED_KEY = 'digiwell_weather_synced_flag';
 const WEATHER_DATA_KEY = 'digiwell_weather_data';
+const WEATHER_LAST_UPDATED_KEY = 'digiwell_weather_last_updated';
+const WEATHER_LAST_ATTEMPT_KEY = 'digiwell_weather_last_attempt';
+const WEATHER_POLL_INTERVAL_MS = 15 * 60 * 1000;
+const WEATHER_MAX_CALLS_PER_HOUR = 5;
+const WEATHER_RATE_LIMIT_HOUR_MS = 60 * 60 * 1000;
+
+type WeatherSyncOptions = {
+  silent?: boolean;
+  force?: boolean;
+};
 
 export function weatherToStoreData(w: WeatherData) {
   return {
@@ -86,41 +95,7 @@ export const syncWeatherAndWaterGoal = async (silent = false): Promise<WeatherDa
     }
 
     if (!silent) {
-      toast.loading('Đang cập nhật mục tiêu nước...', { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      if (!silent) toast.info('Chưa đăng nhập, chỉ cập nhật hiển thị thời tiết.', { id: toastId, duration: WEATHER_SYNC_RESULT_DURATION });
-      return weather;
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('water_goal')
-      .eq('id', user.id)
-      .single();
-
-    if (profile) {
-      const baseGoal = profile.water_goal || 2000;
-      const adjustment = calculateWeatherAdjustment(baseGoal, weather.temp, weather.humidity);
-      const newGoal = baseGoal + adjustment;
-
-      if (Math.abs(adjustment) > 50) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ water_goal: newGoal })
-          .eq('id', user.id);
-
-        if (error) throw error;
-        if (!silent) {
-          toast.success(`Đã cập nhật mục tiêu nước theo thời tiết (${Math.round(weather.temp)}°C)`, { id: toastId, duration: 6000 });
-        }
-      } else {
-        if (!silent) {
-          toast.info(`Thời tiết ôn hòa, không cần điều chỉnh mục tiêu.`, { id: toastId, duration: WEATHER_SYNC_RESULT_DURATION });
-        }
-      }
+      toast.success('Đã cập nhật thời tiết. Mục tiêu nước sẽ điều chỉnh theo ngưỡng ổn định.', { id: toastId, duration: WEATHER_SYNC_RESULT_DURATION });
     }
 
     return weather;
@@ -157,17 +132,36 @@ export function useWeatherSync() {
   const setAppState = useAppStore(s => s.setAppState);
   const inFlightRef = useRef(false);
   const initializedRef = useRef(false);
+  const lastAttemptAtRef = useRef(Number(AppStorage.getItem(WEATHER_LAST_ATTEMPT_KEY)) || 0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const rateLimitCountRef = useRef(0);
+  const rateLimitWindowRef = useRef(Date.now());
 
+  function checkRateLimit(): boolean {
+    const now = Date.now();
+    if (now - rateLimitWindowRef.current > WEATHER_RATE_LIMIT_HOUR_MS) {
+      rateLimitCountRef.current = 0;
+      rateLimitWindowRef.current = now;
+    }
+    if (rateLimitCountRef.current >= WEATHER_MAX_CALLS_PER_HOUR) {
+      return false;
+    }
+    rateLimitCountRef.current += 1;
+    return true;
+  }
+
+  // Restore cached data on mount
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
     const restored = restoreWeatherData();
     const flag = AppStorage.getItem(WEATHER_SYNCED_KEY) === 'true';
+    const lastUpdated = AppStorage.getItem(WEATHER_LAST_UPDATED_KEY) ?? null;
     if (restored && flag) {
       setAppState({
         weatherData: weatherToStoreData(restored),
         isWeatherSynced: true,
+        weatherLastUpdatedAt: lastUpdated,
       });
     }
   }, [setAppState]);
@@ -177,19 +171,38 @@ export function useWeatherSync() {
     persistWeatherSyncFlag(synced);
   }, [setAppState]);
 
-  const syncWeather = useCallback(async () => {
+  const doSync = useCallback(async (options: WeatherSyncOptions = {}) => {
     if (inFlightRef.current) return false;
+    if (!checkRateLimit()) {
+      if (!options.silent) {
+        toast.info('Đã đạt giới hạn cập nhật thời tiết (5 lần/giờ).', { id: WEATHER_SYNC_TOAST_ID, duration: WEATHER_SYNC_RESULT_DURATION });
+      }
+      return false;
+    }
+    const nowMs = Date.now();
+    if (!options.force && nowMs - lastAttemptAtRef.current < WEATHER_POLL_INTERVAL_MS) {
+      if (!options.silent) {
+        toast.info('Thời tiết vừa được cập nhật gần đây.', { id: WEATHER_SYNC_TOAST_ID, duration: WEATHER_SYNC_RESULT_DURATION });
+      }
+      return false;
+    }
+
+    lastAttemptAtRef.current = nowMs;
+    AppStorage.setItem(WEATHER_LAST_ATTEMPT_KEY, String(nowMs));
     inFlightRef.current = true;
     setIsSyncing(true);
     try {
-      const weather = await syncWeatherAndWaterGoal();
+      const weather = await syncWeatherAndWaterGoal(options.silent === true);
       if (weather) {
+        const now = new Date().toISOString();
         setAppState({ 
           isWeatherSynced: true,
           weatherData: weatherToStoreData(weather),
+          weatherLastUpdatedAt: now,
         });
         persistWeatherSyncFlag(true);
         persistWeatherData(weather);
+        AppStorage.setItem(WEATHER_LAST_UPDATED_KEY, now);
         return true;
       }
       return false;
@@ -199,11 +212,30 @@ export function useWeatherSync() {
     }
   }, [setAppState]);
 
+  // Polling interval
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      doSync({ silent: true });
+    }, WEATHER_POLL_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [doSync]);
+
+  // Refresh on tab focus
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        doSync({ silent: true });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [doSync]);
+
   return {
     isWeatherSynced,
     setIsWeatherSynced,
     weatherData,
-    syncWeather,
+    syncWeather: doSync,
     isSyncing,
   };
 }

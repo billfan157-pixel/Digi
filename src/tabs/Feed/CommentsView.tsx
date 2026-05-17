@@ -84,7 +84,7 @@ const handleDeleteComment = async (commentId: string) => {
                     <div className="absolute -left-6 top-4 w-4 h-4 border-l-2 border-b-2 border-slate-600 rounded-bl-lg opacity-50 pointer-events-none" />
                   )}
                   <div className={`${isReply ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm'} rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white shrink-0 overflow-hidden`}>
-                    {c.author?.avatar_url ? <img src={c.author.avatar_url} alt="" className="w-full h-full object-cover" /> : (c.author?.nickname || 'U')[0].toUpperCase()}
+                    {c.author?.avatar_url ? <img src={c.author.avatar_url} alt={`Avatar của ${c.author?.nickname || 'người dùng'}`} className="w-full h-full object-cover" /> : (c.author?.nickname || 'U')[0].toUpperCase()}
                   </div>
                   <div className={`flex-1 bg-slate-800/50 border border-white/5 rounded-2xl rounded-tl-none ${isReply ? 'p-2.5' : 'p-3'} pr-8 relative`}>
                     <div className="flex items-baseline gap-2 mb-1">

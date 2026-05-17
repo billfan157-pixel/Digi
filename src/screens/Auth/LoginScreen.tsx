@@ -6,6 +6,7 @@ import { Browser } from '@capacitor/browser';
 import { supabase } from '@/lib/supabase';
 import { useBiometric } from '@/hooks/useBiometric';
 import { getBiometricEnabled } from '@/lib/sessionSecurity';
+import { useTranslation } from 'react-i18next';
 
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 
@@ -16,6 +17,7 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlock }: LoginScreenProps) {
+  const { t } = useTranslation();
   const [loginEmail, setLoginEmail] = useState(initialEmail);
   const [loginPass, setLoginPass] = useState('');
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
@@ -34,14 +36,14 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
     const { data: sessionRes } = await supabase!.auth.getSession();
     const userId = sessionRes?.session?.user?.id;
     if (!userId) {
-      toast.error('Vui lòng đăng nhập trước khi sử dụng Sinh trắc học');
+      toast.error(t('auth.biometric_required'));
       return;
     }
 
     setIsCheckingBiometric(true);
     const isEnabled = await getBiometricEnabled(userId);
     if (!isEnabled) {
-      toast.error('Bạn chưa bật tính năng mở khóa Sinh trắc học');
+      toast.error(t('auth.biometric_not_enabled'));
       setIsCheckingBiometric(false);
       return;
     }
@@ -59,14 +61,14 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
     
     // Check lockout
     if (isLockedOut) {
-      const remainingMs = Math.ceil((lockoutUntil! - Date.now()) / 1000);
-      toast.error(`Temporarily locked. Try again in ${remainingMs} seconds.`);
+      const remainingSec = Math.ceil((lockoutUntil! - Date.now()) / 1000);
+      toast.error(t('auth.temp_locked_msg', { seconds: remainingSec }));
       return;
     }
     
-    if (!loginEmail || !loginPass) { toast.error("Vui lòng nhập Email và Mật khẩu!"); return; }
+    if (!loginEmail || !loginPass) { toast.error(t('auth.email_required')); return; }
     setIsSubmittingLogin(true);
-    const toastId = toast.loading("Đang xác thực...");
+    const toastId = toast.loading(t('auth.login_loading'));
     try {
       const { error } = await supabase!.auth.signInWithPassword({ email: loginEmail.toLowerCase().trim(), password: loginPass });
       if (error) {
@@ -77,16 +79,16 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
         setLastAttemptTime(now);
         
         if (attempts >= 5) {
-          setLockoutUntil(now + 300000); // 5 min lockout
-          toast.error("Quá nhiều lần thử. Vui lòng đợi 5 phút.", { id: toastId });
+          setLockoutUntil(now + 300000);
+          toast.error(t('auth.too_many_attempts'), { id: toastId });
         } else {
-          toast.error(error.message === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng!' : error.message, { id: toastId });
+          toast.error(error.message === 'Invalid login credentials' ? t('auth.wrong_credentials') : error.message, { id: toastId });
         }
         throw error;
       }
       // Reset on success
       setLoginAttempts(0);
-      toast.success("Đăng nhập thành công! 👋", { id: toastId });
+      toast.success(t('auth.login_success'), { id: toastId });
     } catch {
       // Already handled above
     } finally { setIsSubmittingLogin(false); }
@@ -110,7 +112,7 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
       if (error) throw error;
       if (data?.url && Capacitor.isNativePlatform()) await Browser.open({ url: data.url });
     } catch (err: unknown) {
-      toast.error("Lỗi kết nối Google: " + (err as Error).message);
+      toast.error(t('auth.google_error') + (err as Error).message);
     }
   };
 
@@ -126,7 +128,7 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
       if (error) throw error;
       if (data?.url && Capacitor.isNativePlatform()) await Browser.open({ url: data.url });
     } catch (err: unknown) {
-      toast.error("Lỗi kết nối Apple: " + (err as Error).message);
+      toast.error(t('auth.apple_error') + (err as Error).message);
     }
   };
 
@@ -134,50 +136,51 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
     <div className="flex flex-col min-h-screen max-w-md mx-auto font-sans bg-slate-950">
       <Toaster position="top-center" theme="dark" richColors />
       <div className="p-6 pt-14">
-        <button onClick={onBack} className="mb-10 p-2 rounded-xl bg-slate-900/60 backdrop-blur-xl border border-white/5 text-slate-400 inline-flex active:scale-95 transition-all duration-200 ease-out hover:text-white">
+        <button onClick={onBack} aria-label="Quay lại" className="mb-10 p-2 rounded-xl bg-slate-900/60 backdrop-blur-xl border border-white/5 text-slate-400 inline-flex active:scale-95 transition-all duration-200 ease-out hover:text-white">
           <ChevronLeft size={20} />
         </button>
 
-        <h2 className="text-3xl font-black text-white mb-8">Đăng nhập</h2>
+        <h2 className="text-3xl font-black text-white mb-8">{t('auth.login_title')}</h2>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2 block">Email</label>
-            <input type="email" placeholder="your@email.com" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} disabled={isSubmittingLogin} className="w-full p-4 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50 text-sm" />
+            <label className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2 block">{t('auth.email')}</label>
+            <input type="email" aria-label={t('auth.email')} placeholder={t('auth.email_placeholder')} value={loginEmail} onChange={e => setLoginEmail(e.target.value)} disabled={isSubmittingLogin} className="w-full p-4 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50 text-sm" />
           </div>
           <div>
-            <label className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2 block">Mật khẩu</label>
+            <label className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2 block">{t('auth.password')}</label>
             <div className="relative">
-              <input type="password" placeholder="••••••••" value={loginPass} onChange={e => setLoginPass(e.target.value)} disabled={isSubmittingLogin} className="w-full p-4 pl-12 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50 text-sm" />
+              <input type="password" aria-label={t('auth.password')} placeholder={t('auth.password_placeholder')} value={loginPass} onChange={e => setLoginPass(e.target.value)} disabled={isSubmittingLogin} className="w-full p-4 pl-12 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/5 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200 ease-out disabled:opacity-50 text-sm" />
               <Lock className="w-4 h-4 absolute left-4 top-4 text-slate-500" />
             </div>
           </div>
-<button type="submit" disabled={isSubmittingLogin || isLockedOut} className="w-full py-4 rounded-xl font-semibold text-slate-950 text-sm mt-2 disabled:opacity-50 active:scale-95 transition-all duration-200 ease-out shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]" style={{ background: isSubmittingLogin ? '#334155' : '#06b6d4' }}>
-           {isSubmittingLogin ? <span className="animate-pulse">Đang xác thực...</span> : isLockedOut ? "Đã khóa tạm thời" : "Đăng nhập →"}
+<button type="submit" aria-label={t('auth.login_btn')} disabled={isSubmittingLogin || isLockedOut} className="w-full py-4 rounded-xl font-semibold text-slate-950 text-sm mt-2 disabled:opacity-50 active:scale-95 transition-all duration-200 ease-out shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]" style={{ background: isSubmittingLogin ? '#334155' : '#06b6d4' }}>
+           {isSubmittingLogin ? <span className="animate-pulse">{t('auth.login_loading')}</span> : isLockedOut ? t('auth.login_temp_locked') : t('auth.login_btn')}
           </button>
         </form>
 
         <button
           onClick={handleBiometricUnlock}
+          aria-label={t('auth.biometric_unlock')}
           disabled={isCheckingBiometric || isAuthenticating}
           className="w-full py-4 rounded-xl font-bold text-white text-sm mt-4 border border-cyan-500/30 bg-cyan-500/10 backdrop-blur-xl hover:bg-cyan-500/20 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <ScanFace size={20} />
-          {isCheckingBiometric || isAuthenticating ? 'Đang xác thực...' : 'Mở khóa bằng Sinh trắc học'}
+          {isCheckingBiometric || isAuthenticating ? t('auth.biometric_authenticating') : t('auth.biometric_unlock')}
         </button>
 
         <div className="mt-6 flex items-center justify-between text-xs text-slate-500">
-          <hr className="w-full border-slate-700" /><span className="px-3 font-bold tracking-widest">HOẶC</span><hr className="w-full border-slate-700" />
+          <hr className="w-full border-slate-700" /><span className="px-3 font-bold tracking-widest">{t('auth.or')}</span><hr className="w-full border-slate-700" />
         </div>
 
-        <button onClick={handleGoogleLogin} className="w-full py-4 rounded-xl font-bold text-white text-sm mt-6 border border-white/5 bg-slate-900/60 backdrop-blur-xl hover:bg-slate-800/80 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2">
+        <button onClick={handleGoogleLogin} aria-label={t('auth.google_login')} className="w-full py-4 rounded-xl font-bold text-white text-sm mt-6 border border-white/5 bg-slate-900/60 backdrop-blur-xl hover:bg-slate-800/80 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2">
           <img src="/google-icon.svg" alt="Google" className="w-5 h-5" />
-          Đăng nhập bằng Google
+          {t('auth.google_login')}
         </button>
         
-        <button onClick={handleAppleLogin} className="w-full py-4 rounded-xl font-bold text-white text-sm mt-3 border border-white/5 bg-slate-900/60 backdrop-blur-xl hover:bg-slate-800/80 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2">
+        <button onClick={handleAppleLogin} aria-label={t('auth.apple_login')} className="w-full py-4 rounded-xl font-bold text-white text-sm mt-3 border border-white/5 bg-slate-900/60 backdrop-blur-xl hover:bg-slate-800/80 active:scale-95 transition-all duration-200 ease-out flex items-center justify-center gap-2">
           <img src="/apple-icon.svg" alt="Apple" className="w-5 h-5" style={{ filter: 'invert(1)' }} />
-          Đăng nhập bằng Apple
+          {t('auth.apple_login')}
         </button>
       </div>
     </div>

@@ -55,6 +55,7 @@ export type WaterIntakeInput = {
   healthCondition: HealthCondition;
   dietFactors:     DietFactor[];     // Có thể chọn nhiều
   currentTempC?:   number;           // Nhiệt độ hiện tại (°C) từ weather API
+  currentHumidity?: number;          // Độ ẩm hiện tại (%) từ weather API
   exerciseMinutes?: number;          // Phút tập hôm nay (nếu biết)
   isFasting?:      boolean;          // [NEW] Đang trong chế độ nhịn ăn (Fasting)
   wakeUpTime?:     string;           // "07:00"
@@ -99,6 +100,20 @@ export type WaterIntakeResult = {
 // Giới hạn an toàn
 const MIN_GOAL_ML = 1200;   // Tối thiểu tuyệt đối (trừ bệnh thận/tim)
 const MAX_GOAL_ML = 5000;   // Tối đa an toàn cho người khoẻ mạnh
+const GOAL_ROUNDING_ML = 250;
+
+export function calculateWeatherBandAdjustment(tempC?: number, humidity?: number): number {
+  if (tempC === undefined && humidity === undefined) return 0;
+
+  const hotAndHumid = tempC !== undefined && tempC >= 32 && humidity !== undefined && humidity >= 75;
+  const veryHumid = humidity !== undefined && humidity >= 85;
+  if ((tempC !== undefined && tempC >= 35) || hotAndHumid || veryHumid) return 500;
+
+  const warmAndHumid = tempC !== undefined && tempC >= 28 && humidity !== undefined && humidity >= 75;
+  if ((tempC !== undefined && tempC >= 30) || warmAndHumid) return 250;
+
+  return 0;
+}
 
 // ── Core Algorithm ─────────────────────────────────────────
 
@@ -106,7 +121,7 @@ export function calculateWaterIntake(input: WaterIntakeInput): WaterIntakeResult
   const {
     weightKg, heightCm, ageYears, gender,
     activityLevel, climate, healthCondition,
-    dietFactors, currentTempC, exerciseMinutes = 0,
+    dietFactors, currentTempC, currentHumidity, exerciseMinutes = 0,
     isFasting = false, // [NEW] Khởi tạo giá trị mặc định cho isFasting
     wakeUpTime = '07:00',
     bedTime = '23:00',
@@ -162,11 +177,15 @@ export function calculateWaterIntake(input: WaterIntakeInput): WaterIntakeResult
 
   // ─ 5. Climate/temperature adjustment
   let climateAdj = 0;
-  if (currentTempC !== undefined && currentTempC > 26) {
-    // [UPGRADED] Hệ số phi tuyến tính: Càng nóng bù càng mạnh
-    const severity = currentTempC > 35 ? 70 : (currentTempC > 30 ? 50 : 35);
-    climateAdj = Math.round((currentTempC - 26) * severity);
-    notes.push(`Nhiệt độ ${currentTempC}°C: bù nước cường độ cao thêm ${climateAdj}ml theo thời tiết thực tế`);
+  if (currentTempC !== undefined || currentHumidity !== undefined) {
+    climateAdj = calculateWeatherBandAdjustment(currentTempC, currentHumidity);
+    if (climateAdj > 0) {
+      const weatherParts = [
+        currentTempC !== undefined ? `${Math.round(currentTempC)}°C` : null,
+        currentHumidity !== undefined ? `${Math.round(currentHumidity)}% độ ẩm` : null,
+      ].filter(Boolean).join(', ');
+      notes.push(`Thời tiết hôm nay (${weatherParts}): thêm ${climateAdj}ml theo ngưỡng ổn định`);
+    }
   } else {
     const climateMap: Record<Climate, { ml: number; label: string }> = {
       cold:      { ml: -100, label: 'Lạnh/điều hoà' },
@@ -302,8 +321,8 @@ export function calculateWaterIntake(input: WaterIntakeInput): WaterIntakeResult
     goalMl = Math.max(MIN_GOAL_ML, Math.min(MAX_GOAL_ML, rawTotal));
   }
 
-  // Làm tròn về bội số 50ml (dễ tracking hơn)
-  goalMl = Math.round(goalMl / 50) * 50;
+  // Làm tròn về bội số 250ml để mục tiêu ngày không nhảy vụn theo tín hiệu nhỏ.
+  goalMl = Math.round(goalMl / GOAL_ROUNDING_ML) * GOAL_ROUNDING_ML;
 
   // ─ 10. Confidence level
   const confidence: WaterIntakeResult['confidence'] =

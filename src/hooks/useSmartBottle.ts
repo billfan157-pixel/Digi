@@ -204,7 +204,7 @@ export const useSmartBottle = (userId: string | undefined, deviceId: string, cap
 
         setMetrics(prev => ({ ...prev, currentVolume: nextVolume }));
         await fetchEquippedBottle(profileData?.equipped_bottle_id);
-    } catch {
+    } catch (err) {
         console.error('Lỗi lấy dữ liệu khởi tạo bình:', err);
       }
     };

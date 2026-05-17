@@ -362,7 +362,7 @@ export const HydrationRitualSheet = ({
                     <>
                       <img
                         src={imagePreview}
-                        alt=""
+                        alt="Xem trước ảnh"
                         className="h-full w-full object-cover"
                       />
                       <button

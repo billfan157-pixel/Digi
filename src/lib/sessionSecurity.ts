@@ -67,7 +67,7 @@ async function secureSetValue(server: string, username: string, value: string, w
       username,
       password: value,
       server,
-      accessControl: AccessControl.NONE,
+      accessControl: AccessControl.BIOMETRY_CURRENT_SET,
     });
     return true;
   } catch {

@@ -1,3 +1,5 @@
+import { calculateWeatherBandAdjustment } from './HydrationEngine';
+
 export interface WeatherData {
   temp: number;
   feels_like: number;
@@ -79,11 +81,6 @@ export const getWeatherData = async (lookup: WeatherLookup, signal?: AbortSignal
 };
 
 export const calculateWeatherAdjustment = (baseGoal: number, temp: number, humidity: number): number => {
-  const tempMultiplier = temp > 25 ? (temp - 25) * 0.01 : 0;
-  const humidityMultiplier = humidity > 70 ? 0.05 : 0;
-  
-  const adjustedGoal = baseGoal * (1 + tempMultiplier + humidityMultiplier);
-  
-  // Return the additional amount added by the weather
-  return Math.round(adjustedGoal - baseGoal);
+  const cappedAdjustment = Math.min(calculateWeatherBandAdjustment(temp, humidity), 500);
+  return Math.min(cappedAdjustment, Math.max(0, baseGoal));
 };

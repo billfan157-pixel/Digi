@@ -57,7 +57,11 @@ if (!globalAny.__supabaseClient) {
   });
 }
 
-export const supabase: SupabaseClient = globalAny.__supabaseClient!;
+const supabaseClient = globalAny.__supabaseClient;
+if (!supabaseClient) {
+  throw new Error('Supabase client not initialized. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+}
+export const supabase: SupabaseClient = supabaseClient;
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 

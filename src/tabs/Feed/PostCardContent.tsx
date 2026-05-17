@@ -187,7 +187,7 @@ export const PostCardContent = ({
         {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap">{safeContent}</p>}
         {post.image_url && (
           <div className="rounded-2xl overflow-hidden bg-slate-950 mt-3 border border-white/5">
-            <img src={post.image_url} alt="" loading="lazy" className="w-full max-h-[400px] object-cover" />
+            <img src={post.image_url} alt={post.content || 'Ảnh bài viết'} loading="lazy" className="w-full max-h-[400px] object-cover" />
           </div>
         )}
       </div>

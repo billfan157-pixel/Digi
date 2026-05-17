@@ -7,7 +7,7 @@ export const stableHash = (seed: string) => {
   for (let index = 0; index < seed.length; index++) {
     hash = (hash * 31 + seed.charCodeAt(index)) | 0;
   }
-  return Math.abs(hash);
+  return (hash >>> 0) % 2147483647;
 };
 
 export const stableRange = (seed: string, min: number, max: number) => {

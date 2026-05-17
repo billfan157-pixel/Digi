@@ -92,9 +92,7 @@ export function useAppTabProps({
     calendarEvents,
     syncCalendar,
   }) as React.ComponentProps<typeof InsightTab>, [
-    geminiProps.aiAdvice,
-    geminiProps.fetchAIAdvice,
-    geminiProps.isAiLoading,
+    geminiProps,
     handleExportPDF,
     handleExportCSV,
     handleGenerateWeeklyReport,

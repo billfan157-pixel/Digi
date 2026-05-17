@@ -96,7 +96,7 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/20 p-[1.5px] border border-white/5">
               <div className="w-full h-full rounded-[14px] bg-slate-950 flex items-center justify-center overflow-hidden">
                 {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                  <img src={profile.avatar_url} alt="Avatar của bạn" className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-sm font-black text-slate-500">{initial}</span>
                 )}

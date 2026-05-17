@@ -5,6 +5,7 @@ import { Browser } from '@capacitor/browser';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 import { useAppStore } from '../store/useAppStore';
+import { providerTokenStore } from '../lib/providerTokenStore';
 
 export const CALENDAR_OAUTH_PENDING_KEY = 'digiwell_pending_calendar_oauth';
 export const CALENDAR_TOKEN_UPDATED_EVENT = 'digiwell:google-provider-token-updated';
@@ -174,10 +175,10 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
     return { events: [], needs_reauth: true };
   }
 
-  // Trên native, provider tokens được AppBootstrap lưu vào sessionStorage
+  // Trên native, provider tokens được AppBootstrap lưu trong memory store
   // vì supabase.auth.setSession() KHÔNG lưu provider_token/provider_refresh_token vào session object
-  const storedProviderToken = sessionStorage.getItem('digiwell_provider_token') || '';
-  const storedProviderRefreshToken = sessionStorage.getItem('digiwell_google_refresh_token') || '';
+  const storedProviderToken = providerTokenStore.token || '';
+  const storedProviderRefreshToken = providerTokenStore.refreshToken || '';
 
   // 1. Persist refresh_token khi có (chỉ xuất hiện lần đầu sau OAuth)
   const refreshTokenFromSession = session.provider_refresh_token || storedProviderRefreshToken;
@@ -201,16 +202,20 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
 
   const timeMin = new Date();
   timeMin.setHours(0, 0, 0, 0);
-  const { data, error } = await supabase.functions.invoke('calendar-proxy', {
-    body: {
-      action: 'list-events',
-      maxResults: 50,
-      daysAhead: 7,
-      timeMin: timeMin.toISOString(),
-      providerToken: session.provider_token || storedProviderToken || '',
-      providerRefreshToken: refreshToken,
-    },
-  });
+  const result = await Promise.race([
+    supabase.functions.invoke('calendar-proxy', {
+      body: {
+        action: 'list-events',
+        maxResults: 50,
+        daysAhead: 7,
+        timeMin: timeMin.toISOString(),
+        providerToken: session.provider_token || storedProviderToken || '',
+        providerRefreshToken: refreshToken,
+      },
+    }),
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Calendar proxy timeout')), 15000)),
+  ]);
+  const { data, error } = result;
   if (error) throw new Error(error.message || 'Không thể kết nối calendar proxy.');
   const response = data as CalendarProxyResponse | null;
   if (response?.error) {

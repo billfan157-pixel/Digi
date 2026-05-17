@@ -147,9 +147,13 @@ export function useLeagueData({
 
   const handleAddFriend = useCallback(async (friendId: string, friendName: string) => {
     const toastId = toast.loading('Đang gửi lời mời...');
+    if (!profile?.id) {
+      toast.error('Không thể gửi lời mời lúc này.', { id: toastId });
+      return;
+    }
     const { error } = await supabase!
       .from('friends')
-      .insert({ user_id: profile?.id, friend_id: friendId });
+      .insert({ user_id: profile.id, friend_id: friendId });
 
     if (error) {
       if (error.code === '23505') {

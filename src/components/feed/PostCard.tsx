@@ -230,7 +230,7 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-slate-800 border border-slate-700/70">
             {post.author?.avatar_url ? (
-              <img src={post.author.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+              <img src={post.author.avatar_url} alt={`Avatar của ${post.author?.nickname || 'người dùng'}`} className="w-full h-full rounded-full object-cover" />
             ) : (
               <span className="text-base font-black text-white">{(post.author?.nickname || 'U').charAt(0).toUpperCase()}</span>
             )}
@@ -248,11 +248,11 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={handleShare} className="p-2 rounded-full hover:bg-white/10 text-slate-400 transition-colors">
+          <button onClick={handleShare} aria-label="Chia sẻ bài viết" className="p-2 rounded-full hover:bg-white/10 text-slate-400 transition-colors">
             <Share2 size={18} />
           </button>
           <div className="relative">
-            <button onClick={() => setShowMenu(true)} className="p-2 rounded-full hover:bg-white/10 text-slate-400 transition-colors">
+            <button onClick={() => setShowMenu(true)} aria-label="Tùy chọn bài viết" className="p-2 rounded-full hover:bg-white/10 text-slate-400 transition-colors">
               <MoreHorizontal size={18} />
             </button>
 
@@ -381,13 +381,13 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
             <span>{cheersCount > 0 ? `${cheersCount} Cheers` : 'Cụng ly'}</span>
           </button>
 
-          <button onClick={() => onOpenComments(post)} className="flex items-center gap-1.5 text-slate-400 text-xs font-bold hover:bg-white/5 hover:text-white py-2 px-3 rounded-xl transition-all active:scale-95 group">
+          <button onClick={() => onOpenComments(post)} aria-label="Bình luận" className="flex items-center gap-1.5 text-slate-400 text-xs font-bold hover:bg-white/5 hover:text-white py-2 px-3 rounded-xl transition-all active:scale-95 group">
             <MessageCircle size={18} className="group-hover:text-blue-400" />
             {(post.comments_count || 0) > 0 ? post.comments_count : <span className="hidden sm:inline">Bình luận</span>}
           </button>
         </div>
 
-        <button onClick={handleSavePost} className="flex items-center gap-1.5 text-slate-400 text-xs font-bold hover:bg-white/5 hover:text-white py-2 px-3 rounded-xl transition-all active:scale-95 group">
+        <button onClick={handleSavePost} aria-label={isSaved ? 'Bỏ lưu bài viết' : 'Lưu bài viết'} className="flex items-center gap-1.5 text-slate-400 text-xs font-bold hover:bg-white/5 hover:text-white py-2 px-3 rounded-xl transition-all active:scale-95 group">
           <Bookmark size={18} className={isSaved ? "fill-cyan-500 text-cyan-500" : ""} />
         </button>
       </div>

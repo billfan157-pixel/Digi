@@ -20,8 +20,8 @@ const DEFAULT_REMINDERS = [
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return true;
   const { LocalNotifications } = await import('@capacitor/local-notifications');
-  const { granted } = await LocalNotifications.requestPermissions();
-  return granted;
+  const { display } = await LocalNotifications.requestPermissions();
+  return display === 'granted';
 }
 
 export async function scheduleHydrationReminders(options: HydrationReminderOptions[] = []) {

@@ -1,5 +1,10 @@
 import type { Profile } from '@/models';
 
+const escapeHtml = (s: unknown): string =>
+  String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,
+  );
+
 interface ExportData {
   profile: Profile | null;
   waterIntake: number;
@@ -152,26 +157,26 @@ export async function exportDetailedPDF(params: {
   <body>
     <main class="report">
       <h1>BAO CAO SUC KHOE DIGIWELL</h1>
-      <p class="subtitle">Ngay xuat: ${todayLabel} - Thu thap boi DigiCoach AI</p>
+      <p class="subtitle">Ngay xuat: ${escapeHtml(todayLabel)} - Thu thap boi DigiCoach AI</p>
       <hr />
       
       <h2>1. Thong tin ca nhan</h2>
       <div class="metric-grid">
         <div class="metric-card">
           <p class="metric-label">Ho va ten</p>
-          <p class="metric-value">${profile?.nickname || 'Khach'}</p>
+          <p class="metric-value">${profile?.nickname ? escapeHtml(profile.nickname) : 'Khach'}</p>
         </div>
         <div class="metric-card">
           <p class="metric-label">Tuoi</p>
-          <p class="metric-value">${profile?.age || '--'}</p>
+          <p class="metric-value">${escapeHtml(profile?.age ?? '--')}</p>
         </div>
         <div class="metric-card">
           <p class="metric-label">Chieu cao</p>
-          <p class="metric-value">${profile?.height || '--'} cm</p>
+          <p class="metric-value">${escapeHtml(profile?.height ?? '--')} cm</p>
         </div>
         <div class="metric-card">
           <p class="metric-label">Can nang</p>
-          <p class="metric-value">${profile?.weight || '--'} kg</p>
+          <p class="metric-value">${escapeHtml(profile?.weight ?? '--')} kg</p>
         </div>
       </div>
 
@@ -209,7 +214,7 @@ export async function exportDetailedPDF(params: {
           ${weeklyChartData.map(d => {
             const pct = Math.round((d.ml / waterGoal) * 100);
             const status = d.ml >= waterGoal ? 'Dat muc tieu' : d.ml > 0 ? 'Chua dat' : 'Chua uong';
-            return `<tr><td>${d.d}</td><td>${d.ml}</td><td>${pct}%</td><td>${status}</td></tr>`;
+            return `<tr><td>${escapeHtml(d.d)}</td><td>${escapeHtml(d.ml)}</td><td>${pct}%</td><td>${escapeHtml(status)}</td></tr>`;
           }).join('')}
         </tbody>
       </table>
@@ -218,8 +223,8 @@ export async function exportDetailedPDF(params: {
       <ul>
         <li><strong>Tong so lan uong:</strong> ${totalEntries}</li>
         <li><strong>Tong luong nuoc:</strong> ${totalWater} ml</li>
-        <li><strong>Muc tieu suc khoe:</strong> ${profile?.goal || '--'}</li>
-        <li><strong>Muc do hoat dong:</strong> ${profile?.activity || '--'}</li>
+        <li><strong>Muc tieu suc khoe:</strong> ${escapeHtml(profile?.goal ?? '--')}</li>
+        <li><strong>Muc do hoat dong:</strong> ${escapeHtml(profile?.activity ?? '--')}</li>
       </ul>
 
       <p class="footer">Tai lieu nay duoc tao tu dong. Khong dung de thay the chan doan y te chuyen sau.</p>

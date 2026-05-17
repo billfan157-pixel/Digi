@@ -71,9 +71,10 @@ export function useBattleArena(profile: Record<string, unknown> | null, isOpen: 
 
     const tid = toast.loading('Đang rải chiến thư...');
     try {
-      await supabase.from('hydration_battles').insert({
+      const { error: insertError } = await supabase.from('hydration_battles').insert({
         challenger_id: profile?.id, opponent_id: opponentId, stake_coins: stakeAmount, status: 'pending'
       });
+      if (insertError) throw insertError;
       toast.success('Đã gửi chiến thư!', { id: tid });
       loadArenaData();
     } catch {

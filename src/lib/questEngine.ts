@@ -27,6 +27,8 @@ export interface QuestEngineContext {
   level:         number;   // cấp độ hiện tại của user
 }
 
+const questEngineInFlight = new Map<string, Promise<void>>();
+const questEngineQueuedCtx = new Map<string, QuestEngineContext>();
 const challengeEngineInFlight = new Map<string, Promise<void>>();
 const challengeEngineQueuedCtx = new Map<string, QuestEngineContext>();
 
@@ -45,11 +47,34 @@ function checkCondition(
 export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
   if (!ctx.userId) return;
 
+  const running = questEngineInFlight.get(ctx.userId);
+  if (running) {
+    questEngineQueuedCtx.set(ctx.userId, ctx);
+    return running;
+  }
+
+  const runner = (async () => {
+    let nextCtx: QuestEngineContext | undefined = ctx;
+    while (nextCtx) {
+      questEngineQueuedCtx.delete(ctx.userId);
+      await runQuestEngineOnce(nextCtx);
+      nextCtx = questEngineQueuedCtx.get(ctx.userId);
+    }
+  })().finally(() => {
+    questEngineInFlight.delete(ctx.userId);
+    questEngineQueuedCtx.delete(ctx.userId);
+  });
+
+  questEngineInFlight.set(ctx.userId, runner);
+  return runner;
+}
+
+async function runQuestEngineOnce(ctx: QuestEngineContext): Promise<void> {
+  if (!ctx.userId) return;
+
   try {
-    // 1. Tự động cấp phát nhiệm vụ trước khi chấm điểm để không bao giờ bị trễ nhịp
     await provisionUserQuests(ctx.userId, ctx.level);
 
-    // 2. Lấy tất cả quest đang active của user
     const { data: userQuests, error } = await supabase
       .from('user_quests')
       .select(`
@@ -83,7 +108,6 @@ export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
     }
 
     for (const uq of (userQuests ?? []) as unknown as UserQuestRow[]) {
-      // AN TOÀN: Bỏ qua nhiệm vụ bị xóa khỏi DB để tránh lỗi Null Pointer Exception
       const questData = Array.isArray(uq.quest) ? uq.quest[0] : uq.quest;
       if (!questData) continue;
 
@@ -92,10 +116,8 @@ export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
         ctx
       );
 
-      // Đảm bảo progress là số hợp lệ (tránh null/NaN vi phạm NOT NULL constraint)
       const safeProgress = Math.max(0, Math.floor(progress || 0));
 
-      // Chỉ update nếu có thay đổi
       if (safeProgress !== uq.progress || (completed && uq.status === 'active')) {
         updates.push({
           id:           uq.id,
@@ -110,7 +132,6 @@ export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
       }
     }
 
-    // Batch update
     if (updates.length > 0) {
       await Promise.allSettled(
         updates.map(async (u) => {
@@ -122,13 +143,12 @@ export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
           
           if (error) console.error('[QuestEngine] Lỗi Update DB:', error.message);
           else if (!data || data.length === 0) {
-            console.error(`[QuestEngine] RLS chặn update quest ${u.id}! Vui lòng chạy SQL cấp quyền UPDATE cho user_quests.`);
+            console.error(`[QuestEngine] RLS chặn update quest ${u.id}!`);
           }
         })
       );
     }
 
-    // Notify user khi có quest hoàn thành
     for (const uq of newlyCompleted) {
       toast.success(`🎯 Hoàn thành: ${uq.quest.title} · ⚡ +${uq.quest.reward_exp} EXP!`, {
         duration: 4000,
@@ -138,7 +158,6 @@ export async function runQuestEngine(ctx: QuestEngineContext): Promise<void> {
         },
       });
 
-      // Bắn Push Notification
       await triggerRewardNotification(
         '🎯 Hoàn thành nhiệm vụ!',
         `${uq.quest.title} · ⚡ +${uq.quest.reward_exp} EXP & 💰 +${uq.quest.reward_coins} xu!`,

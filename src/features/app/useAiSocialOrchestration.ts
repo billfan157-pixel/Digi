@@ -26,8 +26,8 @@ export function useAiSocialOrchestration() {
 
   // Dummy handlers for now that will be wired to actual implementations 
   // or extracted from another store if available
-  const handleExportPDF = async () => { toast.success('Export PDF feature') };
-  const toggleFastingMode = () => { toast.success('Fasting Mode Triggered') };
+  const handleExportPDF = async () => { toast.success('Tính năng xuất PDF đang phát triển') };
+  const toggleFastingMode = () => { toast.success('Tính năng chế độ nhịn ăn đang phát triển') };
 
   const socialProps = useSocialData({
     profile: profile as unknown as Record<string, unknown> | null,

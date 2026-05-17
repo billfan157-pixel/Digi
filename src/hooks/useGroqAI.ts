@@ -100,7 +100,7 @@ export function useGeminiAI(props: UseGeminiAIProps) {
       console.error("Lỗi AI Advice:", error);
     } finally {
       setIsAiLoading(false);
-      setTimeout(() => { isFetchingAdviceRef.current = false; }, 2000);
+      isFetchingAdviceRef.current = false;
     }
   }, [buildContext, isAiLoading]);
 

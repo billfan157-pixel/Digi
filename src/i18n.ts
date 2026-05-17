@@ -20,7 +20,7 @@ i18n
     resources,
     lng: savedLanguage,
     fallbackLng: 'vi',
-    interpolation: { escapeValue: false }
+    interpolation: { escapeValue: true }
   });
 
 export default i18n;

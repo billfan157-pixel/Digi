@@ -50,7 +50,12 @@ export const useReminderStore = create<ReminderState>((set, get) => ({
 
   loadReminderSettings: (profileId) => {
     if (profileId) {
-      const savedReminderSettings = JSON.parse(AppStorage.getItem(`digiwell_reminders_${profileId}`) || 'null');
+      let savedReminderSettings = null;
+      try {
+        savedReminderSettings = JSON.parse(AppStorage.getItem(`digiwell_reminders_${profileId}`) || 'null');
+      } catch {
+        savedReminderSettings = null;
+      }
       set({
         reminderSettings: savedReminderSettings
           ? { ...DEFAULT_HYDRATION_REMINDER_SETTINGS, ...savedReminderSettings }

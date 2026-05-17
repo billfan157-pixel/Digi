@@ -10,6 +10,7 @@ import { useTheme } from '@/context/ThemeProvider';
 import { queryClient } from '@/lib/queryClient';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { readCheckoutResult, clearCheckoutResult } from '@/lib/stripe';
+import { providerTokenStore } from '@/lib/providerTokenStore';
 
 function MissingConfigScreen() {
   return (
@@ -114,8 +115,7 @@ export default function AppBootstrap({ children }: { children: React.ReactNode }
               const providerRefreshToken = params.get('provider_refresh_token');
 
               if (accessToken && refreshToken) {
-                if (providerToken) sessionStorage.setItem('digiwell_provider_token', providerToken);
-                if (providerRefreshToken) sessionStorage.setItem('digiwell_google_refresh_token', providerRefreshToken);
+                if (providerToken) providerTokenStore.set(providerToken, providerRefreshToken);
 
                 const { error } = await supabase.auth.setSession({
                   access_token: accessToken,

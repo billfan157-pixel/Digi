@@ -1,13 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
 
+const appUrl = Deno.env.get('APP_URL') ?? 'https://digiwell-app.vercel.app';
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': appUrl,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const TEXT_MODEL = 'llama-3.3-70b-versatile';
 const groqApiKey = Deno.env.get('GROQ_API_KEY') ?? '';
-const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
 type AiGatewayAction = 'advice' | 'chat' | 'report-analysis';
