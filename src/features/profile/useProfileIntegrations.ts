@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Activity, Calendar, CloudSun, Watch } from 'lucide-react';
 import { toast } from 'sonner';
 import { normalizeActivity, normalizeClimate } from '@/lib/profileNormalization';
-import { updateProfileFields } from '@/services/profile.service';
+import { updateProfileFields, type AppProfile } from '@/services/profile.service';
 
 interface EditProfileData {
   nickname: string;
@@ -16,8 +16,8 @@ interface EditProfileData {
 }
 
 interface UseProfileIntegrationsOptions {
-  profile: Record<string, unknown> | null;
-  setProfile: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
+  profile: AppProfile | null;
+  setProfile: React.Dispatch<React.SetStateAction<AppProfile | null>>;
   setShowEditProfile: (value: boolean) => void;
   isWeatherSynced: boolean;
   syncWeather: () => Promise<boolean>;
@@ -94,7 +94,7 @@ export function useProfileIntegrations({
       });
 
       setEditProfileData(normalizedProfileData);
-      setProfile(updatedProfile as unknown as Record<string, unknown> | null);
+      setProfile(updatedProfile);
       toast.success('Cập nhật hồ sơ thành công! ✅', { id: toastId });
       setShowEditProfile(false);
     } catch (error: unknown) {

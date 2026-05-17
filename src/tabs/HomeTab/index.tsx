@@ -155,7 +155,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       {/* 2. Progress Summary (merged LevelBar + HabitNudgeBar) */}
       {profile ? (
         <ProgressSummary
-          level={Number((profile as unknown as Record<string, unknown>).level) || 1}
+          level={profile.level || 1}
           streak={streak}
           waterIntake={waterIntake}
           waterGoal={waterGoal}

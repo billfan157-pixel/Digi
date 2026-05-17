@@ -39,7 +39,7 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
   const waterGoal = useAppStore((state) => state.waterGoal);
   const weeklyHistory = useAppStore((state) => state.weeklyHistory);
 
-  const { settings } = useSettings(profile as unknown as Record<string, unknown> | null);
+  const { settings } = useSettings(profile);
 
   // 1. HYDRATION SCORE
   const hydrationScore = useMemo(() => {

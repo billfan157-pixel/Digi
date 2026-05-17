@@ -99,7 +99,7 @@ export default function SettingsModal() {
   const setProfile = (newProfile: typeof profile) => useAppStore.getState().setAppState({ profile: newProfile });
   const handleLogout = useAppStore(s => s.actions.handleLogout);
 
-  const { settings, updateSettings, isSaving, lastSync, triggerHaptic } = useSettings(profile as unknown as Record<string, unknown> | null);
+  const { settings, updateSettings, isSaving, lastSync, triggerHaptic } = useSettings(profile);
   const [activeSheet, setActiveSheet] = useState<'none' | 'personal' | 'quiet' | 'privacy' | 'delete' | 'name' | 'widget' | 'wellness'>('none');
   
   // ================= ĐÃ ĐỒNG BỘ TOÀN BỘ BIẾN VÀO ĐÂY =================
@@ -676,7 +676,7 @@ export default function SettingsModal() {
                 try {
                   const widgetPlugin = WidgetPlugin as unknown as Record<string, (data: unknown) => Promise<void>>;
                   await widgetPlugin.syncData({
-                    water_today: Number((profile as unknown as Record<string, unknown>)?.water_today) || 0,
+                    water_today: Number(profile?.water_today) || 0,
                     water_goal: settings.waterGoal || 2000,
                     themeColor: settings.themeColor || '#06b6d4'
                   });
