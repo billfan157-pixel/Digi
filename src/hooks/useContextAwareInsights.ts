@@ -32,27 +32,114 @@ function getLocalDateKey(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
-function countEventsOnDate(events: CalendarEventItem[], dateKey: string) {
+function getBusyEvents(events: CalendarEventItem[], dateKey: string) {
   return events.filter(ev => {
     const startKey = ev.startRaw.length >= 10 ? ev.startRaw.slice(0, 10) : '';
-    if (!ev.isAllDay) return startKey === dateKey;
-    const endKey = ev.endRaw.length >= 10 ? ev.endRaw.slice(0, 10) : '';
-    return startKey <= dateKey && (!endKey || endKey > dateKey);
-  }).length;
+    return !ev.isAllDay && startKey === dateKey && ev.transparency !== 'transparent';
+  });
 }
 
-function countMeetingHours(events: CalendarEventItem[], dateKey: string) {
-  return events
-    .filter(ev => {
-      const startKey = ev.startRaw.length >= 10 ? ev.startRaw.slice(0, 10) : '';
-      return !ev.isAllDay && startKey === dateKey && ev.transparency !== 'transparent';
-    })
+function countBusyHours(events: CalendarEventItem[], dateKey: string) {
+  return getBusyEvents(events, dateKey)
     .reduce((total, ev) => {
       const start = new Date(ev.startRaw).getTime();
       const end = new Date(ev.endRaw).getTime();
       if (Number.isNaN(start) || Number.isNaN(end)) return total;
       return total + (end - start) / (1000 * 60 * 60);
     }, 0);
+}
+
+const RISK_ORDER: Record<string, number> = { high: 3, medium: 2, low: 1 };
+
+type EventCategory =
+  | 'sleep' | 'meal' | 'exercise' | 'meeting'
+  | 'school' | 'social' | 'medical' | 'travel'
+  | 'entertainment' | 'work' | 'other';
+
+const CATEGORY_KEYWORDS: Record<Exclude<EventCategory, 'other'>, { vi: string; en: string }> = {
+  sleep:        { vi: 'ngủ|nghỉ trưa|nap',                  en: 'sleep|nap|rest|break' },
+  meal:         { vi: 'ăn|ăn trưa|ăn sáng|ăn tối|cơm|bữa',  en: 'lunch|dinner|breakfast|meal|eat|food|coffee|tea' },
+  exercise:     { vi: 'tập|gym|chạy|yoga|bơi|đạp|thể dục',  en: 'gym|workout|run|yoga|swim|bike|exercise|sport' },
+  meeting:      { vi: 'họp|meeting|cocall|call|pitch',       en: 'meeting|call|sync|standup|review|interview' },
+  school:       { vi: 'học|lớp|bài|thi|ôn',                  en: 'class|lecture|study|lesson|course|exam|test' },
+  social:       { vi: 'đi chơi|hẹn|date|party|nhậu|gặp',     en: 'date|party|hangout|dinner|drinks|friend' },
+  medical:      { vi: 'khám|bác sĩ|bệnh|tái khám|chích',     en: 'doctor|hospital|clinic|appointment|checkup|medical|dentist' },
+  travel:       { vi: 'đi|bay|máy bay|tàu|xe khách|lái',     en: 'travel|flight|drive|commute|trip|journey' },
+  entertainment:{ vi: 'phim|cinema|rạp|concert|game|show',    en: 'movie|cinema|concert|game|theater|show' },
+  work:         { vi: 'làm việc|work|project|sprint|task',    en: 'work|task|project|sprint|deadline|office' },
+};
+
+function classifyEvent(title: string): EventCategory {
+  const t = title.toLowerCase().trim();
+  for (const [cat, kw] of Object.entries(CATEGORY_KEYWORDS)) {
+    const pattern = `${kw.vi}|${kw.en}`;
+    if (new RegExp(pattern, 'i').test(t)) return cat as EventCategory;
+  }
+  return 'meeting';
+}
+
+const CATEGORY_PROFILES: Record<EventCategory, {
+  label: string;
+  risk: 'low' | 'medium' | 'high';
+  advice: string;
+  extraMl: number;
+}> = {
+  sleep:   { label: 'giấc ngủ',   risk: 'low',    extraMl: 0,    advice: 'Uống 150ml nước ấm trước khi ngủ, tránh uống sát giờ để khỏi tiểu đêm.' },
+  meal:    { label: 'bữa ăn',     risk: 'low',    extraMl: 0,    advice: 'Nhân tiện ăn, uống 200ml nước để hỗ trợ tiêu hóa.' },
+  exercise:{ label: 'tập luyện',  risk: 'high',   extraMl: 400,  advice: 'Vận động ra nhiều mồ hôi, cần bù 400ml trước/sau buổi tập.' },
+  meeting: { label: 'họp hành',   risk: 'high',   extraMl: 250,  advice: 'Mang chai nước vào phòng họp, uống từng ngụm giữa các phiên.' },
+  school:  { label: 'học tập',    risk: 'medium', extraMl: 150,  advice: 'Để chai nước trên bàn học, uống đều đặn mỗi 30 phút.' },
+  social:  { label: 'đi chơi',    risk: 'high',   extraMl: 300,  advice: 'Dễ uống bia/rượu thay vì nước. Xen kẽ 1 ly nước giữa các ly khác.' },
+  medical: { label: 'y tế',       risk: 'medium', extraMl: 0,    advice: 'Nếu không có chỉ định nhịn ăn/uống, hãy uống 200ml trước khi đi.' },
+  travel:  { label: 'di chuyển',  risk: 'high',   extraMl: 350,  advice: 'Mang theo bình nước khi di chuyển, uống thêm 350ml để bù.' },
+  entertainment: { label: 'giải trí', risk: 'medium', extraMl: 200, advice: 'Phim/game dễ cuốn theo, đặt nhắc nhở uống nước mỗi 45 phút.' },
+  work:    { label: 'làm việc',   risk: 'medium', extraMl: 200,  advice: 'Để nước trên bàn làm việc, tập thói quen uống mỗi khi chuyển task.' },
+  other:   { label: 'lịch trình', risk: 'medium', extraMl: 150,  advice: 'Giữ chai nước bên cạnh, uống từng ngụm nhỏ đều đặn.' },
+};
+
+function classifyEvents(events: CalendarEventItem[], dateKey: string) {
+  const busy = getBusyEvents(events, dateKey);
+  return busy.map(ev => ({
+    ...ev,
+    category: classifyEvent(ev.title),
+    profile: CATEGORY_PROFILES[classifyEvent(ev.title)],
+  }));
+}
+
+function summarizeProfile(categorized: ReturnType<typeof classifyEvents>): {
+  worstRisk: EventCategory;
+  dominantLabel: string;
+  totalExtraMl: number;
+  adviceLines: string[];
+  sampleName: string;
+} {
+  if (categorized.length === 0) {
+    return { worstRisk: 'other', dominantLabel: 'khác', totalExtraMl: 0, adviceLines: [], sampleName: '' };
+  }
+  const byCat = new Map<EventCategory, { count: number; hours: number; names: string[] }>();
+  for (const ev of categorized) {
+    const cat = ev.category;
+    const cur = byCat.get(cat) ?? { count: 0, hours: 0, names: [] };
+    cur.count++;
+    cur.names.push(ev.title);
+    const start = new Date(ev.startRaw).getTime();
+    const end = new Date(ev.endRaw).getTime();
+    if (!Number.isNaN(start) && !Number.isNaN(end)) {
+      cur.hours += (end - start) / (1000 * 60 * 60);
+    }
+    byCat.set(cat, cur);
+  }
+  const entries = Array.from(byCat.entries()).sort((a, b) => b[1].hours - a[1].hours);
+  const dominant = entries[0][0];
+  const totalExtraMl = entries.reduce((s, [cat, info]) => {
+    return s + CATEGORY_PROFILES[cat].extraMl * Math.max(1, Math.ceil(info.hours / 2));
+  }, 0);
+  const worstRisk = entries.reduce((worst, [cat]) => {
+    return RISK_ORDER[CATEGORY_PROFILES[cat].risk] > RISK_ORDER[CATEGORY_PROFILES[worst].risk] ? cat : worst;
+  }, dominant);
+  const adviceLines = [...new Set(entries.map(([cat]) => CATEGORY_PROFILES[cat].advice))].slice(0, 2);
+  const sampleName = categorized.find(e => e.title?.trim())?.title || '';
+  return { worstRisk, dominantLabel: CATEGORY_PROFILES[dominant].label, totalExtraMl, adviceLines, sampleName };
 }
 
 export function useContextAwareInsights({
@@ -71,8 +158,6 @@ export function useContextAwareInsights({
     if (weeklyData.length < 3) return result;
 
     const todayKey = getLocalDateKey(new Date());
-    const avgIntake = weeklyData.reduce((s, d) => s + d.ml, 0) / weeklyData.length;
-    const goalRatio = waterGoal > 0 ? avgIntake / waterGoal : 0;
 
     // ── 1. DAY-OF-WEEK PATTERN ──
     const dayOfWeekMap = new Map<number, { total: number; count: number }>();
@@ -116,26 +201,31 @@ export function useContextAwareInsights({
 
     // ── 2. CALENDAR IMPACT (today + tomorrow) ──
     if (isCalendarSynced && calendarEvents.length > 0) {
-      const todayCount = countEventsOnDate(calendarEvents, todayKey);
-      const todayMeetingHrs = countMeetingHours(calendarEvents, todayKey);
+      const todayClassified = classifyEvents(calendarEvents, todayKey);
 
-      if (todayCount > 0) {
-        const meetingLabel = todayMeetingHrs > 0
-          ? ` (${Math.round(todayMeetingHrs * 60)} phút họp)`
-          : '';
-        const riskLevel = todayMeetingHrs >= 4 ? 'cao' : todayMeetingHrs >= 2 ? 'trung bình' : 'thấp';
-        const suggestedExtra = todayMeetingHrs >= 4 ? 500 : todayMeetingHrs >= 2 ? 250 : 150;
+      if (todayClassified.length > 0) {
+        const { worstRisk, dominantLabel, adviceLines, sampleName } = summarizeProfile(todayClassified);
+        const totalHours = todayClassified.reduce((s, ev) => {
+          const start = new Date(ev.startRaw).getTime();
+          const end = new Date(ev.endRaw).getTime();
+          return s + (Number.isNaN(start) || Number.isNaN(end) ? 0 : (end - start) / (1000 * 60 * 60));
+        }, 0);
+
+        const riskLevel = worstRisk === 'exercise' || worstRisk === 'social' || worstRisk === 'travel' ? 'cao'
+          : worstRisk === 'meeting' && totalHours >= 4 ? 'cao'
+          : totalHours >= 3 ? 'trung bình' : 'thấp';
+        const riskBadge = riskLevel === 'cao' ? '⚠ Cao' : riskLevel === 'trung bình' ? 'Trung bình' : 'Thấp';
 
         result.push({
           id: 'calendar_today',
           category: 'calendar',
           icon: 'calendar',
-          title: `Lịch hôm nay: ${todayCount} sự kiện${meetingLabel}`,
-          insight: todayMeetingHrs >= 2
-            ? `Ngày nhiều họp → nguy cơ quên uống nước ${riskLevel}. Nghiên cứu cho thấy người dùng giảm ${Math.round(Math.min(35, todayMeetingHrs * 8))}% lượng nước khi có ${todayMeetingHrs}+ giờ họp. Bù thêm ${suggestedExtra}ml để duy trì mục tiêu.`
-            : `Bạn có ${todayCount} sự kiện hôm nay. Nhớ giữ nhịp uống nước đều đặn giữa các cuộc họp.`,
-          impact: { label: 'Rủi ro', delta: riskLevel === 'cao' ? '⚠ Cao' : riskLevel === 'trung bình' ? 'Trung bình' : 'Thấp' },
-          confidence: todayMeetingHrs >= 2 ? 0.85 : 0.6,
+          title: `Hôm nay: ${dominantLabel}${sampleName ? ` (${sampleName})` : ''}`,
+          insight: totalHours >= 2
+            ? `${todayClassified.length} lịch trình với ${Math.round(totalHours * 10) / 10}h ${dominantLabel}. ${adviceLines[0] || ''}`
+            : `Hôm nay có ${todayClassified.length} sự kiện: ${dominantLabel}. Giữ chai nước bên cạnh.`,
+          impact: { label: 'Rủi ro', delta: riskBadge },
+          confidence: totalHours >= 2 ? 0.85 : 0.6,
         });
       }
 
@@ -143,20 +233,17 @@ export function useContextAwareInsights({
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowKey = getLocalDateKey(tomorrow);
-      const tomorrowCount = countEventsOnDate(calendarEvents, tomorrowKey);
-      const tomorrowMeetingHrs = countMeetingHours(calendarEvents, tomorrowKey);
+      const tomorrowClassified = classifyEvents(calendarEvents, tomorrowKey);
 
-      if (tomorrowCount > 2 || tomorrowMeetingHrs >= 2) {
-        const meetingLabel = tomorrowMeetingHrs > 0
-          ? ` (${Math.round(tomorrowMeetingHrs * 60)} phút họp)`
-          : '';
+      if (tomorrowClassified.length > 2) {
+        const { dominantLabel, totalExtraMl, sampleName } = summarizeProfile(tomorrowClassified);
         result.push({
           id: 'calendar_tomorrow',
           category: 'calendar',
           icon: 'calendar',
-          title: `Ngày mai bận: ${tomorrowCount} sự kiện${meetingLabel}`,
-          insight: `Chuẩn bị trước: ngày mai lịch dày, hãy uống đủ ${Math.round(waterGoal)}ml từ sớm để không bị thiếu hụt khi bận họp.`,
-          impact: { label: 'Chuẩn bị', delta: `${tomorrowCount} events` },
+          title: `Ngày mai: ${dominantLabel}${sampleName ? ` (${sampleName})` : ''}`,
+          insight: `Ngày mai có ${tomorrowClassified.length} lịch trình ${dominantLabel}. Chuẩn bị nước từ tối nay${totalExtraMl > 0 ? `, cần thêm ${totalExtraMl}ml nước` : ''}.`,
+          impact: { label: 'Chuẩn bị', delta: `${tomorrowClassified.length} events` },
           confidence: 0.7,
         });
       }
@@ -256,8 +343,8 @@ export function useContextAwareInsights({
   const calendarRiskScore = useMemo(() => {
     if (!isCalendarSynced || calendarEvents.length === 0) return 0;
     const todayKey = getLocalDateKey(new Date());
-    const meetingHrs = countMeetingHours(calendarEvents, todayKey);
-    return Math.min(1, meetingHrs / 6); // 6+ hours = max risk
+    const busyHrs = countBusyHours(calendarEvents, todayKey);
+    return Math.min(1, busyHrs / 6);
   }, [calendarEvents, isCalendarSynced]);
 
   const weatherAdjustment = useMemo(() => {

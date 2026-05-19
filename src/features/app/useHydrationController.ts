@@ -120,6 +120,7 @@ export function useHydrationController({
     hasPendingCloudSync = false,
     isSyncing = false,
     refetchWater = async () => {},
+    syncOfflineLogs = async () => {},
   } = useWaterData(profile, handleWaterSync, {
     tempC: isWeatherSynced ? weatherData?.temp : undefined,
     exerciseMins: isWatchConnected ? Math.round((watchData?.steps || 0) / 120) : 0,
@@ -250,6 +251,7 @@ export function useHydrationController({
     handleEditEntry,
     hasPendingCloudSync,
     isSyncing,
+    syncOfflineLogs,
     weeklyHistory,
     weeklyLogCount,
     streak,

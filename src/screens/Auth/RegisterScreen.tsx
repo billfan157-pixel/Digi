@@ -3,6 +3,7 @@ import { ChevronLeft, ArrowRight } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from 'react-i18next';
+import { registerSchema, formatZodErrors } from '@/lib/validations';
 
 interface RegisterScreenProps {
   onBack: () => void;
@@ -23,50 +24,43 @@ export default function RegisterScreen({ onBack, onSuccess }: RegisterScreenProp
   const [regEmail, setRegEmail] = useState('');
   const [isSubmittingReg, setIsSubmittingReg] = useState(false);
 
-  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmittingReg) return;
-    if (!regEmail || !regData.nickname || !regData.password) { toast.error(t('auth.fill_all')); return; }
-    if (!isValidEmail(regEmail)) { toast.error(t('auth.invalid_email')); return; }
-    
-    if (regData.password.length < 8) { 
-      toast.error(t('auth.password_min_error')); 
-      return; 
+
+    const parsed = registerSchema.safeParse({ email: regEmail, ...regData });
+    if (!parsed.success) {
+      toast.error(formatZodErrors(parsed.error));
+      return;
     }
-    if (!/[a-zA-Z]/.test(regData.password) || !/[0-9]/.test(regData.password)) { 
-      toast.error(t('auth.password_need_letter_number')); 
-      return; 
-    }
+    const { email, password, ...profileData } = parsed.data;
     
     setIsSubmittingReg(true);
     const toastId = toast.loading(t('auth.setting_up'));
     
     try {
       const { data: authData, error: authError } = await supabase!.auth.signUp({ 
-        email: regEmail.toLowerCase().trim(), 
-        password: regData.password,
+        email: email.toLowerCase().trim(), 
+        password,
       });
       
       if (authError) throw authError;
 
       if (authData.user) {
-        // Tự động tính lượng nước mục tiêu ban đầu (35ml/kg)
-        const initialWaterGoal = regData.weight * 35;
+        const initialWaterGoal = profileData.weight * 35;
 
         const { error: dbError } = await supabase!.from('profiles').upsert([{
           id: authData.user.id,
-          nickname: regData.nickname.trim(),
-          gender: regData.gender,
-          age: regData.age,
-          height: regData.height,
-          weight: regData.weight,
-          activity: regData.activity,
-          climate: regData.climate,
-          goal: regData.goal,
-          wake_up: regData.wakeUp,
-          bed_time: regData.bedTime,
+          nickname: profileData.nickname,
+          gender: profileData.gender,
+          age: profileData.age,
+          height: profileData.height,
+          weight: profileData.weight,
+          activity: profileData.activity,
+          climate: profileData.climate,
+          goal: profileData.goal,
+          wake_up: profileData.wakeUp,
+          bed_time: profileData.bedTime,
           water_goal: initialWaterGoal,
           onboarding_completed: true,
           created_at: new Date().toISOString(),
@@ -78,7 +72,7 @@ export default function RegisterScreen({ onBack, onSuccess }: RegisterScreenProp
       toast.success(t('auth.success'), { id: toastId });
       
       if (!authData.session) { 
-        onSuccess(regEmail); 
+        onSuccess(email); 
       }
     } catch (err: unknown) {
       toast.error((err as Error).message || t('auth.error'), { id: toastId });

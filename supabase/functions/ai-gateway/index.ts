@@ -1,12 +1,24 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
+import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimit.ts';
 
 const appUrl = Deno.env.get('APP_URL') ?? 'https://digiwell-app.vercel.app';
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': appUrl,
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const allowedOrigins = [
+  appUrl,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'capacitor://localhost',
+  ...(Deno.env.get('EXTRA_ALLOWED_ORIGINS')?.split(',').filter(Boolean) ?? []),
+];
+
+function getCorsHeaders(origin: string | null) {
+  const allowOrigin = origin && allowedOrigins.includes(origin) ? origin : appUrl;
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+}
 
 const TEXT_MODEL = 'llama-3.3-70b-versatile';
 const groqApiKey = Deno.env.get('GROQ_API_KEY') ?? '';
@@ -24,10 +36,22 @@ type DigiwellAiContext = {
   nowIso: string;
   waterIntake: number;
   waterGoal: number;
+  hydrationHistory?: Array<{ date: string; ml: number }>;
   weather?: { temp: number; status: string; location: string };
   watch?: { heartRate: number; steps: number };
   calendar?: { synced: boolean; nextEventTitle?: string };
   profile?: { nickname?: string; goal?: string; activity?: string; climate?: string };
+  chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  behaviorPatterns?: Array<{
+    pattern: string;
+    confidence: number;
+    recommendation: string;
+  }>;
+  calendarEvents?: Array<{
+    title: string;
+    startRaw: string;
+    endRaw: string;
+  }>;
 };
 
 type WaterAction = {
@@ -36,10 +60,40 @@ type WaterAction = {
   name: string;
 };
 
-const json = (body: Record<string, unknown>, status = 200) =>
+type AiMemoryMessage = {
+  role: string;
+  content: string;
+  created_at: string;
+};
+
+type ChatCompletionMessage = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
+
+type SupabaseGatewayError = { message: string };
+type SupabaseGatewayResult<T = unknown> = PromiseLike<{
+  data: T | null;
+  error: SupabaseGatewayError | null;
+}>;
+type SupabaseGatewayQuery = SupabaseGatewayResult & {
+  select: (columns: string) => SupabaseGatewayQuery;
+  eq: (column: string, value: unknown) => SupabaseGatewayQuery;
+  order: (column: string, options?: { ascending?: boolean }) => SupabaseGatewayQuery;
+  limit: (count: number) => SupabaseGatewayQuery;
+  maybeSingle: () => SupabaseGatewayResult<Record<string, unknown>>;
+  single: () => SupabaseGatewayResult<Record<string, unknown>>;
+  insert: (values: unknown) => SupabaseGatewayQuery;
+};
+type SupabaseGatewayClient = {
+  rpc: (fn: string, args?: Record<string, unknown>) => SupabaseGatewayResult;
+  from: (table: string) => SupabaseGatewayQuery;
+};
+
+const json = (body: Record<string, unknown>, status = 200, origin?: string | null) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...getCorsHeaders(origin ?? null), 'Content-Type': 'application/json' },
   });
 
 async function groqChat(body: Record<string, unknown>) {
@@ -65,6 +119,67 @@ async function groqChat(body: Record<string, unknown>) {
   return data;
 }
 
+async function groqChatStream(body: Record<string, unknown>) {
+  if (!groqApiKey.trim()) {
+    throw new Error('AI server chưa được cấu hình.');
+  }
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${groqApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ ...body, stream: true }),
+  });
+
+  if (!response.ok) {
+    let message = `Groq request failed (${response.status})`;
+    try {
+      const data = await response.json();
+      message = data.error?.message ?? message;
+    } catch {
+      // keep fallback message
+    }
+    throw new Error(message);
+  }
+
+  if (!response.body) {
+    throw new Error('AI stream không khả dụng.');
+  }
+
+  return response.body;
+}
+
+function sseResponse(
+  origin: string | null,
+  start: (controller: ReadableStreamDefaultController<Uint8Array>) => Promise<void>,
+) {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      void start(controller).catch((error) => {
+        const encoder = new TextEncoder();
+        const message = getErrorMessage(error);
+        controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ error: message })}\n\n`));
+        controller.close();
+      });
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      ...getCorsHeaders(origin),
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+    },
+  });
+}
+
+function encodeSse(event: string, body: Record<string, unknown>) {
+  return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(body)}\n\n`);
+}
+
 function buildContextSummary(context: DigiwellAiContext): string {
   const now = new Date(context.nowIso);
   const timeText = Number.isNaN(now.getTime())
@@ -81,6 +196,14 @@ function buildContextSummary(context: DigiwellAiContext): string {
   return [
     `- Thời gian hiện tại: ${timeText}`,
     `- Lượng nước đã uống: ${context.waterIntake}/${context.waterGoal} ml`,
+    ...(context.hydrationHistory?.length
+      ? [
+          `- Lịch sử uống nước gần đây: ${context.hydrationHistory
+            .slice(-14)
+            .map(day => `${day.date}: ${day.ml}ml`)
+            .join('; ')}`,
+        ]
+      : []),
     context.weather
       ? `- Thời tiết: ${context.weather.temp}°C, ${context.weather.status}, tại ${context.weather.location}`
       : '- Thời tiết: chưa đồng bộ',
@@ -98,6 +221,8 @@ function buildContextSummary(context: DigiwellAiContext): string {
     context.profile?.goal ? `- Mục tiêu sức khỏe: ${context.profile.goal}` : null,
     context.profile?.activity ? `- Mức vận động: ${context.profile.activity}` : null,
     context.profile?.climate ? `- Môi trường/khí hậu: ${context.profile.climate}` : null,
+    ...(context.behaviorPatterns?.map(p => `- Thói quen uống: ${p.pattern} (${Math.round(p.confidence * 100)}% tin cậy) — ${p.recommendation}`) ?? []),
+    ...(context.calendarEvents?.length ? context.calendarEvents.map(ev => `- Lịch: "${ev.title}" (${ev.startRaw} → ${ev.endRaw})`) : []),
   ]
     .filter(Boolean)
     .join('\n');
@@ -183,8 +308,9 @@ function getErrorStatus(error: unknown): number {
 }
 
 async function enforceRateLimit(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseGatewayClient,
   action: AiGatewayAction,
+  origin: string | null,
 ) {
   const { data, error } = await supabase.rpc('consume_ai_usage', {
     p_action: action,
@@ -192,7 +318,7 @@ async function enforceRateLimit(
 
   if (error) {
     console.error('[ai-gateway] RPC consume_ai_usage failed:', error.message, JSON.stringify(error));
-    return json({ error: `Không thể kiểm tra giới hạn AI: ${error.message}` }, 500);
+    return json({ error: `Không thể kiểm tra giới hạn AI: ${error.message}` }, 500, origin);
   }
 
   const usage = data as AiUsageResult | null;
@@ -201,35 +327,272 @@ async function enforceRateLimit(
       error: 'Bạn đã dùng hết lượt AI hôm nay.',
       limit: usage?.limit ?? 0,
       remaining: 0,
-    }, 429);
+    }, 429, origin);
   }
 
   return null;
 }
 
+async function getRecentAiMessages(
+  supabase: SupabaseGatewayClient,
+  userId: string,
+): Promise<AiMemoryMessage[]> {
+  const { data, error } = await supabase
+    .from('ai_messages')
+    .select('role, content, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(8);
+
+  if (error) {
+    console.warn('[ai-gateway] ai_messages select failed:', error.message);
+    return [];
+  }
+
+  return ((data ?? []) as AiMemoryMessage[]).reverse();
+}
+
+function buildMemoryMessages(
+  context: DigiwellAiContext,
+  persistedMessages: AiMemoryMessage[],
+): ChatCompletionMessage[] {
+  const persisted = persistedMessages
+    .filter((message) => message.content?.trim())
+    .map((message) => ({
+      role: message.role === 'user' ? 'user' as const : 'assistant' as const,
+      content: message.content.slice(0, 700),
+    }));
+
+  const clientHistory = (context.chatHistory ?? [])
+    .filter((message) => message.content?.trim())
+    .map((message) => ({
+      role: message.role,
+      content: message.content.slice(0, 700),
+    }));
+
+  const merged = [...persisted, ...clientHistory];
+  return merged.slice(-10);
+}
+
+async function getOrCreateAiConversation(
+  supabase: SupabaseGatewayClient,
+  userId: string,
+  context: DigiwellAiContext,
+) {
+  const { data: existing, error: selectError } = await supabase
+    .from('ai_conversations')
+    .select('id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (selectError) {
+    console.warn('[ai-gateway] ai_conversations select failed:', selectError.message);
+    return null;
+  }
+
+  if (existing?.id) return existing.id as string;
+
+  const { data: inserted, error: insertError } = await supabase
+    .from('ai_conversations')
+    .insert({
+      user_id: userId,
+      title: 'DigiCoach',
+      context,
+    })
+    .select('id')
+    .single();
+
+  if (insertError) {
+    console.warn('[ai-gateway] ai_conversations insert failed:', insertError.message);
+    return null;
+  }
+
+  return inserted?.id as string | null;
+}
+
+async function rememberAiExchange(
+  supabase: SupabaseGatewayClient,
+  userId: string,
+  input: string,
+  reply: string,
+  context: DigiwellAiContext,
+  waterAction?: WaterAction,
+) {
+  if (!input.trim() || !reply.trim()) return;
+
+  const conversationId = await getOrCreateAiConversation(supabase, userId, context);
+  if (!conversationId) return;
+
+  const { error } = await supabase
+    .from('ai_messages')
+    .insert([
+      {
+        conversation_id: conversationId,
+        user_id: userId,
+        role: 'user',
+        content: input.slice(0, 4000),
+        metadata: { source: 'chat' },
+      },
+      {
+        conversation_id: conversationId,
+        user_id: userId,
+        role: 'assistant',
+        content: reply.slice(0, 4000),
+        metadata: waterAction ? { source: 'chat', waterAction } : { source: 'chat' },
+      },
+    ]);
+
+  if (error) {
+    console.warn('[ai-gateway] ai_messages insert failed:', error.message);
+  }
+}
+
+function buildChatMessages(
+  context: DigiwellAiContext,
+  input: string,
+  memoryMessages: ChatCompletionMessage[],
+): ChatCompletionMessage[] {
+  return [
+    {
+      role: 'system',
+      content:
+        'Bạn là trợ lý ảo AI của DigiWell. ' +
+        'Trả lời bằng tiếng Việt, ngắn gọn tối đa 50 từ, thân thiện, hữu ích. ' +
+        'Ưu tiên chủ đề uống nước, nghỉ ngơi, thói quen sinh hoạt, hydration coaching. ' +
+        'Cá nhân hóa theo lịch sử uống nước, thói quen đã phát hiện, và các lần tư vấn gần đây. ' +
+        'Nếu người dùng nói vừa uống hoặc muốn ghi nhận đồ uống, BẮT BUỘC gọi function recordWaterIntake. ' +
+        'Không dùng markdown phức tạp.',
+    },
+    ...memoryMessages,
+    {
+      role: 'user',
+      content: `Bối cảnh người dùng:\n${buildContextSummary(context)}\n\nTin nhắn: "${input}"`,
+    },
+  ];
+}
+
+async function streamChatResponse(
+  supabase: SupabaseGatewayClient,
+  userId: string,
+  origin: string | null,
+  input: string,
+  context: DigiwellAiContext,
+  memoryMessages: ChatCompletionMessage[],
+) {
+  return sseResponse(origin, async (controller) => {
+    const encoder = new TextEncoder();
+    const body = await groqChatStream({
+      model: TEXT_MODEL,
+      max_tokens: 180,
+      tools: [recordWaterIntakeTool],
+      tool_choice: 'auto',
+      messages: buildChatMessages(context, input, memoryMessages),
+    });
+
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    const toolCalls: Record<number, { name?: string; arguments: string }> = {};
+    let buffer = '';
+    let fullReply = '';
+    let waterAction: WaterAction | undefined;
+
+    const emitDelta = (text: string) => {
+      if (!text) return;
+      fullReply += text;
+      controller.enqueue(encoder.encode(`event: delta\ndata: ${JSON.stringify({ text })}\n\n`));
+    };
+
+    const processBlock = (block: string) => {
+      const dataLines = block
+        .split('\n')
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trim());
+
+      for (const dataLine of dataLines) {
+        if (!dataLine || dataLine === '[DONE]') continue;
+
+        const parsed = JSON.parse(dataLine);
+        const delta = parsed.choices?.[0]?.delta;
+        const content = delta?.content;
+        if (typeof content === 'string') emitDelta(content);
+
+        if (Array.isArray(delta?.tool_calls)) {
+          for (const toolCall of delta.tool_calls) {
+            const index = Number(toolCall.index ?? 0);
+            const current = toolCalls[index] ?? { arguments: '' };
+            if (toolCall.function?.name) current.name = toolCall.function.name;
+            if (toolCall.function?.arguments) current.arguments += toolCall.function.arguments;
+            toolCalls[index] = current;
+          }
+        }
+      }
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const blocks = buffer.split('\n\n');
+      buffer = blocks.pop() ?? '';
+
+      for (const block of blocks) {
+        if (block.trim()) processBlock(block);
+      }
+    }
+
+    if (buffer.trim()) processBlock(buffer);
+
+    const firstToolCall = toolCalls[0];
+    if (firstToolCall?.name === 'recordWaterIntake') {
+      let parsedArgs: Partial<WaterAction> = {};
+      try {
+        parsedArgs = JSON.parse(firstToolCall.arguments || '{}');
+      } catch {
+        parsedArgs = {};
+      }
+
+      waterAction = clampWaterAction(parsedArgs);
+      if (waterAction) {
+        const actionReply = `Đã ghi nhận bạn uống ${waterAction.amount}ml ${waterAction.name}.`;
+        if (!fullReply.trim()) emitDelta(actionReply);
+        controller.enqueue(encodeSse('waterAction', { waterAction }));
+      }
+    }
+
+    const finalReply = fullReply.trim() || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.';
+    await rememberAiExchange(supabase, userId, input, finalReply, context, waterAction);
+    controller.enqueue(encodeSse('done', {}));
+    controller.close();
+  });
+}
+
 Deno.serve(async (request) => {
   console.log('[ai-gateway] Invoked:', request.method, request.url, 'model:', TEXT_MODEL, 'groqKeySet:', !!groqApiKey);
+  const origin = request.headers.get('Origin');
 
   if (request.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: getCorsHeaders(origin) });
   }
 
   if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405);
+    return json({ error: 'Method not allowed' }, 405, origin);
   }
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return json({ error: 'Thiếu cấu hình Supabase server.' }, 500);
+    return json({ error: 'Thiếu cấu hình Supabase server.' }, 500, origin);
   }
 
   const authHeader = request.headers.get('Authorization');
   if (!authHeader) {
-    return json({ error: 'Unauthorized.' }, 401);
+    return json({ error: 'Unauthorized.' }, 401, origin);
   }
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: authHeader } },
-  });
+  }) as unknown as SupabaseGatewayClient & ReturnType<typeof createClient>;
 
   const {
     data: { user },
@@ -237,15 +600,22 @@ Deno.serve(async (request) => {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return json({ error: 'Unauthorized.' }, 401);
+    return json({ error: 'Unauthorized.' }, 401, origin);
   }
 
   try {
+    const gatewayLimit = await checkRateLimit(`ai-gateway:${user.id}`, RATE_LIMITS.aiGateway);
+    if (!gatewayLimit.allowed) {
+      return json({
+        error: `AI đang nhận quá nhiều yêu cầu. Thử lại sau ${gatewayLimit.retryAfterSeconds} giây.`,
+      }, 429, origin);
+    }
+
     const body = (await request.json()) as Record<string, unknown>;
     const action = body.action as AiGatewayAction;
 
     if (!action) {
-      return json({ error: 'Missing action.' }, 400);
+      return json({ error: 'Missing action.' }, 400, origin);
     }
 
     // Validate and sanitize input based on action type
@@ -253,19 +623,19 @@ Deno.serve(async (request) => {
     if (action === 'advice') {
       const context = body.context as Partial<DigiwellAiContext>;
       if (!context || typeof context !== 'object') {
-        return json({ error: 'Invalid or missing context.' }, 400);
+        return json({ error: 'Invalid or missing context.' }, 400, origin);
       }
       // Validate numeric fields
       if (context.waterIntake !== undefined && (!Number.isFinite(context.waterIntake) || context.waterIntake < 0)) {
-        return json({ error: 'Invalid waterIntake value.' }, 400);
+        return json({ error: 'Invalid waterIntake value.' }, 400, origin);
       }
       if (context.waterGoal !== undefined && (!Number.isFinite(context.waterGoal) || context.waterGoal <= 0)) {
-        return json({ error: 'Invalid waterGoal value.' }, 400);
+        return json({ error: 'Invalid waterGoal value.' }, 400, origin);
       }
       // Validate weather if present
       if (context.weather) {
         if (typeof context.weather.temp !== 'number' || context.weather.temp < -50 || context.weather.temp > 60) {
-          return json({ error: 'Invalid weather temperature.' }, 400);
+          return json({ error: 'Invalid weather temperature.' }, 400, origin);
         }
       }
     }
@@ -276,15 +646,15 @@ Deno.serve(async (request) => {
       const entries = body.entries;
       
       if (!stats || typeof stats !== 'object') {
-        return json({ error: 'Invalid or missing stats.' }, 400);
+        return json({ error: 'Invalid or missing stats.' }, 400, origin);
       }
       
       // Validate entries array
       if (!Array.isArray(entries)) {
-        return json({ error: 'Invalid or missing entries array.' }, 400);
+        return json({ error: 'Invalid or missing entries array.' }, 400, origin);
       }
       if (entries.length > 100) {
-        return json({ error: 'Entries array too large (max 100).' }, 400);
+        return json({ error: 'Entries array too large (max 100).' }, 400, origin);
       }
       
       // Sanitize string inputs to prevent prompt injection
@@ -294,13 +664,20 @@ Deno.serve(async (request) => {
       }
     }
 
-    const rateLimitResponse = await enforceRateLimit(supabase, action);
+    const rateLimitResponse = await enforceRateLimit(supabase, action, origin);
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
 
     if (action === 'advice') {
       const context = body.context as DigiwellAiContext;
+      const persistedMessages = await getRecentAiMessages(supabase, user.id);
+      const memoryMessages = buildMemoryMessages(context, persistedMessages);
+      const memoryText = memoryMessages.length
+        ? `\n\nLịch sử tư vấn gần đây:\n${memoryMessages
+            .map(message => `- ${message.role === 'user' ? 'Người dùng' : 'DigiCoach'}: ${message.content}`)
+            .join('\n')}`
+        : '';
       const response = await groqChat({
         model: TEXT_MODEL,
         max_tokens: 100,
@@ -314,8 +691,10 @@ Deno.serve(async (request) => {
           {
             role: 'user',
             content:
-              `Bối cảnh hiện tại:\n${buildContextSummary(context)}\n\n` +
+              `Bối cảnh hiện tại:\n${buildContextSummary(context)}${memoryText}\n\n` +
               'Đưa ra 1 lời khuyên ngắn gọn về uống nước/nghỉ ngơi. ' +
+              'Nếu có lịch trình, hãy phân tích loại lịch (học, họp, tập gym, đi chơi, ngủ...) ' +
+              'và đưa ra lời khuyên phù hợp với từng loại. ' +
               'Nếu thiếu nhiều nước thì nhắc uống sớm. Nếu gần đạt mục tiêu thì động viên nhẹ. ' +
               'Chỉ trả về duy nhất câu khuyên, không chào hỏi.',
           },
@@ -323,32 +702,25 @@ Deno.serve(async (request) => {
       });
 
       const text = String(response.choices?.[0]?.message?.content ?? '').replace(/\*/g, '').trim();
-      return json({ text });
+      return json({ text }, 200, origin);
     }
 
     if (action === 'chat') {
       const input = String(body.input ?? '');
       const context = body.context as DigiwellAiContext;
+      const persistedMessages = await getRecentAiMessages(supabase, user.id);
+      const memoryMessages = buildMemoryMessages(context, persistedMessages);
+
+      if (body.stream === true) {
+        return streamChatResponse(supabase, user.id, origin, input, context, memoryMessages);
+      }
+
       const response = await groqChat({
         model: TEXT_MODEL,
         max_tokens: 150,
         tools: [recordWaterIntakeTool],
         tool_choice: 'auto',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Bạn là trợ lý ảo AI của DigiWell. ' +
-              'Trả lời bằng tiếng Việt, ngắn gọn tối đa 50 từ, thân thiện, hữu ích. ' +
-              'Ưu tiên chủ đề uống nước, nghỉ ngơi, thói quen sinh hoạt, hydration coaching. ' +
-              'Nếu người dùng nói vừa uống hoặc muốn ghi nhận đồ uống, BẮT BUỘC gọi function recordWaterIntake. ' +
-              'Không dùng markdown phức tạp.',
-          },
-          {
-            role: 'user',
-            content: `Bối cảnh người dùng:\n${buildContextSummary(context)}\n\nTin nhắn: "${input}"`,
-          },
-        ],
+        messages: buildChatMessages(context, input, memoryMessages),
       });
 
       const choice = response.choices?.[0];
@@ -366,16 +738,19 @@ Deno.serve(async (request) => {
 
           const waterAction = clampWaterAction(parsedArgs);
           if (waterAction) {
+            const reply = `Đã ghi nhận bạn uống ${waterAction.amount}ml ${waterAction.name}.`;
+            await rememberAiExchange(supabase, user.id, input, reply, context, waterAction);
             return json({
-              reply: `Đã ghi nhận bạn uống ${waterAction.amount}ml ${waterAction.name}.`,
+              reply,
               waterAction,
-            });
+            }, 200, origin);
           }
         }
       }
 
       const reply = String(choice?.message?.content ?? '').replace(/\*/g, '').trim();
-      return json({ reply: reply || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.' });
+      await rememberAiExchange(supabase, user.id, input, reply || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.', context);
+      return json({ reply: reply || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.' }, 200, origin);
     }
 
 
@@ -427,10 +802,10 @@ Trả về JSON thuần:
       return json({
         analysis: parsed.analysis || '',
         recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
-      });
+      }, 200, origin);
     }
 
-    return json({ error: `Unsupported action "${action}".` }, 400);
+    return json({ error: `Unsupported action "${action}".` }, 400, origin);
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack?.split('\n').slice(0, 4).join('\n') : '';
@@ -440,6 +815,6 @@ Trả về JSON thuần:
       `[ai-gateway] ${status} ${name}: ${msg}` +
         (stack ? `\n  Stack: ${stack}` : ''),
     );
-    return json({ error: getErrorMessage(error) }, status);
+    return json({ error: getErrorMessage(error) }, status, origin);
   }
 });

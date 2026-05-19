@@ -1,4 +1,4 @@
-import { invokeAiGateway } from './aiGateway';
+import { invokeAiGateway, invokeAiGatewayStream, type AiGatewayStreamEvent } from './aiGateway';
 import { isSupabaseConfigured } from './supabase';
 
 export type AiChatMessage = {
@@ -10,10 +10,22 @@ export type DigiwellAiContext = {
   nowIso: string;
   waterIntake: number;
   waterGoal: number;
+  hydrationHistory?: Array<{ date: string; ml: number }>;
   weather?: { temp: number; status: string; location: string };
   watch?: { heartRate: number; steps: number };
   calendar?: { synced: boolean; nextEventTitle?: string };
   profile?: { nickname?: string; goal?: string; activity?: string; climate?: string };
+  chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  behaviorPatterns?: Array<{
+    pattern: string;
+    confidence: number;
+    recommendation: string;
+  }>;
+  calendarEvents?: Array<{
+    title: string;
+    startRaw: string;
+    endRaw: string;
+  }>;
 };
 
 type WaterAction = {
@@ -88,4 +100,12 @@ export async function sendAiChatMessage(
     const msg = err instanceof Error ? err.message : '';
     return { reply: msg || 'Hệ thống AI đang bận một chút, bạn thử lại sau nhé.' };
   }
+}
+
+export async function streamAiChatMessage(
+  input: string,
+  context: DigiwellAiContext,
+  onEvent: (event: AiGatewayStreamEvent) => void,
+): Promise<void> {
+  await invokeAiGatewayStream('chat', { input, context }, onEvent);
 }

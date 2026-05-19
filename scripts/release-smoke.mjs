@@ -117,6 +117,16 @@ async function main() {
       throw new Error(`Compiled asset request failed: ${assetMatch[0]}`);
     }
 
+    const manifestResponse = await fetch(new URL('/manifest.webmanifest', baseUrl));
+    if (!manifestResponse.ok) {
+      throw new Error('PWA manifest request failed.');
+    }
+
+    const serviceWorkerResponse = await fetch(new URL('/sw.js', baseUrl));
+    if (!serviceWorkerResponse.ok) {
+      throw new Error('Generated service worker request failed.');
+    }
+
     console.log(`Smoke test passed on ${baseUrl}`);
   } finally {
     server.closeAllConnections?.();

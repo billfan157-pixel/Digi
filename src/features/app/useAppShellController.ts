@@ -8,6 +8,8 @@ import { useHydrationController } from '@/features/app/useHydrationController';
 import { useLeagueController } from '@/features/app/useLeagueController';
 import { updateProfileFields } from '@/services/profile.service';
 import { useAppSystem } from '@/hooks/useAppSystem';
+import { useNetworkState } from '@/hooks/useNetworkState';
+import { countQueue } from '@/lib/offlineQueue';
 import { useReminderStore } from '@/store/useReminderStore';
 import { useDrinkPresetStore } from '@/store/useDrinkPresetStore';
 import { useAppStore } from '@/store/useAppStore';
@@ -76,6 +78,17 @@ export function useAppShellController(): AppShellProps {
     loadReminderSettings,
     loadDrinkPresets,
   });
+
+  const { isOnline } = useNetworkState();
+
+  const offlineSyncProps = profile?.id && typeof profile.id === 'string'
+    ? {
+        pendingCount: countQueue(profile.id),
+        isOnline,
+        isSyncing: hydration.isSyncing,
+        onSyncNow: hydration.syncOfflineLogs,
+      }
+    : undefined;
 
   const league = useLeagueController({
     profile,
@@ -197,7 +210,7 @@ export function useAppShellController(): AppShellProps {
     getLeagueData: league.getLeagueData,
     getRankInfo: (wp: number) => getRankInfo(wp),
     socialProps,
-    openSocialComposer: (..._args: unknown[]) => openSocialComposer(),
+    openSocialComposer: () => openSocialComposer(),
     streakFreezes: hydration.streakFreezes,
     needsFreeze: hydration.needsFreeze,
     useStreakFreeze: hydration.useStreakFreeze,
@@ -256,5 +269,6 @@ export function useAppShellController(): AppShellProps {
       visible: import.meta.env.DEV && !!profile?.id && profile.id !== 'undefined',
       onClick: hydration.syncProfileData,
     },
+    offlineSyncProps,
   };
 }

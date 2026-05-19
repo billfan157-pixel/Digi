@@ -1,48 +1,32 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
+import { checkRateLimit, getRateLimitKey, RATE_LIMITS } from '../_shared/rateLimit.ts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const Deno: any;
 
-type StripeSubscription = {
-  id: string;
-  customer: string | null;
-  items?: {
-    data?: Array<{
-      price?: { id?: string | null };
-    }>;
-  };
-  current_period_end?: number;
-  metadata?: Record<string, string>;
-  status?: string;
-};
-
 const appUrl = Deno.env.get('APP_URL') ?? 'https://digiwell-app.vercel.app';
+const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
+const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '';
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': appUrl,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
 };
 
-const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
-const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '';
-const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-
 const encoder = new TextEncoder();
 
 const json = (body: Record<string, unknown>, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
 const hex = (buffer: ArrayBuffer) =>
-  Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  Array.from(new Uint8Array(buffer)).map((b) => b.toString(16).padStart(2, '0')).join('');
 
 const safeEqual = (a: string, b: string) => {
   if (a.length !== b.length) return false;
   let mismatch = 0;
-  for (let i = 0; i < a.length; i += 1) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return mismatch === 0;
 };
 
@@ -55,125 +39,172 @@ const verifyStripeSignature = async (body: string, signatureHeader: string) => {
 
   const timestamp = parts.t;
   const signature = parts.v1;
-
   if (!timestamp || !signature || !stripeWebhookSecret) return false;
 
-  // Prevent replay attack: reject signatures older than 5 minutes
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - Number(timestamp)) > 300) return false;
 
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(stripeWebhookSecret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
+  const key = await crypto.subtle.importKey('raw', encoder.encode(stripeWebhookSecret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(`${timestamp}.${body}`));
   return safeEqual(hex(signed), signature);
 };
 
-const fetchStripeSubscription = async (subscriptionId: string): Promise<StripeSubscription | null> => {
-  const response = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
-    headers: { Authorization: `Bearer ${stripeSecretKey}` },
-  });
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-  if (!response.ok) return null;
-  return await response.json();
-};
-
-const updateProfileSubscription = async (
-  userId: string,
-  values: {
-    subscriptionTier: 'free' | 'premium';
-    subscriptionEnd: string | null;
-    stripeCustomerId?: string | null;
-    stripeSubscriptionId?: string | null;
-  },
-) => {
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      subscription_tier: values.subscriptionTier,
-      subscription_end: values.subscriptionEnd,
-      stripe_customer_id: values.stripeCustomerId ?? null,
-      stripe_subscription_id: values.stripeSubscriptionId ?? null,
-      // stripe_price_id omitted — column doesn't exist yet; add via migration if needed
-    })
-    .eq('id', userId);
-
+async function updateProfile(userId: string, updates: Record<string, unknown>) {
+  const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
   if (error) throw error;
-};
+}
+
+async function logEvent(userId: string, eventType: string, tier: string, amountVnd?: number) {
+  await supabase.from('subscription_events').insert({
+    user_id: userId,
+    event_type: eventType,
+    tier,
+    amount_vnd: amountVnd ?? null,
+  }).maybeSingle();
+}
+
+function extractUserId(obj: Record<string, unknown>): string {
+  return String(obj.client_reference_id ?? (obj.metadata as Record<string, string> | undefined)?.userId ?? '');
+}
+
+function extractSubDetails(obj: Record<string, unknown>) {
+  const items = obj.items as { data?: Array<{ price?: { id?: string } }> } | undefined;
+  const priceId = items?.data?.[0]?.price?.id ?? null;
+  const periodEnd = typeof obj.current_period_end === 'number' ? new Date(obj.current_period_end * 1000).toISOString() : null;
+  const customer = typeof obj.customer === 'string' ? obj.customer : null;
+  return { priceId, periodEnd, customer };
+}
 
 Deno.serve(async (request: Request) => {
-  if (request.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   if (!stripeSecretKey || !stripeWebhookSecret || !supabaseUrl || !supabaseServiceRoleKey) {
-    return json({ error: 'Missing Stripe webhook environment configuration.' }, 500);
+    return json({ error: 'Missing configuration' }, 500);
+  }
+
+  const rateLimit = await checkRateLimit(
+    getRateLimitKey(request, 'stripe-webhook'),
+    RATE_LIMITS.stripeWebhook,
+  );
+  if (!rateLimit.allowed) {
+    return json({ error: `Rate limited. Retry in ${rateLimit.retryAfterSeconds}s` }, 429);
   }
 
   const rawBody = await request.text();
   const signature = request.headers.get('stripe-signature') ?? '';
-  const isValid = await verifyStripeSignature(rawBody, signature);
-
-  if (!isValid) {
-    return json({ error: 'Invalid Stripe signature.' }, 401);
+  if (!(await verifyStripeSignature(rawBody, signature))) {
+    return json({ error: 'Invalid signature' }, 401);
   }
 
   const event = JSON.parse(rawBody);
   const eventType = event.type as string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const object = event.data?.object as Record<string, any> | undefined;
+  const obj = event.data?.object as Record<string, unknown> | undefined;
 
   try {
-    if (eventType === 'checkout.session.completed' && object) {
-      const userId = String(object.client_reference_id ?? object.metadata?.userId ?? '');
-      const subscriptionId = typeof object.subscription === 'string' ? object.subscription : '';
+    if (eventType === 'checkout.session.completed' && obj) {
+      const userId = extractUserId(obj);
+      const subscriptionId = typeof obj.subscription === 'string' ? obj.subscription : '';
 
       if (userId && subscriptionId) {
-        const subscription = await fetchStripeSubscription(subscriptionId);
-
-        await updateProfileSubscription(userId, {
-          subscriptionTier: 'premium',
-          subscriptionEnd: subscription?.current_period_end
-            ? new Date(subscription.current_period_end * 1000).toISOString()
-            : null,
-          stripeCustomerId: typeof subscription?.customer === 'string' ? subscription.customer : null,
-          stripeSubscriptionId: subscription?.id ?? subscriptionId,
+        const resp = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+          headers: { Authorization: `Bearer ${stripeSecretKey}` },
         });
+        if (resp.ok) {
+          const sub = await resp.json() as Record<string, unknown>;
+          const { priceId, periodEnd, customer } = extractSubDetails(sub);
+          await updateProfile(userId, {
+            subscription_tier: 'premium',
+            subscription_end: periodEnd,
+            stripe_customer_id: customer,
+            stripe_subscription_id: subscriptionId,
+            stripe_price_id: priceId,
+            grace_period_end: null,
+          });
+          await logEvent(userId, 'subscription_created', 'premium');
+        }
       }
     }
 
-    if ((eventType === 'customer.subscription.updated' || eventType === 'customer.subscription.deleted') && object) {
-      const subscription = object as StripeSubscription;
-      const userId = subscription.metadata?.userId;
+    if (eventType === 'customer.subscription.updated' && obj) {
+      const userId = extractUserId(obj);
+      const status = String(obj.status ?? '');
+      const { priceId, periodEnd, customer } = extractSubDetails(obj);
 
       if (userId) {
-        const isActive = eventType !== 'customer.subscription.deleted' && subscription.status !== 'canceled';
+        const isActive = status !== 'canceled' && status !== 'incomplete_expired' && status !== 'unpaid';
+        const cancelAtPeriodEnd = Boolean(obj.cancel_at_period_end);
 
-        await updateProfileSubscription(userId, {
-          subscriptionTier: isActive ? 'premium' : 'free',
-          subscriptionEnd: isActive && subscription.current_period_end
-            ? new Date(subscription.current_period_end * 1000).toISOString()
-            : null,
-          stripeCustomerId: typeof subscription.customer === 'string' ? subscription.customer : null,
-          stripeSubscriptionId: subscription.id,
+        await updateProfile(userId, {
+          subscription_tier: isActive ? 'premium' : 'free',
+          subscription_end: periodEnd,
+          stripe_customer_id: customer,
+          stripe_subscription_id: String(obj.id ?? ''),
+          stripe_price_id: priceId,
+          cancel_at_period_end: cancelAtPeriodEnd,
+          grace_period_end: isActive ? null : undefined,
         });
+        await logEvent(userId, isActive ? 'subscription_updated' : 'subscription_expired', isActive ? 'premium' : 'free');
+      }
+    }
+
+    if (eventType === 'customer.subscription.deleted' && obj) {
+      const userId = extractUserId(obj);
+      if (userId) {
+        await updateProfile(userId, {
+          subscription_tier: 'free',
+          subscription_end: null,
+          cancel_at_period_end: false,
+          grace_period_end: null,
+        });
+        await logEvent(userId, 'subscription_canceled', 'free');
+      }
+    }
+
+    if (eventType === 'invoice.payment_succeeded' && obj) {
+      const subscriptionId = typeof obj.subscription === 'string' ? obj.subscription : '';
+      const amountPaid = typeof obj.amount_paid === 'number' ? obj.amount_paid : 0;
+      const amountVnd = Math.round(amountPaid / 100);
+      const userId = extractUserId(obj);
+
+      if (userId && subscriptionId) {
+        const resp = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+          headers: { Authorization: `Bearer ${stripeSecretKey}` },
+        });
+        if (resp.ok) {
+          const sub = await resp.json() as Record<string, unknown>;
+          const { priceId, periodEnd } = extractSubDetails(sub);
+          await updateProfile(userId, {
+            subscription_tier: 'premium',
+            subscription_end: periodEnd,
+            stripe_price_id: priceId,
+            grace_period_end: null,
+            cancel_at_period_end: false,
+          });
+        }
+        await logEvent(userId, 'payment_succeeded', 'premium', amountVnd);
+      }
+    }
+
+    if (eventType === 'invoice.payment_failed' && obj) {
+      const userId = extractUserId(obj);
+      const attemptCount = typeof obj.attempt_count === 'number' ? obj.attempt_count : 0;
+
+      if (userId) {
+        // Grant 7-day grace period on first failure
+        if (attemptCount <= 1) {
+          const graceEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+          await updateProfile(userId, { grace_period_end: graceEnd });
+        }
+        await logEvent(userId, 'payment_failed', 'premium');
       }
     }
 
     return json({ received: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : typeof error === 'object' && error !== null ? JSON.stringify(error) : String(error);
+    const message = error instanceof Error ? error.message : String(error);
     console.error('stripe-webhook error:', message);
     return json({ error: message }, 500);
   }

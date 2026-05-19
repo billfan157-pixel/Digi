@@ -9,6 +9,7 @@ import OnboardingModal from '@/components/OnboardingModal';
 import BottomNav, { type TabType } from '@/components/layout/BottomNav';
 import ThemeEngine from '@/components/ThemeEngine';
 import GlobalModalManager from '@/components/modals/GlobalModalManager';
+import PendingSyncIndicator from '@/components/ui/PendingSyncIndicator';
 import type { Profile } from '@/models';
 import { QuickDropCamera } from '@/tabs/Feed/QuickDropCamera';
 
@@ -45,6 +46,12 @@ export interface AppShellProps {
     visible: boolean;
     onClick: () => void;
   };
+  offlineSyncProps?: {
+    pendingCount: number;
+    isOnline: boolean;
+    isSyncing: boolean;
+    onSyncNow: () => void;
+  };
 }
 
 export default function AppShell({
@@ -65,6 +72,7 @@ export default function AppShell({
   feedTabProps,
   profileTabProps,
   devSyncProps,
+  offlineSyncProps,
 }: AppShellProps) {
   const tabFallback = <div className="h-40 rounded-3xl bg-slate-900/40 border border-white/5 animate-pulse" />;
 
@@ -159,6 +167,16 @@ export default function AppShell({
         >
           <RefreshCw size={20} />
         </button>
+      )}
+
+      {offlineSyncProps && (
+        <PendingSyncIndicator
+          pendingCount={offlineSyncProps.pendingCount}
+          isOnline={offlineSyncProps.isOnline}
+          isSyncing={offlineSyncProps.isSyncing}
+          onSyncNow={offlineSyncProps.onSyncNow}
+          onDismiss={() => {}}
+        />
       )}
     </div>
   );

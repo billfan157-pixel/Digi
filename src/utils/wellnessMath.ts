@@ -141,6 +141,14 @@ export function getWellnessTier(score: number): {
 /**
  * Generate wellness insights based on correlations
  */
+function hasVariance(values: number[]): boolean {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  if (min === max) return false;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  return mean > 0 && (max - min) / mean > 0.05;
+}
+
 export function generateWellnessInsights(
   history: Array<{
     date: string;
@@ -160,7 +168,7 @@ export function generateWellnessInsights(
     history.map(h => h.sleep)
   );
 
-  if (Math.abs(hydrationSleepCorr) > 0.3) {
+  if (hasVariance(history.map(h => h.hydration)) && hasVariance(history.map(h => h.sleep)) && Math.abs(hydrationSleepCorr) > 0.3) {
     insights.push({
       type: 'hydration_sleep',
       strength: hydrationSleepCorr,
@@ -181,7 +189,7 @@ export function generateWellnessInsights(
   const morningHydration = history.map(h => h.hydration); // simplified
   const moodCorr = calculateCorrelation(morningHydration, history.map(h => h.mood));
 
-  if (Math.abs(moodCorr) > 0.25) {
+  if (hasVariance(history.map(h => h.hydration)) && hasVariance(history.map(h => h.mood)) && Math.abs(moodCorr) > 0.25) {
     insights.push({
       type: 'hydration_mood',
       strength: moodCorr,

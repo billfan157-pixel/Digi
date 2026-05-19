@@ -44,7 +44,12 @@ export function useFeedInteractions({
       });
       if (error) throw error;
       // Fire-and-forget pulse update
-      void supabase.rpc('pulse_post', { p_post_id: postId }).then(() => {});
+      void supabase.rpc('pulse_post', { p_post_id: postId }).then(
+        ({ error: pulseError }) => {
+          if (pulseError) console.error(pulseError);
+        },
+        console.error,
+      );
     } catch {
       setHasCheered(false);
       setCheersCount(prev => prev - 1);

@@ -26,10 +26,83 @@ jobs:
         run: npm run typecheck
 
       - name: Tests
-        run: npm test
+        run: npm run test
 
       - name: Build
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: ${{ github.sha }}
+
+      - name: Smoke test built app
+        run: npm run smoke
+
+      - name: Build size guard
+        run: npm run size
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Deploy Edge Functions
+        run: |
+          set -euo pipefail
+          functions=(
+            ai-gateway
+            calendar-proxy
+            create-stripe-checkout
+            stripe-webhook
+            stripe-portal
+            delete-account
+            send-push-notification
+          )
+          for fn in "${functions[@]}"; do
+            echo "::group::Deploy $fn"
+            npx supabase functions deploy $fn --project-ref plbwqjdrivyffrhpbmvm
+            echo "::endgroup::"
+          done
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Smoke test — verify functions are reachable
+        run: |
+          set -euo pipefail
+          failed=0
+          functions=(
+            ai-gateway
+            calendar-proxy
+            create-stripe-checkout
+            stripe-webhook
+            stripe-portal
+            delete-account
+            send-push-notification
+          )
+          for fn in "${functions[@]}"; do
+            echo "::group::Smoke $fn"
+            status=$(curl -s -o /dev/null -w "%{http_code}" -m 10 \
+              "https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/$fn" \
+              -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}")
+            echo "  HTTP $status"
+            # 4xx means the function is running (auth/permission expected);
+            # 5xx or connection error means it's down
+            case "$status" in
+              20[0-9]) echo "  ✅ OK" ;;
+              4[0-9][0-9]) echo "  ✅ Running (auth-required: $status)" ;;
+              5[0-9][0-9]) echo "  ❌ Server error ($status)"; failed=1 ;;
+              *) echo "  ❌ Unreachable ($status)"; failed=1 ;;
+            esac
+            echo "::endgroup::"
+          done
+          exit "$failed"

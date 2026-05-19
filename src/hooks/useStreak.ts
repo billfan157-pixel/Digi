@@ -1,182 +1,124 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 
+function toDateStr(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function computePastStreak(dailyTotals: Map<string, number>, waterGoal: number): number {
+  const now = new Date();
+  let currentPastStreak = 0;
+  for (let i = 1; i <= 30; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    const total = dailyTotals.get(toDateStr(d)) || 0;
+    if (total >= waterGoal) currentPastStreak++;
+    else break;
+  }
+  return currentPastStreak;
+}
+
+function computeFreezeCandidate(dailyTotals: Map<string, number>, waterGoal: number): string | null {
+  const now = new Date();
+  const yesterday = toDateStr(new Date(now.getTime() - 86400000));
+  const dayBeforeYesterday = toDateStr(new Date(now.getTime() - 2 * 86400000));
+  const yesterdayTotal = dailyTotals.get(yesterday) || 0;
+  const dayBeforeTotal = dailyTotals.get(dayBeforeYesterday) || 0;
+  return (yesterdayTotal < waterGoal && dayBeforeTotal >= waterGoal) ? yesterday : null;
+}
+
+interface StreakWaterLog {
+  day: string;
+  amount: number;
+}
+
 export function useStreak(userId: string | undefined, waterGoal: number, todayIntake: number, isPremium: boolean = false) {
-  const [pastStreak, setPastStreak] = useState(0);
-  const [streakFreezes, setStreakFreezes] = useState(0);
-  const [lastFreezeReset, setLastFreezeReset] = useState<string>('');
-  const [freezeCandidateDay, setFreezeCandidateDay] = useState<string | null>(null);
-  const [refreshVersion, setRefreshVersion] = useState(0);
+  const queryClient = useQueryClient();
 
-  const toDateStr = useCallback((date: Date) => (
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-  ), []);
+  const now = new Date();
+  const startDateKey = toDateStr(new Date(now.getTime() - 30 * 86400000));
+  const todayKey = toDateStr(now);
 
-  // Reset streak freezes monthly for premium users
-  useEffect(() => {
-    if (!userId || userId === 'undefined' || !isPremium) return;
+  const waterLogsQuery = useQuery({
+    queryKey: ['streak', 'waterLogs', userId] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('water_logs')
+        .select('day, amount')
+        .eq('user_id', userId)
+        .gte('day', startDateKey)
+        .lte('day', todayKey);
+      if (error) throw error;
+      const dailyTotals = new Map<string, number>();
+      (data || []).forEach((log: StreakWaterLog) => {
+        const amt = Number(log.amount ?? 0);
+        dailyTotals.set(log.day, (dailyTotals.get(log.day) || 0) + (Number.isNaN(amt) ? 0 : amt));
+      });
+      return dailyTotals;
+    },
+    enabled: !!userId && userId !== 'undefined' && waterGoal > 0,
+    staleTime: 30_000,
+  });
 
-    const today = new Date().toLocaleDateString('en-CA');
-    const currentMonth = today.substring(0, 7); // YYYY-MM
-
-    if (lastFreezeReset !== currentMonth) {
-      // Reset streak freezes to 2 per month
-      supabase
-        .from('profiles')
-        .update({ streak_freezes: 2 })
-        .eq('id', userId)
-        .then(({ error }) => {
-          if (error) {
-            console.error('[useStreak] Freeze reset error:', error);
-            return;
-          }
-          setStreakFreezes(2);
-          setLastFreezeReset(currentMonth);
-        });
-    }
-  }, [userId, isPremium, lastFreezeReset]);
-
-  const fetchStreakData = useCallback(async (isActive: () => boolean) => {
-    if (!userId || userId === 'undefined' || !waterGoal) return;
-
-    if (isPremium) {
-      const { data: profile } = await supabase
+  const profileQuery = useQuery({
+    queryKey: ['streak', 'profile', userId] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('profiles')
         .select('streak_freezes')
         .eq('id', userId)
         .single();
+      if (error) throw error;
+      return { streakFreezes: data?.streak_freezes || 0 };
+    },
+    enabled: !!userId && userId !== 'undefined' && isPremium,
+    staleTime: 30_000,
+  });
 
-      if (isActive() && profile) {
-        setStreakFreezes(profile.streak_freezes || 0);
+  const dailyTotals = useMemo(() => waterLogsQuery.data ?? new Map<string, number>(), [waterLogsQuery.data]);
+  const pastStreak = useMemo(() => computePastStreak(dailyTotals, waterGoal), [dailyTotals, waterGoal]);
+  const streak = pastStreak + (todayIntake >= waterGoal ? 1 : 0);
+  const freezeCandidateDay = useMemo(() => computeFreezeCandidate(dailyTotals, waterGoal), [dailyTotals, waterGoal]);
+  const streakFreezes = profileQuery.data?.streakFreezes ?? 0;
+
+  const needsFreeze = !!(isPremium && streakFreezes > 0 && freezeCandidateDay);
+
+  const freezeMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('use_streak_freeze', { p_user_id: userId });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      if (typeof data?.remaining_freezes === 'number') {
+        queryClient.setQueryData(['streak', 'profile', userId], { streakFreezes: data.remaining_freezes });
+        queryClient.invalidateQueries({ queryKey: ['streak', 'waterLogs', userId] });
       }
-    }
+    },
+  });
 
-    const now = new Date();
-    const dates: string[] = [];
-    for (let i = 1; i <= 30; i++) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i);
-      dates.push(toDateStr(d));
-    }
-
-    const yesterday = dates[0] || null;
-    const dayBeforeYesterday = dates[1] || null;
-    
-    const todayKey = toDateStr(now);
-    const startDate = new Date(now);
-    startDate.setDate(now.getDate() - 30);
-    const startDateKey = toDateStr(startDate);
-
-    const { data, error } = await supabase
-      .from('water_logs')
-      .select('day, amount')
-      .eq('user_id', userId)
-      .gte('day', startDateKey)
-      .lte('day', todayKey);
-
-    if (error) {
-      console.error('Lỗi tải dữ liệu streak:', error);
-      return;
-    }
-
-    const dailyTotals = new Map<string, number>();
-    (data || []).forEach((log: { day: string; amount: number }) => {
-      const amt = Number(log.amount ?? 0);
-      const logDay = String(log.day);
-
-      const current = dailyTotals.get(logDay) || 0;
-      dailyTotals.set(logDay, current + (Number.isNaN(amt) ? 0 : amt));
-    });
-
-    let currentPastStreak = 0;
-    for (let i = 0; i < dates.length; i++) {
-      const total = dailyTotals.get(dates[i]) || 0;
-      if (total >= waterGoal) currentPastStreak++;
-      else break;
-    }
-
-    const yesterdayTotal = yesterday ? (dailyTotals.get(yesterday) || 0) : 0;
-    const dayBeforeYesterdayTotal = dayBeforeYesterday ? (dailyTotals.get(dayBeforeYesterday) || 0) : 0;
-    const nextFreezeCandidate = (
-      yesterday &&
-      yesterdayTotal < waterGoal &&
-      dayBeforeYesterdayTotal >= waterGoal
-    ) ? yesterday : null;
-
-    if (isActive()) {
-      setPastStreak(currentPastStreak);
-      setFreezeCandidateDay(nextFreezeCandidate);
-    }
-  }, [isPremium, toDateStr, userId, waterGoal]);
-
-  useEffect(() => {
-    if (!userId || userId === 'undefined' || !waterGoal) return;
-
-    let active = true;
-    const isActive = () => active;
-
-    void fetchStreakData(isActive);
-
-    return () => {
-      active = false;
-    };
-  }, [fetchStreakData, refreshVersion, userId, waterGoal]);
-
-  // Tổng Streak = Chuỗi quá khứ + (1 nếu hôm nay đã đạt)
-  const streak = useMemo(() => pastStreak + (todayIntake >= waterGoal ? 1 : 0), [pastStreak, todayIntake, waterGoal]);
-
-  const needsFreeze = useMemo(() => {
-    if (!isPremium || streakFreezes <= 0) return false;
-    return Boolean(freezeCandidateDay);
-  }, [freezeCandidateDay, isPremium, streakFreezes]);
-
-  const useStreakFreeze = async () => {
+  const useStreakFreeze = useCallback(async (): Promise<boolean> => {
     if (!userId || userId === 'undefined' || !isPremium || streakFreezes <= 0 || !needsFreeze) return false;
-
     try {
-      const { data, error } = await supabase.rpc('use_streak_freeze', {
-        p_user_id: userId,
-      });
-
-      if (error) {
-        // Surface the server error to the user — do NOT mutate local state
-        const friendlyMessage = error.message?.includes('No active streak')
-          ? 'Không có chuỗi streak nào đang hoạt động để bảo vệ.'
-          : error.message?.includes('already met')
-          ? 'Ngày hôm qua đã đạt mục tiêu, không cần dùng Streak Freeze.'
-          : error.message?.includes('No streak freezes')
-          ? 'Bạn đã hết lượt Streak Freeze trong tháng này.'
-          : 'Không thể sử dụng Streak Freeze lúc này.';
-
-        const { toast } = await import('sonner');
-        toast.error(friendlyMessage);
-        return false;
-      }
-
-      // Only update local state from the verified server response
-      if (typeof data?.remaining_freezes !== 'number') {
-        return false;
-      }
-
-      setStreakFreezes(data.remaining_freezes);
-      setFreezeCandidateDay(null);
-
-      // Re-fetch streak data to reflect the compensating water_log entry
-      setRefreshVersion(value => value + 1);
-
-      const { toast } = await import('sonner');
-      toast.success(`Đã bảo vệ streak thành công! Còn ${data.remaining_freezes} lượt Freeze.`);
+      const result = await freezeMutation.mutateAsync();
+      const remaining_freezes = result?.remaining_freezes;
+      if (typeof remaining_freezes !== 'number') return false;
       return true;
-    } catch {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : '';
+      const friendlyMessage = msg.includes('No active streak')
+        ? 'Không có chuỗi streak nào đang hoạt động để bảo vệ.'
+        : msg.includes('already met')
+        ? 'Ngày hôm qua đã đạt mục tiêu, không cần dùng Streak Freeze.'
+        : msg.includes('No streak freezes')
+        ? 'Bạn đã hết lượt Streak Freeze trong tháng này.'
+        : 'Không thể sử dụng Streak Freeze lúc này.';
+      const { toast } = await import('sonner');
+      toast.error(friendlyMessage);
       return false;
     }
-  };
+  }, [userId, isPremium, streakFreezes, needsFreeze, freezeMutation]);
 
-  return {
-    streak,
-    streakFreezes,
-    needsFreeze,
-    useStreakFreeze,
-    isPremium
-  };
+  return { streak, streakFreezes, needsFreeze, useStreakFreeze, isPremium };
 }

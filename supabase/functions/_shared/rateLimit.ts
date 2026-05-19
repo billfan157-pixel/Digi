@@ -61,16 +61,31 @@ export async function checkRateLimit(
   }
 }
 
+export function getRateLimitKey(request: Request, scope: string, fallback = 'unknown'): string {
+  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  const realIp = request.headers.get('x-real-ip')?.trim();
+  const cfIp = request.headers.get('cf-connecting-ip')?.trim();
+  return `${scope}:${forwardedFor || realIp || cfIp || fallback}`;
+}
+
 /**
  * Common rate limit presets for different endpoint types.
  */
 export const RATE_LIMITS = {
+  // AI endpoints: DB usage limits still apply; this protects the function itself.
+  aiGateway: { maxRequests: 60, windowSeconds: 60 } as RateLimitConfig,
+
   // Payment endpoints: strict to prevent abuse
   stripeCheckout: { maxRequests: 5, windowSeconds: 60 } as RateLimitConfig,
+  stripePortal: { maxRequests: 5, windowSeconds: 60 } as RateLimitConfig,
+  stripeWebhook: { maxRequests: 120, windowSeconds: 60 } as RateLimitConfig,
 
   // Account deletion: very strict (1 per hour)
   deleteAccount: { maxRequests: 1, windowSeconds: 3600 } as RateLimitConfig,
 
   // Calendar proxy: moderate (30 per minute to avoid Google API quota exhaustion)
   calendarProxy: { maxRequests: 30, windowSeconds: 60 } as RateLimitConfig,
+
+  // Push: authenticated sender endpoint
+  pushNotification: { maxRequests: 30, windowSeconds: 60 } as RateLimitConfig,
 };

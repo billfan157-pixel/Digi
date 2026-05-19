@@ -146,15 +146,15 @@ export function usePremiumGamification({
 
     const awardFirst100PercentBadge = async () => {
       try {
-        const { data: badgeData } = await supabase.from('badges').select('id').eq('name', 'Giọt Nước Nhỏ').single();
-        if (!badgeData) return;
+        const { data: badgeData, error: badgeError } = await supabase.from('badges').select('id').eq('name', 'Giọt Nước Nhỏ').maybeSingle();
+        if (badgeError || !badgeData) return;
 
         const { data: userBadge } = await supabase
           .from('user_badges')
           .select('id')
           .eq('user_id', profile.id)
           .eq('badge_id', badgeData.id)
-          .single();
+          .maybeSingle();
 
         if (!userBadge) {
           const { error } = await supabase.from('user_badges').insert({

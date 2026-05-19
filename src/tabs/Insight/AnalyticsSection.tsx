@@ -1,14 +1,15 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, BarChart2, Lock, Crown, Sparkles, Target, CheckCircle2, Flame, Droplets, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart2, Lock, Crown, Sparkles, Target, CheckCircle2, Flame, Droplets, TrendingUp, HeartPulse, Moon } from 'lucide-react';
 import CalendarView from '../../components/insight/CalendarView';
 import HourlyHeatmap from '../../components/HourlyHeatmap';
-import AdvancedStatsGrid from '../AdvancedStatsGrid';
 import WeeklyChart from '../../components/WeeklyChart';
 import BehaviorInsightCards from './BehaviorInsightCards';
 import ContextInsightCard from '../../components/insight/ContextInsightCard';
-import type { BehaviorPattern } from '@/hooks/useBehaviorAnalysis';
-import type { ContextInsight } from '@/hooks/useContextAwareInsights';
+import { useBehaviorAnalysis } from '@/hooks/useBehaviorAnalysis';
+import { useContextAwareInsights } from '@/hooks/useContextAwareInsights';
+import { useWellnessData } from '@/hooks/useWellnessData';
+import type { CalendarEventItem } from '@/hooks/useCalendarSync';
 
 interface AnalyticsSectionProps {
   isPremium: boolean;
@@ -28,16 +29,13 @@ interface AnalyticsSectionProps {
   selectedCalendarCell: { dayNum: number; ml: number; fullDate: string } | null;
   setSelectedCalendarCell: (cell: { dayNum: number; ml: number; fullDate: string } | null) => void;
   handleDayClick: (dateStr: string, totalMl: number) => void;
-  monthlyTotal: number;
   stats: { avg: number; completed: number };
-  profile: { id?: string } | null;
-  weeklyTotal: number;
-  patterns: BehaviorPattern[];
+  profile: { id?: string; sleep_hours?: number; sleep_quality?: number } | null;
   streak: number;
   completionRate: number;
-  contextInsights: ContextInsight[];
-  calendarRiskScore: number;
-  weatherAdjustment: number;
+  calendarEvents: CalendarEventItem[];
+  weatherData: { temp?: number; humidity?: number; feelsLike?: number; status?: string } | null | undefined;
+  isWeatherSynced: boolean;
 }
 
 export default function AnalyticsSection({
@@ -57,18 +55,32 @@ export default function AnalyticsSection({
   selectedCalendarCell,
   setSelectedCalendarCell,
   handleDayClick,
-  monthlyTotal,
   stats,
   profile,
-  weeklyTotal,
-  patterns,
   streak,
   completionRate,
-  contextInsights,
-  calendarRiskScore,
-  weatherAdjustment,
+  calendarEvents,
+  weatherData,
+  isWeatherSynced,
 }: AnalyticsSectionProps) {
   const daysInWeek = weeklyChartData.length || 7;
+  const waterIntake = weeklyChartData.length > 0 ? weeklyChartData[weeklyChartData.length - 1].ml : 0;
+
+  const { patterns } = useBehaviorAnalysis({ weeklyData: weeklyChartData, waterGoal });
+
+  const { insights: correlationInsights } = useWellnessData();
+
+  const { insights: contextInsights, calendarRiskScore, weatherAdjustment } = useContextAwareInsights({
+    weeklyData: weeklyChartData,
+    waterGoal,
+    waterIntake,
+    calendarEvents,
+    isCalendarSynced: calendarEvents.length > 0,
+    weatherData: weatherData ?? null,
+    isWeatherSynced,
+    sleepHours: profile?.sleep_hours ?? 0,
+    sleepQuality: profile?.sleep_quality ?? 0,
+  });
 
   return (
     <div className="mb-20 mt-2 space-y-8 pb-10">
@@ -131,6 +143,57 @@ export default function AnalyticsSection({
             {contextInsights.slice(0, 4).map((insight, i) => (
               <ContextInsightCard key={insight.id} insight={insight} index={i} />
             ))}
+          </div>
+        </section>
+      )}
+      
+      {/* Correlation Insights */}
+      {correlationInsights.length > 0 && (
+        <section className="px-6">
+          <div className="flex items-center gap-2 mb-3">
+            <HeartPulse size={14} className="text-rose-400" />
+            <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+              Tương quan sức khỏe
+            </h4>
+          </div>
+          <div className="space-y-2.5">
+            {correlationInsights.map((corr, i) => {
+              const isSleep = corr.type === 'hydration_sleep';
+              const colors = isSleep
+                ? { bg: 'bg-indigo-500/8', border: 'border-indigo-500/20', text: 'text-indigo-400', iconBg: 'bg-indigo-500/15' }
+                : { bg: 'bg-amber-500/8', border: 'border-amber-500/20', text: 'text-amber-400', iconBg: 'bg-amber-500/15' };
+              const strength = Math.abs(corr.strength);
+              const strengthLabel = strength > 0.7 ? 'Mạnh' : strength > 0.5 ? 'TB' : 'Yếu';
+              const Icon = isSleep ? Moon : Sparkles;
+
+              return (
+                <motion.div
+                  key={corr.type}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  className={`rounded-2xl border ${colors.border} ${colors.bg} backdrop-blur-sm p-4`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-9 h-9 rounded-xl ${colors.iconBg} flex items-center justify-center shrink-0`}>
+                      <Icon size={16} className={colors.text} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[9px] font-black uppercase tracking-widest ${colors.text}`}>
+                          {isSleep ? 'Hydration ↔ Giấc ngủ' : 'Hydration ↔ Tâm trạng'}
+                        </span>
+                        <span className={`text-[9px] font-bold ${strength > 0.5 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                          r = {corr.strength.toFixed(2)} ({strengthLabel})
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">{corr.insight}</p>
+                      <p className="text-[10px] text-slate-400 mt-1.5 italic">{corr.recommendation}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -275,20 +338,6 @@ export default function AnalyticsSection({
           )}
         </section>
       )}
-
-      {/* Quick Stats Section */}
-      <section className="px-6 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <BarChart2 size={14} className="text-cyan-400" />
-          <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Tổng quan nhanh</h4>
-        </div>
-        <AdvancedStatsGrid 
-          weeklyTotal={weeklyTotal}
-          monthlyTotal={monthlyTotal}
-          stats={stats}
-          weeklyChartData={weeklyChartData}
-        />
-      </section>
 
       {/* Heatmap Section */}
       <section className="px-6 pb-4">

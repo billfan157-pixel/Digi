@@ -195,7 +195,8 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
   let refreshToken = session.provider_refresh_token || storedProviderRefreshToken || localStorage.getItem(CALENDAR_REFRESH_TOKEN_KEY);
   
   if (!refreshToken) {
-    const { data: profile } = await supabase.from('profiles').select('google_refresh_token').single();
+    const { data: profile, error: profileError } = await supabase.from('profiles').select('google_refresh_token').maybeSingle();
+    if (profileError) console.error('Lỗi lấy google_refresh_token:', profileError);
     refreshToken = profile?.google_refresh_token || '';
     if (refreshToken) localStorage.setItem(CALENDAR_REFRESH_TOKEN_KEY, refreshToken);
   }

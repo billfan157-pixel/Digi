@@ -10,16 +10,19 @@ DROP POLICY IF EXISTS "Allow update for authenticated users" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 
 -- ── 2. Add missing RLS policies on active_buffs ──
+DROP POLICY IF EXISTS "active_buffs_select_own" ON public.active_buffs;
 CREATE POLICY "active_buffs_select_own" ON public.active_buffs
   FOR SELECT
   TO authenticated
   USING ((SELECT auth.uid()) = target_user_id);
 
+DROP POLICY IF EXISTS "active_buffs_insert_own" ON public.active_buffs;
 CREATE POLICY "active_buffs_insert_own" ON public.active_buffs
   FOR INSERT
   TO authenticated
   WITH CHECK ((SELECT auth.uid()) = target_user_id);
 
+DROP POLICY IF EXISTS "active_buffs_update_own" ON public.active_buffs;
 CREATE POLICY "active_buffs_update_own" ON public.active_buffs
   FOR UPDATE
   TO authenticated

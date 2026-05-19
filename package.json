@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
+    "size": "node scripts/check-build-size.mjs",
     "smoke": "node scripts/release-smoke.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -34,7 +35,7 @@
     "@capgo/capacitor-native-biometric": "^8.4.2",
     "@sentry/react": "^10.53.1",
     "@supabase/ssr": "^0.10.2",
-    "@supabase/supabase-js": "^2.105.1",
+    "@supabase/supabase-js": "^2.105.4",
     "@tanstack/react-query": "^5.99.2",
     "@vercel/analytics": "^2.0.1",
     "canvas-confetti": "^1.9.4",
@@ -51,9 +52,11 @@
     "recharts": "^3.8.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
+    "zod": "^4.4.3",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@ai-sdk/mcp": "^1.0.42",
     "@eslint/js": "^9.39.4",
     "@sentry/vite-plugin": "^5.3.0",
     "@testing-library/jest-dom": "^6.9.1",

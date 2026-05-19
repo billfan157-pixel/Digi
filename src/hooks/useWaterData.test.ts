@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isRealUser, toDateStr, normalizeRow, getOfflineQueueKey } from './useWaterData';
+import { isRealUser, toDateStr, normalizeRow } from './useWaterData';
 import { calculateWaterTotal, buildPendingWaterSyncKey, getWaterEntriesStorageKey } from '@/lib/waterStorage';
 import type { WaterEntry } from '@/lib/waterStorage';
 
@@ -76,12 +76,6 @@ describe('normalizeRow', () => {
     const result = normalizeRow(row);
     expect(result.amount).toBe(500);
     expect(result.exp).toBe(50);
-  });
-});
-
-describe('getOfflineQueueKey', () => {
-  it('returns scoped key for userId', () => {
-    expect(getOfflineQueueKey('user-123')).toBe('digiwell_offline_water_queue_user-123');
   });
 });
 

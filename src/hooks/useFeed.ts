@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { readFeedCache, writeFeedCache } from '@/lib/sessionSecurity';
 import type { SocialFeedPost } from '@/models';
+import { appQueryKeys } from '@/lib/queryKeys';
 
 const PAGE_SIZE = 10;
 
-/** Đảm bảo user có row trong public_profiles để JOIN hiển thị tên */
 async function ensurePublicProfile(userId: string) {
   const { data: existing, error: existingError } = await supabase
     .from('public_profiles')
@@ -16,7 +17,6 @@ async function ensurePublicProfile(userId: string) {
   if (existingError) throw existingError;
 
   if (!existing) {
-    // Copy từ profiles sang public_profiles
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, nickname, avatar_url, level, water_today, water_goal')
@@ -38,16 +38,49 @@ async function ensurePublicProfile(userId: string) {
   }
 }
 
+async function fetchFeedPage(
+  currentUserId: string,
+  friendIdSet: Set<string>,
+  offset: number,
+): Promise<SocialFeedPost[]> {
+  const { data, error } = await supabase
+    .from('social_posts')
+    .select(`
+      *,
+      author:profiles!social_posts_author_id_fkey (id, nickname, avatar_url, level, water_today, water_goal),
+      social_post_likes (user_id)
+    `)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1);
+
+  if (error) throw error;
+
+  const visibleRows = (data || []).filter((post: { author_id: string; post_kind: string; visibility: string }) => {
+    if (post.author_id === currentUserId) return true;
+    if (post.post_kind === 'challenge') return friendIdSet.has(post.author_id);
+    return post.visibility === 'public' || friendIdSet.has(post.author_id);
+  });
+
+  return visibleRows.map((post: Record<string, unknown>) => ({
+    ...(post as unknown as SocialFeedPost),
+    cheeredByMe: (post.social_post_likes as Array<{ user_id: string }>)?.some((l) => l.user_id === currentUserId) ?? false,
+  }));
+}
+
 export function useFeed(currentUserId: string | undefined, friendIds: string[] = []) {
-  const [posts, setPosts] = useState<SocialFeedPost[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [mergedPending, setMergedPending] = useState<SocialFeedPost[]>([]);
   const [newPostsCount, setNewPostsCount] = useState(0);
   const [pendingPosts, setPendingPosts] = useState<SocialFeedPost[]>([]);
+  const [activeUserId, setActiveUserId] = useState(currentUserId);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const postsLengthRef = useRef(0);
   const friendIdSet = useMemo(() => new Set(friendIds), [friendIds]);
+
+  if (currentUserId !== activeUserId) {
+    setActiveUserId(currentUserId);
+    setMergedPending([]);
+    setPendingPosts([]);
+    setNewPostsCount(0);
+  }
 
   useEffect(() => {
     if (currentUserId && currentUserId !== 'undefined') {
@@ -57,102 +90,36 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
     }
   }, [currentUserId]);
 
+  const feedQuery = useInfiniteQuery({
+    queryKey: appQueryKeys.feed(currentUserId, friendIds),
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!currentUserId || currentUserId === 'undefined') return [];
+      return fetchFeedPage(currentUserId, friendIdSet, pageParam);
+    },
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      return (lastPageParam as number) + PAGE_SIZE;
+    },
+    initialPageParam: 0,
+    enabled: !!currentUserId && currentUserId !== 'undefined',
+    staleTime: 30_000,
+    placeholderData: () => {
+      if (!currentUserId) return undefined;
+      const cached = readFeedCache<SocialFeedPost[]>(currentUserId);
+      if (!cached?.length) return undefined;
+      return { pages: [cached], pageParams: [0] };
+    },
+  });
+
   useEffect(() => {
-    setPosts(currentUserId && currentUserId !== 'undefined'
-      ? readFeedCache<SocialFeedPost[]>(currentUserId) || []
-      : []);
-    setPendingPosts([]);
-    setNewPostsCount(0);
-    setHasMore(true);
-  }, [currentUserId]);
-
-  const fetchPosts = useCallback(async (offset: number) => {
-    if (!currentUserId || currentUserId === 'undefined') return;
-    const isFirstPage = offset === 0;
-
-    // 1. Load từ Local Cache trước (Offline-First) cho trang đầu
-    if (isFirstPage) {
-      try {
-        const cached = readFeedCache<SocialFeedPost[]>(currentUserId);
-        if (cached) {
-          setPosts(cached);
-        } else {
-          setIsLoading(true);
-        }
-      } catch (e) {
-        console.error('Failed to read feed cache:', e);
-        setIsLoading(true);
-      }
-    } else {
-      setIsFetchingMore(true);
+    if (feedQuery.data && currentUserId) {
+      writeFeedCache(currentUserId, feedQuery.data.pages.flat());
     }
+  }, [feedQuery.data, currentUserId]);
 
-    try {
-  const { data, error } = await supabase
-          .from('social_posts')
-          .select(`
-            *,
-            author:profiles!social_posts_author_id_fkey (id, nickname, avatar_url, level, water_today, water_goal),
-            social_post_likes (user_id)
-          `)
-         .order('created_at', { ascending: false })
-         .range(offset, offset + PAGE_SIZE - 1);
-
-      if (error) throw error;
-
-      if (data) {
-        const visibleRows = data.filter((post: { author_id: string; post_kind: string; visibility: string }) => {
-          if (post.author_id === currentUserId) return true;
-          if (post.post_kind === 'challenge') return friendIdSet.has(post.author_id);
-          return post.visibility === 'public' || friendIdSet.has(post.author_id);
-        });
-
-        const formatted: SocialFeedPost[] = visibleRows.map((post: Record<string, unknown>) => ({
-          ...(post as unknown as SocialFeedPost),
-          cheeredByMe: (post.social_post_likes as Array<{ user_id: string }>)?.some((l) => l.user_id === currentUserId) ?? false,
-        }));
-
-        if (isFirstPage) {
-          setPosts(formatted);
-          postsLengthRef.current = formatted.length;
-          // 2. Cập nhật lại Cache
-          writeFeedCache(currentUserId, formatted);
-        }
-        else {
-          setPosts(prev => {
-            const existingIds = new Set(prev.map(p => p.id));
-            const newPosts = formatted.filter((p: { id: string }) => !existingIds.has(p.id));
-            const merged = [...prev, ...newPosts];
-            postsLengthRef.current = merged.length;
-            return merged;
-          });
-        }
-
-        setHasMore(visibleRows.length === PAGE_SIZE);
-      }
-    } catch (err) {
-      console.error('Lỗi tải feed:', err);
-    } finally {
-      setIsLoading(false);
-      setIsFetchingMore(false);
-    }
-  }, [currentUserId, friendIdSet]);
-
-  // Public refetch for pull-to-refresh
-  const refetch = useCallback(async () => {
-    if (!currentUserId || currentUserId === 'undefined') return;
-    await fetchPosts(0);
-  }, [currentUserId, fetchPosts]);
-
-  useEffect(() => {
-    fetchPosts(0);
-  }, [fetchPosts]);
-
-  // Supabase Realtime Subscription cho bài mới
   useEffect(() => {
     if (!currentUserId || currentUserId === 'undefined') return;
 
-    // Cleanup previous channel before creating new one
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
@@ -169,19 +136,17 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
           const newPost = payload.new as { id: string;[key: string]: unknown };
           const { data } = await supabase
             .from('social_posts')
-             .select('*, author:profiles!social_posts_author_id_fkey (id, nickname, avatar_url, level, water_today, water_goal)')
+            .select('*, author:profiles!social_posts_author_id_fkey (id, nickname, avatar_url, level, water_today, water_goal)')
             .eq('id', newPost.id)
             .single();
-          
-if (data) {
-             // Include story/drop posts in real-time updates
-             setPendingPosts(prev => [data, ...prev]);
-             setNewPostsCount(prev => prev + 1);
-           }
+
+          if (data) {
+            setPendingPosts(prev => [data, ...prev]);
+            setNewPostsCount(prev => prev + 1);
+          }
         }
       );
 
-    // Dùng setTimeout cực ngắn để đảm bảo callstack dọn dẹp channel cũ xong
     const subTimeout = setTimeout(() => {
       if (channelRef.current === channel) {
         channel.subscribe();
@@ -197,20 +162,39 @@ if (data) {
     };
   }, [currentUserId]);
 
+  const posts = useMemo(() => {
+    const base = feedQuery.data?.pages.flat() ?? [];
+    const baseIds = new Set(base.map(p => p.id));
+    const extra = mergedPending.filter(p => !baseIds.has(p.id));
+    return [...extra, ...base];
+  }, [mergedPending, feedQuery.data]);
+
   const loadMore = useCallback(() => {
-    if (!isLoading && !isFetchingMore && hasMore) fetchPosts(postsLengthRef.current);
-  }, [isLoading, isFetchingMore, hasMore, fetchPosts]);
+    if (feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) {
+      feedQuery.fetchNextPage();
+    }
+  }, [feedQuery]);
 
   const showNewPosts = useCallback(() => {
     const formattedPending = pendingPosts.filter(Boolean).map(p => ({ ...p, cheeredByMe: false }));
-    setPosts(prev => {
-      const nextPosts = [...formattedPending, ...prev];
-      postsLengthRef.current = nextPosts.length;
-      writeFeedCache(currentUserId, nextPosts);
-      return nextPosts;
-    });
-    setPendingPosts([]); setNewPostsCount(0);
-  }, [pendingPosts, currentUserId]);
+    const base = feedQuery.data?.pages.flat() ?? [];
+    const baseIds = new Set(base.map(p => p.id));
+    const uniquePending = formattedPending.filter(p => !baseIds.has(p.id));
+    const nextMerged = [...uniquePending, ...mergedPending];
+    writeFeedCache(currentUserId, [...nextMerged, ...base]);
+    setMergedPending(nextMerged);
+    setPendingPosts([]);
+    setNewPostsCount(0);
+  }, [pendingPosts, currentUserId, feedQuery.data, mergedPending]);
 
-  return { posts, isLoading, isFetchingMore, hasMore, loadMore, newPostsCount, showNewPosts, refetch };
+  return {
+    posts,
+    isLoading: feedQuery.isLoading && feedQuery.fetchStatus !== 'idle',
+    isFetchingMore: feedQuery.isFetchingNextPage,
+    hasMore: !!feedQuery.hasNextPage,
+    loadMore,
+    newPostsCount,
+    showNewPosts,
+    refetch: () => feedQuery.refetch().then(() => {}),
+  };
 }

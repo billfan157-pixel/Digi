@@ -21,27 +21,37 @@ export function useBehaviorAnalysis({ weeklyData, waterGoal }: UseBehaviorAnalys
     const result: BehaviorPattern[] = [];
     
     if (data.length < 3) return result;
+
+    // Group by actual day-of-week
+    const byDow = new Map<number, { total: number; count: number }>();
+    data.forEach(entry => {
+      const d = new Date(entry.d);
+      if (!Number.isNaN(d.getTime())) {
+        const dow = d.getDay();
+        const cur = byDow.get(dow) ?? { total: 0, count: 0 };
+        cur.total += entry.ml;
+        cur.count++;
+        byDow.set(dow, cur);
+      }
+    });
     
-    // Pattern 1: Morning vs Evening preference
-    const morningAvg = data
-      .filter((_, i) => i < 4) // Mon-Thu
-      .reduce((s, d) => s + d.ml, 0) / Math.min(4, data.length);
-    const eveningAvg = data
-      .filter((_, i) => i >= 4) // Fri-Sun
-      .reduce((s, d) => s + d.ml, 0) / Math.max(1, data.length - 4);
-    
-    if (morningAvg > eveningAvg * 1.3) {
-      result.push({
-        pattern: 'Sáng tối',
-        confidence: 0.8,
-        recommendation: 'Bạn uống nhiều vào buổi sáng. Hãy duy trì và thêm 200ml vào buổi chiều.'
+    if (byDow.size >= 4) {
+      const weekend = [5, 6, 0]; // Fri, Sat, Sun — so sánh Thứ 2->5 vs Thứ 6->CN
+      let wdTotal = 0, wdCount = 0, weTotal = 0, weCount = 0;
+      byDow.forEach((val, dow) => {
+        if (weekend.includes(dow)) { weTotal += val.total; weCount += val.count; }
+        else { wdTotal += val.total; wdCount += val.count; }
       });
-    } else if (eveningAvg > morningAvg * 1.3) {
-      result.push({
-        pattern: 'Chiều tối',
-        confidence: 0.75,
-        recommendation: 'Bạn uống nhiều vào buổi chiều/tối. Nên bắt đầu ngày với 250ml để cân bằng.'
-      });
+      const wdAvg = wdCount > 0 ? wdTotal / wdCount : 0;
+      const weAvg = weCount > 0 ? weTotal / weCount : 0;
+      
+      if (weAvg > 0 && weAvg < wdAvg * 0.5) {
+        result.push({
+          pattern: 'Cuối tuần giảm',
+          confidence: 0.7,
+          recommendation: 'Cuối tuần bạn hay uống ít hơn. Hãy đặt nhắc nhở để giữ nhịp.'
+        });
+      }
     }
     
     // Pattern 2: Constistency
@@ -62,20 +72,6 @@ export function useBehaviorAnalysis({ weeklyData, waterGoal }: UseBehaviorAnalys
       });
     }
     
-    // Pattern 3: Weekend vs Weekday
-    const weekdays = data.slice(0, 5);
-    const weekends = data.slice(5);
-    const weekdayAvg = weekdays.reduce((s, d) => s + d.ml, 0) / Math.max(1, weekdays.length);
-    const weekendAvg = weekends.reduce((s, d) => s + d.ml, 0) / Math.max(1, weekends.length);
-    
-    if (weekendAvg < weekdayAvg * 0.5 && weekendAvg > 0) {
-      result.push({
-        pattern: 'Cuối tuần giảm',
-        confidence: 0.7,
-        recommendation: 'Weekend bạn ít uống. Đặt nhắc nhở để không bỏ lỡ.'
-      });
-    }
-    
     return result;
   }, [weeklyDataStr, waterGoal]);
   
@@ -84,12 +80,6 @@ export function useBehaviorAnalysis({ weeklyData, waterGoal }: UseBehaviorAnalys
     const gap = waterGoal - currentIntake;
     
     for (const pattern of patterns) {
-      if (pattern.pattern === 'Sáng tối' && hour < 12 && gap > 500) {
-        return 'Bắt đầu ngày với 300ml để cân bằng năng lượng.';
-      }
-      if (pattern.pattern === 'Chiều tối' && hour >= 12 && gap > 500) {
-        return 'Nên giảm portion và tăng tần suất uống vào buổi sáng.';
-      }
       if (pattern.pattern === 'Ít đều đặn') {
         return `Uống ${Math.min(150, Math.max(50, gap / 4))}ml ngay để bắt kịp.`;
       }

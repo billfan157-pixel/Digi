@@ -19,6 +19,7 @@ export async function insertWaterLog(params: {
   name: string;
   exp: number;
   day: string;
+  created_at?: string;
 }): Promise<{ id: string }> {
   const { data, error } = await supabase
     .from('water_logs')
@@ -28,6 +29,7 @@ export async function insertWaterLog(params: {
       name: params.name,
       exp: params.exp,
       day: params.day,
+      ...(params.created_at ? { created_at: params.created_at } : {}),
     })
     .select('id')
     .single();

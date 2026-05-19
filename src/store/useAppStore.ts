@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Profile, WaterLog } from '../models';
+import type { WaterLog } from '../models';
 import type { AppProfile } from '@/services/profile.service';
 import type { WaterIntakeResult } from '../lib/HydrationEngine';
 import type { CalendarEventItem } from '../hooks/useCalendarSync';

@@ -16,6 +16,7 @@ export interface AppProfile extends Profile {
   mood_tracking?: boolean;
   sync_wellness_data?: boolean;
   energy_tracking?: boolean;
+  grace_period_end?: string | null;
 }
 
 const getTodayKey = () => {
@@ -55,6 +56,7 @@ interface ProfileRow {
   mood_tracking?: boolean;
   sync_wellness_data?: boolean;
   energy_tracking?: boolean;
+  grace_period_end?: string | null;
   last_water_date?: string;
   level?: number;
   [key: string]: unknown;
@@ -99,6 +101,7 @@ function toAppProfile(profileRow: ProfileRow): AppProfile {
     mood_tracking: normalizedProfile.mood_tracking,
     sync_wellness_data: normalizedProfile.sync_wellness_data,
     energy_tracking: normalizedProfile.energy_tracking,
+    grace_period_end: normalizedProfile.grace_period_end,
   };
 }
 

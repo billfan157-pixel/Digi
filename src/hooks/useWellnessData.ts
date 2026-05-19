@@ -5,6 +5,7 @@ import {
   calculateHydrationScore,
   calculateSleepScore,
   calculateActivityScore,
+  calculateCorrelation,
   calculateWellnessScore,
   generateWellnessInsights,
   getWellnessTier,
@@ -59,7 +60,7 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
 
   // 3. ACTIVITY DATA
   const activityData: ActivityData = useMemo(() => {
-    const steps = 0; // TODO: wire to health data
+    const steps = 0; // TODO: wire to health data (e.g. Apple Health / Google Fit)
     const activeMinutes = 0; // TODO: derive from health data
     const intensity = String(profile?.activity || 'sedentary') as ActivityData['intensity'];
     return { steps, activeMinutes, intensity };
@@ -71,7 +72,8 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
 
   // 4. MOOD DATA
   const moodScore = useMemo(() => {
-    // TODO: Implement mood check-in
+    // TODO: Implement mood check-in — hardcoded 60 làm cho hasVariance(mood) = false
+    // nên generateWellnessInsights không thể tính tương quan hydration↔mood.
     return 60; // Neutral baseline
   }, []);
 
@@ -113,14 +115,40 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
 
   // CORRELATION INSIGHTS
   const insights = useMemo(() => {
-    const history = weeklyHistory.slice(-7).map((day) => ({
+    const recentHydration = weeklyHistory.slice(-7);
+    const history = recentHydration.map((day) => ({
       date: day.d,
       hydration: day.ml,
       sleep: sleepData.hours,
       activity: activityData.steps,
       mood: moodScore,
     }));
-    return generateWellnessInsights(history);
+
+    const generatedInsights = generateWellnessInsights(history);
+    if (generatedInsights.length > 0 || recentHydration.length < 7) {
+      return generatedInsights;
+    }
+
+    const hydrationValues = recentHydration.map((day) => day.ml);
+    const sleepValues = recentHydration.map(() => sleepData.hours);
+    const moodValues = recentHydration.map(() => moodScore);
+
+    return [
+      {
+        type: 'hydration_sleep' as const,
+        strength: calculateCorrelation(hydrationValues, sleepValues),
+        insight: 'Chưa đủ lịch sử giấc ngủ theo ngày để xác định tương quan thật.',
+        recommendation: 'Cập nhật ngủ mỗi ngày để DigiWell tính Pearson hydration ↔ giấc ngủ chính xác hơn.',
+        examples: [],
+      },
+      {
+        type: 'hydration_mood' as const,
+        strength: calculateCorrelation(hydrationValues, moodValues),
+        insight: 'Chưa đủ lịch sử tâm trạng theo ngày để xác định tương quan thật.',
+        recommendation: 'Bật theo dõi tâm trạng và ghi nhận đều để DigiCoach cá nhân hoá tốt hơn.',
+        examples: [],
+      },
+    ];
   }, [weeklyHistory, sleepData.hours, activityData.steps, moodScore]);
 
   return {

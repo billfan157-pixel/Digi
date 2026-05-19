@@ -11,8 +11,6 @@ import { useUIStore } from '../store/useUIStore';
 import { useShallow } from 'zustand/react/shallow';
 import { useInsightData } from '../hooks/useInsightData';
 import { usePreviousWeekData } from '../hooks/usePreviousWeekData';
-import { useBehaviorAnalysis } from '../hooks/useBehaviorAnalysis';
-
 import TabHeader from '../components/layout/TabHeader';
 import OverviewSection from './Insight/OverviewSection';
 import AnalyticsSection from './Insight/AnalyticsSection';
@@ -20,7 +18,6 @@ import SystemSection from './Insight/SystemSection';
 import SelectedDateModal from './Insight/SelectedDateModal';
 
 import type { CalendarEventItem } from '../hooks/useCalendarSync';
-import { useContextAwareInsights } from '../hooks/useContextAwareInsights';
 
 interface InsightTabProps {
    isExportingPDF: boolean;
@@ -155,23 +152,6 @@ const InsightTab = memo(function InsightTab({
 
   const { data: previousWeekData } = usePreviousWeekData(profile?.id);
 
-  const { patterns } = useBehaviorAnalysis({
-    weeklyData: weeklyChartData,
-    waterGoal
-  });
-
-  const { insights: contextInsights, calendarRiskScore, weatherAdjustment } = useContextAwareInsights({
-    weeklyData: weeklyChartData,
-    waterGoal,
-    waterIntake,
-    calendarEvents,
-    isCalendarSynced: calendarEvents.length > 0,
-    weatherData: weatherData ?? null,
-    isWeatherSynced,
-    sleepHours: profile?.sleep_hours ?? 0,
-    sleepQuality: profile?.sleep_quality ?? 0,
-  });
-
   const stats = useMemo(() => {
     if (weeklyChartData.length === 0) return { avg: 0, completed: 0 };
     const total = weeklyChartData.reduce((acc: number, curr: { ml: number }) => acc + curr.ml, 0);
@@ -181,8 +161,6 @@ const InsightTab = memo(function InsightTab({
   }, [weeklyChartData, waterGoal]);
 
   const completionRate = weeklyChartData.length === 0 ? 0 : Math.round((stats.completed / weeklyChartData.length) * 100);
-  const weeklyTotal = useMemo(() => weeklyChartData.reduce((sum: number, d: { ml: number }) => sum + d.ml, 0), [weeklyChartData]);
-  const monthlyTotal = useMemo(() => Object.values(monthlyDataMap).reduce((sum, ml) => sum + ml, 0), [monthlyDataMap]);
 
   const yesterdayIntake = useMemo(() => {
     if (weeklyChartData.length >= 2) {
@@ -314,16 +292,13 @@ const InsightTab = memo(function InsightTab({
               selectedCalendarCell={selectedCalendarCell}
               setSelectedCalendarCell={setSelectedCalendarCell}
               handleDayClick={handleDayClick}
-              monthlyTotal={monthlyTotal}
               stats={stats}
               profile={profile}
-              weeklyTotal={weeklyTotal}
-              patterns={patterns}
               streak={streak}
               completionRate={completionRate}
-              contextInsights={contextInsights}
-              calendarRiskScore={calendarRiskScore}
-              weatherAdjustment={weatherAdjustment}
+              calendarEvents={calendarEvents}
+              weatherData={weatherData}
+              isWeatherSynced={isWeatherSynced}
             />
           </motion.div>
         )}

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { buildProgressShareText, isMissingSocialSchemaError } from './social';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { buildProgressShareText, isMissingSocialSchemaError, getRelativeTimeLabel, DEFAULT_SOCIAL_COMPOSER, DEFAULT_SOCIAL_PROFILE_STATS } from './social';
 
 describe('buildProgressShareText', () => {
   it('uses nickname when provided', () => {
@@ -88,5 +88,68 @@ describe('isMissingSocialSchemaError', () => {
   it('is case insensitive', () => {
     expect(isMissingSocialSchemaError('SOCIAL_POSTS')).toBe(true);
     expect(isMissingSocialSchemaError('SOCIAL-MEDIA')).toBe(true);
+  });
+});
+
+describe('getRelativeTimeLabel', () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('returns "Vừa xong" for null/undefined', () => {
+    expect(getRelativeTimeLabel(null)).toBe('Vừa xong');
+    expect(getRelativeTimeLabel(undefined)).toBe('Vừa xong');
+  });
+
+  it('returns "Vừa xong" for less than 60 seconds', () => {
+    const now = new Date('2026-05-18T12:00:00Z');
+    vi.setSystemTime(now);
+    const recent = new Date(now.getTime() - 30 * 1000).toISOString();
+    expect(getRelativeTimeLabel(recent)).toBe('Vừa xong');
+  });
+
+  it('returns minutes ago for < 60 minutes', () => {
+    const now = new Date('2026-05-18T12:00:00Z');
+    vi.setSystemTime(now);
+    const past = new Date(now.getTime() - 5 * 60 * 1000).toISOString();
+    expect(getRelativeTimeLabel(past)).toBe('5 phút trước');
+  });
+
+  it('returns hours ago for < 24 hours', () => {
+    const now = new Date('2026-05-18T12:00:00Z');
+    vi.setSystemTime(now);
+    const past = new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString();
+    expect(getRelativeTimeLabel(past)).toBe('3 giờ trước');
+  });
+
+  it('returns days ago for < 7 days', () => {
+    const now = new Date('2026-05-18T12:00:00Z');
+    vi.setSystemTime(now);
+    const past = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    expect(getRelativeTimeLabel(past)).toBe('2 ngày trước');
+  });
+
+  it('returns formatted date for >= 7 days', () => {
+    const now = new Date('2026-05-18T12:00:00Z');
+    vi.setSystemTime(now);
+    const past = new Date('2026-05-01T12:00:00Z').toISOString();
+    const result = getRelativeTimeLabel(past);
+    expect(result).toMatch(/0[15]\/0[15]\/2026/);
+  });
+});
+
+describe('DEFAULT constants', () => {
+  it('DEFAULT_SOCIAL_COMPOSER has correct shape', () => {
+    expect(DEFAULT_SOCIAL_COMPOSER).toEqual({
+      content: '',
+      imageUrl: '',
+      postKind: 'status',
+      visibility: 'followers',
+    });
+  });
+
+  it('DEFAULT_SOCIAL_PROFILE_STATS starts at 0', () => {
+    expect(DEFAULT_SOCIAL_PROFILE_STATS).toEqual({
+      followers: 0, following: 0, posts: 0,
+    });
   });
 });

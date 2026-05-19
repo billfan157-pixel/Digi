@@ -48,7 +48,8 @@ export function useBattleArena(profile: Record<string, unknown> | null, isOpen: 
       setPendingInvites(battles?.filter((b: Record<string, unknown>) => b.status === 'pending' && b.opponent_id === profile.id) || []);
 
       if (!currentActive) {
-        const { data: users } = await supabase.from('profiles').select('id, nickname, level, avatar_url').neq('id', profile.id).limit(10);
+        const { data: users, error: opponentsError } = await supabase.from('profiles').select('id, nickname, level, avatar_url').neq('id', profile.id).limit(10);
+        if (opponentsError) console.error('Lỗi tải đối thủ:', opponentsError);
         setOpponents(users || []);
       }
     } catch (err) {

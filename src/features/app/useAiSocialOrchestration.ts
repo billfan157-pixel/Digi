@@ -13,6 +13,8 @@ export function useAiSocialOrchestration() {
   const waterIntake = useAppStore(s => s.waterIntake);
   const waterGoal = useAppStore(s => s.waterGoal);
   const streak = useAppStore(s => s.streak);
+  const weeklyHistory = useAppStore(s => s.weeklyHistory);
+  const calendarEvents = useAppStore(s => s.calendarEvents);
   const weatherData = useAppStore(s => s.weatherData);
   const watchData = useAppStore(s => s.watchData);
   const isWeatherSynced = useAppStore(s => s.isWeatherSynced);
@@ -42,6 +44,8 @@ export function useAiSocialOrchestration() {
     profile,
     waterIntake,
     waterGoal,
+    weeklyHistory,
+    calendarEvents,
     weatherData,
     watchData,
     isWeatherSynced,

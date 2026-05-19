@@ -3,6 +3,7 @@ import { Activity, Calendar, CloudSun, Watch } from 'lucide-react';
 import { toast } from 'sonner';
 import { normalizeActivity, normalizeClimate } from '@/lib/profileNormalization';
 import { updateProfileFields, type AppProfile } from '@/services/profile.service';
+import { profileSchema, formatZodErrors } from '@/lib/validations';
 
 interface EditProfileData {
   nickname: string;
@@ -69,6 +70,12 @@ export function useProfileIntegrations({
   const handleSaveProfile = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
     if (!profile?.id || profile.id === 'undefined') return;
+
+    const parsed = profileSchema.safeParse(editProfileData);
+    if (!parsed.success) {
+      toast.error(formatZodErrors(parsed.error));
+      return;
+    }
 
     setIsUpdatingProfile(true);
     const toastId = toast.loading('Đang cập nhật hồ sơ...');

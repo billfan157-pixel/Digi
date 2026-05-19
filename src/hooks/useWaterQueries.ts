@@ -31,6 +31,7 @@ export function useAddWaterMutation() {
       name: string;
       exp: number;
       day: string;
+      created_at?: string;
     }) => {
       const data = await insertWaterLog({
         user_id: params.userId,
@@ -38,6 +39,7 @@ export function useAddWaterMutation() {
         name: params.name,
         exp: params.exp,
         day: params.day,
+        created_at: params.created_at,
       });
       return data;
     },

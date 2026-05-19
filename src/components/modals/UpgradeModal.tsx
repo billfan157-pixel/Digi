@@ -3,7 +3,7 @@ import { Sparkles, X, Loader2 } from 'lucide-react';
 
 import { useUIStore } from '../../store/useUIStore';
 import { redirectToCheckout } from '../../lib/stripe';
-import { PREMIUM_HIGHLIGHTS } from '../../config/premium';
+import { PREMIUM_HIGHLIGHTS, PRICING } from '../../config/premium';
 
 export default function UpgradeModal() {
   const open = useUIStore(s => s.showPremiumModal);
@@ -63,7 +63,7 @@ export default function UpgradeModal() {
             ) : (
               <Sparkles size={18} />
             )}
-            {loading === 'monthly' ? 'Đang kết nối...' : 'Đăng ký Pro Tháng — 29.000₫/tháng'}
+            {loading === 'monthly' ? 'Đang kết nối...' : `Đăng ký Pro Tháng — ${PRICING.monthly.label}`}
           </button>
 
           <button
@@ -77,7 +77,7 @@ export default function UpgradeModal() {
             ) : (
               <Sparkles size={18} />
             )}
-            {loading === 'yearly' ? 'Đang kết nối...' : 'Đăng ký Pro Năm — 199.000₫/năm (Tiết kiệm 43%)'}
+            {loading === 'yearly' ? 'Đang kết nối...' : `Đăng ký Pro Năm — ${PRICING.yearly.label} (${PRICING.yearly.discount})`}
           </button>
 
           <button

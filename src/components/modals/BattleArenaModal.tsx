@@ -44,7 +44,8 @@ export default function BattleArenaModal() {
       if (currentActive) {
         const battleDay = new Date(currentActive.created_at).toISOString().split('T')[0];
         if (battleDay < today) {
-          const { data: result } = await supabase.rpc('resolve_stale_battle', { battle_id: currentActive.id });
+          const { data: result, error: staleError } = await supabase.rpc('resolve_stale_battle', { battle_id: currentActive.id });
+          if (staleError) console.error('Lỗi resolve battle:', staleError);
           if (result) {
             if (result.status === 'won') toast.success(`🎉 Bạn THẮNG trận hôm qua: +${result.reward} WP!`);
             else if (result.status === 'draw') toast.info(`Trận hôm qua HÒA. Đã hoàn WP.`);
@@ -58,11 +59,12 @@ export default function BattleArenaModal() {
       setPendingInvites(battles?.filter((b: Battle) => b.status === 'pending' && b.opponent_id === profile.id) || []);
 
       if (!currentActive) {
-        const { data: users } = await supabase
+        const { data: users, error: opponentsError } = await supabase
           .from('public_profiles')
           .select('id, nickname, level, avatar_url')
           .neq('id', profile.id)
           .limit(10);
+        if (opponentsError) console.error('Lỗi tải đối thủ:', opponentsError);
         setOpponents(users || []);
       }
     } catch (err) {

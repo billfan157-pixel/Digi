@@ -11,7 +11,11 @@ import {
   useDeleteWaterMutation,
   useUpdateWaterMutation,
 } from './useWaterQueries';
+import { supabase } from '@/lib/supabase';
 import { fetchUserClubs, incrementClubIntake, insertClubActivity, findExistingWaterLog, insertWaterLog } from '@/services/water.service';
+import { queueItem, pushToQueue, readQueue, writeQueue, countQueue, clearQueue, migrateLegacyQueue, resolveStrategy } from '@/lib/offlineQueue';
+import { useNetworkState } from './useNetworkState';
+import type { QueueItem } from '@/lib/offlineQueue';
 
 // ── Dev-only logger ────────────────────────────────────────
 const devLog = (...args: unknown[]) => {
@@ -24,29 +28,6 @@ const devError = (...args: unknown[]) => {
     console.error('[useWaterData]', ...args);
   }
 };
-
-// ── Constants ──────────────────────────────────────────────
-
-const OFFLINE_QUEUE_KEY = 'digiwell_offline_water_queue';
-const MAX_SYNC_RETRIES = 3;
-
-// ── Types ──────────────────────────────────────────────────
-
-interface OfflineQueueItem {
-  tempId:     string;
-  user_id:    string;
-  amount:     number;
-  name:       string;
-  exp:        number;
-  day:        string;
-  created_at: string;
-  tempC?:     number;
-  exerciseMins?: number;
-  isFasting?: boolean;
-  logSynced?: boolean;
-  progressionSynced?: boolean;
-  retryCount?: number;
-}
 
 // ── Pure helpers ───────────────────────────────────────────
 
@@ -73,54 +54,6 @@ export const normalizeRow = (row: Record<string, unknown>): WaterLog => {
   };
 };
 
-// ── Offline queue helpers ──────────────────────────────────
-
-export function getOfflineQueueKey(userId: string) {
-  return `${OFFLINE_QUEUE_KEY}_${userId}`;
-}
-
-function readRawOfflineQueue(storageKey: string): OfflineQueueItem[] {
-  try {
-    return JSON.parse(localStorage.getItem(storageKey) ?? '[]');
-  } catch {
-    return [];
-  }
-}
-
-function readScopedOfflineQueue(userId: string): OfflineQueueItem[] {
-  return readRawOfflineQueue(getOfflineQueueKey(userId));
-}
-
-function writeOfflineQueue(userId: string, queue: OfflineQueueItem[]) {
-  const scopedKey = getOfflineQueueKey(userId);
-
-  if (queue.length > 0) {
-    localStorage.setItem(scopedKey, JSON.stringify(queue));
-  } else {
-    localStorage.removeItem(scopedKey);
-  }
-
-  const legacyQueue = readRawOfflineQueue(OFFLINE_QUEUE_KEY);
-  const remainingLegacyItems = legacyQueue.filter(item => item.user_id !== userId);
-  if (remainingLegacyItems.length > 0) {
-    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(remainingLegacyItems));
-  } else {
-    localStorage.removeItem(OFFLINE_QUEUE_KEY);
-  }
-}
-
-function readOfflineQueue(userId: string): OfflineQueueItem[] {
-  const scopedQueue = readScopedOfflineQueue(userId);
-  const legacyQueue = readRawOfflineQueue(OFFLINE_QUEUE_KEY).filter(item => item.user_id === userId);
-  return [...legacyQueue, ...scopedQueue];
-}
-
-function pushOfflineQueue(item: OfflineQueueItem) {
-  const queue = readScopedOfflineQueue(item.user_id);
-  queue.push(item);
-  localStorage.setItem(getOfflineQueueKey(item.user_id), JSON.stringify(queue));
-}
-
 // ── Hook ───────────────────────────────────────────────────
 
 export function useWaterData(
@@ -134,9 +67,17 @@ export function useWaterData(
 
   const waterIntakeRef  = useRef(0);
   const waterEntriesRef = useRef<WaterLog[]>([]);
+  const offlineSyncInFlightRef = useRef(false);
 
   const today = toDateStr();
   const waterQuery = useWaterLogsQuery(isRealUser(profile?.id) ? profile.id : undefined, today);
+  const waterQueryRef = useRef(waterQuery);
+
+  // Keep latest query object in a ref (must not be assigned during render)
+  useEffect(() => {
+    waterQueryRef.current = waterQuery;
+  }, [waterQuery]);
+
   const addWaterMutation = useAddWaterMutation();
   const processHydrationMutation = useProcessHydrationMutation();
   const deleteWaterMutation = useDeleteWaterMutation();
@@ -145,8 +86,11 @@ export function useWaterData(
   // Sync React Query data → local state (initial load + refetch)
   useEffect(() => {
     if (waterQuery.data && waterQuery.isSuccess) {
-      setWaterEntries(waterQuery.data);
-      setIsSyncing(false);
+      // avoid react-hooks/set-state-in-effect (setState directly in effect body)
+      setTimeout(() => {
+        setWaterEntries(waterQuery.data);
+        setIsSyncing(false);
+      }, 0);
     }
   }, [waterQuery.data, waterQuery.isSuccess]);
 
@@ -159,13 +103,16 @@ export function useWaterData(
   useEffect(() => { waterIntakeRef.current = waterIntake; }, [waterIntake]);
   useEffect(() => { waterEntriesRef.current = waterEntries; }, [waterEntries]);
 
+  const { isOnline, wasOffline } = useNetworkState();
+
   useEffect(() => {
     if (!isRealUser(profile?.id)) {
       setTimeout(() => setHasPendingCloudSync(false), 0);
       return;
     }
-
-    setTimeout(() => setHasPendingCloudSync(readOfflineQueue(profile.id).length > 0), 0);
+    const migrated = migrateLegacyQueue(profile.id);
+    if (migrated > 0) devLog(`Migrated ${migrated} legacy queue items`);
+    setTimeout(() => setHasPendingCloudSync(countQueue(profile.id) > 0), 0);
   }, [profile?.id]);
 
   // ── Fetch ──────────────────────────────────────────────
@@ -178,19 +125,20 @@ export function useWaterData(
     }
 
     setIsSyncing(true);
-    const result = await waterQuery.refetch();
+    const result = await waterQueryRef.current.refetch();
     if (result.error) {
       devError('fetchAllWater error:', result.error);
       toast.error('Không thể tải nhật ký nước. Kiểm tra kết nối.');
     }
     setIsSyncing(false);
-  }, [profile?.id, waterQuery]);
+  }, [profile?.id]);
 
   // Auto fetch water data on mount/profile change
   useEffect(() => {
     if (profile?.id) {
       devLog('Profile changed, fetching water data');
-      fetchAllWater();
+      // avoid react-hooks/set-state-in-effect by deferring execution
+      setTimeout(() => fetchAllWater(), 0);
     }
   }, [profile?.id, fetchAllWater]);
 
@@ -260,6 +208,7 @@ export function useWaterData(
           name,
           exp,
           day: today,
+          created_at: now,
         });
 
         // [QUAN TRỌNG] Gọi RPC để backend tự cộng EXP, Level và Coin an toàn tuyệt đối
@@ -295,18 +244,18 @@ export function useWaterData(
         setWaterEntries(prev => prev.filter(e => e.id !== tempId));
 
         // Lưu day ngay tại đây thay vì tính lại khi sync
-        pushOfflineQueue({
-          tempId, user_id: String(profile.id),
-          amount: actualAmount, name, exp,
-          day: today,
-          created_at: now,
-          tempC, exerciseMins, isFasting
-        });
+        pushToQueue(profile.id, queueItem(
+          profile.id,
+          'add',
+          'water_log',
+          null,
+          { tempId, amount: actualAmount, name, exp, day: today, created_at: now, tempC, exerciseMins, isFasting },
+        ));
 
         setHasPendingCloudSync(true);
       }
     },
-    [profile?.id, profile?.level, onWaterLogged, efTempC, efExerciseMins, efIsFasting],
+    [profile, onWaterLogged, efTempC, efExerciseMins, efIsFasting, addWaterMutation, processHydrationMutation],
   );
 
   // ── Delete ─────────────────────────────────────────────
@@ -336,10 +285,18 @@ export function useWaterData(
       } catch (err) {
         devError('Delete failed:', err);
         setWaterEntries(snapshot);
-        toast.error('Không thể xóa. Thử lại sau.');
+        pushToQueue(profile.id, queueItem(
+          profile.id,
+          'delete',
+          'water_log',
+          id,
+          { amount: entry.amount, exp: entry.exp, day: today },
+        ));
+        setHasPendingCloudSync(true);
+        toast.error('Không thể xóa lúc này. Đã lưu offline để đồng bộ sau.');
       }
     },
-    [profile?.id, onWaterLogged, fetchAllWater],
+    [profile, onWaterLogged, fetchAllWater, deleteWaterMutation, today],
   );
 
   const handleDeleteEntry = useCallback(
@@ -399,94 +356,152 @@ export function useWaterData(
     } catch (err) {
       devError('edit failed:', err);
       setWaterEntries(snapshot);
-      toast.error('Không thể cập nhật. Kiểm tra kết nối.');
+      pushToQueue(profile.id, queueItem(
+        profile.id,
+        'edit',
+        'water_log',
+        id,
+        { amount: newAmount, exp: newExp, deltaAmount, deltaExp, day: today },
+      ));
+      setHasPendingCloudSync(true);
+      toast.error('Không thể cập nhật lúc này. Đã lưu offline để đồng bộ sau.');
     }
-  }, [profile?.id, profile?.level, onWaterLogged, fetchAllWater]);
+  }, [profile, onWaterLogged, today, updateWaterMutation]);
 
   // ── Offline sync ───────────────────────────────────────
 
   const syncOfflineLogs = useCallback(async () => {
-    if (!isRealUser(profile?.id)) return;
+    if (!isRealUser(profile?.id) || offlineSyncInFlightRef.current || !isOnline) return;
 
-    const queue = readOfflineQueue(profile.id);
+    const queue = readQueue<QueueItem>(profile.id);
     if (!queue.length) return;
 
     devLog('Syncing offline queue:', queue.length, 'items');
+    offlineSyncInFlightRef.current = true;
+    setIsSyncing(true);
 
     let syncedCount = 0;
     let failedCount = 0;
-    const remaining: OfflineQueueItem[] = [];
+    const remaining: QueueItem[] = [];
+    const handledIds = new Set<string>();
 
-    for (const item of queue) {
-      const retryCount = item.retryCount ?? 0;
-
-      try {
-        if (!item.logSynced) {
-          const existingLog = await findExistingWaterLog({
-            user_id: item.user_id,
-            day: item.day,
-            amount: item.amount,
-            name: item.name,
-            created_at: item.created_at,
-          });
-
-          if (!existingLog) {
-            await insertWaterLog({
-              user_id: item.user_id,
-              amount: item.amount,
-              name: item.name,
-              exp: item.exp,
-              day: item.day,
+    try {
+      for (const item of queue) {
+        try {
+          if (item.operation === 'add') {
+            const p = item.payload as Record<string, unknown>;
+            const createdAt = String(p.created_at ?? item.createdAt);
+            const existingLog = await findExistingWaterLog({
+              user_id: item.userId,
+              day: String(p.day ?? ''),
+              amount: Number(p.amount ?? 0),
+              name: String(p.name ?? 'Nuoc Loc'),
+              created_at: createdAt,
             });
+
+            if (!existingLog) {
+              await insertWaterLog({
+                user_id: item.userId,
+                amount: Number(p.amount ?? 0),
+                name: String(p.name ?? 'Nuoc Loc'),
+                exp: Number(p.exp ?? 0),
+                day: String(p.day ?? ''),
+                created_at: createdAt,
+              });
+            }
+
+            await processHydrationMutation.mutateAsync({
+              p_user_id: item.userId,
+              p_amount_ml: Number(p.amount ?? 0),
+              p_temp_c: (p.tempC as number) || null,
+              p_exercise_mins: (p.exerciseMins as number) || 0,
+              p_is_fasting: (p.isFasting as boolean) || false,
+            });
+          } else if (item.operation === 'delete' && item.entityId) {
+            const p = item.payload as Record<string, unknown>;
+            const resolution = resolveStrategy(item, { updated_at: undefined });
+            if (resolution !== 'server_wins') {
+              await deleteWaterMutation.mutateAsync({
+                id: item.entityId,
+                userId: item.userId,
+                day: String(p.day ?? ''),
+              });
+
+              await onWaterLogged?.(Number(p.amount ?? 0) * -1, Number(p.exp ?? 0) * -1);
+            }
+          } else if (item.operation === 'edit' && item.entityId) {
+            const p = item.payload as Record<string, unknown>;
+
+            const { data: serverData } = await supabase
+              .from('water_logs')
+              .select('created_at')
+              .eq('id', item.entityId)
+              .maybeSingle();
+            const resolution = resolveStrategy(item, { updated_at: serverData?.created_at });
+            if (resolution !== 'server_wins') {
+              await updateWaterMutation.mutateAsync({
+                id: item.entityId,
+                userId: item.userId,
+                day: String(p.day ?? ''),
+                amount: Number(p.amount ?? 0),
+                exp: Number(p.exp ?? 0),
+              });
+
+              const deltaAmount = Number(p.deltaAmount ?? 0);
+              if (deltaAmount !== 0) await onWaterLogged?.(deltaAmount, Number(p.deltaExp ?? 0));
+            }
+          }
+
+          handledIds.add(item.id);
+          syncedCount += 1;
+        } catch (err) {
+          devError('sync item failed:', item.id, err);
+          handledIds.add(item.id);
+          if (item.retryCount >= 2) {
+            devLog('Dropping item after max retries:', item.id);
+          } else {
+            remaining.push({ ...item, retryCount: item.retryCount + 1, lastError: String(err) });
+            failedCount += 1;
           }
         }
-
-        if (!item.progressionSynced) {
-          await processHydrationMutation.mutateAsync({
-            p_user_id: item.user_id,
-            p_amount_ml: item.amount,
-            p_temp_c: item.tempC || null,
-            p_exercise_mins: item.exerciseMins || 0,
-            p_is_fasting: item.isFasting || false,
-          });
-        }
-
-        syncedCount += 1;
-      } catch (err) {
-        devError('sync item failed:', item.tempId, err);
-
-        if (retryCount >= MAX_SYNC_RETRIES) {
-          devLog('Dropping item after max retries:', item.tempId);
-        } else {
-          remaining.push({ ...item, retryCount: retryCount + 1 });
-          failedCount += 1;
-        }
       }
+
+      const currentQueue = readQueue<QueueItem>(profile.id);
+      const final = [...remaining, ...currentQueue.filter(i => !handledIds.has(i.id))];
+
+      if (final.length === 0) {
+        clearQueue(profile.id);
+      } else {
+        writeQueue(profile.id, final);
+      }
+      setHasPendingCloudSync(final.length > 0);
+
+      if (syncedCount > 0) {
+        toast.success(`Đã đồng bộ ${syncedCount} mục offline.`);
+        await onWaterLogged?.();
+        fetchAllWater();
+      }
+
+      if (failedCount > 0 && remaining.length > 0) {
+        toast.info(`Còn ${remaining.length} mục chờ đồng bộ.`);
+      }
+    } finally {
+      offlineSyncInFlightRef.current = false;
+      setIsSyncing(false);
     }
-
-    // Re-read queue before writing to preserve items added during sync
-    const processedIds = new Set(queue.map(item => item.tempId));
-    const currentQueue = readOfflineQueue(profile.id);
-    const newItems = currentQueue.filter(item => !processedIds.has(item.tempId));
-    const finalQueue = [...remaining, ...newItems];
-
-    writeOfflineQueue(profile.id, finalQueue);
-    setHasPendingCloudSync(finalQueue.length > 0);
-
-    if (syncedCount > 0) {
-      toast.success(`Đã đồng bộ ${syncedCount} mục offline.`);
-      await onWaterLogged?.();
-      fetchAllWater();
-    }
-
-    if (failedCount > 0 && remaining.length > 0) {
-      toast.info(`Còn ${remaining.length} mục chờ đồng bộ.`);
-    }
-  }, [profile?.id, onWaterLogged, fetchAllWater]);
+  }, [profile, onWaterLogged, fetchAllWater, processHydrationMutation, deleteWaterMutation, updateWaterMutation, isOnline]);
 
   useEffect(() => {
-    if (hasPendingCloudSync) syncOfflineLogs();
-  }, [hasPendingCloudSync, syncOfflineLogs]);
+    if (hasPendingCloudSync && isOnline) {
+      setTimeout(() => syncOfflineLogs(), 0);
+    }
+  }, [hasPendingCloudSync, isOnline, syncOfflineLogs]);
+
+  useEffect(() => {
+    if (wasOffline && isOnline && hasPendingCloudSync) {
+      setTimeout(() => syncOfflineLogs(), 1000);
+    }
+  }, [wasOffline, isOnline, hasPendingCloudSync, syncOfflineLogs]);
 
   // ── Return ─────────────────────────────────────────────
 

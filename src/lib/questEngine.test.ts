@@ -1,7 +1,32 @@
-import { describe, it, expect } from 'vitest';
-import { claimQuestReward } from './questEngine';
+import { describe, it, expect, vi } from 'vitest';
+import { claimQuestReward, claimChallengeReward } from './questEngine';
 
-// ── Pure logic tests (no Supabase needed) ──
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        in: vi.fn(() => ({ eq: vi.fn(() => Promise.resolve({ data: [], error: null })) })),
+        lte: vi.fn(() => Promise.resolve({ data: [], error: null })),
+      })),
+      update: vi.fn(() => ({ eq: vi.fn(() => Promise.resolve({ data: [], error: null })) })),
+      upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
+      insert: vi.fn(() => ({ select: vi.fn(() => Promise.resolve({ data: null, error: null })) })),
+    })),
+    rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
+  },
+}));
+
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock('@capacitor/local-notifications', () => ({
+  LocalNotifications: {
+    registerActionTypes: vi.fn(),
+    schedule: vi.fn(),
+  },
+}));
 
 describe('claimQuestReward input validation', () => {
   it('returns null for empty userId', async () => {
@@ -27,6 +52,56 @@ describe('claimQuestReward input validation', () => {
   it('returns null when both params are empty', async () => {
     const result = await claimQuestReward('', '');
     expect(result).toBeNull();
+  });
+});
+
+describe('claimQuestReward — RPC', () => {
+  it('returns null when RPC returns error', async () => {
+    const { supabase } = await import('@/lib/supabase');
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: new Error('RPC failed') });
+
+    const result = await claimQuestReward('valid-user', 'valid-quest');
+    expect(result).toBeNull();
+  });
+
+  it('returns data on success', async () => {
+    const { supabase } = await import('@/lib/supabase');
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: { success: true, leveled_up: false }, error: null });
+
+    const result = await claimQuestReward('valid-user', 'valid-quest');
+    expect(result).toEqual({ success: true, leveled_up: false });
+  });
+
+  it('dispatches refresh event after claim', async () => {
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+    const { supabase } = await import('@/lib/supabase');
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: { success: true }, error: null });
+
+    await claimQuestReward('valid-user', 'valid-quest');
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'hydrationEvent' }),
+    );
+
+    dispatchSpy.mockRestore();
+  });
+});
+
+describe('claimChallengeReward', () => {
+  it('returns null when RPC returns error', async () => {
+    const { supabase } = await import('@/lib/supabase');
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: new Error('fail') });
+
+    const result = await claimChallengeReward('uid', 'cid');
+    expect(result).toBeNull();
+  });
+
+  it('returns success on RPC ok', async () => {
+    const { supabase } = await import('@/lib/supabase');
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null });
+
+    const result = await claimChallengeReward('uid', 'cid');
+    expect(result).toEqual({ success: true });
   });
 });
 
@@ -56,11 +131,10 @@ describe('milestone calculation logic', () => {
       { at: 1000, exp: 50, coins: 25, label: 'Mốc 1000ml' },
     ];
     const newValue = 1500;
-    const alreadyReached: number[] = [];
 
     const newMilestones = milestones
       .map((m, idx) => ({ ...m, idx }))
-      .filter(m => m.at <= newValue && !alreadyReached.includes(m.idx));
+      .filter(m => m.at <= newValue);
 
     expect(newMilestones).toHaveLength(3);
   });
@@ -81,23 +155,20 @@ describe('milestone calculation logic', () => {
   });
 
   it('detects completion when target_value is reached', () => {
-    const targetValue = 1000;
-    const newValue = 1500;
-    const isCompleted = targetValue != null && newValue >= targetValue;
-    expect(isCompleted).toBe(true);
+    const target = 1000;
+    const current = 1500;
+    expect(target != null && current >= target).toBe(true);
   });
 
   it('detects not completed when below target', () => {
-    const targetValue = 1000;
-    const newValue = 500;
-    const isCompleted = targetValue != null && newValue >= targetValue;
-    expect(isCompleted).toBe(false);
+    const target = 1000;
+    const current = 500;
+    expect(target != null && current >= target).toBe(false);
   });
 
   it('null target_value means no completion check', () => {
-    const targetValue = null;
-    const newValue = 500;
-    const isCompleted = targetValue != null && newValue >= targetValue;
-    expect(isCompleted).toBe(false);
+    const target = null;
+    const current = 500;
+    expect(target != null && current >= target).toBe(false);
   });
 });

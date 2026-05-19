@@ -5,6 +5,12 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 
+const sentryRelease =
+  process.env.SENTRY_RELEASE ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.GITHUB_SHA ||
+  undefined
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -13,6 +19,21 @@ export default defineConfig({
       org: 'digiwell',
       project: 'digiwell-app',
       authToken: process.env.SENTRY_AUTH_TOKEN,
+      sourcemaps: {
+        assets: './dist/assets/**',
+        ignore: ['./node_modules/**'],
+        filesToDeleteAfterUpload: ['./dist/**/*.map'],
+      },
+      release: {
+        name: sentryRelease,
+        setCommits: {
+          auto: true,
+          ignoreMissing: true,
+        },
+        deploy: {
+          env: process.env.VITE_APP_ENV || process.env.NODE_ENV || 'production',
+        },
+      },
     }) : null,
     process.env.CAPACITOR_BUILD !== 'true' ? VitePWA({
       registerType: 'autoUpdate',
@@ -57,7 +78,7 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: true,
+    sourcemap: process.env.SENTRY_AUTH_TOKEN ? true : false,
     rollupOptions: {
       external: process.env.CAPACITOR_BUILD === 'true' ? ['@capacitor/haptics', '@capacitor/share', '@capacitor/local-notifications'] : [],
       output: {

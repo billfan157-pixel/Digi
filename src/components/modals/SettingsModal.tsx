@@ -3,17 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera, Activity, Droplets, Heart, Bell,
   MoonStar, Send, Smartphone, Ruler, CloudUpload, Fingerprint,
-  FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Sparkles
+  FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Sparkles,
+  Crown, ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '../../lib/supabase';
 import { useUIStore } from '../../store/useUIStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useSettings } from '../../hooks/useSettings';
 import { useBiometric } from '../../hooks/useBiometric';
 import { useDeleteAccount } from '../../hooks/useDeleteAccount';
 import type { DeleteOption } from '../../hooks/useDeleteAccount';
-import { LocalNotifications } from '@capacitor/local-notifications';
 import { registerPlugin } from '@capacitor/core';
 import Cropper from 'react-easy-crop';
 
@@ -21,6 +20,10 @@ import type { AppProfile } from '@/services/profile.service';
 import { AppStorage } from '@/lib/storage';
 import { useWeatherSync } from '@/hooks/useWeatherSync';
 import { requestHealthReadStepsAndHeartRate } from '@/lib/healthIntegration';
+import { profileSchema, formatZodErrors } from '@/lib/validations';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { usePremiumStatus } from '@/hooks/useIsPremium';
+import { supabase } from '@/lib/supabase';
 
 // Khai báo Plugin tự chế
 interface WidgetPluginType {
@@ -190,21 +193,36 @@ export default function SettingsModal() {
     }
   };
 
+  const { sendTestNotification, isSendingTest } = usePushNotifications(profile?.id);
+
   const testNotification = async () => {
     triggerHaptic();
-    const perm = await LocalNotifications.requestPermissions();
-    if (perm.display === 'granted') {
-      await LocalNotifications.schedule({
-        notifications: [{
-          title: '💧 DigiWell',
-          body: 'Đến giờ uống nước rồi sếp ơi!',
-          id: Date.now(),
-          schedule: { at: new Date(Date.now() + 2000) } // Sẽ nổ thông báo sau 2 giây
-        }]
-      });
-      toast.success('Đã lên lịch thông báo sau 2 giây!');
-    } else {
-      toast.warning('Hãy cấp quyền thông báo trong hệ thống điện thoại.');
+    try {
+      const result = await sendTestNotification();
+      if (result.ok) {
+        toast.success(result.message);
+      } else {
+        toast.warning(result.message);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không gửi được thông báo thử.');
+    }
+  };
+
+  const premiumStatus = usePremiumStatus();
+
+  const openStripePortal = async () => {
+    triggerHaptic();
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-portal');
+      if (error) throw new Error(error.message);
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      } else {
+        toast.error('Không thể mở trang quản lý.');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Lỗi kết nối Stripe');
     }
   };
 
@@ -212,35 +230,38 @@ export default function SettingsModal() {
   const handleSaveProfile = async () => {
     triggerHaptic();
     if (!profile?.id) return;
-    if (!formData.nickname.trim()) { toast.error('Vui lòng nhập tên hiển thị!'); return; }
-    if (formData.weight < 20 || formData.weight > 300 || formData.height < 50 || formData.height > 250 || formData.age < 5 || formData.age > 120) {
-      toast.error('Vui lòng kiểm tra lại các thông số không hợp lệ!'); return;
+
+    const parsed = profileSchema.safeParse(formData);
+    if (!parsed.success) {
+      toast.error(formatZodErrors(parsed.error));
+      return;
     }
     
+    const data = parsed.data;
     const toastId = toast.loading('Đang cập nhật hồ sơ...');
     try {
       const { error } = await supabase.from('profiles').update({
-        nickname: formData.nickname.trim(),
-        gender: formData.gender,
-        age: formData.age,
-        height: formData.height,
-        weight: formData.weight,
-        activity: formData.activity,
-        climate: formData.climate,
-        goal: formData.goal
+        nickname: data.nickname,
+        gender: data.gender,
+        age: data.age,
+        height: data.height,
+        weight: data.weight,
+        activity: data.activity,
+        climate: data.climate,
+        goal: data.goal
       }).eq('id', profile.id);
 
       if (error) throw error;
       
-      setProfile({ ...profile, ...formData, nickname: formData.nickname.trim() } as AppProfile);
+      setProfile({ ...profile, ...data } as AppProfile);
       updateSettings({
-        displayName: formData.nickname.trim(),
-        weight: formData.weight,
-        height: formData.height,
-        age: formData.age,
-        gender: formData.gender,
-        activity: formData.activity,
-        climate: formData.climate
+        displayName: data.nickname,
+        weight: data.weight,
+        height: data.height,
+        age: data.age,
+        gender: data.gender,
+        activity: data.activity,
+        climate: data.climate
       });
       
       toast.success('Cập nhật hồ sơ thành công!', { id: toastId });
@@ -436,12 +457,14 @@ export default function SettingsModal() {
                   </div>
                 </button>
 
-                <button onClick={testNotification} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors">
+                <button disabled={isSendingTest} onClick={testNotification} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors disabled:opacity-60">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-slate-500/20 text-slate-400 flex items-center justify-center"><Send size={18} /></div>
+                    <div className="w-8 h-8 rounded-lg bg-slate-500/20 text-slate-400 flex items-center justify-center">
+                      {isSendingTest ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                    </div>
                     <span className="text-white font-medium">Gửi thông báo thử</span>
                   </div>
-                  <span className="text-sm font-semibold text-cyan-400">Thử ngay</span>
+                  <span className="text-sm font-semibold text-cyan-400">{isSendingTest ? 'Đang gửi' : 'Thử ngay'}</span>
                 </button>
               </div>
             </section>
@@ -475,7 +498,48 @@ export default function SettingsModal() {
               </div>
             </section>
 
-            {/* SECTION D: ACCOUNT & LEGAL */}
+            {/* SECTION D: PREMIUM SUBSCRIPTION */}
+            <section>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-2 ml-4">Gói thành viên</h3>
+              <div className="bg-slate-800/40 backdrop-blur-md border border-white/5 rounded-2xl overflow-hidden mb-6 shadow-sm">
+                <div className="w-full flex items-center justify-between p-4 bg-transparent border-b border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${premiumStatus !== 'none' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                      <Crown size={18} />
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <span className="text-white font-medium">
+                        {premiumStatus === 'active' ? 'DigiWell PRO' :
+                         premiumStatus === 'grace' ? 'DigiWell PRO (Ân hạn)' :
+                         premiumStatus === 'expired' ? 'PRO đã hết hạn' :
+                         'DigiWell Miễn phí'}
+                      </span>
+                      <span className="text-[10px] text-slate-500">
+                        {premiumStatus === 'active' && profile?.subscription_end
+                          ? `Đến ${new Date(profile.subscription_end).toLocaleDateString('vi-VN')}`
+                          : premiumStatus === 'grace'
+                          ? `Ân hạn đến ${profile?.grace_period_end ? new Date(profile.grace_period_end).toLocaleDateString('vi-VN') : ''}`
+                          : premiumStatus === 'expired'
+                          ? 'Gia hạn để tiếp tục dùng PRO'
+                          : 'Nâng cấp để mở khóa toàn bộ tính năng'}
+                      </span>
+                    </div>
+                  </div>
+                  {premiumStatus !== 'none' ? (
+                    <button onClick={openStripePortal} className="flex items-center gap-1 text-sm font-semibold text-amber-400 p-2 hover:bg-white/5 rounded-lg transition-colors">
+                      <ExternalLink size={14} />
+                      Quản lý
+                    </button>
+                  ) : (
+                    <button onClick={() => useUIStore.getState().setShowPremiumModal(true)} className="text-sm font-semibold text-cyan-400 p-2 hover:bg-white/5 rounded-lg transition-colors">
+                      Nâng cấp
+                    </button>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* SECTION E: ACCOUNT & LEGAL */}
             <section>
               <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 ml-4">Tài khoản & Pháp lý</h3>
               <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden mb-6 shadow-sm">
