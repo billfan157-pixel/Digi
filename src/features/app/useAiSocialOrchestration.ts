@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
 import { useFeed } from '@/hooks/useFeed';
-import { useGeminiAI } from '@/hooks/useGroqAI';
+import { useGroqAI } from '@/hooks/useGroqAI';
 import { useSocialData } from '@/hooks/useSocialData';
 
 import { useAppStore } from '@/store/useAppStore';
@@ -40,7 +40,7 @@ export function useAiSocialOrchestration() {
     setActiveTab: setActiveTab as (tab: string) => void,
   }) || {};
 
-  const geminiProps = useGeminiAI({
+  const geminiProps = useGroqAI({
     profile,
     waterIntake,
     waterGoal,

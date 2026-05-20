@@ -38,7 +38,8 @@ function useAnimatedCounter(target: number, duration = 1000) {
 
     raf = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(raf);
-  }, [target]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, duration]);
 
   return Math.round(current);
 }
@@ -153,7 +154,7 @@ function StreakBadge({ streak }: { streak: number }) {
         <Flame size={16} className="text-orange-400" aria-hidden="true" />
         <div className="text-left">
           <p className="text-[8px] uppercase tracking-widest text-slate-400 font-bold leading-none mb-0.5">
-            Streak
+            Liên tục
           </p>
           <p className="text-lg leading-none font-black text-orange-400">{streak}</p>
         </div>
@@ -448,7 +449,7 @@ export default function BasicTodayRingUltimate({
           <MetricRow
             icon={Droplets}
             title="Nạp nước"
-            subtitle="Volume"
+            subtitle="Thể tích"
             value={
               <>
                 {waterIntake.toLocaleString('vi-VN')}
@@ -520,7 +521,7 @@ export default function BasicTodayRingUltimate({
           <MetricRow
             icon={Target}
             title="Mục tiêu tuần"
-            subtitle="Consistency"
+            subtitle="Đều đặn"
             value={
               <>
                 {Math.round(weeklyPercent)}
@@ -536,7 +537,7 @@ export default function BasicTodayRingUltimate({
           <MetricRow
             icon={Flame}
             title="Độ kiên trì"
-            subtitle="Streak"
+            subtitle="Liên tục"
             value={
               <>
                 {streak}
@@ -544,7 +545,7 @@ export default function BasicTodayRingUltimate({
               </>
             }
             secondaryInfo={
-              streak >= 7 ? <span className="text-orange-400">🔥 On fire</span> : undefined
+              streak >= 7 ? <span className="text-orange-400"><Flame size={14} className="inline mr-1" />Đang cháy</span> : undefined
             }
             accentClass="text-orange-400"
             bgClass="bg-orange-500/10"

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Plus, X } from 'lucide-react';
 import { type DrinkPreset } from '../../models';
 import { renderIcon, presetStyles } from '../../tabs/HomeTab/components/homeHeaderUtils';

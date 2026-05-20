@@ -2,6 +2,7 @@
 // DigiWell — QuestCard & ChallengeCard Components
 // ============================================================
 
+import { Droplet, Flame, Target, FileText, Trophy, Calendar, HelpCircle, CheckCircle2, Zap, Coins } from 'lucide-react';
 import { QUEST_TYPE_LABEL, conditionLabel, RANKS, levelProgress, totalExpForLevel, expRequiredForLevel } from '../config/questConfig';
 import type { UserQuest, UserChallenge, RankTier, Challenge, ChallengeMilestone } from '../config/questConfig';
 
@@ -47,14 +48,15 @@ export function QuestCard({ userQuest: uq, onClaim, isClaiming = false }: QuestC
 
   // Get condition-specific icon
   const getConditionIcon = (conditionType: string) => {
+    const size = 16;
     switch (conditionType) {
-      case 'drink_today': return '💧';
-      case 'drink_streak': return '🔥';
-      case 'goal_percent': return '🎯';
-      case 'log_count': return '📝';
-      case 'drink_total': return '🏆';
-      case 'drink_weekly_days': return '📅';
-      default: return '❓';
+      case 'drink_today': return <Droplet size={size} className="text-cyan-400" />;
+      case 'drink_streak': return <Flame size={size} className="text-orange-400" />;
+      case 'goal_percent': return <Target size={size} className="text-green-400" />;
+      case 'log_count': return <FileText size={size} className="text-blue-400" />;
+      case 'drink_total': return <Trophy size={size} className="text-yellow-400" />;
+      case 'drink_weekly_days': return <Calendar size={size} className="text-purple-400" />;
+      default: return <HelpCircle size={size} className="text-slate-400" />;
     }
   };
 
@@ -68,7 +70,7 @@ export function QuestCard({ userQuest: uq, onClaim, isClaiming = false }: QuestC
 
       {/* Quest type badge */}
       <div className="flex items-center gap-2 mb-3">
-        <div className={`w-8 h-8 rounded-xl ${style.bg} flex items-center justify-center text-lg shadow-lg ${style.glow}`}>
+        <div className={`w-8 h-8 rounded-xl ${style.bg} flex items-center justify-center shadow-lg ${style.glow}`}>
           {getConditionIcon(q.condition_type)}
         </div>
         <div>
@@ -77,7 +79,7 @@ export function QuestCard({ userQuest: uq, onClaim, isClaiming = false }: QuestC
           </span>
           {isCompleted && (
             <span className="ml-2 text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-              ✅ Hoàn thành
+              <CheckCircle2 size={12} className="inline mr-0.5" /> Hoàn thành
             </span>
           )}
         </div>
@@ -90,7 +92,7 @@ export function QuestCard({ userQuest: uq, onClaim, isClaiming = false }: QuestC
 
       {/* Condition */}
       <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
-        🎯 {conditionLabel(q)}
+        <Target size={14} className="inline mr-1 text-green-500" />{conditionLabel(q)}
       </p>
 
       {/* Progress section */}
@@ -121,12 +123,12 @@ export function QuestCard({ userQuest: uq, onClaim, isClaiming = false }: QuestC
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-3">
           <div className="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800">
-            <span className="text-indigo-600 dark:text-indigo-400">⚡</span>
+            <Zap size={14} className="text-indigo-500" />
             <span className="text-sm font-bold text-indigo-700 dark:text-indigo-300">+{q.reward_exp}</span>
           </div>
           {q.reward_coins > 0 && (
             <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800">
-              <span className="text-amber-600 dark:text-amber-400">💰</span>
+              <Coins size={14} className="text-amber-500" />
               <span className="text-sm font-bold text-amber-700 dark:text-amber-300">+{q.reward_coins}</span>
             </div>
           )}
@@ -134,7 +136,7 @@ export function QuestCard({ userQuest: uq, onClaim, isClaiming = false }: QuestC
 
         {q.reward_badge_id && (
           <div className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/30 px-3 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800">
-            <span className="text-purple-600 dark:text-purple-400">🏆</span>
+            <Trophy size={14} className="text-purple-500" />
             <span className="text-sm font-bold text-purple-700 dark:text-purple-300">Badge</span>
           </div>
         )}

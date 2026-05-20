@@ -1,4 +1,4 @@
-import { Coins, ScrollText, Zap } from 'lucide-react';
+import { Coins, ScrollText, Zap, Swords } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import CountUp from '@/components/CountUp';
@@ -35,7 +35,7 @@ const GamificationBar = React.memo(function GamificationBar({ wp, coins, onShopC
           onClick={onBattleClick}
           className="flex items-center gap-2 bg-gradient-to-br from-rose-500/15 to-rose-600/10 px-4 py-2.5 rounded-xl border border-rose-500/25 text-rose-600 dark:text-rose-400 hover:from-rose-500/20 hover:to-rose-600/15 hover:border-rose-500/35 active:scale-95 transition-all font-bold text-xs shadow-[0_0_15px_rgba(244,63,94,0.1)] hover:shadow-[0_0_20px_rgba(244,63,94,0.15)] group"
         >
-          <span className="group-hover:scale-110 transition-transform">⚔️</span> {t('home.battle')}
+          <Swords size={15} className="group-hover:scale-110 transition-transform" /> {t('home.battle')}
         </button>
         <button
           onClick={onQuestClick}

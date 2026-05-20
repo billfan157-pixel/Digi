@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { AlertTriangle } from 'lucide-react';
 import { PostCard } from './PostCard';
@@ -26,7 +27,7 @@ function PostCardErrorFallback({ error }: { error: unknown }) {
   );
 }
 
-export const FeedPostList = ({
+const FeedPostListComponent = ({
   posts,
   isLoading,
   socialError,
@@ -58,7 +59,10 @@ export const FeedPostList = ({
     {!socialError && posts.length > 0 && (
       <div className="space-y-4">
         {posts.map((post, index) => (
-          <ErrorBoundary key={post.id && String(post.id).trim() !== '' ? post.id : `fallback-post-${index}`} FallbackComponent={PostCardErrorFallback}>
+          <ErrorBoundary
+            key={post.id && String(post.id).trim() !== '' ? post.id : `fallback-post-${index}`}
+            FallbackComponent={PostCardErrorFallback}
+          >
             <PostCard
               post={post}
               currentUserId={currentUserId}
@@ -71,3 +75,5 @@ export const FeedPostList = ({
     )}
   </>
 );
+
+export const FeedPostList = memo(FeedPostListComponent);

@@ -1,24 +1,22 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
 import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimit.ts';
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const Deno: any;
+const json = (body: Record<string, unknown>, status = 200, origin: string | null = null) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
+  });
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const VAPID_CONTACT = 'mailto:push@digiwell.app';
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const origin = req.headers.get('Origin');
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'Method not allowed' }, 405, origin);
   }
 
   const authHeader = req.headers.get('Authorization') ?? '';
@@ -28,17 +26,11 @@ Deno.serve(async (req: Request) => {
   const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') ?? '';
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'Server configuration error' }, 500, origin);
   }
 
   if (!vapidPrivateKey || !vapidPublicKey) {
-    return new Response(JSON.stringify({ error: 'VAPID keys not configured' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'VAPID keys not configured' }, 500, origin);
   }
 
   try {
@@ -48,17 +40,14 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Unauthorized' }, 401, origin);
     }
 
     const rateLimit = await checkRateLimit(`push:${user.id}`, RATE_LIMITS.pushNotification);
     if (!rateLimit.allowed) {
-      return new Response(JSON.stringify({
+      return json({
         error: `Rate limited. Try again in ${rateLimit.retryAfterSeconds}s`,
-      }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }, 429, origin);
     }
 
     const { title, body, data: extraData, badge, icon } = await req.json();
@@ -79,17 +68,11 @@ Deno.serve(async (req: Request) => {
       .eq('user_id', targetUserId);
 
     if (subError) {
-      return new Response(JSON.stringify({ error: subError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: subError.message }, 500, origin);
     }
 
     if (!subscriptions || subscriptions.length === 0) {
-      return new Response(JSON.stringify({ sent: 0, message: 'No subscriptions found' }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ sent: 0, message: 'No subscriptions found' }, 200, origin);
     }
 
     const payload = JSON.stringify({
@@ -109,7 +92,7 @@ Deno.serve(async (req: Request) => {
         const result = await sendWebPush(
           sub.endpoint, sub.p256dh, sub.auth,
           payload, vapidPublicKey, vapidPrivateKey,
-          `mailto:${user.email ?? 'push@digiwell.app'}`,
+          VAPID_CONTACT,
         );
         if (result.ok) sent++;
         if (result.expired) {
@@ -124,17 +107,11 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    return new Response(JSON.stringify({ sent, total: subscriptions.length, removed, results }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ sent, total: subscriptions.length, removed, results }, 200, origin);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal error';
     console.error('send-push-notification error:', message);
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: message }, 500, origin);
   }
 });
 

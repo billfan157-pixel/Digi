@@ -59,6 +59,14 @@ export const getFallbackPostDrinkType = (post: Record<string, unknown>, index: n
 export const sortPostsByLatest = (posts: SocialFeedPost[]) =>
   [...posts].sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime());
 
+export const sortPostsByHot = (posts: SocialFeedPost[]) =>
+  [...posts].sort((left, right) => {
+    const likesA = left.like_count ?? 0;
+    const likesB = right.like_count ?? 0;
+    if (likesB !== likesA) return likesB - likesA;
+    return new Date(right.created_at).getTime() - new Date(left.created_at).getTime();
+  });
+
 export const getSavedPostStorageKey = (userId: string) => `digiwell_saved_posts_${userId}`;
 
 export const readSavedPostIds = (userId: string | undefined) => {

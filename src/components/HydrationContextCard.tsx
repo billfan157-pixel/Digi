@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Activity, CloudSun, Moon, Droplets } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -13,7 +13,8 @@ interface HydrationContextCardProps {
 }
 
 export default function HydrationContextCard(props: HydrationContextCardProps) {
-  const { profile, waterIntake, waterGoal, weeklyChartData } = props;
+  const { profile, waterIntake, waterGoal, weeklyChartData: _weeklyChartData } = props;
+  void _weeklyChartData;
 
   const contextAnalysis = useMemo(() => {
     // Activity level impact
@@ -120,7 +121,7 @@ export default function HydrationContextCard(props: HydrationContextCardProps) {
       currentPercent,
       adjustedPercent
     };
-  }, [profile, waterIntake, waterGoal, weeklyChartData]);
+  }, [profile, waterIntake, waterGoal]);
 
   const stateConfig = {
     optimal: {

@@ -360,7 +360,7 @@ export function calculateWaterIntake(input: WaterIntakeInput): WaterIntakeResult
 
 function generateHydrationSchedule(
   goalMl: number,
-  activity: ActivityLevel,
+  _activity: ActivityLevel,
   exerciseMinutes: number,
   wakeUpTime: string,
   bedTime: string,

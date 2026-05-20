@@ -46,7 +46,8 @@ function useAnimatedValue(target: number, duration: number = 800) {
     };
     
     requestAnimationFrame(animate);
-  }, [target]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, duration]);
   
   return Math.round(current);
 }
@@ -80,40 +81,40 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 // Heart rate zone indicator
-function getHeartRateZone(hr: number, restingHR: number = 60): { zone: string; color: string; emoji: string } {
-  const maxHR = 220 - 25; // Assuming average age, adjust as needed
+function getHeartRateZone(hr: number, restingHR: number = 60): { zone: string; color: string; icon: React.ReactNode } {
+  const maxHR = 220 - 25;
   const hrr = maxHR - restingHR;
   const intensity = (hr - restingHR) / hrr;
   
-  if (intensity < 0.5) return { zone: 'Resting', color: 'text-emerald-400', emoji: '😌' };
-  if (intensity < 0.6) return { zone: 'Light', color: 'text-cyan-400', emoji: '🚶' };
-  if (intensity < 0.7) return { zone: 'Moderate', color: 'text-yellow-400', emoji: '🏃' };
-  if (intensity < 0.8) return { zone: 'Vigorous', color: 'text-orange-400', emoji: '💪' };
-  return { zone: 'Max', color: 'text-red-400', emoji: '🔥' };
+  if (intensity < 0.5) return { zone: 'Nghỉ ngơi', color: 'text-emerald-400', icon: <Heart size={10} className="text-emerald-400" /> };
+  if (intensity < 0.6) return { zone: 'Nhẹ', color: 'text-cyan-400', icon: <Footprints size={10} className="text-cyan-400" /> };
+  if (intensity < 0.7) return { zone: 'Vừa', color: 'text-yellow-400', icon: <Footprints size={10} className="text-yellow-400" /> };
+  if (intensity < 0.8) return { zone: 'Mạnh', color: 'text-orange-400', icon: <Zap size={10} className="text-orange-400" /> };
+  return { zone: 'Tối đa', color: 'text-red-400', icon: <Zap size={10} className="text-red-400" /> };
 }
 
 // Weather recommendation
 function getWeatherRecommendation(temp: number, uvIndex?: number): { text: string; icon: React.ReactNode } {
   if (temp > 30) {
     return {
-      text: 'Stay hydrated!',
+      text: 'Nhớ uống nước!',
       icon: <WaterDrop size={10} className="text-cyan-400" />
     };
   }
   if (uvIndex && uvIndex > 6) {
     return {
-      text: 'UV high - use protection',
+      text: 'UV cao - bảo vệ da',
       icon: <Zap size={10} className="text-yellow-400" />
     };
   }
   if (temp < 10) {
     return {
-      text: 'Bundle up!',
+      text: 'Giữ ấm nhé!',
       icon: <Wind size={10} className="text-blue-400" />
     };
   }
   return {
-    text: 'Perfect weather',
+    text: 'Thời tiết đẹp',
     icon: <CloudSun size={10} className="text-emerald-400" />
   };
 }
@@ -238,13 +239,13 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">{hrZone ? `${hrZone.emoji} ${hrZone.zone} zone` : 'Nhịp tim'}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{hrZone ? <>{hrZone.icon} <span className={hrZone.color}>{hrZone.zone}</span></> : 'Nhịp tim'}</p>
                 {/* Additional health info on hover */}
                 {isHoveringWatch && (
                   <div className="mt-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
                     {watchData.steps > 0 && (
                       <p className="text-slate-400 text-[9px] font-bold flex items-center gap-1">
-                        <Footprints size={8} /> {animatedSteps.toLocaleString()} steps
+                        <Footprints size={8} /> {animatedSteps.toLocaleString()} bước
                       </p>
                     )}
                     {watchData.calories && (

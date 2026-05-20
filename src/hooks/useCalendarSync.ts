@@ -11,7 +11,6 @@ export const CALENDAR_OAUTH_PENDING_KEY = 'digiwell_pending_calendar_oauth';
 export const CALENDAR_TOKEN_UPDATED_EVENT = 'digiwell:google-provider-token-updated';
 const CALENDAR_CACHE_KEY = 'digiwell_calendar_events_cache';
 const CALENDAR_SYNCED_KEY = 'digiwell_calendar_synced_flag';
-const CALENDAR_REFRESH_TOKEN_KEY = 'digiwell_google_refresh_token';
 
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 const CALENDAR_SYNC_TOAST_ID = 'digiwell-calendar-sync-toast';
@@ -183,22 +182,20 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
   // 1. Persist refresh_token khi có (chỉ xuất hiện lần đầu sau OAuth)
   const refreshTokenFromSession = session.provider_refresh_token || storedProviderRefreshToken;
   if (refreshTokenFromSession) {
-    localStorage.setItem(CALENDAR_REFRESH_TOKEN_KEY, refreshTokenFromSession);
-    // Lưu lên DB để đồng bộ xuyên thiết bị
+    // Lưu lên DB để đồng bộ xuyên thiết bị (Không lưu vào localStorage để tránh XSS)
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase.from('profiles').update({ google_refresh_token: refreshTokenFromSession }).eq('id', user.id);
     }
   }
 
-  // 2. Lấy refresh token (Ưu tiên session -> stored -> local -> DB)
-  let refreshToken = session.provider_refresh_token || storedProviderRefreshToken || localStorage.getItem(CALENDAR_REFRESH_TOKEN_KEY);
+  // 2. Lấy refresh token (Ưu tiên session -> stored -> DB)
+  let refreshToken = session.provider_refresh_token || storedProviderRefreshToken;
   
   if (!refreshToken) {
     const { data: profile, error: profileError } = await supabase.from('profiles').select('google_refresh_token').maybeSingle();
     if (profileError) console.error('Lỗi lấy google_refresh_token:', profileError);
     refreshToken = profile?.google_refresh_token || '';
-    if (refreshToken) localStorage.setItem(CALENDAR_REFRESH_TOKEN_KEY, refreshToken);
   }
 
   const timeMin = new Date();

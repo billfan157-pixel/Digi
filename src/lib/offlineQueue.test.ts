@@ -180,7 +180,41 @@ describe('writeQueue', () => {
   });
 });
 
-describe('compactQueue', () => {
+describe('compactQueue — edge cases', () => {
+  it('returns empty for empty input', () => {
+    expect(compactQueue([])).toEqual([]);
+  });
+
+  it('returns single item as-is', () => {
+    const item = queueItem(userId, 'add', 'water_log', null, { amount: 250 });
+    expect(compactQueue([item])).toEqual([item]);
+  });
+
+  it('deduplicates by id', () => {
+    const item = queueItem(userId, 'add', 'water_log', null, { amount: 250 });
+    const result = compactQueue([item, item]);
+    expect(result).toHaveLength(1);
+  });
+
+  it('removes a deleted temp add entirely', () => {
+    const add = queueItem(userId, 'add', 'water_log', null, { tempId: 't1' });
+    const del = queueItem(userId, 'delete', 'water_log', null, { tempId: 't1' });
+    expect(compactQueue([add, del])).toHaveLength(0);
+  });
+
+  it('deduplicates temp add with same created_at, amount, name', () => {
+    const a1 = queueItem(userId, 'add', 'water_log', null, {
+      tempId: 't1', amount: 250, name: 'Nuoc', created_at: '2024-06-15T10:00:00Z',
+    });
+    const a2 = queueItem(userId, 'add', 'water_log', null, {
+      tempId: 't2', amount: 250, name: 'Nuoc', created_at: '2024-06-15T10:00:00Z',
+    });
+    const result = compactQueue([a1, a2]);
+    expect(result).toHaveLength(1);
+  });
+});
+
+describe('compactQueue — merge/delete', () => {
   it('keeps only the latest edit for the same server entity', () => {
     const first = queueItem(userId, 'edit', 'water_log', 'log-1', { amount: 250, exp: 25 });
     const second = queueItem(userId, 'edit', 'water_log', 'log-1', { amount: 500, exp: 50 });

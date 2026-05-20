@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { Sparkles, Trophy, Zap, UserPlus, Settings, Flame, Lock, BarChart2, Grid, Droplets, Target, Award, Shield, Heart, Crown, Share2 } from 'lucide-react';
 import TabHeader from '../components/layout/TabHeader';
 import { PostCard } from './FeedTab';

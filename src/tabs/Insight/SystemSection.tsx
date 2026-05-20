@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Cpu, Activity, Calendar, ChevronRight, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Cpu, Activity, Calendar, ChevronRight, RefreshCw, ChevronDown, ChevronUp, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScheduleManager from '../../components/ScheduleManager';
 import { useAppStore } from '../../store/useAppStore';
@@ -12,6 +12,7 @@ interface SystemSectionProps {
   isExportingPDF: boolean;
   handleExportPDF: () => void;
   handleExportCSV: () => void;
+  handleExportJSON: () => void;
   setShowPremiumModal: (show: boolean) => void;
   calendarEvents: CalendarEventItem[];
   syncCalendar: (options?: { silent?: boolean; startOAuthIfNeeded?: boolean }) => Promise<number | false>;
@@ -79,6 +80,7 @@ export default function SystemSection({
   isExportingPDF,
   handleExportPDF,
   handleExportCSV,
+  handleExportJSON,
   setShowPremiumModal,
   calendarEvents,
   syncCalendar,
@@ -262,31 +264,44 @@ export default function SystemSection({
       {/* Reporting & Exports */}
       <div className="px-6 space-y-4 pb-6">
         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Báo cáo & Dữ liệu</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           <button 
             onClick={() => isPremium ? handleExportPDF() : setShowPremiumModal(true)}
             disabled={isExportingPDF}
-            className="glass-card p-4 flex flex-col items-center gap-3 group hover:bg-slate-800/60 transition-all disabled:opacity-50 border border-white/5"
+            className="glass-card p-3 flex flex-col items-center gap-2 group hover:bg-slate-800/60 transition-all disabled:opacity-50 border border-white/5"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-              {isExportingPDF ? <RefreshCw size={18} className="animate-spin" /> : <Activity size={18} />}
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+              {isExportingPDF ? <RefreshCw size={16} className="animate-spin" /> : <Activity size={16} />}
             </div>
             <div className="text-center">
-              <h4 className="text-white font-bold text-[11px] uppercase tracking-tight">Xuất PDF</h4>
-              <p className="text-slate-500 text-[8px] uppercase mt-1 font-black">Báo cáo Y khoa</p>
+              <h4 className="text-white font-bold text-[10px] uppercase tracking-tight">PDF</h4>
+              <p className="text-slate-500 text-[7px] uppercase mt-0.5 font-black">Y khoa</p>
             </div>
           </button>
 
           <button 
             onClick={() => isPremium ? handleExportCSV() : setShowPremiumModal(true)}
-            className="glass-card p-4 flex flex-col items-center gap-3 group hover:bg-slate-800/60 transition-all border border-white/5"
+            className="glass-card p-3 flex flex-col items-center gap-2 group hover:bg-slate-800/60 transition-all border border-white/5"
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform">
-              <RefreshCw size={18} />
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform">
+              <RefreshCw size={16} />
             </div>
             <div className="text-center">
-              <h4 className="text-white font-bold text-[11px] uppercase tracking-tight">Xuất CSV</h4>
-              <p className="text-slate-500 text-[8px] uppercase mt-1 font-black">Dữ liệu thô</p>
+              <h4 className="text-white font-bold text-[10px] uppercase tracking-tight">CSV</h4>
+              <p className="text-slate-500 text-[7px] uppercase mt-0.5 font-black">Dữ liệu thô</p>
+            </div>
+          </button>
+
+          <button 
+            onClick={() => isPremium ? handleExportJSON() : setShowPremiumModal(true)}
+            className="glass-card p-3 flex flex-col items-center gap-2 group hover:bg-slate-800/60 transition-all border border-white/5"
+          >
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-transform">
+              <Target size={16} />
+            </div>
+            <div className="text-center">
+              <h4 className="text-white font-bold text-[10px] uppercase tracking-tight">JSON</h4>
+              <p className="text-slate-500 text-[7px] uppercase mt-0.5 font-black">Dữ liệu gốc</p>
             </div>
           </button>
         </div>

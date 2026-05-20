@@ -13,6 +13,7 @@ const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const corsHeaders = {
   'Access-Control-Allow-Origin': appUrl,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
 };
 
 const encoder = new TextEncoder();
@@ -56,17 +57,33 @@ async function updateProfile(userId: string, updates: Record<string, unknown>) {
   if (error) throw error;
 }
 
-async function logEvent(userId: string, eventType: string, tier: string, amountVnd?: number) {
+async function logEvent(userId: string, eventType: string, tier: string, stripeEventId: string, amountVnd?: number) {
   await supabase.from('subscription_events').insert({
     user_id: userId,
     event_type: eventType,
     tier,
+    stripe_event_id: stripeEventId,
     amount_vnd: amountVnd ?? null,
   }).maybeSingle();
 }
 
-function extractUserId(obj: Record<string, unknown>): string {
-  return String(obj.client_reference_id ?? (obj.metadata as Record<string, string> | undefined)?.userId ?? '');
+async function extractUserId(obj: Record<string, unknown>): Promise<string> {
+  const directId = String(obj.client_reference_id ?? (obj.metadata as Record<string, string> | undefined)?.userId ?? '');
+  if (directId) return directId;
+
+  // Fallback: invoice events don't have client_reference_id/metadata.userId
+  // Look up by stripe_customer_id instead
+  const customer = typeof obj.customer === 'string' ? obj.customer : '';
+  if (customer) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('stripe_customer_id', customer)
+      .maybeSingle();
+    if (data?.id) return data.id;
+  }
+
+  return '';
 }
 
 function extractSubDetails(obj: Record<string, unknown>) {
@@ -101,11 +118,26 @@ Deno.serve(async (request: Request) => {
 
   const event = JSON.parse(rawBody);
   const eventType = event.type as string;
+  const eventId = String(event.id ?? '');
   const obj = event.data?.object as Record<string, unknown> | undefined;
+
+  // Idempotency: skip if this event was already processed
+  if (eventId) {
+    const { data: existingEvent } = await supabase
+      .from('subscription_events')
+      .select('id')
+      .eq('stripe_event_id', eventId)
+      .maybeSingle();
+
+    if (existingEvent) {
+      console.log(`stripe-webhook: skipping duplicate event ${eventId}`);
+      return json({ received: true, duplicate: true });
+    }
+  }
 
   try {
     if (eventType === 'checkout.session.completed' && obj) {
-      const userId = extractUserId(obj);
+      const userId = await extractUserId(obj);
       const subscriptionId = typeof obj.subscription === 'string' ? obj.subscription : '';
 
       if (userId && subscriptionId) {
@@ -123,13 +155,13 @@ Deno.serve(async (request: Request) => {
             stripe_price_id: priceId,
             grace_period_end: null,
           });
-          await logEvent(userId, 'subscription_created', 'premium');
+          await logEvent(userId, 'subscription_created', 'premium', eventId);
         }
       }
     }
 
     if (eventType === 'customer.subscription.updated' && obj) {
-      const userId = extractUserId(obj);
+      const userId = await extractUserId(obj);
       const status = String(obj.status ?? '');
       const { priceId, periodEnd, customer } = extractSubDetails(obj);
 
@@ -144,14 +176,14 @@ Deno.serve(async (request: Request) => {
           stripe_subscription_id: String(obj.id ?? ''),
           stripe_price_id: priceId,
           cancel_at_period_end: cancelAtPeriodEnd,
-          grace_period_end: isActive ? null : undefined,
+          grace_period_end: status === 'active' ? null : undefined,
         });
-        await logEvent(userId, isActive ? 'subscription_updated' : 'subscription_expired', isActive ? 'premium' : 'free');
+        await logEvent(userId, isActive ? 'subscription_updated' : 'subscription_expired', isActive ? 'premium' : 'free', eventId);
       }
     }
 
     if (eventType === 'customer.subscription.deleted' && obj) {
-      const userId = extractUserId(obj);
+      const userId = await extractUserId(obj);
       if (userId) {
         await updateProfile(userId, {
           subscription_tier: 'free',
@@ -159,7 +191,7 @@ Deno.serve(async (request: Request) => {
           cancel_at_period_end: false,
           grace_period_end: null,
         });
-        await logEvent(userId, 'subscription_canceled', 'free');
+        await logEvent(userId, 'subscription_canceled', 'free', eventId);
       }
     }
 
@@ -167,7 +199,7 @@ Deno.serve(async (request: Request) => {
       const subscriptionId = typeof obj.subscription === 'string' ? obj.subscription : '';
       const amountPaid = typeof obj.amount_paid === 'number' ? obj.amount_paid : 0;
       const amountVnd = Math.round(amountPaid / 100);
-      const userId = extractUserId(obj);
+      const userId = await extractUserId(obj);
 
       if (userId && subscriptionId) {
         const resp = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
@@ -184,12 +216,12 @@ Deno.serve(async (request: Request) => {
             cancel_at_period_end: false,
           });
         }
-        await logEvent(userId, 'payment_succeeded', 'premium', amountVnd);
+        await logEvent(userId, 'payment_succeeded', 'premium', eventId, amountVnd);
       }
     }
 
     if (eventType === 'invoice.payment_failed' && obj) {
-      const userId = extractUserId(obj);
+      const userId = await extractUserId(obj);
       const attemptCount = typeof obj.attempt_count === 'number' ? obj.attempt_count : 0;
 
       if (userId) {
@@ -198,7 +230,7 @@ Deno.serve(async (request: Request) => {
           const graceEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
           await updateProfile(userId, { grace_period_end: graceEnd });
         }
-        await logEvent(userId, 'payment_failed', 'premium');
+        await logEvent(userId, 'payment_failed', 'premium', eventId);
       }
     }
 

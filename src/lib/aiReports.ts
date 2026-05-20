@@ -36,6 +36,7 @@ async function fetchWaterEntries(
   userId: string,
   fromDate: string,
   toDate: string,
+  waterGoal: number,
 ): Promise<DailyEntry[]> {
   const { data, error } = await supabase
     .from('water_logs')
@@ -51,7 +52,7 @@ async function fetchWaterEntries(
 
   for (const row of data) {
     const date = row.day;
-    const existing = byDate.get(date) ?? { intake: 0, goal: 2000 };
+    const existing = byDate.get(date) ?? { intake: 0, goal: waterGoal };
     byDate.set(date, { intake: existing.intake + (row.amount ?? 0), goal: existing.goal });
   }
 
@@ -159,6 +160,7 @@ async function generateAiAnalysis(
 
 export async function generateWeeklyReport(
   userId: string,
+  waterGoal: number,
   profile?: { nickname?: string; goal?: string; activity?: string; avgHeartRate?: number },
 ): Promise<HealthReport> {
   const today = new Date();
@@ -169,7 +171,7 @@ export async function generateWeeklyReport(
   const toDate   = today.toISOString().split('T')[0];
   const periodLabel = `${formatDate(weekAgo)} – ${formatDate(today)}`;
 
-  const entries = await fetchWaterEntries(userId, fromDate, toDate);
+  const entries = await fetchWaterEntries(userId, fromDate, toDate, waterGoal);
   const stats   = calculateStats(entries);
   const aiRes   = await generateAiAnalysis(stats, entries, periodLabel, profile);
 
@@ -201,6 +203,7 @@ export async function generateWeeklyReport(
 
 export async function generateMonthlyReport(
   userId: string,
+  waterGoal: number,
   profile?: { nickname?: string; goal?: string; activity?: string; avgHeartRate?: number },
 ): Promise<HealthReport> {
   const today = new Date();
@@ -211,7 +214,7 @@ export async function generateMonthlyReport(
   const toDate   = today.toISOString().split('T')[0];
   const periodLabel = `${formatDate(monthAgo)} – ${formatDate(today)}`;
 
-  const entries = await fetchWaterEntries(userId, fromDate, toDate);
+  const entries = await fetchWaterEntries(userId, fromDate, toDate, waterGoal);
   const stats   = calculateStats(entries);
   const aiRes   = await generateAiAnalysis(stats, entries, periodLabel, profile);
 

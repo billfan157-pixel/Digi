@@ -174,6 +174,7 @@ export const QuickDropCameraUltimate = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+const handleCaptureRef = useRef<() => void>(()=>{});
   
   const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>('environment');
   const [cameraError, setCameraError] = useState('');
@@ -246,22 +247,11 @@ export const QuickDropCameraUltimate = ({
     };
   }, [cameraFacing, isOpen]);
 
-  // Handle countdown completion
-  useEffect(() => {
-    if (countdown === null) return;
-    
-    if (countdown === 0) {
-      handleCapture();
-      setCountdown(null);
-      return;
-    }
 
-    const timer = setTimeout(() => {
-      setCountdown(countdown - 1);
-    }, 1000);
 
-    return () => clearTimeout(timer);
-  }, [countdown]);
+  const startCountdown = () => {
+    setCountdown(3);
+  };
 
   // Handle focus tap
   const handleFocusTap = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -314,10 +304,11 @@ export const QuickDropCameraUltimate = ({
       void onCapture(blob);
     }, 'image/jpeg', 0.95);
   };
+  useEffect(() => {
+    handleCaptureRef.current = handleCapture;
+  }, [handleCapture]);
 
-  const startCountdown = () => {
-    setCountdown(3);
-  };
+
 
   const switchCamera = () => {
     setCameraFacing(prev => prev === 'environment' ? 'user' : 'environment');

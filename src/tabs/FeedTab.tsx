@@ -18,6 +18,8 @@ import { PullToRefresh } from './Feed/PullToRefresh';
 import TabHeader from '../components/layout/TabHeader';
 import { Search, TrendingUp } from 'lucide-react';
 import { useUIStore } from '../store/useUIStore';
+import { useQueryClient } from '@tanstack/react-query';
+import { appQueryKeys } from '../lib/queryKeys';
 
 export { PostCard } from './Feed/PostCard';
 
@@ -34,9 +36,12 @@ const FeedTab = memo(function FeedTab({
    setShowDiscoverPeople,
    handleToggleLikePost,
  }: FeedTabProps) {
-   const { posts, isLoading, isFetchingMore, hasMore, loadMore, newPostsCount, showNewPosts, refetch } = useFeed(profile?.id, closeCircleIds);
+  const { posts, isLoading, isFetchingMore, hasMore, loadMore, newPostsCount, showNewPosts, refetch } = useFeed(profile?.id, closeCircleIds);
   const { notifications, unreadCount, markAllRead, markAsRead } = useNotifications(profile?.id);
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  const queryClient = useQueryClient();
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
   const [feedMode, setFeedMode] = useState<FeedMode>('smart');
@@ -57,6 +62,11 @@ const FeedTab = memo(function FeedTab({
     socialFollowingIds,
     profile
   );
+
+  const visiblePosts = useMemo(() => {
+    if (!finalRankedFeed) return [];
+    return finalRankedFeed.slice(0, visibleCount);
+  }, [finalRankedFeed, visibleCount]);
   const handleNextStory = () => {
     setActiveStoryIndex(prev => {
       if (prev === null) return null;
@@ -79,10 +89,39 @@ const FeedTab = memo(function FeedTab({
     loadMoreRef.current = loadMore;
   }, [loadMore]);
 
+  // Reset query cache when switching feed mode/filter/search
   useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !isFetchingMore) loadMoreRef.current();
-    }, { threshold: 0.1 });
+    const userId = profile?.id;
+    if (!userId) return;
+
+    // reset the underlying infinite query cache for feed
+    queryClient.removeQueries({
+      queryKey: appQueryKeys.feed(userId, closeCircleIds),
+      exact: true,
+    });
+  }, [profile?.id, feedMode, feedFilter, feedSearch, queryClient, closeCircleIds]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (!entries[0]?.isIntersecting) return;
+
+        // 1) Ensure we reveal more first, and decide fetch using the latest prev value
+        const available = finalRankedFeed.length;
+
+        setVisibleCount(prev => {
+          const next = prev < available ? Math.min(prev + 10, available) : prev;
+
+          // 2) Only fetch more when we already fully revealed current available window
+          if (next >= available && hasMore && !isFetchingMore) {
+            loadMoreRef.current();
+          }
+
+          return next;
+        });
+      },
+      { threshold: 0.1 }
+    );
 
     const currentTarget = observerTarget.current;
     if (currentTarget) observer.observe(currentTarget);
@@ -90,7 +129,7 @@ const FeedTab = memo(function FeedTab({
     return () => {
       if (currentTarget) observer.unobserve(currentTarget);
     };
-  }, [hasMore, isFetchingMore]);
+  }, [finalRankedFeed.length, visibleCount, hasMore, isFetchingMore]);
 
   return (
     <div data-feed-scroll-container className="animate-in slide-in-from-right duration-300 relative">
@@ -150,7 +189,7 @@ const FeedTab = memo(function FeedTab({
         )}
 
         <FeedPostList
-          posts={finalRankedFeed}
+          posts={visiblePosts}
           isLoading={isLoading}
           socialError={socialError}
           currentUserId={profile?.id}

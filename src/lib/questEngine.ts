@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import type { UserQuest, UserChallenge } from '../config/questConfig';
+import { getWeekStart } from '@/utils/dateUtils';
 import type { QuestLike } from './questProgress';
 import { normalizeQuestConditionType, resolveQuestProgress } from './questProgress';
 
@@ -597,14 +598,6 @@ export async function syncLevelQuestProgress(userId: string, userLevel: number):
   } catch (err) {
     console.error('[syncLevelQuestProgress]', err);
   }
-}
-
-function getWeekStart(): string {
-  const d = new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // thứ 2
-  d.setDate(diff);
-  return d.toLocaleDateString('en-CA');
 }
 
 // ── Reward Push Notification Helper ────────────────────────

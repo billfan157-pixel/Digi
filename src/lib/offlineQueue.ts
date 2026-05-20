@@ -30,7 +30,7 @@ export function resolveStrategy(
 }
 
 const QUEUE_PREFIX = 'digiwell_offline_v2';
-const MAX_RETRIES = 3;
+export const MAX_RETRIES = 3;
 
 function createQueueId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {

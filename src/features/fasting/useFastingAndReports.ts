@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
 import { exportHealthReportPDF } from '@/lib/pdfExport';
-import { exportToCSV, exportDetailedPDF } from '@/lib/exportUtils';
+import { supabase } from '@/lib/supabase';
+import { exportToCSV, exportDetailedPDF, exportToJSON, exportFullDataAsJSON, fetchAllUserData } from '@/lib/exportUtils';
 import { useUIStore } from '@/store/useUIStore';
 
 import { AppStorage } from '@/lib/storage';
@@ -185,19 +186,20 @@ const exportReportPdf = useCallback(async ({
        return;
      }
 
-      try {
+    try {
         exportToCSV({
           profile,
-         waterIntake,
-         waterGoal,
-         streak,
-         weeklyChartData,
-         waterEntries,
-       });
-       toast.success('Đã xuất file CSV thành công!');
-     } catch {
-       toast.error('Không thể xuất file CSV lúc này.');
-     }
+          waterIntake,
+          waterGoal,
+          streak,
+          weeklyChartData,
+          waterEntries,
+          watchData: null,
+        });
+        toast.success('Đã xuất file CSV thành công!');
+      } catch {
+        toast.error('Không thể xuất file CSV lúc này.');
+      }
    }, [isPremium, setShowPremiumModal]);
 
   const toggleFastingMode = useCallback(() => {
@@ -272,6 +274,52 @@ const exportReportPdf = useCallback(async ({
 
   const fastingTotalMs = useMemo(() => fastingPlanHours * 60 * 60 * 1000, [fastingPlanHours]);
 
+   const exportReportJson = useCallback(({
+     profile,
+     waterIntake,
+     waterGoal,
+     streak,
+     weeklyChartData,
+     waterEntries,
+   }: ExportCsvOptions) => {
+     if (!isPremium) {
+       setShowPremiumModal(true);
+       return;
+     }
+
+     try {
+       exportToJSON({
+         profile,
+         waterIntake,
+         waterGoal,
+         streak,
+         weeklyChartData,
+         waterEntries,
+         watchData: null,
+       });
+       toast.success('Đã xuất file JSON thành công!');
+     } catch {
+       toast.error('Không thể xuất file JSON lúc này.');
+     }
+   }, [isPremium, setShowPremiumModal]);
+
+   const exportAllData = useCallback(async (profileId: string) => {
+     try {
+       const allData = await fetchAllUserData(profileId);
+       await exportFullDataAsJSON(allData);
+       try {
+         await supabase.rpc('log_audit_event', {
+           p_event_type: 'data_exported',
+           p_event_data: { type: 'full-json', version: 2, timestamp: new Date().toISOString() },
+         });
+       } catch { /* log fail không block export */ }
+       toast.success('Xuất dữ liệu thành công');
+     } catch (err) {
+       console.error(err);
+       toast.error('Không thể xuất dữ liệu');
+     }
+   }, []);
+
   return {
     isFastingMode,
     fastingPlanHours,
@@ -282,6 +330,8 @@ const exportReportPdf = useCallback(async ({
     setShowFastingModal,
     exportReportPdf,
     exportReportCsv,
+    exportReportJson,
+    exportAllData,
     toggleFastingMode,
     startFasting,
     stopFasting,

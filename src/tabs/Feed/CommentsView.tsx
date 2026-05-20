@@ -91,7 +91,7 @@ const handleDeleteComment = async (commentId: string) => {
                       <p className="text-white text-xs font-bold">{c.author?.nickname || 'Người dùng'}</p>
                       {isReply && <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1">▶ <span className="text-cyan-400">@{mentionedUser}</span></span>}
                     </div>
-                    <p className={`text-slate-300 leading-relaxed ${isReply ? 'text-xs' : 'text-sm'}`}>{actualContent}</p>
+                    <p className={`text-slate-300 leading-relaxed break-words ${isReply ? 'text-xs' : 'text-sm'}`}>{actualContent}</p>
                     
                     <div className="flex items-center gap-4 mt-2">
                       <button onClick={() => setReplyTo({ id: c.id, name: c.author?.nickname || 'Người dùng' })} className="text-[10px] font-bold text-slate-500 hover:text-cyan-400 transition-colors">Phản hồi</button>

@@ -16,7 +16,7 @@ const getPresetIcon = (name: string) => {
   return <Droplet size={16} />;
 };
 
-const glassCard = "backdrop-blur-xl border rounded-2xl shadow-xl bg-slate-200/50 dark:bg-slate-900/60 border-slate-300 dark:border-white/5";
+const glassCard = "backdrop-blur-xl border rounded-2xl shadow-xl bg-slate-900/60 border-white/5";
 
 export function QuickActions({
   primaryDrinkPreset, secondaryDrinkPresets, handleAddWater,
@@ -42,15 +42,15 @@ export function QuickActions({
           <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-cyan-500/20 flex items-center justify-center shadow-lg shadow-cyan-500/30">
             <Droplet size={24} className="text-cyan-400" />
           </div>
-          <div className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-1">
+          <div className="text-2xl font-black text-slate-100 mb-1">
             +{primaryDrinkPreset?.amount || 250}
-            <span className="text-lg text-cyan-500 dark:text-cyan-400 ml-1">ml</span>
+            <span className="text-lg text-cyan-400 ml-1">ml</span>
           </div>
-          <div className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+          <div className="text-sm font-semibold text-slate-400">
             {primaryDrinkPreset?.name || 'Nước lọc'}
           </div>
           {primaryDrinkPreset?.factor !== 1 && (
-            <div className="text-xs text-amber-500 dark:text-amber-400 mt-2 font-bold">
+            <div className="text-xs text-amber-400 mt-2 font-bold">
               ×{primaryDrinkPreset?.factor?.toFixed(1)} EXP
             </div>
           )}
@@ -66,13 +66,13 @@ export function QuickActions({
             whileTap={{ scale: 0.95 }}
             className={`${glassCard} p-4 flex flex-col items-center justify-center text-center group hover:scale-105 transition-all duration-300`}
           >
-            <div className="w-8 h-8 mb-2 rounded-lg bg-slate-800/20 dark:bg-slate-700/30 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:text-cyan-400 transition-colors">
+            <div className="w-8 h-8 mb-2 rounded-lg bg-slate-700/30 flex items-center justify-center text-slate-300 group-hover:text-cyan-400 transition-colors">
               {getPresetIcon(preset.name)}
             </div>
-            <div className="text-lg font-bold text-slate-800 dark:text-slate-100">
+            <div className="text-lg font-bold text-slate-100">
               {preset.amount}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate w-full">
+            <div className="text-xs text-slate-400 font-medium truncate w-full">
               {preset.name}
             </div>
           </motion.button>
@@ -82,12 +82,12 @@ export function QuickActions({
         <motion.button
           onClick={() => setShowCustomDrink(true)}
           whileTap={{ scale: 0.95 }}
-          className={`${glassCard} p-4 flex flex-col items-center justify-center text-center group hover:scale-105 transition-all duration-300 border-dashed border-2 border-slate-400 dark:border-slate-500`}
+          className={`${glassCard} p-4 flex flex-col items-center justify-center text-center group hover:scale-105 transition-all duration-300 border-dashed border-2 border-slate-500`}
         >
-          <div className="w-8 h-8 mb-2 rounded-lg bg-slate-400/20 dark:bg-slate-500/20 flex items-center justify-center text-slate-500 dark:text-slate-400">
+          <div className="w-8 h-8 mb-2 rounded-lg bg-slate-500/20 flex items-center justify-center text-slate-400">
             <Plus size={16} />
           </div>
-          <div className="text-sm font-bold text-slate-500 dark:text-slate-400">
+          <div className="text-sm font-bold text-slate-400">
             Tùy chỉnh
           </div>
         </motion.button>
@@ -104,10 +104,10 @@ export function QuickActions({
             <Settings size={16} />
           </div>
           <div className="text-left">
-            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
+            <div className="text-sm font-bold text-slate-100">
               Cài đặt
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-xs text-slate-400">
               Quản lý presets
             </div>
           </div>

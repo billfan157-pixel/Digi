@@ -1,5 +1,5 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Hand } from 'lucide-react';
 import TabHeader from '@/components/layout/TabHeader';
 import type { Profile } from '@/models';
 
@@ -23,7 +23,7 @@ export default function HomeHeader({ profile, onMenuOpen }: HomeHeaderProps) {
           {t('home.greeting')}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
             {profile?.nickname || t('home.you')}
-          </span> 👋
+          </span> <Hand size={18} className="inline text-slate-400" />
         </>
       }
       profile={profile}

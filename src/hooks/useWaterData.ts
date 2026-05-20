@@ -13,7 +13,7 @@ import {
 } from './useWaterQueries';
 import { supabase } from '@/lib/supabase';
 import { fetchUserClubs, incrementClubIntake, insertClubActivity, findExistingWaterLog, insertWaterLog } from '@/services/water.service';
-import { queueItem, pushToQueue, readQueue, writeQueue, countQueue, clearQueue, migrateLegacyQueue, resolveStrategy } from '@/lib/offlineQueue';
+import { queueItem, pushToQueue, readQueue, writeQueue, countQueue, clearQueue, migrateLegacyQueue, resolveStrategy, MAX_RETRIES } from '@/lib/offlineQueue';
 import { useNetworkState } from './useNetworkState';
 import type { QueueItem } from '@/lib/offlineQueue';
 
@@ -236,6 +236,13 @@ export function useWaterData(
         // Clubs sync: fire & forget, không block UI
         syncToClubs(profile.id, actualAmount).catch(devError);
 
+        // First water log analytics
+        const firstLogKey = `first_water_logged_${profile.id}`;
+        if (!localStorage.getItem(firstLogKey)) {
+          localStorage.setItem(firstLogKey, '1');
+          import('@/lib/analytics').then(({ track }) => track('first_water_log', { amount: actualAmount }));
+        }
+
       } catch (err) {
         devError('addWater:', err);
         toast.error('Không thể ghi nhận lúc này. Đã lưu offline để đồng bộ sau.');
@@ -457,7 +464,7 @@ export function useWaterData(
         } catch (err) {
           devError('sync item failed:', item.id, err);
           handledIds.add(item.id);
-          if (item.retryCount >= 2) {
+          if (item.retryCount >= MAX_RETRIES - 1) {
             devLog('Dropping item after max retries:', item.id);
           } else {
             remaining.push({ ...item, retryCount: item.retryCount + 1, lastError: String(err) });
@@ -535,8 +542,9 @@ async function syncToClubs(userId: string, amountMl: number) {
         }),
         insertClubActivity({
           club_id, user_id: userId,
-          activity_type: 'drink',
+          type: 'drink',
           message: `da nap them ${amountMl}ml nuoc`,
+          amount: amountMl,
         }),
       ]),
     ),

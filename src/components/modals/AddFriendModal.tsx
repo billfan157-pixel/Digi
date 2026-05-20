@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, Search, Users } from 'lucide-react';
 import type { SearchResult } from '../../models';
 

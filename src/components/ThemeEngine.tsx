@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Profile } from '../models';
 import { readThemePreference } from '@/services/appPreferences.service';
 

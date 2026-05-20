@@ -1,6 +1,7 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { fetchStreakFreezes, applyStreakFreeze } from '../lib/gamification';
 
 function toDateStr(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -64,13 +65,8 @@ export function useStreak(userId: string | undefined, waterGoal: number, todayIn
   const profileQuery = useQuery({
     queryKey: ['streak', 'profile', userId] as const,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('streak_freezes')
-        .eq('id', userId)
-        .single();
-      if (error) throw error;
-      return { streakFreezes: data?.streak_freezes || 0 };
+      const freezes = await fetchStreakFreezes(userId!);
+      return { streakFreezes: freezes };
     },
     enabled: !!userId && userId !== 'undefined' && isPremium,
     staleTime: 30_000,
@@ -80,15 +76,24 @@ export function useStreak(userId: string | undefined, waterGoal: number, todayIn
   const pastStreak = useMemo(() => computePastStreak(dailyTotals, waterGoal), [dailyTotals, waterGoal]);
   const streak = pastStreak + (todayIntake >= waterGoal ? 1 : 0);
   const freezeCandidateDay = useMemo(() => computeFreezeCandidate(dailyTotals, waterGoal), [dailyTotals, waterGoal]);
+
+  useEffect(() => {
+    if (!waterLogsQuery.isFetched || !userId) return;
+    if (streak === 3 || streak === 7) {
+      const key = `streak_milestone_${streak}_${userId}`;
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, '1');
+        import('@/lib/analytics').then(({ track }) => track(`streak_${streak}`, { streak }));
+      }
+    }
+  }, [streak, userId, waterLogsQuery.isFetched]);
   const streakFreezes = profileQuery.data?.streakFreezes ?? 0;
 
   const needsFreeze = !!(isPremium && streakFreezes > 0 && freezeCandidateDay);
 
   const freezeMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.rpc('use_streak_freeze', { p_user_id: userId });
-      if (error) throw error;
-      return data;
+      return applyStreakFreeze(userId!);
     },
     onSuccess: (data) => {
       if (typeof data?.remaining_freezes === 'number') {

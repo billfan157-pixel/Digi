@@ -191,7 +191,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
             <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-orange-500/20 to-red-500/10 px-2.5 py-1 rounded-md border border-orange-500/30 mt-3 shadow-inner">
               <Flame size={14} className="text-orange-500 animate-pulse" />
               <span className="text-[10px] font-black text-orange-400 tracking-wide">
-                STREAK {streak} <span className="text-red-400">🔥</span>
+                STREAK {streak} <Flame size={12} className="inline text-red-400" />
               </span>
             </div>
           )}
@@ -249,18 +249,18 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
                 </div>
                 <div className="space-y-1.5 text-[10px] font-mono">
                   <div className="flex justify-between text-slate-400">
-                    <span>Base EXP</span>
+                    <span>EXP Gốc</span>
                     <span>{baseExp}</span>
                   </div>
                   {rarity !== 'common' && (
                     <div className="flex justify-between text-purple-400">
-                      <span>Rarity Bonus</span>
+                      <span>Thưởng Độ Hiếm</span>
                       <span>x{rarity === 'epic' ? '2.5' : rarity === 'legendary' ? '5.0' : '1.5'}</span>
                     </div>
                   )}
                   {streak > 0 && (
                     <div className="flex justify-between text-orange-400">
-                      <span>Streak Buff</span>
+                      <span>Buff Chuỗi</span>
                       <span>+{Math.min(streak * 5, 50)}%</span>
                     </div>
                   )}

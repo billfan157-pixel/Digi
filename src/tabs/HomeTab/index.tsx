@@ -126,7 +126,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     if (isGoalReached && waterIntake > 0) {
       setShowDayComplete(true);
     }
-  }, [isGoalReached]);
+  }, [isGoalReached, waterIntake]);
 
   const handleLogoutClick = async () => {
     const { confirmDialog } = await import('@/store/useConfirmDialog');

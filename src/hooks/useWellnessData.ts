@@ -16,7 +16,6 @@ interface UseWellnessDataReturn {
   tier: ReturnType<typeof getWellnessTier>;
   trend: 'up' | 'down' | 'stable';
   weeklyAverage: number;
-  monthlyAverage: number;
   hydrationScore: number;
   sleepScore: number;
   activityScore: number;
@@ -70,12 +69,13 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
     return calculateActivityScore(activityData.steps, activityData.activeMinutes);
   }, [activityData]);
 
-  // 4. MOOD DATA
+  // 4. MOOD DATA (simulated from hydration — replace with real check-in when available)
   const moodScore = useMemo(() => {
-    // TODO: Implement mood check-in — hardcoded 60 làm cho hasVariance(mood) = false
-    // nên generateWellnessInsights không thể tính tương quan hydration↔mood.
-    return 60; // Neutral baseline
-  }, []);
+    if (weeklyHistory.length === 0) return 50;
+    const avg = weeklyHistory.reduce((s, d) => s + d.ml, 0) / weeklyHistory.length;
+    const ratio = waterGoal > 0 ? avg / waterGoal : 0.5;
+    return Math.round(Math.min(100, Math.max(20, 30 + ratio * 50)));
+  }, [weeklyHistory, waterGoal]);
 
   // COMPOSITE WELLNESS SCORE
   const wellnessScore = useMemo(() => {
@@ -105,13 +105,11 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
     return 'stable';
   }, [weeklyHistory]);
 
-  // WEEKLY / MONTHLY AVERAGES
+  // WEEKLY AVERAGE
   const weeklyAverage = useMemo(() => {
     if (weeklyHistory.length === 0) return 0;
     return Math.round(weeklyHistory.reduce((sum, day) => sum + day.ml, 0) / weeklyHistory.length);
   }, [weeklyHistory]);
-
-  const monthlyAverage = useMemo(() => weeklyAverage, [weeklyAverage]);
 
   // CORRELATION INSIGHTS
   const insights = useMemo(() => {
@@ -121,7 +119,7 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
       hydration: day.ml,
       sleep: sleepData.hours,
       activity: activityData.steps,
-      mood: moodScore,
+      mood: waterGoal > 0 ? Math.round(Math.min(100, Math.max(20, 30 + (day.ml / waterGoal) * 50))) : 50,
     }));
 
     const generatedInsights = generateWellnessInsights(history);
@@ -131,7 +129,9 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
 
     const hydrationValues = recentHydration.map((day) => day.ml);
     const sleepValues = recentHydration.map(() => sleepData.hours);
-    const moodValues = recentHydration.map(() => moodScore);
+    const moodValues = recentHydration.map((day) =>
+      waterGoal > 0 ? Math.round(Math.min(100, Math.max(20, 30 + (day.ml / waterGoal) * 50))) : 50,
+    );
 
     return [
       {
@@ -149,14 +149,13 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
         examples: [],
       },
     ];
-  }, [weeklyHistory, sleepData.hours, activityData.steps, moodScore]);
+  }, [weeklyHistory, sleepData.hours, activityData.steps, waterGoal]);
 
   return {
     wellnessScore,
     tier,
     trend,
     weeklyAverage,
-    monthlyAverage,
     hydrationScore,
     sleepScore,
     activityScore,

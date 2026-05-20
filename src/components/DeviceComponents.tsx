@@ -421,9 +421,9 @@ export function DeviceHero({
         <BottleVisualizer isConnected={isConnected} currentVolume={currentVolume} capacity={CAPACITY} fillPercentage={fillPercentage} />
 
         <div className="grid grid-cols-3 gap-3 mt-4">
-          <MetricMini label="Charge" value={`${batteryLevel}%`} icon={Battery} />
-          <MetricMini label="Liquid" value={`${temperature}°C`} icon={Thermometer} />
-          <MetricMini label="Signal" value={isConnected ? 'Excellent' : '---'} icon={Wifi} />
+          <MetricMini label="Sạc" value={`${batteryLevel}%`} icon={Battery} />
+          <MetricMini label="Nhiệt" value={`${temperature}°C`} icon={Thermometer} />
+          <MetricMini label="Tín hiệu" value={isConnected ? 'Tốt' : '---'} icon={Wifi} />
         </div>
       </div>
     </div>

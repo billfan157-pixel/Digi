@@ -177,7 +177,7 @@ export function generateWellnessInsights(
         : 'Uống thiếu nước ảnh hưởng tiêu cực đến giấc ngủ',
       recommendation: hydrationSleepCorr > 0
         ? 'Uống ít nhất 250ml trước khi ngủ để cải thiện sleep score'
-        : 'Tránh uống quá nhiều gần đêm for better sleep',
+        : 'Tránh uống quá nhiều gần đêm để ngủ ngon hơn',
       examples: [
         { scenario: 'Ngày uống 2000ml+, ngủ 8h (quality 8/10)', impact: '+0.6h deep sleep' },
         { scenario: 'Ngày uống 1000ml-, ngủ 6h (quality 5/10)', impact: '-2h total sleep' }

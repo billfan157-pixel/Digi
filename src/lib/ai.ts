@@ -1,5 +1,5 @@
 import { invokeAiGateway, invokeAiGatewayStream, type AiGatewayStreamEvent } from './aiGateway';
-import { isSupabaseConfigured } from './supabase';
+import { isSupabaseConfigured, supabase } from './supabase';
 
 export type AiChatMessage = {
   role: 'user' | 'model';
@@ -60,6 +60,27 @@ function getAiErrorMessage(error: unknown): string {
 
 
 
+export async function fetchChatHistory(userId: string, limit = 20): Promise<AiChatMessage[]> {
+  if (!isSupabaseConfigured || !supabase || !userId) return [];
+
+  const { data, error } = await supabase
+    .from('ai_messages')
+    .select('role, content, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.warn('[fetchChatHistory]', error.message);
+    return [];
+  }
+
+  return (data ?? []).map((msg) => ({
+    role: msg.role as 'user' | 'model',
+    content: msg.content,
+  }));
+}
+
 export function isAiConfigured(): boolean {
   return isSupabaseConfigured;
 }
@@ -106,6 +127,7 @@ export async function streamAiChatMessage(
   input: string,
   context: DigiwellAiContext,
   onEvent: (event: AiGatewayStreamEvent) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
-  await invokeAiGatewayStream('chat', { input, context }, onEvent);
+  await invokeAiGatewayStream('chat', { input, context }, onEvent, signal);
 }

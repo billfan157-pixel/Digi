@@ -40,3 +40,19 @@ export async function logWaterAndUpdateStreakSecurely(
 
   return data;
 }
+
+export async function fetchStreakFreezes(userId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('streak_freezes')
+    .eq('id', userId)
+    .single();
+  if (error) throw error;
+  return data?.streak_freezes || 0;
+}
+
+export async function applyStreakFreeze(userId: string): Promise<{ remaining_freezes: number } | null> {
+  const { data, error } = await supabase.rpc('use_streak_freeze', { p_user_id: userId });
+  if (error) throw error;
+  return data;
+}

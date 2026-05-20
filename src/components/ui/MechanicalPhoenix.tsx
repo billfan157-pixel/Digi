@@ -1,4 +1,3 @@
-import React from 'react';
 
 const MechanicalPhoenix = ({ progress }: { progress: number }) => {
   const safeProgress = Math.round(progress);

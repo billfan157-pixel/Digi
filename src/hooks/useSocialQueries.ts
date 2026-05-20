@@ -53,7 +53,7 @@ export function useSocialSearchQuery(
   return useQuery({
     queryKey: ['social', 'search', userId, query] as const,
     queryFn: () => searchSocialProfiles(userId!, query, circleIds, followingIds),
-    enabled: !!userId && (query.length >= 0),
+    enabled: !!userId && query.length >= 2,
     staleTime: 10_000,
   });
 }

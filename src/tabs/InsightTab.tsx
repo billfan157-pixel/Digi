@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, memo, useCallback } from 'react';
 import {
-  Cpu, Droplets, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock
+  Cpu, Droplets, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -19,10 +19,13 @@ import SelectedDateModal from './Insight/SelectedDateModal';
 
 import type { CalendarEventItem } from '../hooks/useCalendarSync';
 
+import type { HealthReport } from '../lib/aiReports';
+
 interface InsightTabProps {
    isExportingPDF: boolean;
    handleExportPDF: () => void;
    handleExportCSV: () => void;
+   handleExportJSON: () => void;
    isAiLoading: boolean;
    aiAdvice: string;
    fetchAIAdvice: () => void;
@@ -30,15 +33,21 @@ interface InsightTabProps {
    syncCalendar: (options?: { silent?: boolean; startOAuthIfNeeded?: boolean }) => Promise<number | false>;
    weatherData: { temp?: number; humidity?: number; feelsLike?: number; status?: string } | null | undefined;
    isWeatherSynced: boolean;
+   weeklyReport: HealthReport | null;
+   isWeeklyReportLoading: boolean;
+   generateWeeklyReport: () => void;
  }
 
 const InsightTab = memo(function InsightTab({
-   isExportingPDF, handleExportPDF, handleExportCSV,
+   isExportingPDF, handleExportPDF, handleExportCSV, handleExportJSON,
    isAiLoading, aiAdvice, fetchAIAdvice,
    calendarEvents, syncCalendar,
    weatherData,
    isWeatherSynced,
- }: InsightTabProps) {
+   weeklyReport,
+   isWeeklyReportLoading,
+   generateWeeklyReport,
+  }: InsightTabProps) {
   
   const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, hydrationResult, waterIntake, waterEntries, actions } = useAppStore(useShallow((state: AppState) => ({
     profile: state.profile,
@@ -68,6 +77,8 @@ const InsightTab = memo(function InsightTab({
 
   const {
     monthlyDataMap,
+    isLoading: isInsightLoading,
+    error: insightError,
     refetchMonthly,
   } = useInsightData(profile?.id, calendarDate);
 
@@ -144,6 +155,8 @@ const InsightTab = memo(function InsightTab({
       if (error) throw error;
       setDayLogs(data || []);
     } catch (err) {
+      const { toast } = await import('sonner');
+      toast.error('Không thể tải chi tiết ngày');
       console.error('Lỗi tải lịch sử ngày:', err);
     } finally {
       setIsDayLogsLoading(false);
@@ -195,8 +208,27 @@ const InsightTab = memo(function InsightTab({
     return { title: 'Duy trì nhịp độ', action: `Tiếp tục nạp ${Math.min(remaining, 250)}ml để cơ thể luôn tươi mới.`, ml: Math.min(remaining, 250), icon: Droplets, color: 'text-cyan-400', bg: 'bg-cyan-500/20' };
   }, [waterIntake, waterGoal]);
 
+  if (isInsightLoading && !profile) {
+    return (
+      <div className="space-y-6 pb-28 animate-in fade-in duration-300 flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 size={32} className="animate-spin text-cyan-400" />
+          <p className="text-sm font-medium text-slate-400">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-28 animate-in fade-in duration-300">
+      {insightError && (
+        <div className="px-5">
+          <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3">
+            <AlertTriangle size={16} className="text-rose-400 shrink-0" />
+            <p className="text-xs text-rose-300">{insightError}</p>
+          </div>
+        </div>
+      )}
       <TabHeader
         label="Huấn luyện thông minh"
         title="DigiCoach"
@@ -299,6 +331,9 @@ const InsightTab = memo(function InsightTab({
               calendarEvents={calendarEvents}
               weatherData={weatherData}
               isWeatherSynced={isWeatherSynced}
+              weeklyReport={weeklyReport}
+              isWeeklyReportLoading={isWeeklyReportLoading}
+              generateWeeklyReport={generateWeeklyReport}
             />
           </motion.div>
         )}
@@ -317,6 +352,7 @@ const InsightTab = memo(function InsightTab({
               isExportingPDF={isExportingPDF}
               handleExportPDF={handleExportPDF}
               handleExportCSV={handleExportCSV}
+              handleExportJSON={handleExportJSON}
               setShowPremiumModal={setShowPremiumModal}
               calendarEvents={calendarEvents}
               syncCalendar={syncCalendar}

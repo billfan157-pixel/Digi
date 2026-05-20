@@ -3,15 +3,19 @@ import { useAppStore } from '@/store/useAppStore';
 export type PremiumStatus = 'active' | 'grace' | 'expired' | 'none';
 
 export function useIsPremium(): boolean {
-  const { isPremium, profile } = useAppStore(s => ({ isPremium: s.isPremium, profile: s.profile }));
+  const isPremium = useAppStore(s => s.isPremium);
+  const profile = useAppStore(s => s.profile);
   const status = getPremiumStatus(isPremium, profile?.subscription_end, profile?.grace_period_end);
   return status === 'active' || status === 'grace';
 }
 
+
 export function usePremiumStatus(): PremiumStatus {
-  const { isPremium, profile } = useAppStore(s => ({ isPremium: s.isPremium, profile: s.profile }));
+  const isPremium = useAppStore(s => s.isPremium);
+  const profile = useAppStore(s => s.profile);
   return getPremiumStatus(isPremium, profile?.subscription_end, profile?.grace_period_end);
 }
+
 
 function getPremiumStatus(
   isPremium: boolean,

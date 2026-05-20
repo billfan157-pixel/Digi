@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, MessageSquare, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import AvatarFrame, { getFrameEffects, getRankTitle } from "../AvatarFrame";
 
@@ -22,6 +22,8 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -29,24 +31,32 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!clubId || clubId === 'undefined') return;
+
+    setLoading(true);
+    setError(null);
 
     const { data, error } = await supabase
       .from("club_messages")
       .select(`*, profiles:public_profiles!club_messages_user_public_profile_fkey (nickname, avatar_url, level)`)
       .eq("club_id", clubId)
       .order("created_at", { ascending: true })
-      .limit(100); // Nên có limit để tránh tràn RAM
+      .limit(100);
 
-    if (!error && data) {
+    if (error) {
+      setError(error.message);
+      toast.error("Không thể tải tin nhắn");
+    } else if (data) {
       setMessages(data);
       setTimeout(scrollBottom, 100);
     }
-  };
+
+    setLoading(false);
+  }, [clubId]);
 
   // HÀM TỐI ƯU REALTIME: Chỉ fetch tin mới nhất
-  const fetchNewMessage = async (msgId: string) => {
+  const fetchNewMessage = useCallback(async (msgId: string) => {
     const { data } = await supabase
       .from("club_messages")
       .select(`*, profiles:public_profiles!club_messages_user_public_profile_fkey (nickname, avatar_url, level)`)
@@ -57,11 +67,10 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
       setMessages((prev) => [...prev, data]);
       setTimeout(scrollBottom, 100);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    fetchMessages();
+    setTimeout(fetchMessages, 0);
 
     const channel = supabase
       .channel(`club-chat-${clubId}`)
@@ -72,14 +81,13 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
           filter: `club_id=eq.${clubId}`,
         },
         (payload: { new: { id: string } }) => {
-          // GỌI HÀM NÀY THAY VÌ FETCH TOÀN BỘ
           fetchNewMessage(payload.new.id);
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [clubId]);
+  }, [clubId, fetchMessages, fetchNewMessage]);
 
   const sendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault(); // CHẶN LOAD TRANG KHI BẤM ENTER
@@ -110,7 +118,25 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
     <div className="flex flex-col h-full">
       {/* message list */}
       <div className="flex-1 overflow-y-auto space-y-4 p-4">
-        {messages.map((msg) => {
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <Loader2 size={28} className="animate-spin text-cyan-400" />
+            <p className="text-slate-400 text-sm font-medium">Đang tải tin nhắn...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center">
+            <AlertCircle size={32} className="text-rose-400" />
+            <p className="text-rose-400 text-sm font-bold">Không thể tải tin nhắn</p>
+            <p className="text-slate-500 text-xs">{error}</p>
+            <button onClick={fetchMessages} className="text-xs font-bold text-cyan-400 underline underline-offset-2 mt-1">Thử lại</button>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <MessageSquare size={32} className="text-slate-600" />
+            <p className="text-slate-500 text-sm font-medium">Chưa có tin nhắn nào</p>
+            <p className="text-slate-600 text-xs">Hãy gửi tin nhắn đầu tiên cho bang hội!</p>
+          </div>
+        ) : messages.map((msg) => {
           const mine = msg.user_id === userId;
 
           // RENDER TIN NHẮN HỆ THỐNG
@@ -151,7 +177,7 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
                     </span>
                   </div>
                 )}
-                <p className="text-sm leading-relaxed">                  {msg.content}</p>
+                <p className="text-sm leading-relaxed break-words">{msg.content}</p>
               </div>
             </div>
           );

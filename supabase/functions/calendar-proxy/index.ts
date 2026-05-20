@@ -1,13 +1,7 @@
 // deno-lint-ignore no-import-prefix
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
 import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimit.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
-  'Access-Control-Max-Age': '86400',
-};
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
@@ -29,10 +23,10 @@ type CalendarProxyRequestBody = {
   timeMin?: string;
 };
 
-const json = (body: Record<string, unknown>, status = 200) =>
+const json = (body: Record<string, unknown>, status = 200, origin: string | null = null) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
   });
 
 /**
@@ -259,21 +253,21 @@ async function fetchAllCalendarEvents(
 }
 
 Deno.serve(async (request: Request) => {
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders, status: 204 });
-  }
+  const origin = request.headers.get('Origin');
+  const corsResponse = handleCors(request);
+  if (corsResponse) return corsResponse;
 
   if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405);
+    return json({ error: 'Method not allowed' }, 405, origin);
   }
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    return json({ error: 'Missing Supabase configuration.' }, 500);
+    return json({ error: 'Missing Supabase configuration.' }, 500, origin);
   }
 
   const authHeader = request.headers.get('Authorization');
   if (!authHeader) {
-    return json({ error: 'Unauthorized.' }, 401);
+    return json({ error: 'Unauthorized.' }, 401, origin);
   }
 
   const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -286,7 +280,7 @@ Deno.serve(async (request: Request) => {
   } = await userSupabase.auth.getUser();
 
   if (authError || !user) {
-    return json({ error: 'Unauthorized.' }, 401);
+    return json({ error: 'Unauthorized.' }, 401, origin);
   }
 
   // Rate limit: max 30 calendar requests per minute per user (protect Google API quota)
@@ -294,7 +288,7 @@ Deno.serve(async (request: Request) => {
   if (!rateLimit.allowed) {
     return json({
       error: `Too many calendar requests. Try again in ${rateLimit.retryAfterSeconds} seconds.`,
-    }, 429);
+    }, 429, origin);
   }
 
   try {
@@ -302,7 +296,7 @@ Deno.serve(async (request: Request) => {
     const action = body.action;
 
     if (action !== 'list-events') {
-      return json({ error: `Unsupported action "${action}".` }, 400);
+      return json({ error: `Unsupported action "${action}".` }, 400, origin);
     }
 
     const maxResults = typeof body.maxResults === 'number' ? body.maxResults : 10;
@@ -318,20 +312,20 @@ Deno.serve(async (request: Request) => {
     );
 
     if (needsReauth || !token) {
-      return json({ needs_reauth: true, events: [] });
+      return json({ needs_reauth: true, events: [] }, 200, origin);
     }
 
     try {
       const events = await fetchAllCalendarEvents(token, maxResults, daysAhead, body.timeMin);
-      return json({ events, needs_reauth: false });
+      return json({ events, needs_reauth: false }, 200, origin);
     } catch (error) {
       if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
-        return json({ needs_reauth: true, events: [] });
+        return json({ needs_reauth: true, events: [] }, 200, origin);
       }
       throw error;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal error';
-    return json({ error: message }, 500);
+    return json({ error: message }, 500, origin);
   }
 });

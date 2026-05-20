@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Droplets, Clock, Bluetooth, Loader2 } from 'lucide-react';
 import type { WaterLog } from '../../models';

@@ -2,35 +2,27 @@ import { useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { claimQuestReward, provisionUserQuests, syncLevelQuestProgress } from '@/lib/questEngine';
-import type { UserQuest, QuestType } from '../config/questConfig';
+import type { UserQuest, QuestType, ConditionType, Quest } from '../config/questConfig';
 import { resolveQuestProgress } from '@/lib/questProgress';
+import { getWeekStart } from '@/utils/dateUtils';
 
 const QUESTS_QUERY_KEY = (userId?: string) => ['quests', userId] as const;
 
-function getWeekStart(): string {
-  const d = new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d.toLocaleDateString('en-CA');
-}
-
 function normalizeFetchedQuests(rows: UserQuest[], userLevel: number): UserQuest[] {
-  return rows.map((uq) => {
-    const quest = Array.isArray((uq as unknown as { quest: unknown }).quest)
-      ? (uq as unknown as { quest: unknown[] }).quest[0]
-      : (uq as unknown as { quest: Record<string, unknown> }).quest;
-    if (!quest) return uq;
+  return rows.map((rawUq): UserQuest => {
+    const uq = rawUq as UserQuest & { quest: Record<string, unknown> | Record<string, unknown>[] };
+    const quest = Array.isArray(uq.quest) ? uq.quest[0] : uq.quest;
+    if (!quest) return rawUq;
 
-    const resolved = resolveQuestProgress(quest as Record<string, unknown>, { level: userLevel });
+    const resolved = resolveQuestProgress(quest, { level: userLevel });
     const isLevelQuest = resolved.normalizedType === 'level';
 
     return {
-      ...uq,
-      progress: isLevelQuest ? Math.max(Number(uq.progress || 0), resolved.progress) : Number(uq.progress || 0),
-      status: (uq.status === 'claimed' ? 'claimed' : isLevelQuest && resolved.completed ? 'completed' : uq.status) as UserQuest['status'],
-      quest: { ...(quest as Record<string, unknown>), condition_type: resolved.normalizedType, condition_value: resolved.target },
-    } as unknown as UserQuest;
+      ...rawUq,
+      progress: isLevelQuest ? Math.max(Number(rawUq.progress || 0), resolved.progress) : Number(rawUq.progress || 0),
+      status: (rawUq.status === 'claimed' ? 'claimed' : isLevelQuest && resolved.completed ? 'completed' : rawUq.status) as UserQuest['status'],
+      quest: { ...quest, condition_type: resolved.normalizedType as ConditionType, condition_value: resolved.target } as Quest,
+    };
   });
 }
 

@@ -11,7 +11,15 @@ export interface PushSubscriptionRow {
 }
 
 const SW_PATH = '/push-sw.js';
-const VAPID_PUBLIC_KEY = 'BJmXkMLL7MrFOawgfveznoKt_ZBcrtTt8wkG7t5lWKFoD9SIXzCxhEIcKj8WZD3b3nwBrA3SBFqagkiX37_GAok';
+
+function getVapidKey(): string {
+  const key = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+  if (!key) {
+    console.warn('[push] VITE_VAPID_PUBLIC_KEY not set — push subscriptions will fail');
+    return '';
+  }
+  return key;
+}
 
 interface SendPushPayload {
   title: string;
@@ -50,7 +58,7 @@ export async function subscribeToPush(reg: ServiceWorkerRegistration): Promise<P
 
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      applicationServerKey: urlBase64ToUint8Array(getVapidKey()),
     });
     return sub;
   } catch {

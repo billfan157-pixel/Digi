@@ -7,6 +7,7 @@ import type LeagueTab from '@/tabs/LeagueTab';
 import type { Profile, SocialFeedPost } from '@/models';
 import type { CalendarEventItem } from '@/hooks/useCalendarSync';
 import type { RankInfo } from '@/tabs/League/types';
+import type { HealthReport } from '@/lib/aiReports';
 
 interface SocialProfileStats {
   followers: number;
@@ -20,8 +21,9 @@ interface UseAppTabPropsOptions {
   isExportingPDF: boolean;
   handleExportPDF: () => Promise<void>;
   handleExportCSV: () => void;
+  handleExportJSON: () => void;
   geminiProps: Record<string, unknown>;
-  weeklyReport: Record<string, unknown> | null;
+  weeklyReport: HealthReport | null;
   isWeeklyReportLoading: boolean;
   handleGenerateWeeklyReport: () => Promise<void>;
   weatherData: Record<string, unknown> | null | undefined;
@@ -51,6 +53,7 @@ export function useAppTabProps({
   isExportingPDF,
   handleExportPDF,
   handleExportCSV,
+  handleExportJSON,
   geminiProps,
   weeklyReport,
   isWeeklyReportLoading,
@@ -84,6 +87,7 @@ export function useAppTabProps({
     isExportingPDF,
     handleExportPDF,
     handleExportCSV,
+    handleExportJSON,
     isAiLoading: Boolean((geminiProps as Record<string, unknown>).isAiLoading),
     aiAdvice: String((geminiProps as Record<string, unknown>).aiAdvice || ''),
     fetchAIAdvice: ((geminiProps as Record<string, unknown>).fetchAIAdvice as (() => void) | undefined) || (() => {}),
@@ -98,6 +102,7 @@ export function useAppTabProps({
     geminiProps,
     handleExportPDF,
     handleExportCSV,
+    handleExportJSON,
     handleGenerateWeeklyReport,
     isExportingPDF,
     isWeeklyReportLoading,

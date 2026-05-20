@@ -16,6 +16,7 @@ export async function startPremiumCheckout(plan: BillingPlan) {
     ? 'digiwell://checkout-cancel'
     : `${window.location.origin}/checkout-cancel`;
 
+  import('@/lib/analytics').then(({ track }) => track('checkout_started', { plan }));
   Sentry.setContext('stripe-checkout', { plan, successUrl });
 
   const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {

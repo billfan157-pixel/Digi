@@ -12,6 +12,8 @@ import { useWaterData } from '@/hooks/useWaterData';
 import { calculateWaterIntake, type ActivityLevel, type Climate, type Gender } from '@/lib/HydrationEngine';
 import { normalizeActivity, normalizeClimate } from '@/lib/profileNormalization';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { updateWidgetCache } from '@/lib/widgetService';
+import { logWaterToHealth } from '@/lib/healthIntegration';
 import type { AppProfile } from '@/services/profile.service';
 
 interface UseHydrationControllerOptions {
@@ -61,6 +63,7 @@ export function useHydrationController({
     setShowFastingModal,
     exportReportPdf,
     exportReportCsv,
+    exportReportJson,
     toggleFastingMode,
     startFasting,
     stopFasting,
@@ -158,8 +161,13 @@ export function useHydrationController({
       return;
     }
 
-    return originalHandleAddWater(amount, factor, name);
-  }, [waterEntries, originalHandleAddWater]);
+    const result = await originalHandleAddWater(amount, factor, name);
+    if (profile?.id) {
+      updateWidgetCache(profile.id).catch(() => {});
+    }
+    logWaterToHealth(amount).catch(() => {});
+    return result;
+  }, [waterEntries, originalHandleAddWater, profile?.id]);
 
   const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
   const { weeklyHistory, weeklyLogCount } = useWeeklyHistory({
@@ -236,6 +244,17 @@ export function useHydrationController({
     });
   }, [exportReportCsv, profile, waterIntake, waterGoal, streak, weeklyHistory, waterEntries]);
 
+  const handleExportJSON = useCallback(() => {
+    exportReportJson({
+      profile,
+      waterIntake,
+      waterGoal,
+      streak,
+      weeklyChartData: weeklyHistory,
+      waterEntries,
+    });
+  }, [exportReportJson, profile, waterIntake, waterGoal, streak, weeklyHistory, waterEntries]);
+
   return {
     isPremium,
     hydrationResult,
@@ -276,5 +295,6 @@ export function useHydrationController({
     stopFasting,
     handleExportPDF,
     handleExportCSV,
+    handleExportJSON,
   };
 }

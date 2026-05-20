@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUp, Award } from 'lucide-react';
 import { notify } from '@/lib/haptics';

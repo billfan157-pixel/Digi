@@ -38,6 +38,10 @@ async function ensurePublicProfile(userId: string) {
   }
 }
 
+type SocialFeedPostRow = SocialFeedPost & {
+  social_post_likes?: Array<{ user_id: string }>;
+};
+
 async function fetchFeedPage(
   currentUserId: string,
   friendIdSet: Set<string>,
@@ -55,15 +59,16 @@ async function fetchFeedPage(
 
   if (error) throw error;
 
-  const visibleRows = (data || []).filter((post: { author_id: string; post_kind: string; visibility: string }) => {
+  const visibleRows = (data || []).filter((post: SocialFeedPostRow) => {
     if (post.author_id === currentUserId) return true;
     if (post.post_kind === 'challenge') return friendIdSet.has(post.author_id);
     return post.visibility === 'public' || friendIdSet.has(post.author_id);
   });
 
-  return visibleRows.map((post: Record<string, unknown>) => ({
-    ...(post as unknown as SocialFeedPost),
-    cheeredByMe: (post.social_post_likes as Array<{ user_id: string }>)?.some((l) => l.user_id === currentUserId) ?? false,
+  return visibleRows.map((post) => ({
+    ...post,
+    cheeredByMe:
+      post.social_post_likes?.some((l: { user_id: string }) => l.user_id === currentUserId) ?? false,
   }));
 }
 
@@ -71,16 +76,28 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
   const [mergedPending, setMergedPending] = useState<SocialFeedPost[]>([]);
   const [newPostsCount, setNewPostsCount] = useState(0);
   const [pendingPosts, setPendingPosts] = useState<SocialFeedPost[]>([]);
-  const [activeUserId, setActiveUserId] = useState(currentUserId);
+  const initialUserId = useRef(currentUserId);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const friendIdSet = useMemo(() => new Set(friendIds), [friendIds]);
 
-  if (currentUserId !== activeUserId) {
-    setActiveUserId(currentUserId);
+  // Reset local state when userId changes — render-phase setState is valid per React docs
+  // eslint-disable-next-line react-hooks/refs
+  if (currentUserId !== initialUserId.current) {
+    // eslint-disable-next-line react-hooks/refs
+    initialUserId.current = currentUserId;
     setMergedPending([]);
     setPendingPosts([]);
     setNewPostsCount(0);
   }
+
+  useEffect(() => {
+    if (currentUserId === initialUserId.current) return;
+    initialUserId.current = currentUserId;
+    setMergedPending([]);
+    setPendingPosts([]);
+    setNewPostsCount(0);
+  }, [currentUserId]);
+  // eslint-enable react-hooks/set-state-in-effect
 
   useEffect(() => {
     if (currentUserId && currentUserId !== 'undefined') {

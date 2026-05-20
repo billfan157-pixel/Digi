@@ -36,7 +36,7 @@ export const PostCardContent = ({
         <p className="text-amber-400 text-[10px] font-black uppercase tracking-[0.3em] mb-2 z-10 flex items-center gap-2">
            <Sparkles size={12} className="animate-pulse" /> Kỷ Lục Mới
         </p>
-        <h4 className="text-white text-3xl font-black mb-3 z-10 tracking-tight leading-none">{post.content}</h4>
+         <h4 className="text-white text-3xl font-black mb-3 z-10 tracking-tight leading-none truncate max-w-full">{post.content}</h4>
         <div className="h-[1px] w-12 bg-amber-500/30 mx-auto mb-3" />
         <p className="text-slate-400 text-xs font-medium z-10 max-w-[200px] leading-relaxed">Một cột mốc đáng tự hào trong hành trình DigiWell của bạn.</p>
       </div>
@@ -77,7 +77,7 @@ export const PostCardContent = ({
            </div>
            <p className="text-purple-400 text-[10px] font-black uppercase tracking-widest">Thử thách chung</p>
         </div>
-        <p className="text-white text-xl font-black leading-tight mb-6">{safeContent}</p>
+        <p className="text-white text-xl font-black leading-tight mb-6 break-words">{safeContent}</p>
         <button
           onClick={handleJoinChallenge}
           className="w-full bg-white text-purple-950 font-black py-3.5 rounded-2xl hover:bg-slate-100 active:scale-[0.98] transition-all shadow-xl shadow-purple-500/10"
@@ -95,8 +95,8 @@ export const PostCardContent = ({
           <Flame size={40} className="text-white" />
         </div>
         <p className="text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Peak Mới</p>
-        <h4 className="text-white text-3xl font-black mb-2 tracking-tight">Chuỗi {post.value || post.streak_snapshot || 0} ngày</h4>
-        {safeContent && <p className="text-slate-400 text-sm font-medium">{safeContent}</p>}
+        <h4 className="text-white text-3xl font-black mb-2 tracking-tight truncate max-w-full">Chuỗi {post.value || post.streak_snapshot || 0} ngày</h4>
+         {safeContent && <p className="text-slate-400 text-sm font-medium break-words">{safeContent}</p>}
       </div>
     );
   }
@@ -183,7 +183,7 @@ export const PostCardContent = ({
             <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-lg text-[9px] font-bold ${categoryColor}`}>{categoryLabel}</span>
           </div>
         </div>
-        {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap">{safeContent}</p>}
+        {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap break-words">{safeContent}</p>}
         {post.image_url && (
           <div className="rounded-2xl overflow-hidden bg-slate-950 mt-3 border border-white/5">
             <img src={post.image_url} alt={post.content || 'Ảnh bài viết'} loading="lazy" className="w-full max-h-[400px] object-cover" />
@@ -257,7 +257,7 @@ export const PostCardContent = ({
              Drop
            </span>
          </div>
-         {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap">{safeContent}</p>}
+         {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap break-words">{safeContent}</p>}
          {post.image_url && (
            <div className="rounded-2xl overflow-hidden bg-slate-950 border border-white/5">
              <img src={post.image_url} alt="Drop" loading="lazy" className="w-full max-h-[300px] object-cover"
@@ -270,7 +270,7 @@ export const PostCardContent = ({
 
    return (
      <>
-       {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap mb-3">{safeContent}</p>}
+       {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap break-words mb-3">{safeContent}</p>}
        {post.image_url && (
          <div className="rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border border-white/5">
            <img src={post.image_url} alt="Ảnh bài viết" loading="lazy" className="w-full max-h-[500px] object-cover"

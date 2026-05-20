@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, FlaskConical, Trophy, ArrowLeft, Box, Sparkles, Cpu } from 'lucide-react';
 import { DeviceHero, ControlDeck, ArenaPaywall } from '../components/DeviceComponents';
@@ -78,7 +78,7 @@ export default function BottleTab({
         if (smartBottle.metrics?.signalStrength != null) setSignalStrength(smartBottle.metrics.signalStrength);
       }, 0);
     }
-  }, [smartBottle]);
+  }, [smartBottle, currentVolume]);
 
   // Handle drink simulation
   const handleDrink = (amount: number) => {
@@ -89,7 +89,7 @@ export default function BottleTab({
       setCurrentVolume(newVol);
       setFillPercentage((newVol / CAPACITY) * 100);
       setIsSyncing(false);
-      setSyncLogs(prev => [...prev, { id: Date.now(), action: `Consumed ${amount}ml`, timestamp: new Date().toISOString() }]);
+      setSyncLogs(prev => [...prev, { id: Date.now(), action: `Đã uống ${amount}ml`, timestamp: new Date().toISOString() }]);
     }, 800);
   };
 
@@ -100,7 +100,7 @@ export default function BottleTab({
       setCurrentVolume(CAPACITY);
       setFillPercentage(100);
       setIsSyncing(false);
-      setSyncLogs(prev => [...prev, { id: Date.now(), action: 'Tank Refilled (100%)', timestamp: new Date().toISOString() }]);
+      setSyncLogs(prev => [...prev, { id: Date.now(), action: 'Đã đổ đầy (100%)', timestamp: new Date().toISOString() }]);
     }, 1200);
   };
 
@@ -127,13 +127,13 @@ export default function BottleTab({
             )}
             <div>
               <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-400 font-black">DigiBottle OS</p>
-              <h1 className="text-xl font-black text-white tracking-tight mt-0.5">Control Center</h1>
+              <h1 className="text-xl font-black text-white tracking-tight mt-0.5">Trung tâm điều khiển</h1>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
             <div className="text-right hidden sm:block">
-              <p className="text-[9px] uppercase tracking-widest text-slate-500 font-black">Identity</p>
+              <p className="text-[9px] uppercase tracking-widest text-slate-500 font-black">Danh tính</p>
               <p className="text-xs font-black text-white">{String(profile?.nickname || 'Cyber User')}</p>
             </div>
             <div className="w-10 h-10 rounded-xl border-2 border-cyan-400/30 overflow-hidden bg-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.2)]">

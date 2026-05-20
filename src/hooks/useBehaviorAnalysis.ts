@@ -76,7 +76,7 @@ export function useBehaviorAnalysis({ weeklyData, waterGoal }: UseBehaviorAnalys
   }, [weeklyDataStr, waterGoal]);
   
   // Generate adaptive recommendations
-  const getAdaptiveRecommendation = useCallback((hour: number, currentIntake: number): string => {
+  const getAdaptiveRecommendation = useCallback((_hour: number, currentIntake: number): string => {
     const gap = waterGoal - currentIntake;
     
     for (const pattern of patterns) {

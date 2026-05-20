@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { appQueryKeys } from '@/lib/queryKeys';
 import { addFollow, removeFollow, addLike, removeLike } from '@/lib/social.service';
-import type { SocialFeedPost } from '@/lib/social';
+import type { SocialFeedPost } from '@/models';
 
 export function useFollowMutation(userId: string | undefined) {
   const queryClient = useQueryClient();
@@ -36,7 +36,7 @@ export function useLikeMutation() {
         if (!old) return old;
         const updater = (p: SocialFeedPost) =>
           p.id === postId
-            ? { ...p, likedByMe: liked, like_count: Math.max((p.like_count || 0) + (liked ? 1 : -1), 0) }
+            ? { ...p, cheeredByMe: liked, like_count: Math.max((p.like_count || 0) + (liked ? 1 : -1), 0) }
             : p;
         return { posts: old.posts.map(updater), stories: old.stories.map(updater) };
       },

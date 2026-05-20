@@ -110,7 +110,7 @@ export function useSocialComposer({
     });
     setActiveTab?.('feed');
     useUIStore.getState().setShowSocialComposer(true);
-  }, [profile?.id, setActiveTab, waterIntake, waterGoal, streak, resetSocialComposer]);
+  }, [profile, setActiveTab, waterIntake, waterGoal, streak, resetSocialComposer]);
 
   const closeSocialComposer = () => {
     resetSocialComposer();

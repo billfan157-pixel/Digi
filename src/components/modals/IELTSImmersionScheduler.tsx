@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Headphones, BookOpen, Mic, PenTool, Lock } from 'lucide-react';
 
 interface SchedulerProps {

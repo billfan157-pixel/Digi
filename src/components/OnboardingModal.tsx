@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 import { Activity, ArrowRight, ArrowLeft, Droplets, Loader2, User } from 'lucide-react';
+import { track } from '@/lib/analytics';
 
 import type { Profile } from '../models';
 interface OnboardingModalProps {
@@ -15,6 +16,12 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
   const [name, setName] = useState<string>(profile?.nickname || '');
   const [weight, setWeight] = useState<string>(profile.weight ? String(profile.weight) : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (profile?.id && !profile.onboarding_completed) {
+      track('onboarding_started', { profile_id: profile.id });
+    }
+  }, [profile?.id, profile?.onboarding_completed]);
 
   const waterGoal = weight ? Math.round(Number(weight) * 30) : 0; // 30ml/kg/day
 
@@ -43,8 +50,9 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
         .eq('id', profile.id);
 
       if (error) throw error;
-      
+
       toast.success('Đã cập nhật mục tiêu của bạn!');
+      track('onboarding_completed', { weight: numWeight, water_goal: waterGoal });
       onComplete(numWeight, waterGoal, name.trim());
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Lỗi cập nhật hồ sơ!');

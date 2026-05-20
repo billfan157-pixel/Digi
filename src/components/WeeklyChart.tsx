@@ -60,7 +60,7 @@ export default function WeeklyChart({
           >
             <div className="w-full border-t border-dashed border-cyan-500/30"></div>
             <span className="text-[8px] font-black tracking-widest text-cyan-400">
-              GOAL
+              MỤC TIÊU
             </span>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShieldCheck, Activity, Trophy, Zap, Shield, Crown } from 'lucide-react';
 import { expRequiredForLevel, totalExpForLevel } from '../config/questConfig';

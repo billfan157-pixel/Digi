@@ -1,51 +1,38 @@
 // --- SENTRY ERROR TRACKING ---
-import { initSentry } from './lib/sentry';
+import { initSentry, Sentry } from './lib/sentry';
 initSentry();
 // --- HẾT SENTRY ---
 
-// --- CODE BẮT LỖI MÀN HÌNH TRẮNG (THÊM VÀO ĐẦU FILE) ---
+// --- CODE BẮT LỖI MÀN HÌNH TRẮNG (DEV MODE) ---
+// DEV: overlay trực quan + forward to Sentry
+// PROD: chỉ forward to Sentry (không làm hỏng UI)
 if (typeof window !== 'undefined') {
-  window.onerror = function (msg, _url, line) {
-    const message = `LỖI NGHIÊM TRỌNG:\n${msg}\n\nDòng: ${line}\nFile: ${_url}`;
-    console.error(message);
-    
-    // Tạo hộp đỏ hiển thị lỗi trên màn hình
-    const errorDiv = document.createElement('div');
-    errorDiv.style.position = 'fixed';
-    errorDiv.style.top = '0';
-    errorDiv.style.left = '0';
-    errorDiv.style.width = '100%';
-    errorDiv.style.height = '100%';
-    errorDiv.style.background = 'rgba(255, 0, 0, 0.9)';
-    errorDiv.style.color = 'white';
-    errorDiv.style.zIndex = '99999';
-    errorDiv.style.padding = '20px';
-    errorDiv.style.fontSize = '16px';
-    errorDiv.style.fontFamily = 'monospace';
-    errorDiv.style.whiteSpace = 'pre-wrap';
-    errorDiv.style.overflow = 'auto';
-    errorDiv.innerText = message;
-    document.body.appendChild(errorDiv);
-    
+  window.onerror = function (msg, _url, line, _col, error) {
+    console.error(`LỖI: ${msg} (dòng ${line})`);
+    if (error) Sentry.captureException(error);
+    else Sentry.captureMessage(String(msg), 'error');
+
+    if (import.meta.env.DEV) {
+      const d = document.createElement('div');
+      d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,0,0,0.9);color:white;z-index:99999;padding:20px;font:16px monospace;white-space:pre-wrap;overflow:auto';
+      d.innerText = `LỖI NGHIÊM TRỌNG:\n${msg}\n\nDòng: ${line}\nFile: ${_url}`;
+      document.body.appendChild(d);
+    }
     return false;
   };
 
   window.onunhandledrejection = function (event) {
-    const message = `LỖI PROMISE:\n${event.reason}`;
-    console.error(message);
-    
-    const errorDiv = document.createElement('div');
-    errorDiv.style.position = 'fixed';
-    errorDiv.style.bottom = '0';
-    errorDiv.style.left = '0';
-    errorDiv.style.width = '100%';
-    errorDiv.style.background = 'orange';
-    errorDiv.style.color = 'black';
-    errorDiv.style.zIndex = '99999';
-    errorDiv.style.padding = '20px';
-    errorDiv.style.fontSize = '16px';
-    errorDiv.innerText = message;
-    document.body.appendChild(errorDiv);
+    const reason = event.reason;
+    console.error(`LỖI PROMISE:`, reason);
+    if (reason instanceof Error) Sentry.captureException(reason);
+    else Sentry.captureMessage(String(reason), 'error');
+
+    if (import.meta.env.DEV) {
+      const d = document.createElement('div');
+      d.style.cssText = 'position:fixed;bottom:0;left:0;width:100%;background:orange;color:black;z-index:99999;padding:20px;font:16px monospace';
+      d.innerText = `LỖI PROMISE:\n${reason}`;
+      document.body.appendChild(d);
+    }
   };
 }
 // --- HẾT CODE BẮT LỖI ---

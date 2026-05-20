@@ -1,4 +1,3 @@
-import React from 'react';
 import { X } from 'lucide-react';
 import { useModalStore } from '../../store/useModalStore';
 import TypingIndicator from '../TypingIndicator';
@@ -34,7 +33,7 @@ export default function AiChatModal() {
           drag="y"
           dragConstraints={{ top: 0 }}
           dragElastic={0.2}
-          onDragEnd={(e, { offset, velocity }) => {
+          onDragEnd={(_e, { offset, velocity }) => {
             if (offset.y > 150 || velocity.y > 500) setShowAiChat(false);
           }}
           className="fixed inset-0 z-[110] bg-slate-950 flex flex-col"

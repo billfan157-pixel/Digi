@@ -2,7 +2,7 @@ import type { Profile, SocialFeedPost } from '../../models';
 import type { CloseCircleMember } from '../../lib/social';
 
 export type FeedFilter = 'all' | 'checkins' | 'drops' | 'milestones' | 'challenges' | 'photos';
-export type FeedMode = 'smart' | 'latest' | 'following';
+export type FeedMode = 'smart' | 'latest' | 'following' | 'hot';
 export type SignaturePostKind = 'pulse' | 'drop' | 'peak' | 'duel' | 'proof';
 export type SocialComposerKind = 'status' | 'progress' | 'story' | 'challenge' | 'tip' | 'poll' | 'photo';
 

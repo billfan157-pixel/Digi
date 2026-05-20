@@ -17,6 +17,7 @@ function getCorsHeaders(origin: string | null) {
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
   };
 }
 
@@ -180,6 +181,19 @@ function encodeSse(event: string, body: Record<string, unknown>) {
   return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(body)}\n\n`);
 }
 
+/**
+ * Sanitize user-provided strings before interpolation into AI prompts.
+ * Prevents prompt injection by removing instruction-like patterns.
+ */
+function sanitizeForPrompt(value: string, maxLength = 120): string {
+  const trimmed = value.trim().slice(0, maxLength);
+  // Remove common prompt injection patterns (case-insensitive)
+  return trimmed
+    .replace(/(?:ignore|bypass|override|disregard|system\s*(?:prompt|instruction)|previous\s*(?:instruction|prompt|directive)|you\s*are\s*(?:now|no\s*longer)|act\s*as|pretend\s*to\s*be)/gi, '[FILTERED]')
+    .replace(/[<>{}[\]\\|`~^]/g, '') // strip chars that could break prompt structure
+    .trim();
+}
+
 function buildContextSummary(context: DigiwellAiContext): string {
   const now = new Date(context.nowIso);
   const timeText = Number.isNaN(now.getTime())
@@ -205,7 +219,7 @@ function buildContextSummary(context: DigiwellAiContext): string {
         ]
       : []),
     context.weather
-      ? `- Thời tiết: ${context.weather.temp}°C, ${context.weather.status}, tại ${context.weather.location}`
+      ? `- Thời tiết: ${context.weather.temp}°C, ${sanitizeForPrompt(context.weather.status, 60)}, tại ${sanitizeForPrompt(context.weather.location, 60)}`
       : '- Thời tiết: chưa đồng bộ',
     context.watch
       ? `- Đồng hồ sức khỏe: ${context.watch.heartRate} BPM, ${context.watch.steps} bước`
@@ -213,16 +227,16 @@ function buildContextSummary(context: DigiwellAiContext): string {
     context.calendar
       ? `- Lịch: ${
           context.calendar.synced
-            ? `đã đồng bộ${context.calendar.nextEventTitle ? `, sự kiện gần nhất: ${context.calendar.nextEventTitle}` : ''}`
+            ? `đã đồng bộ${context.calendar.nextEventTitle ? `, sự kiện gần nhất: ${sanitizeForPrompt(context.calendar.nextEventTitle, 80)}` : ''}`
             : 'chưa đồng bộ'
         }`
       : '- Lịch: chưa đồng bộ',
-    context.profile?.nickname ? `- Tên người dùng: ${context.profile.nickname}` : null,
-    context.profile?.goal ? `- Mục tiêu sức khỏe: ${context.profile.goal}` : null,
-    context.profile?.activity ? `- Mức vận động: ${context.profile.activity}` : null,
-    context.profile?.climate ? `- Môi trường/khí hậu: ${context.profile.climate}` : null,
-    ...(context.behaviorPatterns?.map(p => `- Thói quen uống: ${p.pattern} (${Math.round(p.confidence * 100)}% tin cậy) — ${p.recommendation}`) ?? []),
-    ...(context.calendarEvents?.length ? context.calendarEvents.map(ev => `- Lịch: "${ev.title}" (${ev.startRaw} → ${ev.endRaw})`) : []),
+    context.profile?.nickname ? `- Tên người dùng: ${sanitizeForPrompt(context.profile.nickname, 50)}` : null,
+    context.profile?.goal ? `- Mục tiêu sức khỏe: ${sanitizeForPrompt(context.profile.goal, 80)}` : null,
+    context.profile?.activity ? `- Mức vận động: ${sanitizeForPrompt(context.profile.activity, 50)}` : null,
+    context.profile?.climate ? `- Môi trường/khí hậu: ${sanitizeForPrompt(context.profile.climate, 50)}` : null,
+    ...(context.behaviorPatterns?.map(p => `- Thói quen uống: ${sanitizeForPrompt(p.pattern, 80)} (${Math.round(p.confidence * 100)}% tin cậy) — ${sanitizeForPrompt(p.recommendation, 100)}`) ?? []),
+    ...(context.calendarEvents?.length ? context.calendarEvents.map(ev => `- Lịch: "${sanitizeForPrompt(ev.title, 80)}" (${ev.startRaw} → ${ev.endRaw})`) : []),
   ]
     .filter(Boolean)
     .join('\n');
@@ -235,7 +249,7 @@ function clampWaterAction(action: Partial<WaterAction>): WaterAction | undefined
   const name = typeof action.name === 'string' ? action.name.trim() : '';
 
   if (!Number.isFinite(amount) || amount <= 0) return undefined;
-  if (!Number.isFinite(factor) || !name) return undefined;
+  if (!Number.isFinite(factor) || name === '') return undefined;
 
   return {
     amount: Math.min(Math.max(amount, 30), 2000),
@@ -758,32 +772,36 @@ Deno.serve(async (request) => {
     if (action === 'report-analysis') {
       const stats = body.stats as Record<string, unknown>;
       const entries = Array.isArray(body.entries) ? body.entries : [];
-      const periodLabel = String(body.periodLabel ?? '');
+      const periodLabel = sanitizeForPrompt(String(body.periodLabel ?? ''), 50);
       const profile = (body.profile ?? {}) as Record<string, unknown>;
-      const savings = Number(body.savings ?? 0);
-      const units = String(body.units ?? '0');
 
       const entryText = entries
+        .slice(0, 100)
         .map((entry) => {
           const row = entry as Record<string, unknown>;
-          return `${row.date}: ${row.waterIntake}ml/${row.waterGoal}ml (${row.achieved ? 'đạt' : 'chưa đạt'})`;
+          const date = sanitizeForPrompt(String(row.date ?? ''), 20);
+          const waterIntake = Number(row.waterIntake) || 0;
+          const waterGoal = Number(row.waterGoal) || 0;
+          const achieved = row.achieved === true;
+          return `${date}: ${waterIntake}ml/${waterGoal}ml (${achieved ? 'đạt' : 'chưa đạt'})`;
         })
         .join('\n');
 
-      const prompt = `Bạn là Chuyên gia Sức khỏe và Cố vấn Tài chính AI của DigiWell.
-Hãy phân tích báo cáo cho người dùng ${profile.nickname ?? 'bạn'}.
+      const safeNickname = typeof profile.nickname === 'string' ? sanitizeForPrompt(profile.nickname, 50) : 'bạn';
+
+      const prompt = `Bạn là Chuyên gia Sức khỏe AI của DigiWell — trả lời bằng tiếng Việt.
+Hãy phân tích báo cáo hydrat hóa cho người dùng ${safeNickname}.
 
 Thông tin:
 - Kỳ báo cáo: ${periodLabel}
-- Thành tích: ${stats.goalsAchieved}/${stats.totalDays} ngày đạt mục tiêu (${stats.achievementRate}%).
-- Nhịp tim trung bình: ${profile.avgHeartRate ?? 'N/A'} BPM (Dành cho dân đạp xe/vận động).
-- Tiết kiệm: ${savings.toLocaleString('vi-VN')} VND (Tương đương ${units} đơn vị quỹ VESAF/DCDS).
+- Thành tích: ${Number(stats.goalsAchieved) || 0}/${Number(stats.totalDays) || 0} ngày đạt mục tiêu (${Number(stats.achievementRate) || 0}%).
+- Nhịp tim trung bình: ${Number(profile.avgHeartRate) || 'N/A'} BPM.
 - Nhật ký:
 ${entryText || '- Không có dữ liệu'}
 
 Yêu cầu:
-1. "analysis": Nhận xét sâu sắc, thân thiện về sự kỷ luật, mối liên hệ giữa nước, nhịp tim và tích lũy tài chính.
-2. "recommendations": 3 gợi ý thực tế về Hydration, Vận động và Kỷ luật đầu tư.
+1. "analysis": Nhận xét sâu sắc, thân thiện về thói quen uống nước, sự kỷ luật, xu hướng hydrat hóa.
+2. "recommendations": 3 gợi ý thực tế về cải thiện Hydration và vận động.
 
 Trả về JSON thuần:
 {

@@ -15,6 +15,8 @@ export const useFeedFiltering = (
   return useMemo(() => {
     if (!posts || posts.length === 0) return [];
 
+    // rankFeedPosts expects hydration_ml?: number (not number | null),
+    // so normalize null -> undefined to satisfy type without changing runtime behavior.
     const normalizedPosts: SocialFeedPost[] = posts
       .filter((p: SocialFeedPost) => p.post_kind !== 'story')
       .map((p: SocialFeedPost) => ({
@@ -22,10 +24,25 @@ export const useFeedFiltering = (
         likes: p.like_count || 0,
       }));
 
-    let ranked: SocialFeedPost[] =
+    type RankedPost = SocialFeedPost & { _score?: number };
+
+    // rankFeedPosts() chấp nhận FeedPostLike/FeedUserLike với value?: number, hydration_ml?: number
+    // trong khi SocialFeedPost có value?: number | string và hydration_ml: number | null.
+    // Map đầu vào cho rankFeedPosts, không đổi logic ranking.
+    const rankInput = normalizedPosts.map((p) => ({
+      ...p,
+      hydration_ml: p.hydration_ml ?? undefined,
+      value: typeof p.value === 'number' ? p.value : undefined,
+    }));
+
+    let ranked: RankedPost[] =
       feedMode === 'latest'
-        ? sortPostsByLatest(normalizedPosts)
-        : (rankFeedPosts(normalizedPosts as unknown as Parameters<typeof rankFeedPosts>[0], socialFollowingIds, profile as unknown as Parameters<typeof rankFeedPosts>[2]) as unknown as SocialFeedPost[]);
+        ? (sortPostsByLatest(normalizedPosts) as RankedPost[])
+        : (rankFeedPosts(
+            rankInput,
+            socialFollowingIds,
+            profile ? profile as unknown as Parameters<typeof rankFeedPosts>[2] : undefined,
+          ) as unknown as RankedPost[]);
 
     if (accountabilityPodIds.length > 0) {
       const podRank = new Map(accountabilityPodIds.map((id, index) => [id, index]));

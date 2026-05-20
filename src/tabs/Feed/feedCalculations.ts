@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { rankFeedPosts } from '../../lib/feedAlgorithm';
-import { sortPostsByLatest } from '../../lib/feedUtils';
+import { sortPostsByLatest, sortPostsByHot } from '../../lib/feedUtils';
 import type { Profile, SocialFeedPost } from '../../models';
 import type { FeedFilter, FeedMode, FeedSummary } from './types';
 
@@ -64,7 +64,9 @@ export const useRankedFeed = (
 
     let ranked: SocialFeedPost[] = feedMode === 'latest'
       ? sortPostsByLatest(normalizedPosts)
-      : (rankFeedPosts(normalizedPosts as unknown as Parameters<typeof rankFeedPosts>[0], socialFollowingIds, profile as unknown as Parameters<typeof rankFeedPosts>[2]) as unknown as SocialFeedPost[]);
+      : feedMode === 'hot'
+        ? sortPostsByHot(normalizedPosts)
+        : (rankFeedPosts(normalizedPosts as unknown as Parameters<typeof rankFeedPosts>[0], socialFollowingIds, profile as unknown as Parameters<typeof rankFeedPosts>[2]) as unknown as SocialFeedPost[]);
 
    if (feedMode === 'following') {
      ranked = ranked.filter(post => post.author_id === profile?.id || socialFollowingIds.includes(post.author_id));

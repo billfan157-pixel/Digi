@@ -2,11 +2,11 @@ import { useState, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { appQueryKeys } from '@/lib/queryKeys';
+import type { SocialFeedPost } from '@/models';
 import {
   DEFAULT_SOCIAL_PROFILE_STATS,
   isMissingSocialSchemaError,
   type CloseCircleMember,
-  type SocialFeedPost,
 } from '../lib/social';
 import { useSocialComposer } from './useSocialComposer';
 import {
@@ -143,7 +143,7 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
 
   const handleToggleLikePost = useCallback(async (post: SocialFeedPost) => {
     if (!profile?.id) return;
-    const nextLiked = !post.likedByMe;
+    const nextLiked = !post.cheeredByMe;
     likeMutation.mutate({ postId: post.id, liked: nextLiked, userId: profile.id });
   }, [profile?.id, likeMutation]);
 

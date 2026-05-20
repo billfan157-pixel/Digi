@@ -1,4 +1,3 @@
-import React from 'react';
 import { Droplets, BellRing, Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
 

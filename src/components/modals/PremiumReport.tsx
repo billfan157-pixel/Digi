@@ -1,4 +1,3 @@
-import React from 'react';
 import { Line, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ComposedChart, CartesianGrid } from 'recharts';
 import { Sparkles, TrendingUp, BrainCircuit } from 'lucide-react';
 

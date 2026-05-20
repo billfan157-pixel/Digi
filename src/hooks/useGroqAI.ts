@@ -4,13 +4,14 @@ import {
   generateHydrationAdvice, 
   sendAiChatMessage, 
   streamAiChatMessage,
+  fetchChatHistory,
   type AiChatMessage, 
   type DigiwellAiContext,
   type AiAdviceResponse 
 } from '../lib/ai';
 import { useBehaviorAnalysis } from './useBehaviorAnalysis';
 
-export interface UseGeminiAIProps {
+export interface UseGroqAIProps {
   profile: { id?: string; nickname?: string; goal?: string; activity?: string; climate?: string } | null;
   waterIntake: number;
   waterGoal: number;
@@ -27,7 +28,7 @@ export interface UseGeminiAIProps {
   setShowHistory?: (show: boolean) => void;
 }
 
-function buildContextHash(p: UseGeminiAIProps): string {
+function buildContextHash(p: UseGroqAIProps): string {
   // Include event titles (first 30 chars each) để invalidate khi calendar thay đổi
   const calHash = (p.calendarEvents ?? [])
     .slice(0, 10)
@@ -56,12 +57,14 @@ type ChatWaterAction = {
   name: string;
 };
 
-export function useGeminiAI(props: UseGeminiAIProps) {
+export function useGroqAI(props: UseGroqAIProps) {
   const profile = props.profile;
 
-  // [BÍ QUYẾT TỐI ƯU] Dùng Ref để lưu trữ props mới nhất mà KHÔNG kích hoạt re-render
   const propsRef = useRef(props);
   useEffect(() => { propsRef.current = props; });
+
+  const abortRef = useRef<AbortController | null>(null);
+  const hasLoadedHistoryRef = useRef(false);
 
   // --- [1] STATES ---
   const [aiResponse, setAiResponse] = useState<AiAdviceResponse | null>(null);
@@ -82,13 +85,23 @@ export function useGeminiAI(props: UseGeminiAIProps) {
   const patternsRef = useRef(patterns);
   useEffect(() => { patternsRef.current = patterns; }, [patterns]);
 
-  // Clean chat khi logout
+  // Reset + load history khi profile thay đổi
   useEffect(() => {
     if (!profile?.id) {
       setChatMessages([defaultWelcomeMessage]);
       setAiResponse(null);
       hasFetchedInitialAdvice.current = false;
+      hasLoadedHistoryRef.current = false;
+      return;
     }
+    if (hasLoadedHistoryRef.current) return;
+    hasLoadedHistoryRef.current = true;
+
+    fetchChatHistory(profile.id).then((messages) => {
+      if (messages.length > 0) {
+        setChatMessages(messages);
+      }
+    });
   }, [profile?.id]);
 
   // --- [2] BUILD CONTEXT ---
@@ -243,6 +256,9 @@ export function useGeminiAI(props: UseGeminiAIProps) {
     if (e) e.preventDefault();
     if (!chatInput.trim() || isChatLoading || isChattingRef.current) return;
 
+    // Hủy stream cũ nếu có
+    abortRef.current?.abort();
+
     isChattingRef.current = true;
     const userText = chatInput.trim();
     setChatMessages((prev) => [...prev, { role: 'user', content: userText }]);
@@ -256,6 +272,9 @@ export function useGeminiAI(props: UseGeminiAIProps) {
 
       setChatMessages((prev) => [...prev, { role: 'model', content: '' }]);
 
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       try {
         await streamAiChatMessage(userText, chatContext, (event) => {
           if (event.type === 'delta') {
@@ -266,7 +285,7 @@ export function useGeminiAI(props: UseGeminiAIProps) {
           } else if (event.type === 'error') {
             throw new Error(event.error);
           }
-        });
+        }, controller.signal);
       } catch {
         const { reply, waterAction } = await sendAiChatMessage(userText, chatContext);
         streamedReply = reply;
@@ -285,6 +304,7 @@ export function useGeminiAI(props: UseGeminiAIProps) {
       toast.error('AI đang bận hớp nước, đệ thử lại sau nhé!');
       updateLastModelMessage(() => 'AI đang bận một chút, bạn thử lại sau nhé.');
     } finally {
+      abortRef.current = null;
       setIsChatLoading(false);
       setTimeout(() => { isChattingRef.current = false; }, 1000);
     }

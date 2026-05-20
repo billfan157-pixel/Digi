@@ -75,7 +75,13 @@ function dispatchSseBlock(block: string, onEvent: (event: AiGatewayStreamEvent) 
 
   const eventType = eventLine.slice(6).trim();
   const rawData = dataLines.join('\n');
-  const payload = JSON.parse(rawData) as Record<string, unknown>;
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(rawData) as Record<string, unknown>;
+  } catch {
+    return;
+  }
 
   if (eventType === 'delta') {
     onEvent({ type: 'delta', text: String(payload.text ?? '') });
@@ -92,6 +98,7 @@ export async function invokeAiGatewayStream(
   action: AiGatewayAction,
   payload: Record<string, unknown>,
   onEvent: (event: AiGatewayStreamEvent) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   if (!isSupabaseConfigured || !supabase) {
     throw new Error('Cloud AI chưa được cấu hình.');
@@ -100,6 +107,7 @@ export async function invokeAiGatewayStream(
   const { data, error } = await supabase.functions.invoke<Response>('ai-gateway', {
     body: { action, ...payload, stream: true },
     headers: { Accept: 'text/event-stream' },
+    signal,
   });
 
   if (error) {
@@ -124,7 +132,16 @@ export async function invokeAiGatewayStream(
   const decoder = new TextDecoder();
   let buffer = '';
 
+  if (signal?.aborted) {
+    reader.cancel();
+    return;
+  }
+
   while (true) {
+    if (signal?.aborted) {
+      reader.cancel();
+      return;
+    }
     const { value, done } = await reader.read();
     if (done) break;
 

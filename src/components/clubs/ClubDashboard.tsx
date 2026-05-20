@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { FormEvent } from 'react';
 import { supabase } from "../../lib/supabase";
+import { fetchActiveChallenge, fetchChallengeProgress, createChallenge, type ClubChallenge, type ChallengeProgress } from "../../lib/clubChallenges";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Trophy,
@@ -75,6 +77,7 @@ export default function ClubDashboard({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDisbanding, setIsDisbanding] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [managingMember, setManagingMember] = useState<Leader | null>(null);
   const [adminLogs, setAdminLogs] = useState<AdminLog[]>([]);
   const [clubLevel, setClubLevel] = useState(1);
@@ -82,11 +85,90 @@ export default function ClubDashboard({
   const [editingClubMinLevel, setEditingClubMinLevel] = useState(1);
   const [editingClubName, setEditingClubName] = useState("");
   const [editingClubDesc, setEditingClubDesc] = useState("");
-  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // STATE CHUYỂN TAB
   const [tab, setTab] = useState<'overview' | 'chat' | 'admin'>('overview');
+
+  const [challenge, setChallenge] = useState<ClubChallenge | null>(null);
+  const [challengeProgress, setChallengeProgress] = useState<ChallengeProgress | null>(null);
+  const [showCreateChallenge, setShowCreateChallenge] = useState(false);
+  const [challengeTitle, setChallengeTitle] = useState('');
+  const [challengeTargetMl, setChallengeTargetMl] = useState(100000);
+  const [challengeDays, setChallengeDays] = useState(7);
+  const [isCreatingChallenge, setIsCreatingChallenge] = useState(false);
+
+  const handleOpenEditModal = () => {
+    setEditingClubName(club?.name ?? "");
+    setEditingClubDesc(club?.description ?? "");
+    setEditingClubMinLevel(club?.min_level_required ?? 1);
+    setShowEditModal(true);
+  };
+
+  const handleSetRole = async (userId: string, role: 'deputy' | 'member') => {
+    const { error } = await supabase
+      .from('club_members')
+      .update({ role })
+      .eq('user_id', userId)
+      .eq('club_id', clubId);
+    if (error) {
+      toast.error('Cập nhật vai trò thất bại');
+    } else {
+      toast.success('Cập nhật vai trò thành công');
+      fetchDashboard();
+    }
+  };
+
+  const handleKickMember = async (userId: string, nickname: string) => {
+    if (!window.confirm(`Bạn có chắc muốn loại ${nickname || 'thành viên'} ra khỏi bang hội?`)) return;
+    const { error } = await supabase
+      .from('club_members')
+      .delete()
+      .eq('user_id', userId)
+      .eq('club_id', clubId);
+    if (error) {
+      toast.error('Loại thành viên thất bại');
+    } else {
+      toast.success('Thành viên đã được loại ra');
+      fetchDashboard();
+    }
+  };
+
+  const handleUpdateClub = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!club) return;
+    setIsUpdating(true);
+    const { error } = await supabase
+      .from('clubs')
+      .update({
+        name: editingClubName,
+        description: editingClubDesc,
+        min_level_required: editingClubMinLevel,
+      })
+      .eq('id', club.id);
+    setIsUpdating(false);
+    if (error) {
+      toast.error('Cập nhật bang hội thất bại');
+    } else {
+      toast.success('Cập nhật bang hội thành công');
+      setClub({ ...club, name: editingClubName, description: editingClubDesc, min_level_required: editingClubMinLevel });
+      setShowEditModal(false);
+    }
+  };
+
+  const handleDisbandClub = async () => {
+    if (!club) return;
+    if (!window.confirm('Bạn có chắc muốn giải tán bang hội? Hành động này không thể hoàn tác.')) return;
+    setIsDisbanding(true);
+    const { error } = await supabase.from('clubs').delete().eq('id', club.id);
+    setIsDisbanding(false);
+    if (error) {
+      toast.error('Giải tán bang hội thất bại');
+    } else {
+      toast.success('Bang hội đã được giải tán');
+      onBack();
+    }
+  };
 
   const currentUserRole = useMemo(() => {
     return leaders.find(l => l.user_id === userId)?.role;
@@ -94,15 +176,13 @@ export default function ClubDashboard({
 
   const isAdmin = currentUserRole === 'owner' || currentUserRole === 'deputy';
 
-  const goal = 100000; // Default 100L goal — weekly_goal_ml column not in DB
+  const goal = challenge?.target_ml ?? 100000;
 
-  const totalMl = useMemo(() => {
-    return 0; // total_ml column not in club_members
-  }, []);
+  const totalMl = challengeProgress?.total_ml ?? 0;
 
   const progress = Math.min((totalMl / goal) * 100, 100);
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -154,168 +234,19 @@ export default function ClubDashboard({
         setClubLevel(1); // Fallback
       }
 
+      const activeChallenge = await fetchActiveChallenge(clubId);
+      setChallenge(activeChallenge);
+      if (activeChallenge) {
+        const progress = await fetchChallengeProgress(clubId, activeChallenge.start_date, activeChallenge.end_date);
+        setChallengeProgress(progress);
+      }
+
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra khi tải dữ liệu bang hội.");
-      toast.error("Không thể tải dashboard bang hội.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const logAdminAction = async (message: string) => {
-    await supabase.from('club_admin_logs').insert({
-      club_id: clubId,
-      actor_id: userId,
-      message: message,
-    });
-  };
-
-  const handleOpenEditModal = () => {
-    if (!club) return;
-    setEditingClubName(club.name);
-    setEditingClubDesc(club.description || "");
-    setEditingClubMinLevel(club.min_level_required || 1);
-    setShowEditModal(true);
-  };
-
-  const handleUpdateClub = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!club || userId !== club.owner_id) {
-      toast.error("Chỉ chủ bang mới có quyền này.");
-      return;
-    }
-
-    const trimmedName = editingClubName.trim();
-    const trimmedDesc = editingClubDesc.trim();
-
-    if (!trimmedName || trimmedName.length < 3) {
-      toast.error("Tên bang phải có ít nhất 3 ký tự.");
-      return;
-    }
-
-    setIsUpdating(true);
-    const toastId = toast.loading("Đang cập nhật thông tin bang...");
-
-    try {
-      const { error } = await supabase
-        .from('clubs')
-        .update({ name: trimmedName, description: trimmedDesc, min_level_required: editingClubMinLevel })
-        .eq('id', clubId);
-
-      if (error) throw error;
-
-      await logAdminAction(`đã cập nhật thông tin bang hội.`);
-      toast.success("Cập nhật thành công!", { id: toastId });
-      setShowEditModal(false);
-      // Cập nhật UI ngay lập tức
-      setClub(prev => prev ? { ...prev, name: trimmedName, description: trimmedDesc, min_level_required: editingClubMinLevel } : null);
-    } catch (err: unknown) {
-      toast.error("Lỗi: " + (err instanceof Error ? err.message : String(err)), { id: toastId });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleDisbandClub = async () => {
-    if (!club || !userId || userId !== club.owner_id) {
-      toast.error("Chỉ chủ bang mới có quyền giải tán bang.");
-      return;
-    }
-
-    const { confirmDialog } = await import('@/store/useConfirmDialog');
-    const ok = await confirmDialog({ title: 'Giải tán Bang hội', message: `Sếp có chắc chắn muốn giải tán bang "${club.name}" không? Hành động này không thể hoàn tác và sẽ xóa toàn bộ dữ liệu liên quan!`, confirmLabel: 'Giải tán', variant: 'danger' });
-    if (!ok) return;
-
-    setIsDisbanding(true);
-    const toastId = toast.loading("Đang tiến hành giải tán bang hội...");
-
-    try {
-      // Sử dụng RPC để xóa trong một transaction duy nhất với ownership check
-      const { error: rpcError } = await supabase.rpc('disband_club', {
-        p_club_id: club.id,
-      });
-
-      if (rpcError) {
-        throw rpcError;
-      }
-
-      toast.success(`Bang hội "${club.name}" đã được giải tán.`, { id: toastId });
-      onBack(); // Quay về trang danh sách clubs
-    } catch (err: unknown) {
-      console.error("Lỗi giải tán bang:", err);
-      toast.error("Không thể giải tán bang lúc này: " + (err instanceof Error ? err.message : String(err)), { id: toastId });
-    } finally {
-      setIsDisbanding(false);
-    }
-  };
-
-  const handleSetRole = async (targetUserId: string, newRole: 'deputy' | 'member') => {
-    if (!club || userId !== club.owner_id) {
-      toast.error("Chỉ chủ bang mới có quyền này.");
-      return;
-    }
-    if (targetUserId === userId) {
-      toast.error("Sếp không thể tự thay đổi vai trò của mình.");
-      return;
-    }
-
-    const toastId = toast.loading(`Đang ${newRole === 'deputy' ? 'bổ nhiệm' : 'hạ chức'}...`);
-    try {
-      const { error } = await supabase
-        .from('club_members')
-        .update({ role: newRole })
-        .match({ club_id: clubId, user_id: targetUserId });
-
-      if (error) throw error;
-
-      // LOG ACTION
-      const targetUserName = managingMember?.profiles?.nickname || 'thành viên';
-      const message = newRole === 'deputy' 
-        ? `đã bổ nhiệm ${targetUserName} làm Phó bang`
-        : `đã hạ chức ${targetUserName} về làm thành viên`;
-      await logAdminAction(message);
-
-      toast.success("Cập nhật vai trò thành công!", { id: toastId });
-      setManagingMember(null); // Close the menu
-      fetchDashboard();
-    } catch (err: unknown) {
-      toast.error("Lỗi: " + (err instanceof Error ? err.message : String(err)), { id: toastId });
-    }
-  };
-
-  const handleKickMember = async (targetUserId: string, targetUserName: string) => {
-    const targetUser = leaders.find(l => l.user_id === targetUserId);
-    if (!club || !isAdmin) {
-      toast.error("Bạn không có quyền thực hiện hành động này.");
-      return;
-    }
-    if (targetUserId === userId) {
-      toast.error("Sếp không thể tự kick chính mình.");
-      return;
-    }
-    if (currentUserRole === 'deputy' && (targetUser?.role === 'owner' || targetUser?.role === 'deputy')) {
-      toast.error("Phó bang không thể mời người có chức vụ tương đương hoặc cao hơn ra khỏi bang.");
-      return;
-    }
-
-    const { confirmDialog } = await import('@/store/useConfirmDialog');
-    const ok = await confirmDialog({ title: 'Mời thành viên rời bang', message: `Bạn có chắc chắn muốn mời "${targetUserName}" ra khỏi bang không?`, confirmLabel: 'Xác nhận', variant: 'danger' });
-    if (!ok) return;
-
-    const toastId = toast.loading(`Đang xử lý...`);
-    try {
-      const { error } = await supabase.from('club_members').delete().match({ club_id: clubId, user_id: targetUserId });
-      if (error) throw error;
-
-      await logAdminAction(`đã mời ${targetUserName} ra khỏi bang`);
-
-      toast.success(`Đã mời "${targetUserName}" ra khỏi bang.`, { id: toastId });
-      setManagingMember(null);
-      fetchDashboard();
-    } catch (err: unknown) {
-      toast.error("Lỗi: " + (err instanceof Error ? err.message : String(err)), { id: toastId });
-    }
-  };
+  }, [clubId]);
 
   useEffect(() => {
     if (!clubId) return;
@@ -330,9 +261,8 @@ export default function ClubDashboard({
           table: "club_activity",
           filter: `club_id=eq.${clubId}`,
         },
-        (payload: Record<string, unknown>) => {
-          console.log('New activity received!', payload);
-          fetchDashboard(); // Refetch all for simplicity, can be optimized later
+        () => {
+          fetchDashboard();
         }
       )
       .on(
@@ -343,9 +273,8 @@ export default function ClubDashboard({
           table: "club_admin_logs",
           filter: `club_id=eq.${clubId}`,
         },
-        (payload: Record<string, unknown>) => {
-          console.log('New admin log received!', payload);
-          fetchDashboard(); // Refetch all
+        () => {
+          fetchDashboard();
         }
       )
       .subscribe();
@@ -353,7 +282,7 @@ export default function ClubDashboard({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [clubId]);
+  }, [clubId, fetchDashboard]);
 
   const getRankStyle = (index: number) => {
     if (index === 0) return "bg-yellow-500/10 border border-yellow-500/30";
@@ -440,6 +369,33 @@ export default function ClubDashboard({
               />
             </div>
           </div>
+
+          {challenge && (
+            <div className="mt-3 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+              <div className="flex items-center gap-2 text-xs text-amber-400 font-bold">
+                <Trophy size={14} />
+                Thử thách: {challenge.title}
+                <span className="text-amber-500/60 font-normal">
+                  ({new Date(challenge.start_date).toLocaleDateString('vi-VN')} - {new Date(challenge.end_date).toLocaleDateString('vi-VN')})
+                </span>
+              </div>
+              {challengeProgress && (
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {challengeProgress.member_count} thành viên tham gia, đạt {Math.round(progress)}%
+                  ({totalMl.toLocaleString()}/{goal.toLocaleString()} ml)
+                </p>
+              )}
+            </div>
+          )}
+
+          {isAdmin && !challenge && (
+            <button
+              onClick={() => setShowCreateChallenge(true)}
+              className="mt-3 w-full py-2 rounded-xl bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/30 text-amber-400 text-xs font-bold hover:from-amber-600/30 hover:to-orange-600/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <Trophy size={14} /> Tạo thử thách bang hội
+            </button>
+          )}
         </div>
 
         {/* BỘ NÚT CHUYỂN TAB */}
@@ -628,7 +584,107 @@ export default function ClubDashboard({
       </AnimatePresence>
 
       <AnimatePresence>
-        {showEditModal && (
+        {/* Create Challenge Modal */}
+      <AnimatePresence>
+        {showCreateChallenge && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCreateChallenge(false)} />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-sm bg-slate-900 border border-white/10 rounded-[2rem] p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-white font-black text-lg">Tạo thử thách</h3>
+                <button onClick={() => setShowCreateChallenge(false)} className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Tên thử thách</label>
+                  <input
+                    value={challengeTitle}
+                    onChange={(e) => setChallengeTitle(e.target.value)}
+                    placeholder="Ví dụ: Tuần lễ nước"
+                    className="w-full mt-1 bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-amber-500/50 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Mục tiêu (ml)</label>
+                  <input
+                    type="number"
+                    value={challengeTargetMl}
+                    onChange={(e) => setChallengeTargetMl(Number(e.target.value))}
+                    min={1000}
+                    step={1000}
+                    className="w-full mt-1 bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-amber-500/50 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Thời gian (ngày)</label>
+                  <div className="flex gap-2 mt-1">
+                    {[3, 7, 14].map(d => (
+                      <button
+                        key={d}
+                        onClick={() => setChallengeDays(d)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                          challengeDays === d ? 'bg-amber-500 text-slate-950' : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                        }`}
+                      >
+                        {d} ngày
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (!challengeTitle.trim() || challengeTargetMl < 1000) {
+                      toast.error('Vui lòng nhập tên và mục tiêu hợp lệ');
+                      return;
+                    }
+                    setIsCreatingChallenge(true);
+                    const result = await createChallenge({
+                      clubId,
+                      userId,
+                      title: challengeTitle.trim(),
+                      targetMl: challengeTargetMl,
+                      durationDays: challengeDays,
+                    });
+                    setIsCreatingChallenge(false);
+                    if (result) {
+                      toast.success('Đã tạo thử thách!');
+                      setShowCreateChallenge(false);
+                      setChallengeTitle('');
+                      setChallengeTargetMl(100000);
+                      setChallengeDays(7);
+                      fetchDashboard();
+                    } else {
+                      toast.error('Không thể tạo thử thách');
+                    }
+                  }}
+                  disabled={isCreatingChallenge}
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold text-sm shadow-xl active:scale-[0.97] transition-all disabled:opacity-50"
+                >
+                  {isCreatingChallenge ? 'Đang tạo...' : 'Tạo thử thách'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {showEditModal && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-6">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

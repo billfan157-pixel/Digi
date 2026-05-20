@@ -37,24 +37,7 @@ export type CloseCircleMember = SocialProfileSummary & {
   latest_at?: string | null;
 };
 
-export type SocialPostRow = {
-  id: string;
-  author_id: string;
-  content: string;
-  image_url: string | null;
-  post_kind: 'checkin' | 'status' | 'progress' | 'story' | 'milestone' | 'challenge';
-  visibility: 'public' | 'followers';
-  hydration_ml: number | null;
-  streak_snapshot: number | null;
-  like_count: number | null;
-  created_at: string;
-  expires_at: string | null;
-};
 
-export type SocialFeedPost = SocialPostRow & {
-  author: SocialProfileSummary;
-  likedByMe: boolean;
-};
 
 export const DEFAULT_SOCIAL_COMPOSER: SocialComposerState = {
   content: '',

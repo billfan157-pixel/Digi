@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { supabase } from '../lib/supabase';
+import { addPostCheer, pulsePost as pulsePostApi, dropWaterToPost, sendNudge as sendNudgeApi } from '../lib/social.service';
 import { useAppStore } from '../store/useAppStore';
 
 interface UseFeedInteractionsProps {
@@ -24,96 +25,89 @@ export function useFeedInteractions({
   const [dropsCount, setDropsCount] = useState(initialDropsCount);
   const [hasCheered, setHasCheered] = useState(initialCheered);
 
-  // ── Cheers (Cụng ly) ── Default action, replaces Like
-  const cheers = useCallback(async () => {
-    if (!currentUserId) return;
-    if (hasCheered) {
-      toast.error('Bạn đã cụng ly bài này rồi!');
-      return;
-    }
-
-    setHasCheered(true);
-    setCheersCount(prev => prev + 1);
-
-    const today = new Date().toISOString().slice(0, 10);
-    try {
-      const { error } = await supabase.rpc('action_cheers_post', {
-        p_post_id: postId,
-        p_author_id: postAuthorId,
-        p_local_date: today,
-      });
-      if (error) throw error;
-      // Fire-and-forget pulse update
-      void supabase.rpc('pulse_post', { p_post_id: postId }).then(
-        ({ error: pulseError }) => {
-          if (pulseError) console.error(pulseError);
-        },
-        console.error,
-      );
-    } catch {
+  const cheerMutation = useMutation({
+    mutationFn: () => {
+      const today = new Date().toISOString().slice(0, 10);
+      return addPostCheer(postId, postAuthorId, today);
+    },
+    onMutate: () => {
+      if (hasCheered) {
+        toast.error('Bạn đã cụng ly bài này rồi!');
+        throw new Error('already_cheered');
+      }
+      setHasCheered(true);
+      setCheersCount(prev => prev + 1);
+    },
+    onError: (err) => {
+      if ((err as Error).message === 'already_cheered') return;
       setHasCheered(false);
       setCheersCount(prev => prev - 1);
       toast.error('Lỗi khi cụng ly, thử lại sau!');
-    }
-  }, [currentUserId, postId, postAuthorId, hasCheered]);
+    },
+    onSuccess: () => {
+      pulsePostApi(postId);
+    },
+  });
 
-  // ── Drop (Châm nước) ── Donate 10-50ml from own progress
-  const drop = useCallback(async (amount: number = 25) => {
-    if (!currentUserId) return;
-    if (currentUserId === postAuthorId) {
-      toast.error('Không thể tự châm nước cho chính mình!');
-      return;
-    }
-
-    const waterAvailable = useAppStore.getState().waterIntake;
-    if (waterAvailable < amount) {
-      toast.error(`Bạn cần ít nhất ${amount}ml để châm nước cho bạn bè!`);
-      return;
-    }
-
-    const tid = toast.loading(`Đang châm ${amount}ml nước... 💧`);
-    try {
-      const { error } = await supabase.rpc('drop_water_to_post', {
-        p_post_id: postId,
-        p_from_user: currentUserId,
-        p_to_user: postAuthorId,
-        p_amount: amount,
-      });
-      if (error) throw error;
+  const dropMutation = useMutation({
+    mutationFn: (amount: number) => dropWaterToPost(postId, currentUserId!, postAuthorId, amount),
+    onMutate: (amount) => {
+      const waterAvailable = useAppStore.getState().waterIntake;
+      if (currentUserId === postAuthorId) {
+        toast.error('Không thể tự châm nước cho chính mình!');
+        throw new Error('self_drop');
+      }
+      if (waterAvailable < amount) {
+        toast.error(`Bạn cần ít nhất ${amount}ml để châm nước cho bạn bè!`);
+        throw new Error('insufficient_water');
+      }
+    },
+    onSuccess: (_, amount) => {
       setDropsCount(prev => prev + amount);
-      // Deduct from user's water today
       const current = useAppStore.getState().waterIntake;
       useAppStore.setState({ waterIntake: Math.max(0, current - amount) });
-      toast.success(`Đã châm ${amount}ml cho bạn! (-${amount}ml của bạn)`, { id: tid });
-    } catch {
-      toast.error('Chưa thể châm nước lúc này!', { id: tid });
-    }
-  }, [currentUserId, postId, postAuthorId]);
+      toast.success(`Đã châm ${amount}ml cho bạn! (-${amount}ml của bạn)`);
+    },
+    onError: (err) => {
+      if ((err as Error).message === 'self_drop' || (err as Error).message === 'insufficient_water') return;
+      toast.error('Chưa thể châm nước lúc này!');
+    },
+  });
 
-  // ── Nudge ── Lightweight accountability tap for close-circle posts
-  const donateFreeze = useCallback(async () => {
+  const nudgeMutation = useMutation({
+    mutationFn: () => sendNudgeApi(currentUserId!, postAuthorId, postId),
+    onMutate: () => {
+      if (currentUserId === postAuthorId) {
+        toast.error('Không thể tự nudge chính mình!');
+        throw new Error('self_nudge');
+      }
+    },
+    onSuccess: () => {
+      toast.success('Đã gửi Nudge.');
+    },
+    onError: (err) => {
+      if ((err as Error).message === 'self_nudge') return;
+      toast.error('Chưa thể gửi Nudge lúc này!');
+    },
+  });
+
+  // ── Cheers (Cụng ly) ──
+  const cheers = useCallback(() => {
     if (!currentUserId) return;
-    if (currentUserId === postAuthorId) {
-      toast.error('Không thể tự nudge chính mình!');
-      return;
-    }
+    cheerMutation.mutate();
+  }, [currentUserId, cheerMutation]);
 
-    const tid = toast.loading('Đang gửi Nudge...');
-    try {
-      const { error } = await supabase.from('nudges').insert({
-        from_user_id: currentUserId,
-        to_user_id: postAuthorId,
-        nudge_type: 'reminder',
-        related_entity_id: postId,
-        related_entity_type: 'post',
-        message: 'Uống nước đi, giữ nhịp nhé.',
-      });
-      if (error) throw error;
-      toast.success('Đã gửi Nudge.', { id: tid });
-    } catch {
-      toast.error('Chưa thể gửi Nudge lúc này!', { id: tid });
-    }
-  }, [currentUserId, postId, postAuthorId]);
+  // ── Drop (Châm nước) ──
+  const drop = useCallback((amount: number = 25) => {
+    if (!currentUserId) return;
+    dropMutation.mutate(amount);
+  }, [currentUserId, dropMutation]);
+
+  // ── Nudge ──
+  const donateFreeze = useCallback(() => {
+    if (!currentUserId) return;
+    nudgeMutation.mutate();
+  }, [currentUserId, nudgeMutation]);
 
   return {
     cheersCount,

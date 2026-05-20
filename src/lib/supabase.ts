@@ -63,6 +63,25 @@ if (!supabaseClient) {
 }
 export const supabase: SupabaseClient = supabaseClient;
 
+// ==========================================
+// THIẾT LẬP READ REPLICA CLIENT (Phase 2.1.B)
+// ==========================================
+const readUrl = import.meta.env.VITE_SUPABASE_READ_URL || supabaseUrl; // Fallback về primary nếu không có replica
+const globalAnyRead = globalThis as unknown as { __supabaseReadClient?: SupabaseClient };
+
+if (!globalAnyRead.__supabaseReadClient) {
+  globalAnyRead.__supabaseReadClient = createClient(readUrl, supabaseAnonKey, {
+    auth: { persistSession: false }, // Replica client không cần quản lý session
+    global: {
+      headers: {
+        'X-Client-Info': 'digiwell-mobile-read/1.0.0',
+        'Content-Type': 'application/json'
+      }
+    }
+  });
+}
+export const supabaseRead: SupabaseClient = globalAnyRead.__supabaseReadClient;
+
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
 export const checkSupabaseConfig = () => isSupabaseConfigured;

@@ -48,7 +48,8 @@ function useAnimatedScore(target: number, duration = 700) {
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [target]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, duration]);
 
   return Math.round(value);
 }

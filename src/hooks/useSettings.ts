@@ -198,7 +198,7 @@ export function useSettings(profile: AppProfile | null) {
     } finally {
       setIsSaving(false);
     }
-  }, [settings, profile?.id]);
+  }, [settings, profile]);
 
   return { settings, updateSettings, isSaving, lastSync, triggerHaptic };
 }

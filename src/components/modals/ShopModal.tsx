@@ -113,7 +113,7 @@ const ShopItemCard: React.FC<ShopItemCardProps> = ({ item, isOwned, isEquipped, 
       {/* Visual Preview - Smaller */}
       <div className="relative mb-2.5 z-10">
         {item.image_url ? (
-          <img src={item.image_url} alt={item.name} className="w-14 h-14 rounded-full object-cover border-2 border-white/10" />
+          <img src={item.image_url} alt={item.name} loading="lazy" decoding="async" className="w-14 h-14 rounded-full object-cover border-2 border-white/10" />
         ) : item.category === 'theme' && themeColor ? (
           <div
             className="relative w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden"

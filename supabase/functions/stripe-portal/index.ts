@@ -1,20 +1,20 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
 import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimit.ts';
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const Deno: any;
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const json = (body: Record<string, unknown>, status = 200, origin: string | null = null) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
+  });
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const origin = req.headers.get('Origin');
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'Method not allowed' }, 405, origin);
   }
 
   const authHeader = req.headers.get('Authorization') ?? '';
@@ -24,9 +24,7 @@ Deno.serve(async (req: Request) => {
   const appUrl = Deno.env.get('APP_URL') ?? 'https://digiwell-app.vercel.app';
 
   if (!stripeSecretKey) {
-    return new Response(JSON.stringify({ error: 'Stripe not configured' }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'Stripe not configured' }, 500, origin);
   }
 
   try {
@@ -36,19 +34,14 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Unauthorized' }, 401, origin);
     }
 
     const rateLimit = await checkRateLimit(`stripe-portal:${user.id}`, RATE_LIMITS.stripePortal);
     if (!rateLimit.allowed) {
-      return new Response(JSON.stringify({ error: `Rate limited. Retry in ${rateLimit.retryAfterSeconds}s` }), {
-        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: `Rate limited. Retry in ${rateLimit.retryAfterSeconds}s` }, 429, origin);
     }
 
-    // Get the user's Stripe customer ID from profiles
     const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
@@ -56,12 +49,9 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (!profile?.stripe_customer_id) {
-      return new Response(JSON.stringify({ error: 'No Stripe customer found. Subscribe first.' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'No Stripe customer found. Subscribe first.' }, 400, origin);
     }
 
-    // Create a Stripe Billing Portal session
     const body = new URLSearchParams({
       customer: profile.stripe_customer_id,
       return_url: `${appUrl}/settings`,
@@ -79,20 +69,14 @@ Deno.serve(async (req: Request) => {
     if (!resp.ok) {
       const errText = await resp.text();
       console.error('Stripe portal error:', errText);
-      return new Response(JSON.stringify({ error: 'Failed to create portal session' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Failed to create portal session' }, 500, origin);
     }
 
     const session = await resp.json();
-    return new Response(JSON.stringify({ url: session.url }), {
-      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ url: session.url }, 200, origin);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal error';
     console.error('stripe-portal error:', message);
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: message }, 500, origin);
   }
 });

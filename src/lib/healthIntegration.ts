@@ -10,10 +10,6 @@ function coerceAvailable(raw: unknown): boolean {
   return Boolean(raw);
 }
 
-/**
- * Xin quyền đọc bước chân và nhịp tim từ Apple Health / Health Connect.
- * Không hiển thị toast khi thành công (caller tự báo sau khi lưu prefs).
- */
 export async function requestHealthReadStepsAndHeartRate(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) {
     toast.info('Đồng bộ Apple Health / Health Connect chỉ dùng trên app iOS hoặc Android.');
@@ -52,4 +48,33 @@ export async function requestHealthReadStepsAndHeartRate(): Promise<boolean> {
   }
 }
 
-export const HEALTH_PREFS_CHANGED = 'digiwell-health-prefs-changed';
+export async function logWaterToHealth(amountMl: number): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+
+  try {
+    const availRes = await Health.isAvailable();
+    if (!coerceAvailable(availRes)) return;
+
+    try {
+      await Health.requestAuthorization({
+        write: ['dietaryWater' as HealthDataType],
+      });
+    } catch {
+      return;
+    }
+
+    try {
+      await Health.saveSample({
+        dataType: 'dietaryWater' as HealthDataType,
+        value: amountMl,
+        unit: 'ml' as never,
+        startDate: new Date().toISOString(),
+        endDate: new Date().toISOString(),
+      });
+    } catch (saveErr) {
+      console.warn('[healthIntegration] saveSample dietaryWater failed:', saveErr);
+    }
+  } catch (err) {
+    console.warn('[healthIntegration] logWaterToHealth error:', err);
+  }
+}

@@ -55,7 +55,7 @@ const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 16000;
 const RECONNECT_MAX_ATTEMPTS = 5;
 
-export const useSmartBottle = (userId: string | undefined, deviceId: string, capacity: number = 750) => {
+export const useSmartBottle = (userId: string | undefined, _deviceId: string, capacity: number = 750) => {
   // State machine
   const [connectionState, setConnectionState] = useState<BottleConnectionState>('idle');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -86,17 +86,17 @@ export const useSmartBottle = (userId: string | undefined, deviceId: string, cap
   useEffect(() => () => {
     mountedRef.current = false;
     cancelReconnect();
-  }, []);
+  }, [cancelReconnect]);
 
   // ── Reconnection engine ────────────────────────────────
 
-  const cancelReconnect = useCallback(() => {
+  function cancelReconnect() {
     if (reconnectTimerRef.current !== null) {
       clearTimeout(reconnectTimerRef.current);
       reconnectTimerRef.current = null;
     }
     reconnectAttemptRef.current = 0;
-  }, []);
+  }
 
   const scheduleReconnect = useCallback(() => {
     if (!mountedRef.current) return;
@@ -142,7 +142,7 @@ export const useSmartBottle = (userId: string | undefined, deviceId: string, cap
         scheduleReconnect();
       }
     }, delay);
-  }, []);
+  }, [cancelReconnect]);
 
   // ── Simulate periodic signal check (demo mode) ─────────
 

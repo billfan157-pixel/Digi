@@ -1,19 +1,25 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, X, Loader2 } from 'lucide-react';
 
 import { useUIStore } from '../../store/useUIStore';
 import { redirectToCheckout } from '../../lib/stripe';
 import { PREMIUM_HIGHLIGHTS, PRICING } from '../../config/premium';
+import { track } from '@/lib/analytics';
 
 export default function UpgradeModal() {
   const open = useUIStore(s => s.showPremiumModal);
-  const onClose = () => useUIStore.getState().setShowPremiumModal(false);
+  const onClose = () => { track('premium_upsell_dismissed'); useUIStore.getState().setShowPremiumModal(false); };
   const [loading, setLoading] = useState<'monthly' | 'yearly' | null>(null);
+
+  useEffect(() => {
+    if (open) track('premium_upsell_viewed');
+  }, [open]);
 
   if (!open) return null;
 
   const handleCheckout = async (plan: 'monthly' | 'yearly') => {
     setLoading(plan);
+    track('premium_clicked', { plan });
     await redirectToCheckout(plan);
     setLoading(null);
   };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Camera, Clock3, Droplets, Flame, Send, Swords, X } from 'lucide-react';
+import { Activity, Camera, Clock3, Droplets, Flame, Loader2, Send, Swords, X } from 'lucide-react';
 
 import { useModalStore } from '../../store/useModalStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -83,7 +83,7 @@ export default function GlobalModalManager() {
 
   return (
     <>
-      <React.Suspense fallback={null}>
+      <React.Suspense fallback={<div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60"><Loader2 size={28} className="animate-spin text-cyan-400" /></div>}>
         <HistoryModal 
           showHistory={showHistory} 
           setShowHistory={setShowHistory} 
@@ -246,7 +246,7 @@ export default function GlobalModalManager() {
       )}
 
       {/* OTHER MODALS */}
-      <React.Suspense fallback={null}>
+      <React.Suspense fallback={<div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60"><Loader2 size={28} className="animate-spin text-cyan-400" /></div>}>
         <UpgradeModal />
         <LevelUpModal />
         <ShopModal />

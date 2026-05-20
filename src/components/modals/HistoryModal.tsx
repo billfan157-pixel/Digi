@@ -1,4 +1,3 @@
-import React from 'react';
 import { History, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { WaterEntry } from '@/models';
@@ -29,7 +28,7 @@ export default function HistoryModal({ showHistory, setShowHistory, waterEntries
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             drag="y" dragConstraints={{ top: 0 }} dragElastic={0.2}
-            onDragEnd={(e, { offset, velocity }) => {
+            onDragEnd={(_e, { offset, velocity }) => {
               if (offset.y > 100 || velocity.y > 500) setShowHistory(false);
             }}
             className="relative w-full max-w-md bg-slate-900 border border-slate-700/50 rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[85vh]"

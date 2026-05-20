@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import {
   Users,
@@ -60,7 +60,7 @@ export default function ClubsView({ userId }: { userId: string }) {
   const [isCreating, setIsCreating] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!userId || userId === 'undefined') return;
 
     setLoading(true);
@@ -109,11 +109,11 @@ export default function ClubsView({ userId }: { userId: string }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
-    if (userId && userId !== 'undefined') fetchData();
-  }, [userId]);
+    fetchData();
+  }, [fetchData]);
 
   const handleJoin = async (clubId: string) => {
     setJoiningId(clubId);

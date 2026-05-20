@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function CountUp({ value }: { value: number }) {
   const [displayValue, setDisplayValue] = useState(value);
@@ -28,6 +28,7 @@ export default function CountUp({ value }: { value: number }) {
     }, frameRate);
 
     return () => clearInterval(counter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   return <span>{displayValue.toLocaleString('vi-VN')}</span>;

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Trophy, Edit2, Users, Plus } from 'lucide-react';
 import type { SocialProfileStats } from '../../lib/social';
 import type { Profile } from '../../models';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { BatteryFull, BatteryMedium, BatteryLow } from 'lucide-react';
 import type { RuleTrigger, RuleAction, AutomationRule } from './types';
 

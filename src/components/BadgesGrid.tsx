@@ -132,6 +132,8 @@ export default function BadgesGrid({ userId }: { userId: string }) {
                   <img
                     src={badge.icon}
                     alt={badge.name}
+                    loading="lazy"
+                    decoding="async"
                     className="w-12 h-12 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] animate-[floating_3s_ease-in-out_infinite]"
                     style={{ animationDelay: `${index * 0.2}s` }}
                   />

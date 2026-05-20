@@ -147,7 +147,7 @@ export function DiagnosticsPanel({ isConnected, batteryHealth, batteryCycleCount
                 <MetricCard icon={<Activity size={20} />} label="Health" value={`${batteryHealth}%`} hint={`Cycles: ${batteryCycleCount}`} accent="cyan" />
                 <MetricCard icon={<Zap size={20} />} label="Latency" value={latencyMs > 0 ? `${latencyMs}ms` : '--'} hint="BLE Response" accent="violet" />
                 <MetricCard icon={<Thermometer size={20} />} label="Temp" value={`${temperature}°C`} hint="Board Core" accent="amber" />
-                <MetricCard icon={<Wifi size={20} />} label="Signal" value={`${signalStrength}%`} hint="RSSI Strength" accent="emerald" />
+                <MetricCard icon={<Wifi size={20} />} label="Tín hiệu" value={`${signalStrength}%`} hint="Cường độ RSSI" accent="emerald" />
               </div>
               <div className="rounded-[2rem] border border-white/5 bg-slate-950/40 p-5">
                 <div className="flex items-center justify-between mb-4">

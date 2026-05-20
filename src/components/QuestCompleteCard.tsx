@@ -1,4 +1,3 @@
-import React from 'react';
 import { Trophy, Droplets, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 

@@ -26,9 +26,9 @@ export default function WeeklyReportCard({
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
               <Crown size={12} />
-              Premium report
+              Premium
             </div>
-            <h3 className="text-2xl font-black text-white">Weekly Hydration Report</h3>
+            <h3 className="text-2xl font-black text-white">Báo cáo Hydrat hóa Tuần</h3>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
               Mở khóa báo cáo AI theo tuần để xem tổng lượng nước, xu hướng cải thiện và khuyến nghị cá nhân hóa.
             </p>
@@ -72,7 +72,7 @@ export default function WeeklyReportCard({
         <div>
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200">
             <BarChart3 size={12} />
-            Weekly report
+            Báo cáo tuần
           </div>
           <h3 className="text-2xl font-black text-white">Báo cáo AI tuần này</h3>
           <p className="mt-2 text-sm text-slate-400">
@@ -109,7 +109,7 @@ export default function WeeklyReportCard({
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <div className="flex items-center gap-2 text-cyan-300">
               <Sparkles size={16} />
-              <p className="text-[11px] font-black uppercase tracking-[0.18em]">AI Analysis</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em]">Phân tích AI</p>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-slate-300">{report.aiAnalysis}</p>
           </div>
@@ -127,18 +127,18 @@ export default function WeeklyReportCard({
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Snapshot</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Tổng quan</p>
               <div className="mt-3 space-y-3 text-sm text-slate-300">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500">Xu hướng</span>
                   <span className="font-black text-white">{report.trend}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-500">Best day</span>
+                  <span className="text-slate-500">Ngày tốt nhất</span>
                   <span className="font-black text-white">{report.bestDay || '--'}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-500">Worst day</span>
+                  <span className="text-slate-500">Ngày kém nhất</span>
                   <span className="font-black text-white">{report.worstDay || '--'}</span>
                 </div>
               </div>

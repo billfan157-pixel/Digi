@@ -86,15 +86,21 @@ export default function ScheduleManager({
   const applyAiSchedule = () => {
     if (!aiSchedule || aiSchedule.length === 0) return;
 
-    const source = smartScheduleResult
-      ? smartScheduleResult.schedule
-      : aiSchedule.map(s => ({ time: s.time, amount: s.amount, note: s.note || '', isAdjusted: false }));
+    const source: Array<{ time: string; amount: number; note: string; isAdjusted?: boolean }> =
+      smartScheduleResult
+        ? smartScheduleResult.schedule
+        : aiSchedule.map((s: { time: string; amount: number; note?: string }) => ({
+            time: s.time,
+            amount: s.amount,
+            note: s.note || '',
+            isAdjusted: false,
+          }));
 
-    const mapped: ScheduleItem[] = source.map(s => ({
-      time: s.time,
-      amount: s.amount,
-      note: s.note || '',
-    }));
+    const mapped: ScheduleItem[] = source.map((s: { time: string; amount: number; note: string; isAdjusted?: boolean }) => ({
+    time: s.time,
+    amount: s.amount,
+    note: s.note || '',
+  }));
     setCustomSchedule(mapped);
     setIsEditingSchedule(true);
     

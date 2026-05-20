@@ -132,6 +132,7 @@ export function useSmartSchedule(
   totalAdjustedCount: number;
   hasEventsToday: boolean;
 } {
+  void waterGoal;
   return useMemo(() => {
     if (!baseSchedule || baseSchedule.length === 0) {
       return {
@@ -202,5 +203,5 @@ export function useSmartSchedule(
       totalAdjustedCount: adjustedCount,
       hasEventsToday: calendarEvents.length > 0,
     };
-  }, [baseSchedule, calendarEvents, waterGoal]);
+  }, [baseSchedule, calendarEvents]);
 }

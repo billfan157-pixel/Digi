@@ -4,7 +4,7 @@ function timeToMinutes(time: string): number {
   return (hours * 60) + minutes;
 }
 
-interface FeedPostLike {
+export interface FeedPostLike {
   author_id?: string;
   created_at?: string;
   likes?: number;
@@ -22,7 +22,7 @@ interface FeedPostLike {
   [key: string]: unknown;
 }
 
-interface FeedUserLike {
+export interface FeedUserLike {
   activity?: string;
   water_goal?: number;
   age?: number;

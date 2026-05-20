@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, BarChart2, Lock, Crown, Sparkles, Target, CheckCircle2, Flame, Droplets, TrendingUp, HeartPulse, Moon } from 'lucide-react';
 import CalendarView from '../../components/insight/CalendarView';
@@ -10,6 +9,8 @@ import { useBehaviorAnalysis } from '@/hooks/useBehaviorAnalysis';
 import { useContextAwareInsights } from '@/hooks/useContextAwareInsights';
 import { useWellnessData } from '@/hooks/useWellnessData';
 import type { CalendarEventItem } from '@/hooks/useCalendarSync';
+import WeeklyReportCard from '@/components/ui/WeeklyReportCard';
+import type { HealthReport } from '@/lib/aiReports';
 
 interface AnalyticsSectionProps {
   isPremium: boolean;
@@ -36,6 +37,9 @@ interface AnalyticsSectionProps {
   calendarEvents: CalendarEventItem[];
   weatherData: { temp?: number; humidity?: number; feelsLike?: number; status?: string } | null | undefined;
   isWeatherSynced: boolean;
+  weeklyReport: HealthReport | null;
+  isWeeklyReportLoading: boolean;
+  generateWeeklyReport: () => void;
 }
 
 export default function AnalyticsSection({
@@ -62,6 +66,9 @@ export default function AnalyticsSection({
   calendarEvents,
   weatherData,
   isWeatherSynced,
+  weeklyReport,
+  isWeeklyReportLoading,
+  generateWeeklyReport,
 }: AnalyticsSectionProps) {
   const daysInWeek = weeklyChartData.length || 7;
   const waterIntake = weeklyChartData.length > 0 ? weeklyChartData[weeklyChartData.length - 1].ml : 0;
@@ -116,6 +123,17 @@ export default function AnalyticsSection({
         </div>
       </div>
       
+      {/* Weekly Report Card */}
+      <section className="px-6">
+        <WeeklyReportCard
+          isPremium={isPremium}
+          report={weeklyReport}
+          isLoading={isWeeklyReportLoading}
+          onGenerate={generateWeeklyReport}
+          onUpgrade={() => setShowPremiumModal(true)}
+        />
+      </section>
+
       {/* Context-Aware Insights */}
       {contextInsights.length > 0 && (
         <section className="px-6">

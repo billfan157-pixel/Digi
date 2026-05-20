@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useCallback, useRef } from 'react';
 import { Swords, Loader2, Crown } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -36,17 +36,12 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
 
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 30 * 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const fetchArenaData = async () => {
-      if (!profile?.id) return;
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
+  const fetchArenaDataRef = useRef<() => Promise<void>>(async () => {});
+  const fetchArenaData = useCallback(async () => {
+    if (!profile?.id) return;
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
           .from('hydration_battles')
           .select(`
             *, 
@@ -76,9 +71,37 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
       } finally {
         setIsLoading(false);
       }
-    };
-    fetchArenaData();
   }, [profile?.id]);
+  fetchArenaDataRef.current = fetchArenaData;
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    const channel = supabase.channel(`battles:${profile.id}`)
+      .on('postgres_changes' as never, {
+        event: '*',
+        schema: 'public',
+        table: 'hydration_battles',
+        filter: `challenger_id=eq.${profile.id}`,
+      }, () => {
+        fetchArenaDataRef.current();
+      })
+      .on('postgres_changes' as never, {
+        event: '*',
+        schema: 'public',
+        table: 'hydration_battles',
+        filter: `opponent_id=eq.${profile.id}`,
+      }, () => {
+        fetchArenaDataRef.current();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.id]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30 * 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const activeBattles = battles.filter(b => b.status === 'active');
   const winRate = stats.wins + stats.losses > 0 ? Math.round((stats.wins / (stats.wins + stats.losses)) * 100) : 0;
@@ -160,6 +183,7 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
             profile={profile}
             now={now}
             onClose={() => setShowBattleDetail(null)}
+            onActionComplete={() => { fetchArenaDataRef.current(); }}
           />
         )}
       </AnimatePresence>

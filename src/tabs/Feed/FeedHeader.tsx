@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Award, Search, Swords, Users, Sparkles, TrendingUp, Image, Droplets } from 'lucide-react';
+import { Award, Search, Swords, Users, Sparkles, TrendingUp, Flame, Image, Droplets } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile } from '../../models';
 import type { FeedFilter, FeedMode } from './types';
@@ -22,6 +22,7 @@ interface FeedHeaderProps {
 const modeOptions: { key: FeedMode; label: string; icon: typeof TrendingUp }[] = [
   { key: 'smart', label: 'Smart', icon: Sparkles },
   { key: 'latest', label: 'Mới nhất', icon: TrendingUp },
+   { key: 'hot', label: 'Hot', icon: Flame as unknown as typeof TrendingUp },
   { key: 'following', label: 'Follow', icon: Users },
 ];
 

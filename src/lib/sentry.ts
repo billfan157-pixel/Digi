@@ -12,11 +12,11 @@ export function initSentry() {
     integrations: [
       browserTracingIntegration(),
       replayIntegration({
-        maskAllText: false,
-        blockAllMedia: false,
+        maskAllText: true,
+        blockAllMedia: true,
       }),
     ],
-    tracesSampleRate: import.meta.env.PROD ? 0.5 : 1.0,
+    tracesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
     replaysSessionSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
     replaysOnErrorSampleRate: 1.0,
     ignoreErrors: [
@@ -24,6 +24,14 @@ export function initSentry() {
       'Non-Error promise rejection captured with keys: code',
     ],
   });
+}
+
+export function setSentryUser(userId: string | undefined) {
+  if (userId) {
+    Sentry.setUser({ id: userId });
+  } else {
+    Sentry.setUser(null);
+  }
 }
 
 export { Sentry };

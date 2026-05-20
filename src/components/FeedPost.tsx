@@ -1,4 +1,3 @@
-import React from 'react';
 import { Heart, MessageCircle, Share2, MoreHorizontal } from 'lucide-react';
 
 export interface PostData {
@@ -83,7 +82,7 @@ export const FeedPost = ({ post, onLike, onComment, onShare }: FeedPostProps) =>
           <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{post.content}</p>
         )}
         {post.imageUrl && (
-          <img src={post.imageUrl} alt="Post attachment" className="w-full h-auto max-h-96 object-cover rounded-xl mt-3" />
+          <img src={post.imageUrl} alt="Post attachment" loading="lazy" decoding="async" className="w-full h-auto max-h-96 object-cover rounded-xl mt-3" />
         )}
       </div>
 

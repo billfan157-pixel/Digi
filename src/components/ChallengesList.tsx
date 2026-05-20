@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { Trophy, Target, Lock, CheckCircle2, Flame, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -34,7 +34,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('all');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!userId || userId === 'undefined') return;
     setLoading(true);
     try {
@@ -54,11 +54,11 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     fetchData();
-  }, [userId]);
+  }, [fetchData]);
 
   const handleJoin = async (challenge: Challenge) => {
     if (userPoints < challenge.stake_wp) {

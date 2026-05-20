@@ -115,8 +115,9 @@ export async function incrementClubIntake(params: {
 export async function insertClubActivity(params: {
   club_id: string;
   user_id: string;
-  activity_type: string;
+  type: string;
   message: string;
+  amount: number;
 }): Promise<void> {
   const { error } = await supabase.from('club_activity').insert(params);
   if (error) throw error;

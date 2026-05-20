@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useSocialData } from '@/hooks/useSocialData';
-import { DEFAULT_SOCIAL_PROFILE_STATS, type SocialFeedPost } from '@/lib/social';
+import type { SocialFeedPost } from '@/models';
+import { DEFAULT_SOCIAL_PROFILE_STATS } from '@/lib/social';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
@@ -73,7 +74,7 @@ describe('useSocialData — initial state', () => {
 
   it('handleToggleLikePost does not throw', () => {
     const { result } = renderHook(() => useSocialData({ profile: null }), { wrapper });
-    const post = { id: 'post-1', likedByMe: false, author_id: 'user-1', content: '', like_count: 0 } as unknown as SocialFeedPost;
+    const post = { id: 'post-1', cheeredByMe: false, author_id: 'user-1', content: '', like_count: 0 } as unknown as SocialFeedPost;
     expect(() => result.current.handleToggleLikePost(post)).not.toThrow();
   });
 });

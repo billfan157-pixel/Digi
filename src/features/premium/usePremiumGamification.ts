@@ -58,13 +58,18 @@ export function usePremiumGamification({
     for (let attempt = 0; attempt < attempts; attempt += 1) {
       const { data, error } = await supabase
         .from('profiles')
-        .select('subscription_tier, subscription_end')
+        .select('subscription_tier, subscription_end, grace_period_end')
         .eq('id', profile.id)
         .single();
 
       if (!error && data) {
+        const now = new Date();
         const endDate = data.subscription_end ? new Date(data.subscription_end) : null;
-        const premiumActive = data.subscription_tier === 'premium' && (!endDate || endDate > new Date());
+        const graceEnd = data.grace_period_end ? new Date(data.grace_period_end) : null;
+        const tierActive = data.subscription_tier === 'premium';
+        const withinEnd = !endDate || endDate > now;
+        const withinGrace = !!graceEnd && graceEnd > now;
+        const premiumActive = tierActive && (withinEnd || withinGrace);
 
         setIsPremium(premiumActive);
 
@@ -271,7 +276,7 @@ export function usePremiumGamification({
     const toastId = toast.loading('AI đang tạo báo cáo tuần...');
 
     try {
-      const report = await generateWeeklyReport(profile.id as string, {
+      const report = await generateWeeklyReport(profile.id as string, waterGoal, {
         nickname: profile.nickname || '',
         goal: profile.goal || '',
         activity: profile.activity || '',
@@ -286,7 +291,7 @@ export function usePremiumGamification({
     } finally {
       setIsWeeklyReportLoading(false);
     }
-  }, [isPremium, profile, setShowPremiumModal, watchData?.heartRate]);
+  }, [isPremium, profile, setShowPremiumModal, watchData?.heartRate, waterGoal]);
 
   return {
     showLevelUp,

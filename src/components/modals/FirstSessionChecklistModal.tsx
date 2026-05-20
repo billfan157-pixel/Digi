@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Droplets, Target, X } from 'lucide-react';
 

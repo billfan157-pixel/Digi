@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Swords, Clock, Coins, TrendingUp, X, Check } from 'lucide-react';
+import { Swords, Clock, Coins, TrendingUp, X, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '../../lib/supabase';
 import type { Battle, Profile } from '../../models';
 
 interface BattleDetailModalProps {
@@ -9,9 +10,11 @@ interface BattleDetailModalProps {
   profile: Profile | null;
   now: number;
   onClose: () => void;
+  onActionComplete: () => void;
 }
 
-const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, now, onClose }) => {
+const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, now, onClose, onActionComplete }) => {
+  const [isActing, setIsActing] = useState(false);
   const isChallenger = battle.challenger_id === profile?.id;
   const me = isChallenger ? battle.challenger : battle.opponent;
   const opponent = isChallenger ? battle.opponent : battle.challenger;
@@ -129,22 +132,52 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
           {battle.status === 'pending' && (
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  toast.error('Đã từ chối thách đấu');
-                  onClose();
+                onClick={async () => {
+                  if (!profile?.id) return;
+                  setIsActing(true);
+                  try {
+                    const { error } = await supabase.rpc('decline_battle', {
+                      p_user_id: profile.id,
+                      p_battle_id: battle.id,
+                    });
+                    if (error) throw error;
+                    toast.error('Đã từ chối thách đấu');
+                    onActionComplete();
+                    onClose();
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : 'Lỗi từ chối');
+                  } finally {
+                    setIsActing(false);
+                  }
                 }}
-                className="flex-1 py-4 rounded-2xl bg-slate-800 border border-white/5 text-slate-400 font-black text-sm active:scale-95 transition-all"
+                disabled={isActing}
+                className="flex-1 py-4 rounded-2xl bg-slate-800 border border-white/5 text-slate-400 font-black text-sm active:scale-95 transition-all disabled:opacity-50"
               >
-                Từ chối
+                {isActing ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Từ chối'}
               </button>
               <button
-                onClick={() => {
-                  toast.success('⚔️ Đã chấp nhận thách đấu!');
-                  onClose();
+                onClick={async () => {
+                  if (!profile?.id) return;
+                  setIsActing(true);
+                  try {
+                    const { error } = await supabase.rpc('accept_battle', {
+                      p_user_id: profile.id,
+                      p_battle_id: battle.id,
+                    });
+                    if (error) throw error;
+                    toast.success('⚔️ Đã chấp nhận thách đấu!');
+                    onActionComplete();
+                    onClose();
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : 'Lỗi chấp nhận');
+                  } finally {
+                    setIsActing(false);
+                  }
                 }}
-                className="flex-[2] py-4 rounded-2xl bg-white text-slate-900 font-black text-sm shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
+                disabled={isActing}
+                className="flex-[2] py-4 rounded-2xl bg-white text-slate-900 font-black text-sm shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Check size={18} /> Chấp nhận
+                {isActing ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18} /> Chấp nhận</>}
               </button>
             </div>
           )}

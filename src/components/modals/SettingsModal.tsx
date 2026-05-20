@@ -4,7 +4,8 @@ import {
   Camera, Activity, Droplets, Heart, Bell,
   MoonStar, Send, Smartphone, Ruler, CloudUpload, Fingerprint,
   FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Sparkles,
-  Crown, ExternalLink
+  Crown, ExternalLink, CloudSun, Skull, AlertTriangle, Key, Code, Copy, Check,
+  Globe, Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUIStore } from '../../store/useUIStore';
@@ -13,8 +14,9 @@ import { useSettings } from '../../hooks/useSettings';
 import { useBiometric } from '../../hooks/useBiometric';
 import { useDeleteAccount } from '../../hooks/useDeleteAccount';
 import type { DeleteOption } from '../../hooks/useDeleteAccount';
-import { registerPlugin } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 import Cropper from 'react-easy-crop';
+import AdminDashboardModal from './AdminDashboardModal';
 
 import type { AppProfile } from '@/services/profile.service';
 import { AppStorage } from '@/lib/storage';
@@ -24,13 +26,7 @@ import { profileSchema, formatZodErrors } from '@/lib/validations';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { usePremiumStatus } from '@/hooks/useIsPremium';
 import { supabase } from '@/lib/supabase';
-
-// Khai báo Plugin tự chế
-interface WidgetPluginType {
-  syncData: (data: { water_today: number; water_goal: number; themeColor: string }) => Promise<void>;
-}
-
-const WidgetPlugin = registerPlugin<WidgetPluginType>('WidgetPlugin');
+import { WidgetPlugin } from '@/lib/widgetService';
 
 // ================= BUTTON VARIANTS =================
 const btnIcon = "p-2 rounded-full hover:bg-slate-300 dark:hover:bg-white/10 active:scale-95 transition-all text-slate-700 dark:text-white/80";
@@ -53,7 +49,7 @@ const BottomSheetWrapper = ({ children, title, onClose }: { children: React.Reac
       drag="y" 
       dragConstraints={{ top: 0 }} 
       dragElastic={0.2}
-      onDragEnd={(e, { offset, velocity }) => { if (offset.y > 100 || velocity.y > 500) onClose() }}
+      onDragEnd={(_, { offset, velocity }) => { if (offset.y > 100 || velocity.y > 500) onClose() }}
       className="relative w-full max-h-[85vh] overflow-y-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/10 rounded-t-3xl p-6 pb-10 shadow-2xl flex flex-col custom-scrollbar"
     >
       <div className="w-12 h-1.5 bg-slate-300 dark:bg-white/20 rounded-full mx-auto mb-6" />
@@ -106,7 +102,9 @@ export default function SettingsModal() {
   const handleLogout = useAppStore(s => s.actions.handleLogout);
 
   const { settings, updateSettings, isSaving, lastSync, triggerHaptic } = useSettings(profile);
-  const [activeSheet, setActiveSheet] = useState<'none' | 'personal' | 'quiet' | 'privacy' | 'delete' | 'name' | 'widget' | 'wellness'>('none');
+  const [activeSheet, setActiveSheet] = useState<'none' | 'personal' | 'quiet' | 'privacy' | 'delete' | 'name' | 'widget' | 'wellness' | 'developer'>('none');
+  const [widgetSize, setWidgetSize] = useState<'small' | 'medium'>('small');
+  const [showAdmin, setShowAdmin] = useState(false);
   
   // ================= ĐÃ ĐỒNG BỘ TOÀN BỘ BIẾN VÀO ĐÂY =================
   // FIX: Khởi tạo state với giá trị mặc định hợp lệ (chuẩn tiếng Anh)
@@ -116,6 +114,186 @@ export default function SettingsModal() {
 
   const [draftQuiet, setDraftQuiet] = useState({ start: '22:00', end: '07:00' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ================= DEVELOPER PORTAL STATES & METHODS =================
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [deliveries, setDeliveries] = useState<any[]>([]);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [newWebhookUrl, setNewWebhookUrl] = useState('');
+  const [webhookEvents, setWebhookEvents] = useState<string[]>(['*']);
+  const [isLoadingDevData, setIsLoadingDevData] = useState(false);
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+
+  const loadDeveloperData = async () => {
+    if (!profile?.id) return;
+    setIsLoadingDevData(true);
+    try {
+      // 1. Fetch API Keys
+      const { data: keys } = await supabase
+        .from('public_api_keys')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setApiKeys(keys || []);
+
+      // 2. Fetch Webhook Subscriptions
+      const { data: subs } = await supabase
+        .from('webhook_subscriptions')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setSubscriptions(subs || []);
+
+      // 3. Fetch Webhook Deliveries
+      const { data: dels } = await supabase
+        .from('webhook_deliveries')
+        .select(`
+          id,
+          event_type,
+          response_status,
+          error_message,
+          delivered_at
+        `)
+        .order('delivered_at', { ascending: false })
+        .limit(10);
+      setDeliveries(dels || []);
+    } catch (err) {
+      console.error('Lỗi khi tải dữ liệu nhà phát triển:', err);
+    } finally {
+      setIsLoadingDevData(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeSheet === 'developer') {
+      loadDeveloperData();
+    }
+  }, [activeSheet]);
+
+  const handleCreateApiKey = async () => {
+    triggerHaptic();
+    if (!newKeyName.trim()) {
+      toast.error('Vui lòng nhập tên khóa API.');
+      return;
+    }
+    const toastId = toast.loading('Đang tạo khóa API...');
+    try {
+      const { data: newKey, error } = await supabase.rpc('create_api_key', {
+        p_name: newKeyName.trim()
+      });
+
+      if (error) throw error;
+      
+      setGeneratedKey(newKey);
+      setNewKeyName('');
+      toast.success('Tạo khóa API thành công!', { id: toastId });
+      loadDeveloperData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể tạo khóa API.', { id: toastId });
+    }
+  };
+
+  const handleDeleteApiKey = async (keyId: string) => {
+    triggerHaptic();
+    const { confirmDialog } = await import('@/store/useConfirmDialog');
+    const ok = await confirmDialog({
+      title: 'Thu hồi Khóa API',
+      message: 'Bạn chắc chắn muốn thu hồi khóa API này? Tất cả các thiết bị đang sử dụng khóa này sẽ mất quyền truy cập ngay lập tức.',
+      confirmLabel: 'Thu hồi',
+      variant: 'danger'
+    });
+    
+    if (!ok) return;
+    
+    const toastId = toast.loading('Đang thu hồi...');
+    try {
+      const { error } = await supabase
+        .from('public_api_keys')
+        .delete()
+        .eq('id', keyId);
+
+      if (error) throw error;
+      
+      toast.success('Đã thu hồi khóa API thành công.', { id: toastId });
+      setGeneratedKey(null);
+      loadDeveloperData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể thu hồi khóa API.', { id: toastId });
+    }
+  };
+
+  const handleCreateSubscription = async () => {
+    triggerHaptic();
+    if (!newWebhookUrl.trim()) {
+      toast.error('Vui lòng nhập URL webhook.');
+      return;
+    }
+    
+    try {
+      new URL(newWebhookUrl);
+    } catch {
+      toast.error('Định dạng URL không hợp lệ. Vui lòng bắt đầu bằng http:// hoặc https://');
+      return;
+    }
+
+    const toastId = toast.loading('Đang đăng ký webhook...');
+    try {
+      const { error } = await supabase
+        .from('webhook_subscriptions')
+        .insert({
+          user_id: profile?.id,
+          url: newWebhookUrl.trim(),
+          events: webhookEvents,
+          is_active: true
+        });
+
+      if (error) throw error;
+
+      setNewWebhookUrl('');
+      setWebhookEvents(['*']);
+      toast.success('Đăng ký webhook thành công!', { id: toastId });
+      loadDeveloperData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể đăng ký webhook.', { id: toastId });
+    }
+  };
+
+  const handleDeleteSubscription = async (subId: string) => {
+    triggerHaptic();
+    const { confirmDialog } = await import('@/store/useConfirmDialog');
+    const ok = await confirmDialog({
+      title: 'Xóa đăng ký Webhook',
+      message: 'Bạn chắc chắn muốn xóa webhook này? DigiWell sẽ dừng gửi dữ liệu sự kiện đến URL này.',
+      confirmLabel: 'Xóa',
+      variant: 'danger'
+    });
+
+    if (!ok) return;
+
+    const toastId = toast.loading('Đang xóa...');
+    try {
+      const { error } = await supabase
+        .from('webhook_subscriptions')
+        .delete()
+        .eq('id', subId);
+
+      if (error) throw error;
+
+      toast.success('Đã xóa webhook thành công.', { id: toastId });
+      loadDeveloperData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể xóa webhook.', { id: toastId });
+    }
+  };
+
+  const handleCopy = (text: string, id: string) => {
+    triggerHaptic();
+    navigator.clipboard.writeText(text);
+    setCopiedKeyId(id);
+    toast.success('Đã sao chép vào bộ nhớ tạm.');
+    setTimeout(() => setCopiedKeyId(null), 2000);
+  };
+
 
   // ================= STATES CHO CROPPER =================
   const [cropImage, setCropImage] = useState<string | null>(null);
@@ -413,7 +591,7 @@ export default function SettingsModal() {
                       className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-60 disabled:active:scale-100"
                     >
                      <div className="flex items-center gap-3">
-                       <span className="text-2xl">🌤️</span>
+                       <CloudSun size={24} className="text-blue-400" />
                        <div className="text-left">
                          <p className="font-bold text-sm">Cập nhật theo thời tiết</p>
                          <p className="text-xs opacity-80">{isWeatherSyncing ? 'Đang đồng bộ...' : 'Điều chỉnh mục tiêu nước tự động'}</p>
@@ -577,6 +755,31 @@ export default function SettingsModal() {
                 </button>
               </div>
             </section>
+
+            {/* SECTION F: DEVELOPER PORTAL */}
+            <section>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 ml-4">Dành cho Nhà phát triển</h3>
+              <div className="bg-white/60 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden mb-6 shadow-sm">
+                <button 
+                  onClick={() => { 
+                    triggerHaptic(); 
+                    setActiveSheet('developer'); 
+                  }} 
+                  className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 active:bg-slate-200 dark:active:bg-white/10 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                      <Code size={18} />
+                    </div>
+                    <div className="text-left">
+                      <span className="text-slate-800 dark:text-white font-medium block">Cổng nhà phát triển (API & Webhooks)</span>
+                      <span className="text-[10px] text-slate-500">Tích hợp thiết bị thông minh & Webhook</span>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} className="text-slate-400 dark:text-white/40" />
+                </button>
+              </div>
+            </section>
           </div>
         </motion.div>
       )}
@@ -681,22 +884,75 @@ export default function SettingsModal() {
 
         {activeSheet === 'privacy' && (
           <BottomSheetWrapper key="section-privacy" title="Điều khoản & Bảo mật" onClose={closeSheet}>
-            <div className="text-slate-600 dark:text-white/70 text-sm leading-relaxed space-y-4 mb-6">
-              <p>DigiWell thu thập và lưu trữ các thông tin sinh trắc cơ bản (cân nặng, chiều cao) nhằm cá nhân hóa mục tiêu nước.</p>
-              <p>Dữ liệu được mã hóa và đồng bộ bảo mật lên máy chủ Supabase. Chúng tôi cam kết không bán dữ liệu sức khỏe của bạn cho bên thứ ba.</p>
-              <p>Các tính năng phân tích AI thông qua Google Gemini không sử dụng dữ liệu định danh trực tiếp của bạn để huấn luyện mô hình.</p>
+            <div className="text-slate-400 text-sm leading-relaxed space-y-4 mb-6 max-h-[60vh] overflow-y-auto pr-1">
+              <div>
+                <h4 className="text-white font-bold text-sm mb-2">1. Dữ liệu chúng tôi thu thập</h4>
+                <ul className="space-y-1.5 pl-4 text-xs list-disc marker:text-cyan-500/50">
+                  <li><strong className="text-white/80">Thông tin hồ sơ:</strong> biệt danh, tuổi, chiều cao, cân nặng, giới tính, mức vận động — để cá nhân hóa mục tiêu nước.</li>
+                  <li><strong className="text-white/80">Nhật ký nước:</strong> lượng nước uống, thời gian, loại đồ uống — để theo dõi tiến độ.</li>
+                  <li><strong className="text-white/80">Dữ liệu sức khỏe tùy chọn:</strong> nhịp tim, số bước (khi kết nối đồng hồ) — để phân tích tương quan.</li>
+                  <li><strong className="text-white/80">Nội dung xã hội:</strong> bài viết, bình luận, tin nhắn bang hội — bạn chủ động đăng.</li>
+                  <li><strong className="text-white/80">Dữ liệu thanh toán:</strong> lịch sử giao dịch Premium (qua Stripe) — không lưu thông tin thẻ.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-bold text-sm mb-2">2. Cách chúng tôi sử dụng dữ liệu</h4>
+                <ul className="space-y-1.5 pl-4 text-xs list-disc marker:text-cyan-500/50">
+                  <li>Tính toán mục tiêu nước cá nhân hóa và đưa ra khuyến nghị theo thời gian thực.</li>
+                  <li>Phân tích AI (qua Google Gemini) để tạo báo cáo tuần và lời khuyên — dữ liệu được ẩn danh hóa.</li>
+                  <li>Hiển thị bảng xếp hạng và tính năng xã hội (league, club, feed).</li>
+                  <li>Cải thiện sản phẩm dựa trên phân tích tổng hợp, không nhận dạng cá nhân.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-bold text-sm mb-2">3. Chia sẻ dữ liệu</h4>
+                <p className="text-xs">Chúng tôi <strong className="text-emerald-400">không bao giờ</strong> bán dữ liệu sức khỏe của bạn. Dữ liệu được chia sẻ với các bên xử lý sau:</p>
+                <ul className="space-y-1.5 pl-4 mt-1.5 text-xs list-disc marker:text-cyan-500/50">
+                  <li><strong className="text-white/80">Supabase</strong> (cơ sở dữ liệu) — lưu trữ mã hóa, tuân thủ SOC 2.</li>
+                  <li><strong className="text-white/80">Stripe</strong> (thanh toán) — chỉ xử lý giao dịch, không nhận dữ liệu sức khỏe.</li>
+                  <li><strong className="text-white/80">Google Gemini</strong> (AI) — phản hồi tạm thời, không huấn luyện mô hình từ dữ liệu của bạn.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-bold text-sm mb-2">4. Quyền của bạn</h4>
+                <ul className="space-y-1.5 pl-4 text-xs list-disc marker:text-cyan-500/50">
+                  <li><strong className="text-white/80">Xuất dữ liệu:</strong> bạn có thể tải toàn bộ dữ liệu cá nhân ở định dạng JSON từ mục Phân tích → Xuất.</li>
+                  <li><strong className="text-white/80">Xóa dữ liệu:</strong> bạn có thể xóa toàn bộ dữ liệu hoặc xóa vĩnh viễn tài khoản trong Cài đặt → Tài khoản & Pháp lý.</li>
+                  <li><strong className="text-white/80">Chỉnh sửa:</strong> bạn có thể cập nhật thông tin hồ sơ bất kỳ lúc nào.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-bold text-sm mb-2">5. Liên hệ</h4>
+                <p className="text-xs">Mọi thắc mắc về quyền riêng tư, vui lòng gửi email đến <span className="text-cyan-400">privacy@digiwell.app</span>.</p>
+                <p className="text-[10px] text-slate-500 mt-1">Cập nhật lần cuối: 20/05/2026</p>
+              </div>
             </div>
-            <button onClick={closeSheet} className="w-full py-3 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white font-semibold hover:bg-slate-300 dark:hover:bg-white/20 transition-colors">Đã hiểu</button>
+            <button onClick={closeSheet} className="w-full py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors">Đã hiểu</button>
           </BottomSheetWrapper>
         )}
 
         {activeSheet === 'widget' && (
           <BottomSheetWrapper key="section-widget" title="Widget Màn hình chính" onClose={closeSheet}>
-            <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-white/5 mb-6">
-              <p className="text-slate-900 dark:text-white font-bold mb-4">Xem trước Widget (1x1)</p>
-              
+            <div className="space-y-4 mb-6">
+              {/* Size + Theme selector */}
+              <div className="flex items-center justify-between">
+                <p className="text-white font-bold text-sm">Kích thước</p>
+                <div className="flex gap-2">
+                  {['small', 'medium'].map(s => (
+                    <button key={s} onClick={() => setWidgetSize(s as typeof widgetSize)}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${widgetSize === s ? 'bg-white/10 text-white' : 'text-white/40'}`}>
+                      {s === 'small' ? '1x1' : '2x1'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Widget Preview Mockup */}
-              <div className="w-full max-w-[160px] mx-auto aspect-square rounded-[2rem] bg-slate-900 border border-white/10 p-4 relative overflow-hidden shadow-2xl flex flex-col justify-between" style={{ borderColor: `${settings.themeColor}50` }}>
+              <div className={`mx-auto rounded-[2rem] bg-slate-900 border border-white/10 p-4 relative overflow-hidden shadow-2xl flex flex-col justify-between ${widgetSize === 'small' ? 'w-full max-w-[160px] aspect-square' : 'w-full max-w-[280px] aspect-[2/1]'}`} style={{ borderColor: `${settings.themeColor}50` }}>
                 <div className="absolute top-0 right-0 w-24 h-24 blur-2xl rounded-full pointer-events-none" style={{ backgroundColor: `${settings.themeColor}30` }} />
                 
                 <div className="flex justify-between items-start relative z-10">
@@ -705,23 +961,39 @@ export default function SettingsModal() {
                     <p className="text-xl font-black text-white leading-none">{(profile?.water_today || 0)}</p>
                     <p className="text-[8px] text-slate-400">/ {settings.waterGoal || 2000} ml</p>
                   </div>
-                  <Droplets size={16} style={{ color: settings.themeColor }} />
+                  <Droplets size={widgetSize === 'small' ? 16 : 20} style={{ color: settings.themeColor }} />
                 </div>
                 
-                {/* Progress bar */}
+                {widgetSize === 'medium' && (
+                  <p className="text-[9px] text-slate-500 mt-1 relative z-10">
+                    {Math.min(((profile?.water_today || 0) / (settings.waterGoal || 2000)) * 100, 100).toFixed(0)}% mục tiêu
+                  </p>
+                )}
+
                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mt-auto mb-3 relative z-10">
                   <div className="h-full transition-all" style={{ width: `${Math.min(((profile?.water_today || 0) / (settings.waterGoal || 2000)) * 100, 100)}%`, backgroundColor: settings.themeColor }} />
                 </div>
-                
-                {/* Quick Add Buttons */}
-                <div className="flex gap-1.5 relative z-10">
-                  <div className="flex-1 py-1.5 rounded-lg bg-white/10 text-center text-[9px] font-bold text-white">+100</div>
-                  <div className="flex-1 py-1.5 rounded-lg text-center text-[9px] font-bold text-slate-900 shadow-lg" style={{ backgroundColor: settings.themeColor }}>+250</div>
+
+                {widgetSize === 'medium' && (
+                  <div className="flex gap-1.5 relative z-10">
+                    <div className="flex-1 py-1.5 rounded-lg bg-white/10 text-center text-[9px] font-bold text-white">+100</div>
+                    <div className="flex-1 py-1.5 rounded-lg text-center text-[9px] font-bold text-slate-900 shadow-lg" style={{ backgroundColor: settings.themeColor }}>+250</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Theme Color Picker */}
+              <div>
+                <p className="text-white/60 text-xs mb-2">Màu sắc</p>
+                <div className="flex gap-2 flex-wrap">
+                  {['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#3b82f6', '#84cc16'].map(color => (
+                    <button key={color} onClick={() => { triggerHaptic(); updateSettings({ themeColor: color }); }}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${settings.themeColor === color ? 'border-white scale-110' : 'border-transparent'}`}
+                      style={{ backgroundColor: color }} />
+                  ))}
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-4 mb-6">
               <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
                 <h4 className="text-cyan-400 font-bold text-sm mb-2 flex items-center gap-2"><Smartphone size={16} /> Hướng dẫn thêm Widget</h4>
                 <ul className="text-slate-300 text-xs space-y-2 list-decimal pl-4">
@@ -731,6 +1003,7 @@ export default function SettingsModal() {
                   <li>Tìm <strong>DigiWell</strong> và chọn kích thước bạn thích</li>
                 </ul>
               </div>
+
               <button onClick={async () => { 
                 triggerHaptic(); 
                 AppStorage.setItem('digiwell_widget_sync', JSON.stringify({
@@ -739,14 +1012,18 @@ export default function SettingsModal() {
                   themeColor: settings.themeColor
                 }));
                 
-                // Đẩy dữ liệu xuyên qua màng Native iOS
-                try {
-                  await WidgetPlugin.syncData({
-                    water_today: Number(profile?.water_today) || 0,
-                    water_goal: settings.waterGoal || 2000,
-                    themeColor: settings.themeColor || '#06b6d4'
-                  });
-                } catch { console.log('Bỏ qua vì không chạy trên iOS Native'); }
+                if (Capacitor.isNativePlatform()) {
+                  try {
+                    await WidgetPlugin?.syncData({
+                      water_today: Number(profile?.water_today) || 0,
+                      water_goal: settings.waterGoal || 2000,
+                      themeColor: settings.themeColor || '#06b6d4'
+                    });
+                  } catch { console.log('Bỏ qua vì không chạy trên iOS Native'); }
+                } else {
+                  const { updateWidgetCache } = await import('@/lib/widgetService');
+                  if (profile?.id) updateWidgetCache(profile.id).catch(() => {});
+                }
 
                  toast.success('Đã đồng bộ giao diện và dữ liệu ra Widget!'); 
                  closeSheet(); 
@@ -912,6 +1189,7 @@ export default function SettingsModal() {
 
                {/* Info Card */}
                <div className="p-4 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-2xl">
+
                  <p className="text-xs text-emerald-300 leading-relaxed">
                    <strong>Wellness Score</strong> sẽ kết hợp Hydration + Sleep + Activity + Mood để tạo điểm số sức khỏe tổng hợp. Xem biểu đồ chi tiết ở tab Huấn luyện thông minh.
                  </p>
@@ -919,7 +1197,273 @@ export default function SettingsModal() {
              </div>
            </BottomSheetWrapper>
          )}
+
+         {activeSheet === 'developer' && (
+           <BottomSheetWrapper key="section-developer" title="Cài đặt Nhà phát triển" onClose={closeSheet}>
+             <div className="space-y-8 text-slate-800 dark:text-white">
+               
+               {/* 1. API Documentation Link */}
+               <div className="p-4 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-2xl flex items-center justify-between">
+                 <div>
+                   <h4 className="font-semibold text-sm">Tài liệu API công khai</h4>
+                   <p className="text-xs text-slate-500 dark:text-white/40">Xem đặc tả OpenAPI của các cổng kết nối dữ liệu</p>
+                 </div>
+                 <button 
+                   onClick={() => {
+                     triggerHaptic();
+                     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+                     window.open(`${supabaseUrl}/functions/v1/v1/openapi.json`, '_blank');
+                   }}
+                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-semibold transition-colors"
+                 >
+                   <span>Mở Spec</span>
+                   <ExternalLink size={12} />
+                 </button>
+               </div>
+
+               {/* 2. Public API Keys Section */}
+               <div className="space-y-4">
+                 <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
+                   <Key className="text-cyan-500" size={18} />
+                   <h3 className="font-bold text-sm uppercase tracking-wider">Khóa API công khai</h3>
+                 </div>
+
+                 {/* Generated API key display (Once) */}
+                 {generatedKey && (
+                   <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl space-y-2 relative overflow-hidden">
+                     <div className="absolute top-0 right-0 bg-emerald-505 text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-bl-lg">
+                       Mới tạo
+                     </div>
+                     <span className="text-xs text-emerald-400 font-bold block">Hãy sao chép khóa API bên dưới:</span>
+                     <div className="flex items-center gap-2 bg-slate-200 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-300 dark:border-white/5 select-all font-mono text-xs overflow-x-auto">
+                       <span className="flex-1 break-all select-all">{generatedKey}</span>
+                       <button 
+                         onClick={() => handleCopy(generatedKey, 'gen-key')} 
+                         className="p-1.5 rounded-md hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-white/80 active:scale-95 transition-all flex-shrink-0"
+                         title="Sao chép khóa API"
+                       >
+                         {copiedKeyId === 'gen-key' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                       </button>
+                     </div>
+                     <p className="text-[10px] text-yellow-400/80 leading-relaxed">
+                       ⚠️ <strong>Lưu ý quan trọng:</strong> Vì lý do bảo mật, khóa này sẽ chỉ được hiển thị một lần duy nhất. Hãy chắc chắn sao lưu nó trước khi đóng bảng cài đặt này.
+                     </p>
+                   </div>
+                 )}
+
+                 {/* Create API Key Form */}
+                 <div className="flex gap-2">
+                   <input 
+                     type="text" 
+                     value={newKeyName} 
+                     onChange={e => setNewKeyName(e.target.value)} 
+                     className="flex-1 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-sm outline-none focus:border-cyan-500 transition-colors bg-white dark:bg-slate-800" 
+                     placeholder="Tên khóa API, ví dụ: Smart Bottle..." 
+                   />
+                   <button 
+                     onClick={handleCreateApiKey} 
+                     className="px-4 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm transition-colors flex-shrink-0"
+                   >
+                     Tạo Khóa
+                   </button>
+                 </div>
+
+                 {/* Existing API Keys List */}
+                 <div className="space-y-2">
+                   {isLoadingDevData ? (
+                     <div className="flex justify-center p-4"><Loader2 className="animate-spin text-cyan-400" size={20} /></div>
+                   ) : apiKeys.length === 0 ? (
+                     <p className="text-center text-xs text-slate-500 dark:text-white/30 py-4">Chưa có khóa API nào được tạo.</p>
+                   ) : (
+                     apiKeys.map(key => (
+                       <div key={key.id} className="p-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl flex items-center justify-between gap-4">
+                         <div className="min-w-0">
+                           <span className="font-semibold text-sm block truncate">{key.name}</span>
+                           <span className="text-[10px] text-slate-500 block">Tạo: {new Date(key.created_at).toLocaleDateString()}</span>
+                           <span className="text-[10px] text-slate-500 block">Sử dụng cuối: {key.last_used_at ? new Date(key.last_used_at).toLocaleTimeString() : 'Chưa dùng'}</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <div className="font-mono text-[10px] text-slate-400 dark:text-white/30 bg-slate-200 dark:bg-slate-900 px-2 py-1 rounded">
+                             {key.api_key.substring(0, 12)}...
+                           </div>
+                           <button 
+                             onClick={() => handleDeleteApiKey(key.id)} 
+                             className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 active:scale-95 transition-all"
+                             title="Thu hồi khóa"
+                           >
+                             <Trash2 size={14} />
+                           </button>
+                         </div>
+                       </div>
+                     ))
+                   )}
+                 </div>
+               </div>
+
+               {/* 3. Webhook Subscriptions Section */}
+               <div className="space-y-4">
+                 <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
+                   <Globe className="text-cyan-500" size={18} />
+                   <h3 className="font-bold text-sm uppercase tracking-wider">Đăng ký Webhooks</h3>
+                 </div>
+
+                 {/* Create Webhook Form */}
+                 <div className="space-y-3">
+                   <input 
+                     type="text" 
+                     value={newWebhookUrl} 
+                     onChange={e => setNewWebhookUrl(e.target.value)} 
+                     className="w-full p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white text-sm outline-none focus:border-cyan-500 transition-colors bg-white dark:bg-slate-800" 
+                     placeholder="Webhook URL (bắt đầu bằng http:// hoặc https://)..." 
+                   />
+                   
+                   {/* Events Choice */}
+                   <div className="flex flex-col gap-2">
+                     <span className="text-xs font-semibold text-slate-500">Sự kiện gửi:</span>
+                     <div className="flex flex-wrap gap-2">
+                       {[
+                         { label: 'Tất cả (*)', value: '*' },
+                         { label: 'Uống nước mới', value: 'water_log.created' },
+                         { label: 'Sửa lượng nước', value: 'water_log.updated' },
+                         { label: 'Xóa uống nước', value: 'water_log.deleted' }
+                       ].map(evt => (
+                         <button
+                           key={evt.value}
+                           type="button"
+                           onClick={() => {
+                             triggerHaptic();
+                             if (evt.value === '*') {
+                               setWebhookEvents(['*']);
+                             } else {
+                               const newEvts = webhookEvents.filter(x => x !== '*');
+                               if (newEvts.includes(evt.value)) {
+                                 const updated = newEvts.filter(x => x !== evt.value);
+                                 setWebhookEvents(updated.length === 0 ? ['*'] : updated);
+                               } else {
+                                 setWebhookEvents([...newEvts, evt.value]);
+                               }
+                             }
+                           }}
+                           className={`px-3 py-1 rounded-full text-xs transition-colors border ${
+                             webhookEvents.includes(evt.value) 
+                               ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' 
+                               : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 bg-white dark:bg-slate-800'
+                           }`}
+                         >
+                           {evt.label}
+                         </button>
+                       ))}
+                     </div>
+                   </div>
+
+                   <button 
+                     onClick={handleCreateSubscription} 
+                     className="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm transition-colors"
+                   >
+                     Đăng Ký Webhook
+                   </button>
+                 </div>
+
+                 {/* Webhooks list */}
+                 <div className="space-y-2">
+                   {isLoadingDevData ? (
+                     <div className="flex justify-center p-4"><Loader2 className="animate-spin text-cyan-400" size={20} /></div>
+                   ) : subscriptions.length === 0 ? (
+                     <p className="text-center text-xs text-slate-500 dark:text-white/30 py-4">Chưa đăng ký webhook nào.</p>
+                   ) : (
+                     subscriptions.map(sub => (
+                       <div key={sub.id} className="p-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl space-y-2">
+                         <div className="flex items-center justify-between gap-4">
+                           <div className="min-w-0 flex-1">
+                             <span className="font-semibold text-sm block truncate text-cyan-400">{sub.url}</span>
+                             <span className="text-[10px] text-slate-500 block">Sự kiện: {sub.events.join(', ')}</span>
+                           </div>
+                           <button 
+                             onClick={() => handleDeleteSubscription(sub.id)} 
+                             className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 active:scale-95 transition-all"
+                             title="Xóa webhook"
+                           >
+                             <Trash2 size={14} />
+                           </button>
+                         </div>
+                         <div className="flex items-center gap-2 bg-slate-200 dark:bg-slate-900/60 p-2 rounded border border-slate-300 dark:border-white/5 text-[10px] font-mono">
+                           <span className="text-slate-500 flex-shrink-0">Secret:</span>
+                           <span className="flex-1 truncate">{sub.secret}</span>
+                           <button 
+                             onClick={() => handleCopy(sub.secret, sub.id)} 
+                             className="p-1 rounded hover:bg-slate-300 dark:hover:bg-white/10 text-slate-600 dark:text-white/50 active:scale-95 transition-all"
+                             title="Sao chép Secret"
+                           >
+                             {copiedKeyId === sub.id ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
+                           </button>
+                         </div>
+                       </div>
+                     ))
+                   )}
+                 </div>
+               </div>
+
+               {/* 4. Webhook Delivery Logs Section */}
+               <div className="space-y-4">
+                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-2">
+                   <div className="flex items-center gap-2">
+                     <Clock className="text-cyan-500" size={18} />
+                     <h3 className="font-bold text-sm uppercase tracking-wider">Nhật ký Webhooks</h3>
+                   </div>
+                   <button 
+                     onClick={() => { triggerHaptic(); loadDeveloperData(); }} 
+                     className="text-xs text-cyan-500 dark:text-cyan-400 hover:underline"
+                   >
+                     Làm mới
+                   </button>
+                 </div>
+
+                 <div className="space-y-2 max-h-[250px] overflow-y-auto custom-scrollbar">
+                   {deliveries.length === 0 ? (
+                     <p className="text-center text-xs text-slate-500 dark:text-white/30 py-4">Chưa có giao dịch webhook nào.</p>
+                   ) : (
+                     deliveries.map(del => {
+                       const isSuccess = del.response_status && del.response_status >= 200 && del.response_status < 300;
+                       return (
+                         <div key={del.id} className="p-2.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl flex items-start justify-between gap-3 text-xs">
+                           <div className="min-w-0">
+                             <div className="flex items-center gap-1.5 flex-wrap">
+                               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isSuccess ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                               <span className="font-semibold">{del.event_type}</span>
+                               <span className="text-[10px] text-slate-500">{new Date(del.delivered_at).toLocaleTimeString()}</span>
+                             </div>
+                             {del.error_message && (
+                               <p className="text-[10px] text-red-400 mt-1">{del.error_message}</p>
+                             )}
+                           </div>
+                           <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                             isSuccess 
+                               ? 'bg-emerald-500/10 text-emerald-400' 
+                               : 'bg-red-500/10 text-red-400'
+                           }`}>
+                             {del.response_status || 'ERR'}
+                           </div>
+                         </div>
+                       );
+                     })
+                   )}
+                 </div>
+               </div>
+
+             </div>
+           </BottomSheetWrapper>
+         )}
       </AnimatePresence>
+
+      {showAdmin && <AdminDashboardModal onClose={() => setShowAdmin(false)} />}
+
+      {/* Version tap for admin */}
+      <p
+        className="text-center text-[10px] text-slate-600 dark:text-white/10 pb-4 select-none cursor-default"
+        onDoubleClick={() => setShowAdmin(true)}
+      >
+        DigiWell v1.0
+      </p>
 
       {/* ================= MODAL CROP ẢNH (CROPPER) ================= */}
       <AnimatePresence>
@@ -977,7 +1521,7 @@ export default function SettingsModal() {
                   onClick={() => { setSelectedOption('data-only'); setDeleteStep('confirm'); }}
                   className="w-full p-4 text-left border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-200 transition-all group"
                 >
-                  <div className="font-semibold text-slate-900 dark:text-white group-hover:text-orange-600">🗑️ Xóa dữ liệu</div>
+                  <div className="font-semibold text-slate-900 dark:text-white group-hover:text-orange-600"><Trash2 size={16} className="inline mr-1.5" />Xóa dữ liệu</div>
                   <div className="text-xs text-slate-500 mt-1">Giữ lại tài khoản, xóa sạch bài viết, lịch sử...</div>
                 </button>
 
@@ -985,7 +1529,7 @@ export default function SettingsModal() {
                   onClick={() => { setSelectedOption('account-full'); setDeleteStep('confirm'); }}
                   className="w-full p-4 text-left border border-red-200 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-all group"
                 >
-                  <div className="font-semibold text-red-600 dark:text-red-400">☠️ Xóa vĩnh viễn tài khoản</div>
+                  <div className="font-semibold text-red-600 dark:text-red-400"><Skull size={16} className="inline mr-1.5" />Xóa vĩnh viễn tài khoản</div>
                   <div className="text-xs text-red-500/80 mt-1">Mất tài khoản, mất dữ liệu, không thể đăng nhập lại.</div>
                 </button>
 
@@ -1002,7 +1546,7 @@ export default function SettingsModal() {
             {deleteStep === 'confirm' && (
               <div className="space-y-4">
                 <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-700 dark:text-yellow-400">
-                  ⚠️ Cảnh báo: Bạn đang chọn <b>{selectedOption === 'account-full' ? 'XÓA VĨNH VIỄN TÀI KHOẢN' : 'XÓA TOÀN BỘ DỮ LIỆU'}</b>.
+                  <AlertTriangle size={16} className="inline mr-1 text-amber-500" /> Cảnh báo: Bạn đang chọn <b>{selectedOption === 'account-full' ? 'XÓA VĨNH VIỄN TÀI KHOẢN' : 'XÓA TOÀN BỘ DỮ LIỆU'}</b>.
                 </div>
 
                 <input

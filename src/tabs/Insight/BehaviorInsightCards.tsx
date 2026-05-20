@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Lightbulb, CheckCircle2, AlertCircle, TrendingUp, Info } from 'lucide-react';
 
@@ -45,7 +44,7 @@ export default function BehaviorInsightCards({ patterns }: BehaviorInsightCardsP
                   <h5 className="text-xs font-black text-white">{p.pattern}</h5>
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    <span className="text-[9px] font-bold text-cyan-500">AI Insight</span>
+                    <span className="text-[9px] font-bold text-cyan-500">Gợi ý AI</span>
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed font-medium">

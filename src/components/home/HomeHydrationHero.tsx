@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Bluetooth, AlertTriangle, RefreshCw } from 'lucide-react';
 import type { BottleConnectionState } from '@/hooks/useSmartBottle';

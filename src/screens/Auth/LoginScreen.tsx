@@ -53,7 +53,7 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
       onBiometricUnlock();
     }
     setIsCheckingBiometric(false);
-  }, [onBiometricUnlock, authenticateBiometric]);
+  }, [onBiometricUnlock, authenticateBiometric, t]);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

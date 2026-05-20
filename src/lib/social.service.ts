@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
-import type { CloseCircleMember, SocialDiscoverProfile, SocialFeedPost, SocialProfileStats } from '@/lib/social';
+import type { SocialFeedPost } from '@/models';
+import type { CloseCircleMember, SocialDiscoverProfile, SocialProfileStats } from '@/lib/social';
 
 export async function fetchCloseCircle(userId: string): Promise<CloseCircleMember[]> {
   const { data: rows, error } = await supabase!
@@ -87,7 +88,7 @@ export async function fetchSocialFeed(
 
   const profileMap = new Map((profilesRes.data || []).map((row: { id: string; nickname: string; avatar_url?: string | null; level?: number | null; water_today?: number | null; water_goal?: number | null }) => [row.id, {
     id: row.id, nickname: row.nickname || 'Người dùng DigiWell', avatar_url: row.avatar_url ?? null,
-    level: row.level ?? null, water_today: row.water_today ?? null, water_goal: row.water_goal ?? null,
+    level: row.level ?? undefined, water_today: row.water_today ?? undefined, water_goal: row.water_goal ?? undefined,
   }]));
   const likedPostIds = new Set((likesRes.data || []).map((row: { post_id: string }) => row.post_id));
 
@@ -109,7 +110,7 @@ export async function fetchSocialFeed(
       reference_id: (row.reference_id as string | null) ?? null,
       is_squad_highlight: Boolean(row.is_squad_highlight),
       author: profileMap.get(authorId) || { id: authorId, nickname: 'Người dùng DigiWell' },
-      likedByMe: likedPostIds.has(rowId),
+      cheeredByMe: likedPostIds.has(rowId),
     };
   });
 
@@ -185,5 +186,41 @@ export async function removeLike(postId: string, userId: string): Promise<void> 
     .delete()
     .eq('post_id', postId)
     .eq('user_id', userId);
+  if (error) throw error;
+}
+
+export async function addPostCheer(postId: string, authorId: string, localDate: string): Promise<void> {
+  const { error } = await supabase.rpc('action_cheers_post', {
+    p_post_id: postId,
+    p_author_id: authorId,
+    p_local_date: localDate,
+  });
+  if (error) throw error;
+}
+
+export async function pulsePost(postId: string): Promise<void> {
+  const { error } = await supabase.rpc('pulse_post', { p_post_id: postId });
+  if (error) console.error(error);
+}
+
+export async function dropWaterToPost(postId: string, fromUser: string, toUser: string, amount: number): Promise<void> {
+  const { error } = await supabase.rpc('drop_water_to_post', {
+    p_post_id: postId,
+    p_from_user: fromUser,
+    p_to_user: toUser,
+    p_amount: amount,
+  });
+  if (error) throw error;
+}
+
+export async function sendNudge(fromUserId: string, toUserId: string, postId: string): Promise<void> {
+  const { error } = await supabase.from('nudges').insert({
+    from_user_id: fromUserId,
+    to_user_id: toUserId,
+    nudge_type: 'reminder',
+    related_entity_id: postId,
+    related_entity_type: 'post',
+    message: 'Uống nước đi, giữ nhịp nhé.',
+  });
   if (error) throw error;
 }

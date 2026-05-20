@@ -11,6 +11,7 @@ import { queryClient } from '@/lib/queryClient';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { readCheckoutResult, clearCheckoutResult } from '@/lib/stripe';
 import { providerTokenStore } from '@/lib/providerTokenStore';
+import { setSentryUser } from '@/lib/sentry';
 
 function MissingConfigScreen() {
   return (
@@ -78,19 +79,18 @@ export default function AppBootstrap({ children }: { children: React.ReactNode }
       clearCheckoutResult();
     };
 
-    // ── WEB: kiểm tra URL params ngay khi mount (Stripe redirect) ──
+    // WEB: kiểm tra URL params ngay khi mount (Stripe redirect)
     const webResult = readCheckoutResult();
     if (webResult) {
       handleCheckoutResult(webResult);
     }
 
-    // ── NATIVE: lắng nghe deep link từ Stripe redirect ──
+    // NATIVE: lắng nghe deep link từ Stripe redirect
     if (Capacitor.isNativePlatform()) {
       const setupDeepLinks = async () => {
         await App.addListener('appUrlOpen', async (data) => {
           const url = new URL(data.url);
 
-          // Stripe checkout callback
           if (url.pathname.includes('checkout-success') || url.host === 'checkout-success') {
             await Browser.close();
             const sessionId = url.searchParams.get('session_id');
@@ -103,7 +103,6 @@ export default function AppBootstrap({ children }: { children: React.ReactNode }
             return;
           }
 
-          // Login/calendar callback
           if (url.host === 'login-callback' || url.pathname.includes('login-callback')) {
             await Browser.close();
             const hash = url.hash.substring(1);
@@ -131,6 +130,13 @@ export default function AppBootstrap({ children }: { children: React.ReactNode }
       };
       setupDeepLinks();
     }
+
+    // Sentry user context — track auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSentryUser(session?.user?.id);
+    });
+
+    return () => subscription?.unsubscribe();
   }, []);
 
   if (!isSupabaseConfigured || !supabase) {

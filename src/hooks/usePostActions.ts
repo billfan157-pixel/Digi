@@ -115,16 +115,27 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
       toast.error('Không thể xóa bài viết lúc này!', { id: tid });
       return false;
     }
-  }, []);
-
+  }, [currentUserId]);
+ 
   const reportPost = useCallback(async (postId: string) => {
-    const { confirmDialog } = await import('@/store/useConfirmDialog');
-    const ok = await confirmDialog({ title: 'Báo cáo bài viết', message: 'Báo cáo bài viết này vì chứa nội dung spam hoặc không phù hợp?', confirmLabel: 'Báo cáo', variant: 'danger' });
-    if (!ok) return false;
+    const reasons = [
+      '1. Spam / Quảng cáo',
+      '2. Nội dung không phù hợp',
+      '3. Quấy rối / Bắt nạt',
+      '4. Thông tin sai lệch',
+      '5. Bạo lực / Nội dung nhạy cảm',
+      '6. Lý do khác',
+    ];
+    const choice = window.prompt(`Báo cáo bài viết - Chọn lý do (1-6):\n\n${reasons.join('\n')}`, '1');
+    if (!choice) return false;
+    const idx = parseInt(choice, 10);
+    if (idx < 1 || idx > 6) return false;
+    const reasonMap = ['spam', 'inappropriate', 'harassment', 'misinformation', 'violence', 'other'];
+    const selectedReason = reasonMap[idx - 1];
 
     const tid = toast.loading('Đang gửi báo cáo đến hệ thống...');
     try {
-      const { error } = await supabase.from('reports').insert({ target_id: postId, target_type: 'post', reporter_id: currentUserId, reason: 'Inappropriate content / Spam' });
+      const { error } = await supabase.from('reports').insert({ target_id: postId, target_type: 'post', reporter_id: currentUserId, reason: selectedReason });
       if (error) throw error;
       toast.success('Đã ghi nhận báo cáo. Bài viết đã được ẩn khỏi Feed của bạn.', { id: tid });
       return true;
@@ -154,8 +165,8 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
       }
     }
     return null;
-  }, []);
-
+  }, [currentUserId]);
+ 
   const joinChallenge = useCallback(async (opponentId: string) => {
     if (!currentUserId || !opponentId) {
       toast.error("Vui lòng đăng nhập để thách đấu!");

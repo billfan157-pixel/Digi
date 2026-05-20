@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+
 import type { AppShellProps } from '@/app/AppShell';
 import { useAppTabProps } from '@/app/useAppTabProps';
 import type { TabType } from '@/components/layout/BottomNav';
@@ -104,6 +105,13 @@ export function useAppShellController(): AppShellProps {
     openSocialComposer,
   } = useAiSocialOrchestration();
 
+  const stableOpenSocialComposer = useCallback(
+    (kind: 'status' | 'progress' | 'story' | 'challenge') => openSocialComposer(kind),
+    [openSocialComposer]
+  );
+
+
+
   // ── Sync hydration data to Zustand store ──
   useEffect(() => {
     setAppState({
@@ -159,25 +167,36 @@ export function useAppShellController(): AppShellProps {
     }
   }, [profile?.id, weatherData, syncWeather]);
 
+  // Keep refs to latest function references to avoid stale closures in Zustand
+  const handleAddWaterRef = useRef(hydration.handleAddWater);
+  const handleDeleteEntryRef = useRef(hydration.handleDeleteEntry);
+  const handleEditEntryRef = useRef(hydration.handleEditEntry);
+  const handleLogoutRef = useRef(handleLogout);
+  const startFastingRef = useRef(hydration.startFasting);
+  const stopFastingRef = useRef(hydration.stopFasting);
+
+  useEffect(() => { handleAddWaterRef.current = hydration.handleAddWater; }, [hydration.handleAddWater]);
+  useEffect(() => { handleDeleteEntryRef.current = hydration.handleDeleteEntry; }, [hydration.handleDeleteEntry]);
+  useEffect(() => { handleEditEntryRef.current = hydration.handleEditEntry; }, [hydration.handleEditEntry]);
+  useEffect(() => { handleLogoutRef.current = handleLogout; }, [handleLogout]);
+  useEffect(() => { startFastingRef.current = hydration.startFasting; }, [hydration.startFasting]);
+  useEffect(() => { stopFastingRef.current = hydration.stopFasting; }, [hydration.stopFasting]);
+
+  // Set stable store actions once — they always call the latest function via refs
   useEffect(() => {
     setAppActions({
-      handleAddWater: hydration.handleAddWater,
-      handleDeleteEntry: hydration.handleDeleteEntry,
-      handleEditEntry: hydration.handleEditEntry,
-      handleLogout,
-    openSocialComposer,
-      startFasting: hydration.startFasting,
-      stopFasting: hydration.stopFasting,
+      handleAddWater: (...args) => handleAddWaterRef.current(...args),
+      handleDeleteEntry: (...args) => handleDeleteEntryRef.current(...args),
+      handleEditEntry: (...args) => handleEditEntryRef.current(...args),
+      handleLogout: (...args) => handleLogoutRef.current(...args),
+      openSocialComposer: stableOpenSocialComposer,
+      startFasting: (...args) => startFastingRef.current(...args),
+      stopFasting: (...args) => stopFastingRef.current(...args),
     });
-  }, [
-    handleLogout,
-    hydration.handleAddWater,
-    hydration.handleDeleteEntry,
-    hydration.handleEditEntry,
-    hydration.startFasting,
-    hydration.stopFasting,
-    openSocialComposer,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
 
   // ── Auto-navigate to home if bottle disconnects while on bottle tab ──
   useEffect(() => {
@@ -185,6 +204,7 @@ export function useAppShellController(): AppShellProps {
     if (activeTab === 'insight' && !isConnected && !isSyncing) {
       // Bottle demo redirect — show insight/coach instead
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, hydration.smartBottle?.isConnected, hydration.smartBottle?.isSyncing, setActiveTab]);
 
   // ── Sync tab props ──
@@ -193,6 +213,7 @@ export function useAppShellController(): AppShellProps {
     smartBottle: hydration.smartBottle,
     isExportingPDF: hydration.isExportingPDF,
     handleExportPDF: hydration.handleExportPDF,
+    handleExportJSON: hydration.handleExportJSON,
     handleExportCSV: hydration.handleExportCSV,
     geminiProps,
     weeklyReport: hydration.weeklyReport,
