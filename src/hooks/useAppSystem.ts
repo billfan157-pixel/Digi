@@ -1,5 +1,5 @@
 // src/hooks/useAppSystem.ts
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
@@ -143,7 +143,7 @@ export function useAppSystem() {
     return () => { isMounted = false; if (timeoutId) clearTimeout(timeoutId); sub?.subscription.unsubscribe(); };
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     const { confirmDialog } = await import('@/store/useConfirmDialog');
     const ok = await confirmDialog({ title: 'Đăng xuất', message: 'Xác nhận đăng xuất an toàn?', confirmLabel: 'Đăng xuất', variant: 'danger' });
     if (ok) {
@@ -152,7 +152,7 @@ export function useAppSystem() {
       if (profile?.id) clearUserSessionArtifacts(profile.id);
       await supabase!.auth.signOut();
     }
-  };
+  }, [profile?.id]);
 
   // ✅ Trả về đầy đủ các giá trị, bao gồm spread từ các hook con
   return {

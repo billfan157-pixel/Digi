@@ -177,7 +177,6 @@ export function useAppShellController(): AppShellProps {
     hydration.startFasting,
     hydration.stopFasting,
     openSocialComposer,
-    setAppActions,
   ]);
 
   // ── Auto-navigate to home if bottle disconnects while on bottle tab ──

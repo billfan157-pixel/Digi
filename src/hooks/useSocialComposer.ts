@@ -80,7 +80,7 @@ export function useSocialComposer({
     return supabase!.storage.from('social-media').getPublicUrl(filePath).data.publicUrl;
   };
 
-  const openSocialComposer = (kind: SocialComposerState['postKind'] = 'status') => {
+  const openSocialComposer = useCallback((kind: SocialComposerState['postKind'] = 'status') => {
     if (!profile?.id) {
       toast.error('Vui lòng đăng nhập lại để đăng bài.');
       return;
@@ -110,7 +110,7 @@ export function useSocialComposer({
     });
     setActiveTab?.('feed');
     useUIStore.getState().setShowSocialComposer(true);
-  };
+  }, [profile?.id, setActiveTab, waterIntake, waterGoal, streak, resetSocialComposer]);
 
   const closeSocialComposer = () => {
     resetSocialComposer();
