@@ -30,9 +30,24 @@ CREATE TABLE public.water_logs_y2026m06 PARTITION OF public.water_logs
     FOR VALUES FROM ('2026-06-01') TO ('2026-07-01');
 
 -- 4. Migrate dữ liệu (Cực nhanh vì data lúc này đang ít)
-INSERT INTO public.water_logs (id, user_id, amount, name, exp, day, created_at, drink_type)
-SELECT id, user_id, amount, name, exp, day, created_at, drink_type
-FROM public.water_logs_old;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+          AND table_name = 'water_logs_old' 
+          AND column_name = 'drink_type'
+    ) THEN
+        EXECUTE 'INSERT INTO public.water_logs (id, user_id, amount, name, exp, day, created_at, drink_type)
+                 SELECT id, user_id, amount, name, exp, day, created_at, drink_type
+                 FROM public.water_logs_old;';
+    ELSE
+        EXECUTE 'INSERT INTO public.water_logs (id, user_id, amount, name, exp, day, created_at, drink_type)
+                 SELECT id, user_id, amount, name, exp, day, created_at, NULL
+                 FROM public.water_logs_old;';
+    END IF;
+END $$;
 
 -- 5. Tạo lại các Index quan trọng trên bảng partition
 CREATE INDEX idx_water_logs_user_day ON public.water_logs (user_id, day);
