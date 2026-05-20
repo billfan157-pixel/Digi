@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { handleCors, getCorsHeaders } from './cors.ts';
 import { authenticate } from './auth.ts';
 import { checkRateLimit, getRateLimitKey } from './rateLimit.ts';

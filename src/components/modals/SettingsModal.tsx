@@ -94,6 +94,34 @@ async function getCroppedImg(
   });
 }
 
+interface PublicApiKey {
+  id: string;
+  name: string;
+  api_key: string;
+  created_at: string;
+  last_used_at: string | null;
+}
+
+interface WebhookSubscription {
+  id: string;
+  url: string;
+  secret: string;
+  events: string[];
+  is_active: boolean;
+  created_at: string;
+}
+
+interface WebhookDelivery {
+  id: string;
+  subscription_id: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  response_status: number | null;
+  response_body: string | null;
+  error_message: string | null;
+  created_at: string;
+}
+
 export default function SettingsModal() {
   const isOpen = useUIStore(s => s.showProfileSettings);
   const onClose = () => useUIStore.getState().setShowProfileSettings(false);
@@ -116,9 +144,9 @@ export default function SettingsModal() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ================= DEVELOPER PORTAL STATES & METHODS =================
-  const [apiKeys, setApiKeys] = useState<any[]>([]);
-  const [subscriptions, setSubscriptions] = useState<any[]>([]);
-  const [deliveries, setDeliveries] = useState<any[]>([]);
+  const [apiKeys, setApiKeys] = useState<PublicApiKey[]>([]);
+  const [subscriptions, setSubscriptions] = useState<WebhookSubscription[]>([]);
+  const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [newWebhookUrl, setNewWebhookUrl] = useState('');

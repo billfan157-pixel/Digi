@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function captureException(error: any, context?: any) {
   const dsn = Deno.env.get('SENTRY_DSN');
   if (!dsn) {

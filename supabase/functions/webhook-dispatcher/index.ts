@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
   let body;
   try {
     body = await req.json();
-  } catch (_e) {
+  } catch {
     return new Response(JSON.stringify({ error: 'Yêu cầu không hợp lệ. Body phải là JSON.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
