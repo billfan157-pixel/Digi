@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 import { useModalStore } from '../../store/useModalStore';
 import TypingIndicator from '../TypingIndicator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,7 +43,7 @@ export default function AiChatModal() {
           
         <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/50 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg shadow-cyan-500/20">🤖</div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg shadow-cyan-500/20"><Bot size={20} /></div>
             <div>
               <h3 className="text-white font-black leading-none">DigiCoach AI</h3>
               <p className="text-[10px] text-emerald-400 uppercase tracking-widest mt-1 italic">Groq • Llama Engine</p>

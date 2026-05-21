@@ -3,8 +3,7 @@ import { toDateStr } from './useWaterData';
 import { appQueryKeys } from '@/lib/queryKeys';
 import {
   fetchWaterLogs,
-  insertWaterLog,
-  processHydrationEvent,
+  recordHydrationEvent,
   deleteWaterLog,
   updateWaterLog,
 } from '@/services/water.service';
@@ -21,37 +20,9 @@ export function useWaterLogsQuery(userId: string | undefined, day?: string) {
   });
 }
 
-export function useAddWaterMutation() {
-  const queryClient = useQueryClient();
-
+export function useRecordHydrationMutation() {
   return useMutation({
-    mutationFn: async (params: {
-      userId: string;
-      amount: number;
-      name: string;
-      exp: number;
-      day: string;
-      created_at?: string;
-    }) => {
-      const data = await insertWaterLog({
-        user_id: params.userId,
-        amount: params.amount,
-        name: params.name,
-        exp: params.exp,
-        day: params.day,
-        created_at: params.created_at,
-      });
-      return data;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: appQueryKeys.waterLogs(variables.userId, variables.day) });
-    },
-  });
-}
-
-export function useProcessHydrationMutation() {
-  return useMutation({
-    mutationFn: processHydrationEvent,
+    mutationFn: recordHydrationEvent,
   });
 }
 

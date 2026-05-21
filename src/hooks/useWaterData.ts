@@ -6,14 +6,13 @@ import type { Profile, WaterLog } from '@/models';
 import { expGainedForWater } from '@/config/questConfig';
 import {
   useWaterLogsQuery,
-  useAddWaterMutation,
-  useProcessHydrationMutation,
+  useRecordHydrationMutation,
   useDeleteWaterMutation,
   useUpdateWaterMutation,
 } from './useWaterQueries';
 import { supabase } from '@/lib/supabase';
-import { fetchUserClubs, incrementClubIntake, insertClubActivity, findExistingWaterLog, insertWaterLog } from '@/services/water.service';
-import { queueItem, pushToQueue, readQueue, writeQueue, countQueue, clearQueue, migrateLegacyQueue, resolveStrategy, MAX_RETRIES } from '@/lib/offlineQueue';
+import { fetchUserClubs, incrementClubIntake, insertClubActivity } from '@/services/water.service';
+import { queueItem, pushToQueue, readQueue, writeQueue, countQueue, clearQueue, migrateLegacyQueue, resolveStrategy, MAX_RETRIES, initQueue } from '@/lib/offlineQueue';
 import { useNetworkState } from './useNetworkState';
 import type { QueueItem } from '@/lib/offlineQueue';
 
@@ -78,8 +77,7 @@ export function useWaterData(
     waterQueryRef.current = waterQuery;
   }, [waterQuery]);
 
-  const addWaterMutation = useAddWaterMutation();
-  const processHydrationMutation = useProcessHydrationMutation();
+  const recordHydrationMutation = useRecordHydrationMutation();
   const deleteWaterMutation = useDeleteWaterMutation();
   const updateWaterMutation = useUpdateWaterMutation();
 
@@ -110,9 +108,13 @@ export function useWaterData(
       setTimeout(() => setHasPendingCloudSync(false), 0);
       return;
     }
-    const migrated = migrateLegacyQueue(profile.id);
-    if (migrated > 0) devLog(`Migrated ${migrated} legacy queue items`);
-    setTimeout(() => setHasPendingCloudSync(countQueue(profile.id) > 0), 0);
+    initQueue(profile.id).then(() => {
+      const migrated = migrateLegacyQueue(profile.id);
+      if (migrated > 0) devLog(`Migrated ${migrated} legacy queue items`);
+      setTimeout(() => setHasPendingCloudSync(countQueue(profile.id) > 0), 0);
+    }).catch(err => {
+      devError('Failed to initialize offline queue:', err);
+    });
   }, [profile?.id]);
 
   // ── Fetch ──────────────────────────────────────────────
@@ -201,29 +203,32 @@ export function useWaterData(
         return;
       }
 
-      try {
-        const data = await addWaterMutation.mutateAsync({
-          userId: profile.id,
-          amount: actualAmount,
-          name,
-          exp,
-          day: today,
-          created_at: now,
-        });
+      // Stable client event id for idempotency (crash/replay protection)
+      const clientEventId = uuid();
 
-        // [QUAN TRỌNG] Gọi RPC để backend tự cộng EXP, Level và Coin an toàn tuyệt đối
-        await processHydrationMutation.mutateAsync({
+      try {
+        // Atomic: insert water_log + process hydration side effects in one server transaction
+        const result = await recordHydrationMutation.mutateAsync({
           p_user_id: profile.id,
           p_amount_ml: actualAmount,
           p_temp_c: tempC || null,
           p_exercise_mins: exerciseMins || 0,
           p_is_fasting: isFasting || false,
+          p_client_event_id: clientEventId,
+          p_name: name,
+          p_day: today,
+          p_created_at: now,
         });
 
-        // Swap tempId -> real ID, không cần refetch toàn bộ
-        setWaterEntries(prev =>
-          prev.map(e => e.id === tempId ? { ...e, id: data.id } : e),
-        );
+        const resultData = (result ?? {}) as Record<string, unknown>;
+        const realId = String(resultData.log_id ?? '');
+
+        // Swap tempId -> real ID
+        if (realId) {
+          setWaterEntries(prev =>
+            prev.map(e => e.id === tempId ? { ...e, id: realId } : e),
+          );
+        }
 
         toast.success(`Đã ghi nhận +${actualAmount}ml.`);
 
@@ -262,7 +267,7 @@ export function useWaterData(
         setHasPendingCloudSync(true);
       }
     },
-    [profile, onWaterLogged, efTempC, efExerciseMins, efIsFasting, addWaterMutation, processHydrationMutation],
+    [profile, onWaterLogged, efTempC, efExerciseMins, efIsFasting, recordHydrationMutation],
   );
 
   // ── Delete ─────────────────────────────────────────────
@@ -398,31 +403,18 @@ export function useWaterData(
           if (item.operation === 'add') {
             const p = item.payload as Record<string, unknown>;
             const createdAt = String(p.created_at ?? item.createdAt);
-            const existingLog = await findExistingWaterLog({
-              user_id: item.userId,
-              day: String(p.day ?? ''),
-              amount: Number(p.amount ?? 0),
-              name: String(p.name ?? 'Nuoc Loc'),
-              created_at: createdAt,
-            });
 
-            if (!existingLog) {
-              await insertWaterLog({
-                user_id: item.userId,
-                amount: Number(p.amount ?? 0),
-                name: String(p.name ?? 'Nuoc Loc'),
-                exp: Number(p.exp ?? 0),
-                day: String(p.day ?? ''),
-                created_at: createdAt,
-              });
-            }
-
-            await processHydrationMutation.mutateAsync({
+            // Atomic idempotent hydration: item.id serves as client_event_id
+            await recordHydrationMutation.mutateAsync({
               p_user_id: item.userId,
               p_amount_ml: Number(p.amount ?? 0),
               p_temp_c: (p.tempC as number) || null,
               p_exercise_mins: (p.exerciseMins as number) || 0,
               p_is_fasting: (p.isFasting as boolean) || false,
+              p_client_event_id: item.id,
+              p_name: String(p.name ?? 'Nuoc Loc'),
+              p_day: String(p.day ?? ''),
+              p_created_at: createdAt,
             });
           } else if (item.operation === 'delete' && item.entityId) {
             const p = item.payload as Record<string, unknown>;
@@ -441,10 +433,10 @@ export function useWaterData(
 
             const { data: serverData } = await supabase
               .from('water_logs')
-              .select('created_at')
+              .select('updated_at')
               .eq('id', item.entityId)
               .maybeSingle();
-            const resolution = resolveStrategy(item, { updated_at: serverData?.created_at });
+            const resolution = resolveStrategy(item, { updated_at: serverData?.updated_at });
             if (resolution !== 'server_wins') {
               await updateWaterMutation.mutateAsync({
                 id: item.entityId,
@@ -496,7 +488,7 @@ export function useWaterData(
       offlineSyncInFlightRef.current = false;
       setIsSyncing(false);
     }
-  }, [profile, onWaterLogged, fetchAllWater, processHydrationMutation, deleteWaterMutation, updateWaterMutation, isOnline]);
+  }, [profile, onWaterLogged, fetchAllWater, recordHydrationMutation, deleteWaterMutation, updateWaterMutation, isOnline]);
 
   useEffect(() => {
     if (hasPendingCloudSync && isOnline) {

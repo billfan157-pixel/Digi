@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from 'node:fs';
+import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -43,6 +43,39 @@ for (const file of files) {
   const versionCount = files.filter(f => f.startsWith(versionKey)).length;
   if (versionCount > 1) {
     errors.push(`version ${versionKey} appears in ${versionCount} files — duplicate version detected`);
+  }
+
+  // Read content and check for destructive changes
+  const content = readFileSync(join(migrationsDir, file), 'utf8');
+  const hasBypass = /--\s*allow-destructive-change\s*:/i.test(content);
+
+  if (hasBypass) {
+    console.log(`⚠️  Bypassed destructive change check for: ${file}`);
+  } else {
+    // Strip comments to avoid false positives in text/comments
+    const cleanedContent = content
+      .replace(/\/\*[\s\S]*?\*\//g, '') // strip block comments
+      .replace(/--.*$/gm, '');          // strip line comments
+
+    // 1. Check for DROP COLUMN
+    if (/\bdrop\s+column\b/i.test(cleanedContent)) {
+      errors.push(`${file}: contains potentially destructive action 'DROP COLUMN'. Use a bypass comment '-- allow-destructive-change: [reason]' if intended.`);
+    }
+
+    // 2. Check for TRUNCATE
+    if (/\btruncate\b/i.test(cleanedContent)) {
+      errors.push(`${file}: contains potentially destructive action 'TRUNCATE'. Use a bypass comment '-- allow-destructive-change: [reason]' if intended.`);
+    }
+
+    // 3. Check for DROP TABLE
+    const dropTableMatches = [...cleanedContent.matchAll(/\bdrop\s+table\s+(?:if\s+exists\s+)?([\w"._]+)/gi)];
+    for (const dropMatch of dropTableMatches) {
+      const tableName = dropMatch[1].toLowerCase();
+      const isTempOrOld = tableName.includes('temp') || tableName.includes('_old');
+      if (!isTempOrOld) {
+        errors.push(`${file}: contains potentially destructive action 'DROP TABLE' on non-temporary/old table '${dropMatch[1]}'. Use a bypass comment '-- allow-destructive-change: [reason]' if intended.`);
+      }
+    }
   }
 }
 

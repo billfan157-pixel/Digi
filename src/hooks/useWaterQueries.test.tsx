@@ -1,20 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useWaterLogsQuery, useAddWaterMutation, useDeleteWaterMutation, useUpdateWaterMutation, useProcessHydrationMutation } from './useWaterQueries';
+import { useWaterLogsQuery, useRecordHydrationMutation, useDeleteWaterMutation, useUpdateWaterMutation } from './useWaterQueries';
 
 const mockFetchWaterLogs = vi.fn();
-const mockInsertWaterLog = vi.fn();
 const mockDeleteWaterLog = vi.fn();
 const mockUpdateWaterLog = vi.fn();
-const mockProcessHydrationEvent = vi.fn();
+const mockRecordHydrationEvent = vi.fn();
 
 vi.mock('@/services/water.service', () => ({
   fetchWaterLogs: (...args: unknown[]) => mockFetchWaterLogs(...args),
-  insertWaterLog: (...args: unknown[]) => mockInsertWaterLog(...args),
   deleteWaterLog: (...args: unknown[]) => mockDeleteWaterLog(...args),
   updateWaterLog: (...args: unknown[]) => mockUpdateWaterLog(...args),
-  processHydrationEvent: (...args: unknown[]) => mockProcessHydrationEvent(...args),
+  recordHydrationEvent: (...args: unknown[]) => mockRecordHydrationEvent(...args),
 }));
 
 vi.mock('./useWaterData', () => ({
@@ -56,15 +54,22 @@ describe('useWaterLogsQuery', () => {
   });
 });
 
-describe('useAddWaterMutation', () => {
-  it('calls insertWaterLog with correct params', async () => {
-    mockInsertWaterLog.mockResolvedValue({ id: 'new-id' });
-    const { result } = renderHook(() => useAddWaterMutation(), { wrapper: createWrapper() });
-    result.current.mutate({ userId: 'u1', amount: 250, name: 'Nước', exp: 5, day: '2026-01-15' });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockInsertWaterLog).toHaveBeenCalledWith({
-      user_id: 'u1', amount: 250, name: 'Nước', exp: 5, day: '2026-01-15', created_at: undefined,
+describe('useRecordHydrationMutation', () => {
+  it('calls recordHydrationEvent with correct params', async () => {
+    mockRecordHydrationEvent.mockResolvedValue({ success: true, log_id: 'new-id' });
+    const { result } = renderHook(() => useRecordHydrationMutation(), { wrapper: createWrapper() });
+    result.current.mutate({
+      p_user_id: 'u1', p_amount_ml: 250, p_temp_c: 25, p_exercise_mins: 0, p_is_fasting: false,
+      p_client_event_id: 'evt-1', p_name: 'Nước', p_day: '2026-01-15',
     });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockRecordHydrationEvent).toHaveBeenCalledWith(
+      {
+        p_user_id: 'u1', p_amount_ml: 250, p_temp_c: 25, p_exercise_mins: 0, p_is_fasting: false,
+        p_client_event_id: 'evt-1', p_name: 'Nước', p_day: '2026-01-15',
+      },
+      expect.anything(),
+    );
   });
 });
 
@@ -88,12 +93,3 @@ describe('useUpdateWaterMutation', () => {
   });
 });
 
-describe('useProcessHydrationMutation', () => {
-  it('calls processHydrationEvent with params', async () => {
-    mockProcessHydrationEvent.mockResolvedValue(undefined);
-    const { result } = renderHook(() => useProcessHydrationMutation(), { wrapper: createWrapper() });
-    result.current.mutate({ p_user_id: 'u1', p_amount_ml: 250, p_temp_c: 25, p_exercise_mins: 0, p_is_fasting: false });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockProcessHydrationEvent).toHaveBeenCalledOnce();
-  });
-});

@@ -3,10 +3,7 @@ import { toast } from 'sonner';
 import { levelFromExp } from '@/config/questConfig';
 import { appQueryKeys } from '@/lib/queryKeys';
 import { queryClient } from '@/lib/queryClient';
-import {
-  fetchProfileById,
-  updateProfileFields,
-} from '@/services/profile.service';
+import { fetchProfileById } from '@/services/profile.service';
 import type { AppProfile } from '@/services/profile.service';
 
 interface UseProfileSyncOptions {
@@ -53,9 +50,10 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
     if (!profile?.id || profile.id === 'undefined') return;
 
     // NOTE: EXP, coins, và level đã được backend xử lý trong RPC process_hydration_event.
-    // Frontend chỉ sync water_today và total_water để tránh double EXP.
-    const newWaterToday = (profile.water_today || 0) + optimisticAmount;
-    const newTotalWater = (profile.total_water || 0) + optimisticAmount;
+    // Frontend KHÔNG ghi đè water_today/total_water lên server để tránh stale closure ghi đè.
+    // Chỉ cập nhật local UI cache tạm thời, sau đó refetch server truth.
+    const newWaterToday = Math.max(0, (profile.water_today || 0) + optimisticAmount);
+    const newTotalWater = Math.max(0, (profile.total_water || 0) + optimisticAmount);
 
     const updatedProfile = {
       ...profile,
@@ -66,18 +64,7 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
     setProfile(updatedProfile);
     queryClient.setQueryData(appQueryKeys.profile(profile.id as string), updatedProfile);
 
-    try {
-      await updateProfileFields(profile.id as string, {
-        water_today: updatedProfile.water_today,
-        total_water: updatedProfile.total_water,
-      });
-    } catch (error) {
-      console.error('Profile update failed:', error);
-      toast.error('Cập nhật profile thất bại. Đang hoàn tác...');
-      await refetchProfile();
-      return;
-    }
-
+    // Server là nguồn sự thật duy nhất cho hydration counters
     await refetchProfile();
   }, [profile, refetchProfile, setProfile]);
 

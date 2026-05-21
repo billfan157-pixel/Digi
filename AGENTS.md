@@ -92,6 +92,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - All user-facing text in Vietnamese
 - Dark/Glassmorphism theme — no white backgrounds
 
+**Data integrity & security rules:**
+- Hydration counters (water_today, total_water, exp, coins) — server is the single source of truth. Client may optimistic-render, then refetch.
+- DB trigger payload shape must match Edge Function contract. Any migration altering a trigger or function requires a cross-module regression test.
+- AI tool actions (e.g. waterAction) require explicit user confirmation before executing — never cast & execute directly from a stream response.
+- Webhook URLs must be validated server-side (https only, block private IPs, check redirects) before any outbound fetch.
+
 **When AI wants to refactor existing working code:**
 - STOP. Only fix what was asked.
 - If you see a bug unrelated to the task, comment it, don't fix it.

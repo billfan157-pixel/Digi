@@ -82,6 +82,22 @@ describe('water.service', () => {
     });
   });
 
+  describe('recordHydrationEvent', () => {
+    it('calls record_hydration_event RPC with idempotency key', async () => {
+      mockRpc.mockResolvedValue({ data: { success: true, log_id: 'log-1' }, error: null });
+      const { recordHydrationEvent } = await import('./water.service');
+      const result = await recordHydrationEvent({
+        p_user_id: 'u1', p_amount_ml: 250, p_temp_c: 25, p_exercise_mins: 0, p_is_fasting: false,
+        p_client_event_id: 'evt-1', p_name: 'Nước', p_day: '2026-01-01', p_created_at: '2026-01-01T00:00:00Z',
+      });
+      expect(mockRpc).toHaveBeenCalledWith('record_hydration_event', {
+        p_user_id: 'u1', p_amount_ml: 250, p_temp_c: 25, p_exercise_mins: 0, p_is_fasting: false,
+        p_client_event_id: 'evt-1', p_name: 'Nước', p_day: '2026-01-01', p_created_at: '2026-01-01T00:00:00Z',
+      });
+      expect(result).toEqual({ success: true, log_id: 'log-1' });
+    });
+  });
+
   describe('deleteWaterLog', () => {
     it('deletes a water log by id and user_id', async () => {
       const chain = makeChain();

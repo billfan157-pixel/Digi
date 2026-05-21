@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { findExistingWaterLog, insertWaterLog } from '@/services/water.service';
 import { readQueue, clearQueue, writeQueue, resolveStrategy, MAX_RETRIES } from '@/lib/offlineQueue';
 import type { QueueItem } from '@/lib/offlineQueue';
 import { devLog, devError, isRealUser } from './waterHelpers';
@@ -13,7 +12,7 @@ export function useOfflineWaterSync({
   wasOffline,
   onWaterLogged,
   fetchAllWater,
-  processHydrationMutation,
+  recordHydrationMutation,
   deleteWaterMutation,
   updateWaterMutation,
 }: {
@@ -22,7 +21,7 @@ export function useOfflineWaterSync({
   wasOffline: boolean;
   onWaterLogged?: (optimisticAmount?: number, optimisticExp?: number) => void | Promise<void>;
   fetchAllWater: () => Promise<void>;
-  processHydrationMutation: any;
+  recordHydrationMutation: any;
   deleteWaterMutation: any;
   updateWaterMutation: any;
 }) {
@@ -51,31 +50,18 @@ export function useOfflineWaterSync({
           if (item.operation === 'add') {
             const p = item.payload as Record<string, unknown>;
             const createdAt = String(p.created_at ?? item.createdAt);
-            const existingLog = await findExistingWaterLog({
-              user_id: item.userId,
-              day: String(p.day ?? ''),
-              amount: Number(p.amount ?? 0),
-              name: String(p.name ?? 'Nuoc Loc'),
-              created_at: createdAt,
-            });
 
-            if (!existingLog) {
-              await insertWaterLog({
-                user_id: item.userId,
-                amount: Number(p.amount ?? 0),
-                name: String(p.name ?? 'Nuoc Loc'),
-                exp: Number(p.exp ?? 0),
-                day: String(p.day ?? ''),
-                created_at: createdAt,
-              });
-            }
-
-            await processHydrationMutation.mutateAsync({
+            // Atomic idempotent hydration: item.id serves as client_event_id
+            await recordHydrationMutation.mutateAsync({
               p_user_id: item.userId,
               p_amount_ml: Number(p.amount ?? 0),
               p_temp_c: (p.tempC as number) || null,
               p_exercise_mins: (p.exerciseMins as number) || 0,
               p_is_fasting: (p.isFasting as boolean) || false,
+              p_client_event_id: item.id,
+              p_name: String(p.name ?? 'Nuoc Loc'),
+              p_day: String(p.day ?? ''),
+              p_created_at: createdAt,
             });
           } else if (item.operation === 'delete' && item.entityId) {
             const p = item.payload as Record<string, unknown>;
@@ -149,7 +135,7 @@ export function useOfflineWaterSync({
       offlineSyncInFlightRef.current = false;
       setIsSyncing(false);
     }
-  }, [profileId, isOnline, processHydrationMutation, deleteWaterMutation, updateWaterMutation, onWaterLogged, fetchAllWater]);
+  }, [profileId, isOnline, recordHydrationMutation, deleteWaterMutation, updateWaterMutation, onWaterLogged, fetchAllWater]);
 
   useEffect(() => {
     if (hasPendingCloudSync && isOnline) {

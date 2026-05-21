@@ -49,6 +49,22 @@ export async function processHydrationEvent(params: {
   if (error) throw error;
 }
 
+export async function recordHydrationEvent(params: {
+  p_user_id: string;
+  p_amount_ml: number;
+  p_temp_c: number | null;
+  p_exercise_mins: number;
+  p_is_fasting: boolean;
+  p_client_event_id?: string;
+  p_name?: string;
+  p_day?: string;
+  p_created_at?: string;
+}) {
+  const { data, error } = await supabase.rpc('record_hydration_event', params);
+  if (error) throw error;
+  return data as Record<string, unknown>;
+}
+
 export async function deleteWaterLog(id: string, userId: string): Promise<void> {
   const { error } = await supabase
     .from('water_logs')

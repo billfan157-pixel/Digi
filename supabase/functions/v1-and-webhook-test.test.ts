@@ -105,3 +105,271 @@ Deno.test({
     }
   }
 });
+
+Deno.test({
+  name: "Webhook Dispatcher - Integration, Quota, and Retry Test",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !supabaseUrl || !supabaseServiceKey,
+  async fn() {
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!, {
+      auth: {
+        persistSession: false,
+      },
+    });
+
+    const testUserId = crypto.randomUUID();
+    let subIdNormal: string | null = null;
+    let subIdQuota: string | null = null;
+    let subIdRetry: string | null = null;
+
+    // Track requests received by mock server
+    interface MockRequest {
+      payload: Record<string, unknown> | null;
+      signature: string | null;
+      headers: Headers;
+    }
+    const normalRequests: MockRequest[] = [];
+    const retryRequests: MockRequest[] = [];
+    let retryAttemptCount = 0;
+
+    // 1. Start mock HTTP server in the Deno test process
+    const server = Deno.serve(
+      { port: 0, hostname: "0.0.0.0" },
+      async (request) => {
+        const urlObj = new URL(request.url);
+        const bodyText = await request.text();
+        let payload = null;
+        try {
+          payload = JSON.parse(bodyText);
+        } catch {
+          // Ignore parse errors
+        }
+
+        const signature = request.headers.get("x-digiwell-signature-256");
+
+        if (urlObj.pathname === "/webhook") {
+          normalRequests.push({ payload, signature, headers: request.headers });
+          return new Response("OK", { status: 200 });
+        } else if (urlObj.pathname === "/webhook-retry") {
+          retryAttemptCount++;
+          retryRequests.push({ payload, signature, headers: request.headers });
+          if (retryAttemptCount < 3) {
+            // Fail first 2 attempts with 5xx
+            return new Response("Server Error", { status: 500 });
+          }
+          // Succeed on the 3rd attempt
+          return new Response("OK", { status: 200 });
+        }
+
+        return new Response("Not Found", { status: 404 });
+      }
+    );
+
+    const port = server.addr.port;
+    // Inside docker container, host machine is accessible via host.docker.internal
+    const normalUrl = `http://host.docker.internal:${port}/webhook`;
+    const retryUrl = `http://host.docker.internal:${port}/webhook-retry`;
+
+    try {
+      // 2. Setup mock user profile
+      const { error: profileErr } = await supabase.from("profiles").insert({
+        id: testUserId,
+        coins: 100,
+        experience: 0,
+        level: 1,
+        nickname: "Webhook Tester",
+        gender: "Nam",
+        age: 30,
+        height: 180,
+        weight: 75,
+        activity: "moderate",
+        climate: "temperate",
+        goal: "Sức khỏe tổng quát"
+      });
+      assertEquals(profileErr, null, "Failed to insert test profile");
+
+      // 3. Test 1: Normal webhook dispatch and HMAC signature verification
+      const { data: subNormal, error: subNormalErr } = await supabase
+        .from("webhook_subscriptions")
+        .insert({
+          user_id: testUserId,
+          url: normalUrl,
+          events: ["water_log.created"],
+          is_active: true,
+          daily_quota: 10
+        })
+        .select()
+        .single();
+      assertEquals(subNormalErr, null, "Failed to insert normal webhook subscription");
+      subIdNormal = subNormal.id;
+
+      // Dispatch via calling Edge Function directly
+      const dispatcherUrl = `${supabaseUrl}/functions/v1/webhook-dispatcher`;
+      const dbSecret = Deno.env.get("DATABASE_WEBHOOK_SECRET") || "";
+
+      const eventPayload = {
+        id: crypto.randomUUID(),
+        amount: 250,
+        drink_type: "water"
+      };
+
+      const resNormal = await fetch(dispatcherUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-database-secret": dbSecret,
+        },
+        body: JSON.stringify({
+          user_id: testUserId,
+          event_type: "water_log.created",
+          payload: eventPayload,
+        }),
+      });
+
+      assertEquals(resNormal.status, 200);
+      const resNormalJson = await resNormal.json();
+      console.log("Normal Dispatch response:", resNormalJson);
+
+      // Verify mock server received the request
+      assertEquals(normalRequests.length, 1);
+      const reqReceived = normalRequests[0];
+      assertEquals((reqReceived.payload as Record<string, unknown>)?.data, eventPayload);
+      assertNotEquals(reqReceived.signature, null);
+      assertMatch(reqReceived.signature || "", /^sha256=/);
+
+      // Verify delivery is logged in DB
+      const { data: deliveriesNormal, error: getDelNormalErr } = await supabase
+        .from("webhook_deliveries")
+        .select("*")
+        .eq("subscription_id", subIdNormal);
+      
+      assertEquals(getDelNormalErr, null);
+      assertEquals(deliveriesNormal?.length, 1);
+      assertEquals(deliveriesNormal![0].response_status, 200);
+
+      // 4. Test 2: Webhook daily quota enforcement
+      const { data: subQuota, error: subQuotaErr } = await supabase
+        .from("webhook_subscriptions")
+        .insert({
+          user_id: testUserId,
+          url: normalUrl, // reuse same normal endpoint
+          events: ["water_log.updated"],
+          is_active: true,
+          daily_quota: 1 // quota is only 1!
+        })
+        .select()
+        .single();
+      assertEquals(subQuotaErr, null, "Failed to insert quota webhook subscription");
+      subIdQuota = subQuota.id;
+
+      // First dispatch (within quota)
+      const resQuota1 = await fetch(dispatcherUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-database-secret": dbSecret,
+        },
+        body: JSON.stringify({
+          user_id: testUserId,
+          event_type: "water_log.updated",
+          payload: eventPayload,
+        }),
+      });
+      assertEquals(resQuota1.status, 200);
+
+      // Second dispatch (exceeds quota)
+      const resQuota2 = await fetch(dispatcherUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-database-secret": dbSecret,
+        },
+        body: JSON.stringify({
+          user_id: testUserId,
+          event_type: "water_log.updated",
+          payload: eventPayload,
+        }),
+      });
+      assertEquals(resQuota2.status, 200);
+
+      // Check deliveries in DB for quota subscription
+      const { data: deliveriesQuota, error: getDelQuotaErr } = await supabase
+        .from("webhook_deliveries")
+        .select("*")
+        .eq("subscription_id", subIdQuota)
+        .order("delivered_at", { ascending: true });
+      
+      assertEquals(getDelQuotaErr, null);
+      assertEquals(deliveriesQuota?.length, 2);
+      // First is success
+      assertEquals(deliveriesQuota![0].response_status, 200);
+      // Second is blocked by quota
+      assertEquals(deliveriesQuota![1].response_status, null);
+      assertEquals(deliveriesQuota![1].error_message, "Vượt quá quota webhook hàng ngày");
+
+      // 5. Test 3: Webhook retry logic with exponential backoff
+      const { data: subRetry, error: subRetryErr } = await supabase
+        .from("webhook_subscriptions")
+        .insert({
+          user_id: testUserId,
+          url: retryUrl,
+          events: ["water_log.deleted"],
+          is_active: true,
+          daily_quota: 10
+        })
+        .select()
+        .single();
+      assertEquals(subRetryErr, null, "Failed to insert retry webhook subscription");
+      subIdRetry = subRetry.id;
+
+      const resRetry = await fetch(dispatcherUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-database-secret": dbSecret,
+        },
+        body: JSON.stringify({
+          user_id: testUserId,
+          event_type: "water_log.deleted",
+          payload: eventPayload,
+        }),
+      });
+      assertEquals(resRetry.status, 200);
+
+      // Verify mock server received exactly 3 requests (2 failures + 1 success)
+      assertEquals(retryAttemptCount, 3);
+      assertEquals(retryRequests.length, 3);
+
+      // Verify delivery is logged as 200 (since the last attempt succeeded)
+      const { data: deliveriesRetry, error: getDelRetryErr } = await supabase
+        .from("webhook_deliveries")
+        .select("*")
+        .eq("subscription_id", subIdRetry);
+      
+      assertEquals(getDelRetryErr, null);
+      assertEquals(deliveriesRetry?.length, 1);
+      assertEquals(deliveriesRetry![0].response_status, 200);
+      assertEquals(deliveriesRetry![0].error_message, null);
+
+    } finally {
+      // Shutdown mock server
+      await server.shutdown();
+
+      // Cleanup DB
+      if (subIdNormal) {
+        await supabase.from("webhook_deliveries").delete().eq("subscription_id", subIdNormal);
+        await supabase.from("webhook_subscriptions").delete().eq("id", subIdNormal);
+      }
+      if (subIdQuota) {
+        await supabase.from("webhook_deliveries").delete().eq("subscription_id", subIdQuota);
+        await supabase.from("webhook_subscriptions").delete().eq("id", subIdQuota);
+      }
+      if (subIdRetry) {
+        await supabase.from("webhook_deliveries").delete().eq("subscription_id", subIdRetry);
+        await supabase.from("webhook_subscriptions").delete().eq("id", subIdRetry);
+      }
+      await supabase.from("profiles").delete().eq("id", testUserId);
+    }
+  }
+});

@@ -21,7 +21,7 @@ function getCorsHeaders(origin: string | null) {
   };
 }
 
-import { getModelForAction, getMaxTokensForAction, AiAction } from '../_shared/modelRouter.ts';
+import { getModelForAction, getMaxTokensForAction } from '../_shared/modelRouter.ts';
 
 const groqApiKey = Deno.env.get('GROQ_API_KEY') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
@@ -723,6 +723,9 @@ Deno.serve(async (request) => {
 
     if (action === 'chat') {
       const input = String(body.input ?? '');
+      if (input.length > 2000) {
+        return json({ error: 'Tin nhắn quá dài (tối đa 2000 ký tự).' }, 400, origin);
+      }
       const context = body.context as DigiwellAiContext;
       const persistedMessages = await getRecentAiMessages(supabase, user.id);
       const memoryMessages = buildMemoryMessages(context, persistedMessages);

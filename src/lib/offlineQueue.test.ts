@@ -12,10 +12,13 @@ import {
   migrateLegacyQueue,
   compactQueue,
   type QueueItem,
+  clearMemoryCaches,
+  initQueue,
 } from './offlineQueue';
 
 beforeEach(() => {
   localStorage.clear();
+  clearMemoryCaches();
 });
 
 const userId = 'user-test-abc';
@@ -356,9 +359,7 @@ describe('migrateLegacyQueue', () => {
     migrateLegacyQueue(userId);
     const queue = readRaw();
     expect(queue).toHaveLength(2);
-  });
-
-  it('uses 0 retryCount when legacy item has none', () => {
+  });  it('uses 0 retryCount when legacy item has none', () => {
     const legacyItem = {
       tempId: 'legacy-3',
       user_id: userId,
@@ -371,5 +372,45 @@ describe('migrateLegacyQueue', () => {
     localStorage.setItem(legacyKey, JSON.stringify([legacyItem]));
     migrateLegacyQueue(userId);
     expect(readRaw()[0].retryCount).toBe(0);
+  });
+});
+
+describe('AES-GCM Offline Queue Encryption', () => {
+  it('encrypts, decrypts and matches queue items using initQueue', async () => {
+    const item1 = queueItem(userId, 'add', 'water_log', null, { amount: 250 });
+    const item2 = queueItem(userId, 'edit', 'water_log', 'entity-1', { amount: 500 });
+    
+    // Initialize queue for userId
+    await initQueue(userId);
+    
+    // Push items to queue (which triggers background encryption)
+    pushToQueue(userId, item1);
+    pushToQueue(userId, item2);
+    
+    // Since encryption is background async, let's wait a short bit
+    expect(readQueue(userId)).toHaveLength(2);
+    
+    // Wait for async write to complete (using a short delay)
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Now verify the item in localStorage is encrypted (i.e. not plain JSON)
+    const raw = localStorage.getItem(`digiwell_offline_v2_${userId}`);
+    expect(raw).not.toBeNull();
+    expect(raw).not.toContain('water_log'); // shouldn't contain plaintext entityType
+    
+    // Clear in-memory caches to simulate reload/restart
+    clearMemoryCaches();
+    
+    // If we read now without init, it falls back to raw localStorage, but raw is encrypted (invalid JSON), so it returns empty array
+    expect(readQueue(userId)).toHaveLength(0);
+    
+    // Call initQueue again to decrypt
+    await initQueue(userId);
+    
+    // Now it should be successfully decrypted and read
+    const reloaded = readQueue(userId);
+    expect(reloaded).toHaveLength(2);
+    expect(reloaded[0].payload).toEqual({ amount: 250 });
+    expect(reloaded[1].payload).toEqual({ amount: 500 });
   });
 });

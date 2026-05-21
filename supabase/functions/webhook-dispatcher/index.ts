@@ -1,5 +1,70 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
 
+// Validate webhook URL to prevent SSRF attacks
+function validateWebhookUrl(url: string): { valid: boolean; error?: string } {
+  try {
+    const urlObj = new URL(url);
+
+    if (Deno.env.get('ALLOW_LOCALHOST_WEBHOOK') === 'true') {
+      return { valid: true };
+    }
+
+    // Only allow HTTPS
+    if (urlObj.protocol !== 'https:') {
+      return { valid: false, error: 'Chỉ cho phép HTTPS URLs' };
+    }
+
+    const hostname = urlObj.hostname.toLowerCase();
+
+    // Block localhost variants
+    if (hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '::1' ||
+        hostname.startsWith('127.') ||
+        hostname.startsWith('0.') ||
+        hostname.startsWith('[::')) {
+      return { valid: false, error: 'Không cho phép localhost hoặc private addresses' };
+    }
+
+    // Block private IP ranges
+    const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    const ipMatch = hostname.match(ipPattern);
+    if (ipMatch) {
+      const [, a, b, c, d] = ipMatch.map(Number);
+
+      // 10.0.0.0/8
+      if (a === 10) {
+        return { valid: false, error: 'Không cho phép private IP addresses (10.0.0.0/8)' };
+      }
+
+      // 172.16.0.0/12
+      if (a === 172 && b >= 16 && b <= 31) {
+        return { valid: false, error: 'Không cho phép private IP addresses (172.16.0.0/12)' };
+      }
+
+      // 192.168.0.0/16
+      if (a === 192 && b === 168) {
+        return { valid: false, error: 'Không cho phép private IP addresses (192.168.0.0/16)' };
+      }
+
+      // 169.254.169.254 (cloud metadata)
+      if (a === 169 && b === 254 && c === 169 && d === 254) {
+        return { valid: false, error: 'Không cho phép cloud metadata endpoints' };
+      }
+    }
+
+    // Block .local, .internal, .corp TLDs
+    const tld = hostname.split('.').pop();
+    if (tld === 'local' || tld === 'internal' || tld === 'corp') {
+      return { valid: false, error: 'Không cho phép internal TLDs' };
+    }
+
+    return { valid: true };
+  } catch {
+    return { valid: false, error: 'URL không hợp lệ' };
+  }
+}
+
 // Calculate HMAC-SHA256 hex signature using Web Crypto API
 async function calculateHmac256(secret: string, data: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -85,6 +150,89 @@ Deno.serve(async (req) => {
     const isMatched = sub.events.includes(event_type) || sub.events.includes('*');
     if (!isMatched) continue;
 
+    // Check webhook subscription daily quota
+    const { count, error: countErr } = await supabase
+      .from('webhook_deliveries')
+      .select('*', { count: 'exact', head: true })
+      .eq('subscription_id', sub.id)
+      .gte('delivered_at', new Date(Date.now() - 24*60*60*1000).toISOString());
+
+    if (countErr) {
+      console.error('Lỗi khi đếm lượng giao webhook:', countErr);
+    }
+
+    const currentQuota = sub.daily_quota ?? 200;
+    if (count !== null && count >= currentQuota) {
+      console.warn(`Webhook subscription ${sub.id} đã vượt quá quota hàng ngày: ${count}/${currentQuota}`);
+      
+      const { error: deliveryError } = await supabase
+        .from('webhook_deliveries')
+        .insert({
+          id: crypto.randomUUID(),
+          subscription_id: sub.id,
+          event_type,
+          payload: {
+            id: crypto.randomUUID(),
+            event: event_type,
+            timestamp: new Date().toISOString(),
+            data: payload,
+          },
+          response_status: null,
+          response_body: null,
+          error_message: 'Vượt quá quota webhook hàng ngày',
+        });
+
+      if (deliveryError) {
+        console.error('Lỗi khi ghi nhận log vượt quota webhook:', deliveryError);
+      }
+
+      deliveries.push({
+        subscription_id: sub.id,
+        url: sub.url,
+        success: false,
+        status: null,
+        error: 'Vượt quá quota webhook hàng ngày',
+      });
+      continue;
+    }
+
+    // Validate webhook URL before dispatching
+    const urlValidation = validateWebhookUrl(sub.url);
+    if (!urlValidation.valid) {
+      console.error(`Webhook URL validation failed for subscription ${sub.id}:`, urlValidation.error);
+
+      // Log delivery failure
+      const { error: deliveryError } = await supabase
+        .from('webhook_deliveries')
+        .insert({
+          id: crypto.randomUUID(),
+          subscription_id: sub.id,
+          event_type,
+          payload: {
+            id: crypto.randomUUID(),
+            event: event_type,
+            timestamp: new Date().toISOString(),
+            data: payload,
+          },
+          response_status: null,
+          response_body: null,
+          error_message: `URL validation failed: ${urlValidation.error}`,
+        });
+
+      if (deliveryError) {
+        console.error('Lỗi khi ghi nhật ký giao webhook:', deliveryError);
+      }
+
+      deliveries.push({
+        subscription_id: sub.id,
+        url: sub.url,
+        success: false,
+        status: null,
+        error: `URL validation failed: ${urlValidation.error}`,
+      });
+      continue;
+    }
+
     const deliveryId = crypto.randomUUID();
     const eventPayload = {
       id: deliveryId,
@@ -105,32 +253,57 @@ Deno.serve(async (req) => {
     let responseBody = '';
     let errorMessage: string | null = null;
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      responseStatus = null;
+      responseBody = '';
+      errorMessage = null;
 
-      const response = await fetch(sub.url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-digiwell-signature-256': `sha256=${signature}`,
-          'user-agent': 'DigiWell-Webhook-Dispatcher/1.0.0',
-        },
-        body: jsonString,
-        signal: controller.signal,
-      });
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout
 
-      clearTimeout(timeoutId);
-      responseStatus = response.status;
-      responseBody = await response.text();
-      // Truncate response body if it's too large to save DB space
-      if (responseBody.length > 1000) {
-        responseBody = responseBody.substring(0, 1000) + '... (bị cắt bớt)';
-      }
-    } catch (err) {
-      errorMessage = err instanceof Error ? err.message : String(err);
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        errorMessage = 'Yêu cầu bị quá hạn thời gian (Timeout 5s)';
+        const response = await fetch(sub.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-digiwell-signature-256': `sha256=${signature}`,
+            'user-agent': 'DigiWell-Webhook-Dispatcher/1.0.0',
+          },
+          body: jsonString,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        responseStatus = response.status;
+        responseBody = await response.text();
+        if (responseBody.length > 1000) {
+          responseBody = responseBody.substring(0, 1000) + '... (bị cắt bớt)';
+        }
+
+        if (responseStatus >= 200 && responseStatus < 300) {
+          break;
+        }
+
+        // Only retry on server-side issues (5xx)
+        if (responseStatus < 500) {
+          break;
+        }
+
+        if (attempt < maxAttempts) {
+          const delay = attempt === 1 ? 500 : 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      } catch (err) {
+        errorMessage = err instanceof Error ? err.message : String(err);
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          errorMessage = 'Yêu cầu bị quá hạn thời gian (Timeout 5s)';
+        }
+
+        if (attempt < maxAttempts) {
+          const delay = attempt === 1 ? 500 : 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
       }
     }
 
