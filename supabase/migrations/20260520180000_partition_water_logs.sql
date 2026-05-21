@@ -31,7 +31,16 @@ CREATE TABLE public.water_logs_y2026m06 PARTITION OF public.water_logs
 
 -- 4. Migrate dữ liệu (Cực nhanh vì data lúc này đang ít)
 DO $$
+DECLARE
+    v_id_type text;
 BEGIN
+    -- Lấy kiểu dữ liệu của cột id trong bảng cũ
+    SELECT data_type INTO v_id_type
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'water_logs_old'
+      AND column_name = 'id';
+
     IF EXISTS (
         SELECT 1 
         FROM information_schema.columns 
@@ -39,13 +48,25 @@ BEGIN
           AND table_name = 'water_logs_old' 
           AND column_name = 'drink_type'
     ) THEN
-        EXECUTE 'INSERT INTO public.water_logs (id, user_id, amount, name, exp, day, created_at, drink_type)
-                 SELECT id, user_id, amount, name, exp, day, created_at, drink_type
-                 FROM public.water_logs_old;';
+        IF v_id_type = 'uuid' THEN
+            EXECUTE 'INSERT INTO public.water_logs (id, user_id, amount, name, exp, day, created_at, drink_type)
+                     SELECT id, user_id, amount, name, exp, day, created_at, drink_type
+                     FROM public.water_logs_old;';
+        ELSE
+            EXECUTE 'INSERT INTO public.water_logs (id, user_id, amount, name, exp, day, created_at, drink_type)
+                     SELECT (lpad(to_hex(id), 32, ''0''))::uuid, user_id, amount, name, exp, day, created_at, drink_type
+                     FROM public.water_logs_old;';
+        END IF;
     ELSE
-        EXECUTE 'INSERT INTO public.water_logs (id, user_id, amount, name, exp, day, created_at, drink_type)
-                 SELECT id, user_id, amount, name, exp, day, created_at, NULL
-                 FROM public.water_logs_old;';
+        IF v_id_type = 'uuid' THEN
+            EXECUTE 'INSERT INTO public.water_logs (id, user_id, amount, name, exp, day, created_at, drink_type)
+                     SELECT id, user_id, amount, name, exp, day, created_at, NULL
+                     FROM public.water_logs_old;';
+        ELSE
+            EXECUTE 'INSERT INTO public.water_logs (id, user_id, amount, name, exp, day, created_at, drink_type)
+                     SELECT (lpad(to_hex(id), 32, ''0''))::uuid, user_id, amount, name, exp, day, created_at, NULL
+                     FROM public.water_logs_old;';
+        END IF;
     END IF;
 END $$;
 
