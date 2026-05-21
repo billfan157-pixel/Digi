@@ -35,7 +35,7 @@ export async function updateWidgetCache(userId: string) {
       .neq('id', userId)
       .order('water_today', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!partnerData) {
       console.log('[Widget] Chưa tìm thấy Partner phù hợp.');
