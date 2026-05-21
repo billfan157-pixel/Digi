@@ -59,7 +59,18 @@ jobs:
 
       - run: npm ci
 
+      - name: Check Supabase Access Token presence
+        id: check-token
+        run: |
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "::warning::SUPABASE_ACCESS_TOKEN is not configured in GitHub Secrets. Skipping Edge Function deployment."
+            echo "has_token=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Deploy Edge Functions
+        if: steps.check-token.outputs.has_token == 'true'
         run: |
           set -euo pipefail
           functions=(
@@ -80,6 +91,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Smoke test — verify functions are reachable
+        if: steps.check-token.outputs.has_token == 'true'
         run: |
           set -euo pipefail
           failed=0
