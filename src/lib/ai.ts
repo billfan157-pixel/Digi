@@ -131,3 +131,20 @@ export async function streamAiChatMessage(
 ): Promise<void> {
   await invokeAiGatewayStream('chat', { input, context }, onEvent, signal);
 }
+
+export type AgenticAction =
+  | { type: 'adjustGoal'; reason: string; suggestedGoal: number; delta: number }
+  | { type: 'createReminder'; reason: string; time: string; message: string }
+  | { type: 'suggestSchedule'; reason: string; intervals: string[] };
+
+export async function invokeAgenticWorkflow(
+  context: DigiwellAiContext,
+): Promise<AgenticAction[]> {
+  try {
+    const response = await invokeAiGateway<{ actions?: AgenticAction[] }>('agentic', { context });
+    return Array.isArray(response.actions) ? response.actions : [];
+  } catch (error) {
+    console.warn('[invokeAgenticWorkflow] Failed:', error instanceof Error ? error.message : error);
+    return [];
+  }
+}

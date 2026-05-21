@@ -21,11 +21,12 @@ function getCorsHeaders(origin: string | null) {
   };
 }
 
-const TEXT_MODEL = 'llama-3.3-70b-versatile';
+import { getModelForAction, getMaxTokensForAction, AiAction } from '../_shared/modelRouter.ts';
+
 const groqApiKey = Deno.env.get('GROQ_API_KEY') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
-type AiGatewayAction = 'advice' | 'chat' | 'report-analysis';
+type AiGatewayAction = 'advice' | 'chat' | 'report-analysis' | 'agentic';
 
 type AiUsageResult = {
   allowed?: boolean;
@@ -326,8 +327,9 @@ async function enforceRateLimit(
   action: AiGatewayAction,
   origin: string | null,
 ) {
+  const dbAction = action === 'agentic' ? 'advice' : action;
   const { data, error } = await supabase.rpc('consume_ai_usage', {
-    p_action: action,
+    p_action: dbAction,
   });
 
   if (error) {
@@ -498,8 +500,8 @@ async function streamChatResponse(
   return sseResponse(origin, async (controller) => {
     const encoder = new TextEncoder();
     const body = await groqChatStream({
-      model: TEXT_MODEL,
-      max_tokens: 180,
+      model: getModelForAction('chat'),
+      max_tokens: getMaxTokensForAction('chat'),
       tools: [recordWaterIntakeTool],
       tool_choice: 'auto',
       messages: buildChatMessages(context, input, memoryMessages),
@@ -584,7 +586,7 @@ async function streamChatResponse(
 }
 
 Deno.serve(async (request) => {
-  console.log('[ai-gateway] Invoked:', request.method, request.url, 'model:', TEXT_MODEL, 'groqKeySet:', !!groqApiKey);
+  console.log('[ai-gateway] Invoked:', request.method, request.url, 'groqKeySet:', !!groqApiKey);
   const origin = request.headers.get('Origin');
 
   if (request.method === 'OPTIONS') {
@@ -693,8 +695,8 @@ Deno.serve(async (request) => {
             .join('\n')}`
         : '';
       const response = await groqChat({
-        model: TEXT_MODEL,
-        max_tokens: 100,
+        model: getModelForAction('advice'),
+        max_tokens: getMaxTokensForAction('advice'),
         messages: [
           {
             role: 'system',
@@ -730,8 +732,8 @@ Deno.serve(async (request) => {
       }
 
       const response = await groqChat({
-        model: TEXT_MODEL,
-        max_tokens: 150,
+        model: getModelForAction('chat'),
+        max_tokens: getMaxTokensForAction('chat'),
         tools: [recordWaterIntakeTool],
         tool_choice: 'auto',
         messages: buildChatMessages(context, input, memoryMessages),
@@ -766,8 +768,6 @@ Deno.serve(async (request) => {
       await rememberAiExchange(supabase, user.id, input, reply || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.', context);
       return json({ reply: reply || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.' }, 200, origin);
     }
-
-
 
     if (action === 'report-analysis') {
       const stats = body.stats as Record<string, unknown>;
@@ -810,8 +810,8 @@ Trả về JSON thuần:
 }`;
 
       const response = await groqChat({
-        model: TEXT_MODEL,
-        max_tokens: 500,
+        model: getModelForAction('report-analysis'),
+        max_tokens: getMaxTokensForAction('report-analysis'),
         response_format: { type: 'json_object' },
         messages: [{ role: 'user', content: prompt }],
       });
@@ -820,6 +820,59 @@ Trả về JSON thuần:
       return json({
         analysis: parsed.analysis || '',
         recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
+      }, 200, origin);
+    }
+
+    if (action === 'agentic') {
+      const context = body.context as DigiwellAiContext;
+      if (!context || typeof context !== 'object') {
+        return json({ error: 'Context is required for agentic workflow.' }, 400, origin);
+      }
+
+      const prompt = `Bạn là Đại lý Lập kế hoạch Hydrat hóa AI của DigiWell, trả lời bằng tiếng Việt.
+Nhiệm vụ của bạn là phân tích bối cảnh người dùng để đề xuất các hành động cải thiện thói quen uống nước và lên lịch thông minh.
+
+Bối cảnh người dùng hiện tại:
+${buildContextSummary(context)}
+
+Dựa trên dữ liệu trên, hãy đề xuất một danh sách các hành động thích hợp (có thể trống nếu mọi thứ hoàn hảo). Bạn có thể gợi ý 3 loại hành động:
+1. "adjustGoal": Nếu thời tiết nắng nóng (ví dụ >33 độ C) hoặc người dùng vận động nhiều, đề xuất tăng mục tiêu uống nước hôm nay.
+2. "createReminder": Nếu lịch trình hôm nay có các buổi họp dài liên tục (>2 tiếng), các hoạt động thể thao/gym, hoặc thời gian bận rộn bối cảnh học tập/làm việc, hãy đề xuất một lời nhắc nhở uống nước với khung giờ cụ thể trước/trong buổi đó.
+3. "suggestSchedule": Nếu thói quen của người dùng cho thấy họ hay quên uống nước vào một buổi nhất định hoặc lượng uống phân bổ kém, hãy đề xuất một lịch trình uống nước chia nhỏ thông minh (ví dụ 3-4 khung giờ uống nước lọc/trà).
+
+Hãy trả về phản hồi định dạng JSON chính xác:
+{
+  "actions": [
+    {
+      "type": "adjustGoal",
+      "reason": "Giải thích ngắn gọn lý do tăng mục tiêu bằng tiếng Việt (ví dụ: Nắng nóng 36°C)",
+      "suggestedGoal": 2500, // lượng nước mục tiêu đề xuất mới (ml)
+      "delta": 300 // lượng nước tăng thêm so với mục tiêu hiện tại (ml)
+    },
+    {
+      "type": "createReminder",
+      "reason": "Giải thích lý do nhắc nhở (ví dụ: Bạn có lịch họp dài từ 14:00 đến 16:00)",
+      "time": "13:50", // định dạng HH:MM
+      "message": "Uống 250ml nước trước khi bắt đầu buổi họp dài đệ nhé!" // Lời nhắn thân thiện tiếng Việt, xưng hô đệ/DigiCoach hoặc bạn/tôi
+    },
+    {
+      "type": "suggestSchedule",
+      "reason": "Giải thích lý do đề xuất lịch trình này",
+      "intervals": ["07:30", "10:00", "14:30", "17:00", "20:00"] // danh sách các mốc thời gian đề xuất
+    }
+  ]
+}`;
+
+      const response = await groqChat({
+        model: getModelForAction('agentic'),
+        max_tokens: getMaxTokensForAction('agentic'),
+        response_format: { type: 'json_object' },
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const parsed = JSON.parse(String(response.choices?.[0]?.message?.content ?? '{}'));
+      return json({
+        actions: Array.isArray(parsed.actions) ? parsed.actions : [],
       }, 200, origin);
     }
 

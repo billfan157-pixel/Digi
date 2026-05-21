@@ -5,10 +5,13 @@ import {
   sendAiChatMessage, 
   streamAiChatMessage,
   fetchChatHistory,
+  invokeAgenticWorkflow,
   type AiChatMessage, 
   type DigiwellAiContext,
-  type AiAdviceResponse 
+  type AiAdviceResponse,
+  type AgenticAction,
 } from '../lib/ai';
+import { getOfflineAdvice, type ExpertContext } from '../lib/offlineExpertSystem';
 import { useBehaviorAnalysis } from './useBehaviorAnalysis';
 
 export interface UseGroqAIProps {
@@ -72,6 +75,7 @@ export function useGroqAI(props: UseGroqAIProps) {
   const [chatMessages, setChatMessages] = useState<AiChatMessage[]>([defaultWelcomeMessage]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [chatInput, setChatInput] = useState('');
+  const [agenticSuggestions, setAgenticSuggestions] = useState<AgenticAction[]>([]);
   const isFetchingAdviceRef = useRef(false);
   const isChattingRef = useRef(false);
   const hasFetchedInitialAdvice = useRef(false);
@@ -206,6 +210,21 @@ export function useGroqAI(props: UseGroqAIProps) {
   }, []);
 
 
+  /** Build ExpertContext for offline rule engine from current props */
+  const buildExpertContext = useCallback((): ExpertContext => {
+    const p = propsRef.current;
+    const now = new Date();
+    return {
+      waterToday: p.waterIntake,
+      waterGoal: p.waterGoal,
+      streak: 0, // streak not available in props — default safe
+      hour: now.getHours(),
+      dayOfWeek: now.getDay(),
+      weather: p.weatherData?.temp != null ? { temp: p.weatherData.temp, humidity: 65 } : undefined,
+      activityLevel: p.profile?.activity,
+    };
+  }, []);
+
   const fetchAIAdvice = useCallback(async () => {
     const profileId = propsRef.current.profile?.id;
     if (!profileId) return;
@@ -216,6 +235,13 @@ export function useGroqAI(props: UseGroqAIProps) {
     setIsAiLoading(true);
     
     try {
+      // [Offline check] Nếu thiết bị mất kết nối mạng → dùng Offline Expert System ngay
+      if (!navigator.onLine) {
+        const expertAdvice = getOfflineAdvice(buildExpertContext());
+        setAiResponse({ text: expertAdvice.text });
+        return;
+      }
+
       const response = await generateHydrationAdvice(buildContext());
       setAiResponse(response);
 
@@ -223,12 +249,15 @@ export function useGroqAI(props: UseGroqAIProps) {
       cacheHashRef.current = ctxHash;
       localStorage.setItem(`digiwell_ai_advice_v2_${profileId}`, JSON.stringify({ response, timestamp: Date.now(), ctxHash }));
     } catch (error: unknown) {
-      console.error("Lỗi AI Advice:", error);
+      // [Try-Catch Fallback] API thất bại (timeout, mạng lag, rate limit) → fallback sang Offline Expert System
+      console.warn('[useGroqAI] API advice failed, falling back to offline expert:', error);
+      const expertAdvice = getOfflineAdvice(buildExpertContext());
+      setAiResponse({ text: expertAdvice.text });
     } finally {
       setIsAiLoading(false);
       isFetchingAdviceRef.current = false;
     }
-  }, [buildContext, isAiLoading]);
+  }, [buildContext, buildExpertContext, isAiLoading]);
 
   useEffect(() => {
     if (!profile?.id || hasFetchedInitialAdvice.current) return;
@@ -310,6 +339,17 @@ export function useGroqAI(props: UseGroqAIProps) {
     }
   };
 
+  const fetchAgenticSuggestions = useCallback(async () => {
+    const profileId = propsRef.current.profile?.id;
+    if (!profileId || !navigator.onLine) return;
+    try {
+      const actions = await invokeAgenticWorkflow(buildContext());
+      setAgenticSuggestions(actions);
+    } catch (error) {
+      console.warn('[useGroqAI] Agentic workflow failed:', error);
+    }
+  }, [buildContext]);
+
   return {
     aiAdvice: aiResponse?.text || '',
     isAiLoading, 
@@ -319,6 +359,8 @@ export function useGroqAI(props: UseGroqAIProps) {
     chatInput, 
     setChatInput, 
     fetchAIAdvice, 
-    handleSendChatMessage
+    handleSendChatMessage,
+    agenticSuggestions,
+    fetchAgenticSuggestions,
   };
 }
