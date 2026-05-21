@@ -131,8 +131,24 @@ GRANT EXECUTE ON FUNCTION public.resolve_stale_battles_batch() TO service_role;
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 -- Remove existing schedules to prevent duplicate registration
-SELECT cron.unschedule('assign-daily-quests-cron');
-SELECT cron.unschedule('resolve-stale-battles-cron');
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM pg_catalog.pg_extension 
+        WHERE extname = 'pg_cron'
+    ) THEN
+        IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'assign-daily-quests-cron') THEN
+            PERFORM cron.unschedule('assign-daily-quests-cron');
+        END IF;
+        IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'resolve-stale-battles-cron') THEN
+            PERFORM cron.unschedule('resolve-stale-battles-cron');
+        END IF;
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
+END $$;
 
 -- Schedule new cron jobs
 SELECT cron.schedule(

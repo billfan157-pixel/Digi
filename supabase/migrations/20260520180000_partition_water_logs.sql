@@ -142,8 +142,24 @@ GRANT EXECUTE ON FUNCTION public.create_next_month_water_partition() TO service_
 -- 9. Gắn Cron job chạy vào ngày 25 hàng tháng lúc 00:00 (Yêu cầu bật extension pg_cron)
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
--- Xóa cron cũ nếu có để tránh duplicate
-SELECT cron.unschedule('create-monthly-water-partition');
+-- Xóa cron cũ nếu có để tránh duplicate (sử dụng khối DO để tránh lỗi nếu pg_cron chưa được cấu hình hoặc job không tồn tại)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM pg_catalog.pg_extension 
+        WHERE extname = 'pg_cron'
+    ) AND EXISTS (
+        SELECT 1 
+        FROM cron.job 
+        WHERE jobname = 'create-monthly-water-partition'
+    ) THEN
+        PERFORM cron.unschedule('create-monthly-water-partition');
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
+END $$;
 
 -- Lên lịch cron
 SELECT cron.schedule(
