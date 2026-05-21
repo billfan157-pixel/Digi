@@ -113,13 +113,13 @@ interface WebhookSubscription {
 
 interface WebhookDelivery {
   id: string;
-  subscription_id: string;
+  subscription_id?: string;
   event_type: string;
-  payload: Record<string, unknown>;
+  payload?: Record<string, unknown>;
   response_status: number | null;
-  response_body: string | null;
+  response_body?: string | null;
   error_message: string | null;
-  created_at: string;
+  delivered_at: string;
 }
 
 export default function SettingsModal() {
