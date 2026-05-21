@@ -36,10 +36,12 @@ type WaterAction = {
 
 export type AiAdviceResponse = {
   text: string;
+  suggestedAmount?: number;
 };
 
 const FRIENDLY_FALLBACK_ADVICE: AiAdviceResponse = {
   text: 'Hệ thống AI đang bận một chút. Tạm thời hãy uống thêm vài ngụm nước nhỏ và nghỉ 1-2 phút nhé!',
+  suggestedAmount: 200,
 };
 
 function getAiErrorMessage(error: unknown): string {
@@ -91,6 +93,7 @@ export async function generateHydrationAdvice(context: DigiwellAiContext): Promi
 
     return {
       text: response.text || FRIENDLY_FALLBACK_ADVICE.text,
+      suggestedAmount: response.suggestedAmount,
     };
   } catch (error) {
     const message = getAiErrorMessage(error);

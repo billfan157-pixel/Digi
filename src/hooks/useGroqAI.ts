@@ -13,11 +13,15 @@ import {
 } from '../lib/ai';
 import { getOfflineAdvice, type ExpertContext } from '../lib/offlineExpertSystem';
 import { useBehaviorAnalysis } from './useBehaviorAnalysis';
+import type { WaterLog } from '../models';
 
 export interface UseGroqAIProps {
   profile: { id?: string; nickname?: string; goal?: string; activity?: string; climate?: string } | null;
   waterIntake: number;
   waterGoal: number;
+  streak?: number;
+  sleepHours?: number;
+  waterEntries?: WaterLog[];
   weeklyHistory?: Array<{ d: string; ml: number }>;
   calendarEvents?: Array<{ title: string; startRaw: string; endRaw: string }>;
   weatherData: { temp?: number; status?: string; location?: string } | null;
@@ -214,14 +218,36 @@ export function useGroqAI(props: UseGroqAIProps) {
   const buildExpertContext = useCallback((): ExpertContext => {
     const p = propsRef.current;
     const now = new Date();
+
+    // Compute weekly avg completion from history
+    let weeklyAvgCompletion: number | undefined;
+    if (p.weeklyHistory && p.weeklyHistory.length > 0) {
+      const totalDays = p.weeklyHistory.length;
+      const achieved = p.weeklyHistory.filter(d => d.ml >= p.waterGoal).length;
+      weeklyAvgCompletion = totalDays > 0 ? achieved / totalDays : undefined;
+    }
+
+    // Compute minutes since last drink from water entries
+    let minutesSinceLastDrink: number | undefined;
+    if (p.waterEntries && p.waterEntries.length > 0) {
+      const lastEntry = p.waterEntries[0];
+      const lastTime = new Date(lastEntry.created_at || lastEntry.day).getTime();
+      if (!Number.isNaN(lastTime)) {
+        minutesSinceLastDrink = Math.round((now.getTime() - lastTime) / 60000);
+      }
+    }
+
     return {
       waterToday: p.waterIntake,
       waterGoal: p.waterGoal,
-      streak: 0, // streak not available in props — default safe
+      streak: p.streak ?? 0,
       hour: now.getHours(),
       dayOfWeek: now.getDay(),
       weather: p.weatherData?.temp != null ? { temp: p.weatherData.temp, humidity: 65 } : undefined,
+      sleepHours: p.sleepHours,
       activityLevel: p.profile?.activity,
+      weeklyAvgCompletion,
+      minutesSinceLastDrink,
     };
   }, []);
 
@@ -238,7 +264,7 @@ export function useGroqAI(props: UseGroqAIProps) {
       // [Offline check] Nếu thiết bị mất kết nối mạng → dùng Offline Expert System ngay
       if (!navigator.onLine) {
         const expertAdvice = getOfflineAdvice(buildExpertContext());
-        setAiResponse({ text: expertAdvice.text });
+        setAiResponse({ text: expertAdvice.text, suggestedAmount: expertAdvice.suggestedAmount });
         return;
       }
 
@@ -252,7 +278,7 @@ export function useGroqAI(props: UseGroqAIProps) {
       // [Try-Catch Fallback] API thất bại (timeout, mạng lag, rate limit) → fallback sang Offline Expert System
       console.warn('[useGroqAI] API advice failed, falling back to offline expert:', error);
       const expertAdvice = getOfflineAdvice(buildExpertContext());
-      setAiResponse({ text: expertAdvice.text });
+      setAiResponse({ text: expertAdvice.text, suggestedAmount: expertAdvice.suggestedAmount });
     } finally {
       setIsAiLoading(false);
       isFetchingAdviceRef.current = false;
@@ -349,6 +375,14 @@ export function useGroqAI(props: UseGroqAIProps) {
       console.warn('[useGroqAI] Agentic workflow failed:', error);
     }
   }, [buildContext]);
+
+  // Auto-trigger agentic khi context thay đổi đáng kể (1 lần mỗi phiên)
+  const hasTriggeredAgenticRef = useRef(false);
+  useEffect(() => {
+    if (!profile?.id || hasTriggeredAgenticRef.current) return;
+    hasTriggeredAgenticRef.current = true;
+    void fetchAgenticSuggestions();
+  }, [profile?.id, fetchAgenticSuggestions]);
 
   return {
     aiAdvice: aiResponse?.text || '',

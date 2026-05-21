@@ -13,6 +13,7 @@ export function useAiSocialOrchestration() {
   const waterIntake = useAppStore(s => s.waterIntake);
   const waterGoal = useAppStore(s => s.waterGoal);
   const streak = useAppStore(s => s.streak);
+  const waterEntries = useAppStore(s => s.waterEntries);
   const weeklyHistory = useAppStore(s => s.weeklyHistory);
   const calendarEvents = useAppStore(s => s.calendarEvents);
   const weatherData = useAppStore(s => s.weatherData);
@@ -40,10 +41,15 @@ export function useAiSocialOrchestration() {
     setActiveTab: setActiveTab as (tab: string) => void,
   }) || {};
 
+  const sleepHours = profile?.sleep_hours;
+
   const geminiProps = useGroqAI({
     profile,
     waterIntake,
     waterGoal,
+    streak,
+    sleepHours,
+    waterEntries,
     weeklyHistory,
     calendarEvents,
     weatherData,

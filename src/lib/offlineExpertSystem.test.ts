@@ -121,4 +121,95 @@ describe('Offline Expert System', () => {
     expect(advice.category).toBe('hydration');
     expect(advice.text).toContain('Hãy uống từng ngụm nước lọc nhỏ đều đặn');
   });
+
+  it('should trigger weather_heat_humidity when hot and humid', () => {
+    const ctx: ExpertContext = {
+      ...baseContext,
+      weather: { temp: 33, humidity: 80 },
+    };
+    const advice = getOfflineAdvice(ctx);
+    expect(advice.priority).toBe('high');
+    expect(advice.category).toBe('weather');
+    expect(advice.text).toContain('nắng nóng oi bức');
+    expect(advice.suggestedAmount).toBe(200);
+  });
+
+  it('should trigger weather_cold_dry when temp is low', () => {
+    const ctx: ExpertContext = {
+      ...baseContext,
+      weather: { temp: 15, humidity: 40 },
+    };
+    const advice = getOfflineAdvice(ctx);
+    expect(advice.priority).toBe('medium');
+    expect(advice.category).toBe('weather');
+    expect(advice.text).toContain('Trời lạnh làm giảm cảm giác khát');
+    expect(advice.suggestedAmount).toBe(250);
+  });
+
+  it('should trigger sleep_deficit_morning when user slept <6h', () => {
+    const ctx: ExpertContext = {
+      ...baseContext,
+      hour: 8,
+      sleepHours: 5,
+    };
+    const advice = getOfflineAdvice(ctx);
+    expect(advice.priority).toBe('high');
+    expect(advice.category).toBe('hydration');
+    expect(advice.text).toContain('Đêm qua đệ ngủ hơi ít');
+    expect(advice.suggestedAmount).toBe(300);
+  });
+
+  it('should trigger timing_long_time_no_drink when 3+ hours since last drink', () => {
+    const ctx: ExpertContext = {
+      ...baseContext,
+      hour: 14,
+      minutesSinceLastDrink: 200,
+    };
+    const advice = getOfflineAdvice(ctx);
+    expect(advice.priority).toBe('high');
+    expect(advice.category).toBe('timing');
+    expect(advice.text).toContain('hơn 3 tiếng đệ chưa ghi nhận uống nước');
+    expect(advice.suggestedAmount).toBe(250);
+  });
+
+  it('should trigger timing_morning_routine early in the day with low intake', () => {
+    const ctx: ExpertContext = {
+      ...baseContext,
+      hour: 7,
+      waterToday: 100,
+    };
+    const advice = getOfflineAdvice(ctx);
+    expect(advice.priority).toBe('medium');
+    expect(advice.category).toBe('timing');
+    expect(advice.text).toContain('Chào buổi sáng đệ');
+    expect(advice.suggestedAmount).toBe(200);
+  });
+
+  it('should trigger timing_before_sleep when near bedtime and almost at goal', () => {
+    const ctx: ExpertContext = {
+      ...baseContext,
+      hour: 22,
+      waterToday: 1800,
+    };
+    const advice = getOfflineAdvice(ctx);
+    expect(advice.priority).toBe('medium');
+    expect(advice.category).toBe('timing');
+    expect(advice.text).toContain('Sắp đến giờ ngủ rồi đệ');
+    expect(advice.suggestedAmount).toBe(100);
+  });
+
+  it('should trigger activity_sedentary_warning when sedentary and long gap', () => {
+    const ctx: ExpertContext = {
+      ...baseContext,
+      hour: 14,
+      activityLevel: 'sedentary',
+      minutesSinceLastDrink: 160,
+      waterToday: 1500,
+    };
+    const advice = getOfflineAdvice(ctx);
+    expect(advice.priority).toBe('medium');
+    expect(advice.category).toBe('activity');
+    expect(advice.text).toContain('Ngồi làm việc lâu một chỗ');
+    expect(advice.suggestedAmount).toBe(200);
+  });
 });
