@@ -71,7 +71,12 @@ const globalAnyRead = globalThis as unknown as { __supabaseReadClient?: Supabase
 
 if (!globalAnyRead.__supabaseReadClient) {
   globalAnyRead.__supabaseReadClient = createClient(readUrl, supabaseAnonKey, {
-    auth: { persistSession: false }, // Replica client không cần quản lý session
+    auth: {
+      persistSession: false,
+      storageKey: 'digiwell-read-storage',
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
     global: {
       headers: {
         'X-Client-Info': 'digiwell-mobile-read/1.0.0',

@@ -15,6 +15,9 @@ import { getOfflineAdvice, type ExpertContext } from '../lib/offlineExpertSystem
 import { useBehaviorAnalysis } from './useBehaviorAnalysis';
 import type { WaterLog } from '../models';
 
+/** Module-level Set để tránh double-trigger agentic khi React StrictMode double-mount */
+const triggeredAgenticProfiles = new Set<string>();
+
 export interface UseGroqAIProps {
   profile: { id?: string; nickname?: string; goal?: string; activity?: string; climate?: string } | null;
   waterIntake: number;
@@ -376,11 +379,11 @@ export function useGroqAI(props: UseGroqAIProps) {
     }
   }, [buildContext]);
 
-  // Auto-trigger agentic khi context thay đổi đáng kể (1 lần mỗi phiên)
-  const hasTriggeredAgenticRef = useRef(false);
+  // Auto-trigger agentic 1 lần mỗi profile (module-level Set survive StrictMode double-mount, ref thì không)
   useEffect(() => {
-    if (!profile?.id || hasTriggeredAgenticRef.current) return;
-    hasTriggeredAgenticRef.current = true;
+    if (!profile?.id) return;
+    if (triggeredAgenticProfiles.has(profile.id)) return;
+    triggeredAgenticProfiles.add(profile.id);
     void fetchAgenticSuggestions();
   }, [profile?.id, fetchAgenticSuggestions]);
 
