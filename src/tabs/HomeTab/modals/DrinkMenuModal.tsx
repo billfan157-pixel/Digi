@@ -81,7 +81,7 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
       if (shouldLogOnSave) {
         handleAddWater(customVolume, customFactor, customName.trim());
       } else {
-        toast.success('Đã lưu vào menu đồ uống.');
+        toast.success(t('water.drink_menu_saved'));
       }
     }
     setIsCustomMode(false);

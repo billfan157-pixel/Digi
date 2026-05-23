@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import i18n from '@/i18n';
 import { playWaterDropSound } from '@/lib/audio';
 import type { Profile, WaterLog } from '@/models';
 import { expGainedForWater } from '@/config/questConfig';
@@ -130,7 +131,7 @@ export function useWaterData(
     const result = await waterQueryRef.current.refetch();
     if (result.error) {
       devError('fetchAllWater error:', result.error);
-      toast.error('Không thể tải nhật ký nước. Kiểm tra kết nối.');
+        toast.error(i18n.t('water.failed_load'));
     }
     setIsSyncing(false);
   }, [profile?.id]);
@@ -199,7 +200,7 @@ export function useWaterData(
 
       // 2. Demo mode
       if (!isRealUser(profile.id)) {
-        toast.success(`Đã ghi nhận +${actualAmount}ml.`);
+        toast.success(i18n.t('water.recorded', { amount: actualAmount }));
         return;
       }
 
@@ -230,7 +231,7 @@ export function useWaterData(
           );
         }
 
-        toast.success(`Đã ghi nhận +${actualAmount}ml.`);
+        toast.success(i18n.t('water.recorded', { amount: actualAmount }));
 
         // Confetti (milestones only) handled elsewhere to keep routine logs calm.
 
@@ -250,7 +251,7 @@ export function useWaterData(
 
       } catch (err) {
         devError('addWater:', err);
-        toast.error('Không thể ghi nhận lúc này. Đã lưu offline để đồng bộ sau.');
+        toast.error(i18n.t('water.failed_record'));
 
         // Rollback optimistic entry
         setWaterEntries(prev => prev.filter(e => e.id !== tempId));
@@ -278,7 +279,7 @@ export function useWaterData(
       setWaterEntries(prev => prev.filter(e => e.id !== id));
 
       if (id.startsWith('temp') || !isRealUser(profile?.id)) {
-        toast.success('Đã xóa.');
+        toast.success(i18n.t('water.deleted'));
         return;
       }
 
@@ -293,7 +294,7 @@ export function useWaterData(
         // Force refetch to ensure data consistency
         setTimeout(() => fetchAllWater(), 500);
 
-        toast.success('Đã xóa.');
+        toast.success(i18n.t('water.deleted'));
       } catch (err) {
         devError('Delete failed:', err);
         setWaterEntries(snapshot);
@@ -305,7 +306,7 @@ export function useWaterData(
           { amount: entry.amount, exp: entry.exp, day: today },
         ));
         setHasPendingCloudSync(true);
-        toast.error('Không thể xóa lúc này. Đã lưu offline để đồng bộ sau.');
+        toast.error(i18n.t('water.failed_delete'));
       }
     },
     [profile, onWaterLogged, fetchAllWater, deleteWaterMutation, today],
@@ -333,12 +334,12 @@ export function useWaterData(
   const handleEditEntry = useCallback(async (id: string, newAmount: number) => {
     const originalEntry = waterEntriesRef.current.find(e => e.id === id);
     if (!originalEntry) {
-      toast.error('Lỗi: Không tìm thấy mục cần sửa.');
+        toast.error(i18n.t('water.not_found'));
       return;
     }
 
     if (Number.isNaN(newAmount) || newAmount <= 0) {
-      toast.error('Lượng nước không hợp lệ.');
+        toast.error(i18n.t('water.invalid_amount'));
       return;
     }
 
@@ -363,7 +364,7 @@ export function useWaterData(
         exp: newExp,
       });
 
-      toast.success('Đã cập nhật lượng nước!');
+        toast.success(i18n.t('water.updated'));
       if (deltaAmount !== 0) await onWaterLogged?.(deltaAmount, deltaExp);
     } catch (err) {
       devError('edit failed:', err);
@@ -376,7 +377,7 @@ export function useWaterData(
         { amount: newAmount, exp: newExp, deltaAmount, deltaExp, day: today },
       ));
       setHasPendingCloudSync(true);
-      toast.error('Không thể cập nhật lúc này. Đã lưu offline để đồng bộ sau.');
+        toast.error(i18n.t('water.failed_update'));
     }
   }, [profile, onWaterLogged, today, updateWaterMutation]);
 
@@ -476,13 +477,13 @@ export function useWaterData(
       setHasPendingCloudSync(final.length > 0);
 
       if (syncedCount > 0) {
-        toast.success(`Đã đồng bộ ${syncedCount} mục offline.`);
+        toast.success(i18n.t('water.offline_synced', { count: syncedCount }));
         await onWaterLogged?.();
         fetchAllWater();
       }
 
       if (failedCount > 0 && remaining.length > 0) {
-        toast.info(`Còn ${remaining.length} mục chờ đồng bộ.`);
+        toast.info(i18n.t('water.offline_pending', { count: remaining.length }));
       }
     } finally {
       offlineSyncInFlightRef.current = false;

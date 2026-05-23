@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 // src/hooks/useWeatherSync.ts
 import { Geolocation } from '@capacitor/geolocation';
 import { getWeatherData, type WeatherData } from '@/lib/weatherEngine';
@@ -14,6 +15,8 @@ const WEATHER_SYNCED_KEY = 'digiwell_weather_synced_flag';
 const WEATHER_DATA_KEY = 'digiwell_weather_data';
 const WEATHER_LAST_UPDATED_KEY = 'digiwell_weather_last_updated';
 const WEATHER_LAST_ATTEMPT_KEY = 'digiwell_weather_last_attempt';
+const WEATHER_LAST_STATUS_KEY = 'digiwell_weather_last_status';
+const WEATHER_RETRY_ON_FAILURE_INTERVAL_MS = 60 * 1000; // 1 minute
 const WEATHER_POLL_INTERVAL_MS = 15 * 60 * 1000;
 const WEATHER_MAX_CALLS_PER_HOUR = 5;
 const WEATHER_RATE_LIMIT_HOUR_MS = 60 * 60 * 1000;
@@ -42,7 +45,7 @@ async function getCurrentPosition(): Promise<{ latitude: number; longitude: numb
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
-          timeout: 15000,
+          timeout: 5000,
           maximumAge: 0,
         });
       });
@@ -75,32 +78,38 @@ export const syncWeatherAndWaterGoal = async (silent = false): Promise<WeatherDa
 
   try {
     if (!silent) {
-      toast.loading('Đang kiểm tra quyền vị trí...', { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
+      toast.loading(i18n.t('weather.checking_location'), { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
     }
 
     const coords = await getCurrentPosition();
-    if (!coords) {
-      showError('Không thể lấy vị trí.');
-      return false;
+    let weather: WeatherData | null = null;
+
+    if (coords) {
+      if (!silent) {
+        toast.loading(i18n.t('weather.fetching'), { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
+      }
+      weather = await getWeatherData({ coords });
+    } else {
+      if (!silent) {
+        toast.loading(i18n.t('weather.fallback_location'), { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
+      } else {
+        console.log('[Weather] Geolocation failed/denied, falling back to Hanoi');
+      }
+      weather = await getWeatherData({ city: 'Hanoi' });
     }
 
-    if (!silent) {
-      toast.loading('Đang lấy dữ liệu thời tiết...', { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
-    }
-
-    const weather = await getWeatherData({ coords });
     if (!weather) {
-      showError('Không thể lấy dữ liệu thời tiết.');
+      showError(i18n.t('weather.update_failed'));
       return false;
     }
 
     if (!silent) {
-      toast.success('Đã cập nhật thời tiết. Mục tiêu nước sẽ điều chỉnh theo ngưỡng ổn định.', { id: toastId, duration: WEATHER_SYNC_RESULT_DURATION });
+      toast.success(i18n.t('weather.updated'), { id: toastId, duration: WEATHER_SYNC_RESULT_DURATION });
     }
 
     return weather;
   } catch (error: unknown) {
-    showError('Lỗi: ' + (error instanceof Error ? error.message : 'Không xác định'));
+    showError(i18n.t('weather.update_failed') + ': ' + (error instanceof Error ? error.message : i18n.t('weather.unknown_error')));
     return false;
   }
 };
@@ -175,14 +184,18 @@ export function useWeatherSync() {
     if (inFlightRef.current) return false;
     if (!checkRateLimit()) {
       if (!options.silent) {
-        toast.info('Đã đạt giới hạn cập nhật thời tiết (5 lần/giờ).', { id: WEATHER_SYNC_TOAST_ID, duration: WEATHER_SYNC_RESULT_DURATION });
+        toast.info(i18n.t('weather.rate_limit'), { id: WEATHER_SYNC_TOAST_ID, duration: WEATHER_SYNC_RESULT_DURATION });
       }
       return false;
     }
     const nowMs = Date.now();
-    if (!options.force && nowMs - lastAttemptAtRef.current < WEATHER_POLL_INTERVAL_MS) {
+    const lastStatus = AppStorage.getItem(WEATHER_LAST_STATUS_KEY);
+    const isLastSuccess = lastStatus !== 'failure';
+    const allowedInterval = isLastSuccess ? WEATHER_POLL_INTERVAL_MS : WEATHER_RETRY_ON_FAILURE_INTERVAL_MS;
+
+    if (!options.force && nowMs - lastAttemptAtRef.current < allowedInterval) {
       if (!options.silent) {
-        toast.info('Thời tiết vừa được cập nhật gần đây.', { id: WEATHER_SYNC_TOAST_ID, duration: WEATHER_SYNC_RESULT_DURATION });
+        toast.info(i18n.t('weather.recently_updated'), { id: WEATHER_SYNC_TOAST_ID, duration: WEATHER_SYNC_RESULT_DURATION });
       }
       return false;
     }
@@ -203,8 +216,10 @@ export function useWeatherSync() {
         persistWeatherSyncFlag(true);
         persistWeatherData(weather);
         AppStorage.setItem(WEATHER_LAST_UPDATED_KEY, now);
+        AppStorage.setItem(WEATHER_LAST_STATUS_KEY, 'success');
         return true;
       }
+      AppStorage.setItem(WEATHER_LAST_STATUS_KEY, 'failure');
       return false;
     } finally {
       inFlightRef.current = false;

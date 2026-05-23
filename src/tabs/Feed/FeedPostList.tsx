@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { AlertTriangle } from 'lucide-react';
+import { useVirtualFeedWindow } from '../../hooks/useVirtualFeedWindow';
 import { PostCard } from './PostCard';
 import { SkeletonCard } from './SkeletonCard';
 import type { SocialFeedPost } from '../../models';
@@ -34,9 +35,14 @@ const FeedPostListComponent = ({
   currentUserId,
   handleToggleLikePost,
   onOpenComments,
-}: FeedPostListProps) => (
-  <>
-    {socialError && (
+}: FeedPostListProps) => {
+  const { containerRef, measureElement, totalSize, virtualItems } = useVirtualFeedWindow({
+    itemCount: posts.length,
+  });
+
+  return (
+    <>
+      {socialError && (
       <div className="mx-4 rounded-3xl border border-rose-500/20 bg-rose-500/10 p-5 text-left sm:mx-0">
         <div className="flex items-start gap-3">
           <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-300" />
@@ -46,34 +52,44 @@ const FeedPostListComponent = ({
           </div>
         </div>
       </div>
-    )}
+      )}
 
-    {isLoading && posts.length === 0 && (
+      {isLoading && posts.length === 0 && (
       <div className="space-y-4 px-4 sm:px-0">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
       </div>
-    )}
+      )}
 
-    {!socialError && posts.length > 0 && (
-      <div className="space-y-4">
-        {posts.map((post, index) => (
-          <ErrorBoundary
-            key={post.id && String(post.id).trim() !== '' ? post.id : `fallback-post-${index}`}
-            FallbackComponent={PostCardErrorFallback}
-          >
-            <PostCard
-              post={post}
-              currentUserId={currentUserId}
-              handleToggleLikePost={handleToggleLikePost}
-              onOpenComments={onOpenComments}
-            />
-          </ErrorBoundary>
-        ))}
-      </div>
-    )}
-  </>
-);
+      {!socialError && posts.length > 0 && (
+        <div ref={containerRef} className="relative" style={{ height: totalSize }}>
+          {virtualItems.map(({ index, start }) => {
+            const post = posts[index];
+            if (!post) return null;
+
+            return (
+              <div
+                key={post.id && String(post.id).trim() !== '' ? post.id : `fallback-post-${index}`}
+                ref={(element) => measureElement(index, element)}
+                className="absolute left-0 right-0 pb-4"
+                style={{ transform: `translateY(${start}px)` }}
+              >
+                <ErrorBoundary FallbackComponent={PostCardErrorFallback}>
+                  <PostCard
+                    post={post}
+                    currentUserId={currentUserId}
+                    handleToggleLikePost={handleToggleLikePost}
+                    onOpenComments={onOpenComments}
+                  />
+                </ErrorBoundary>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+};
 
 export const FeedPostList = memo(FeedPostListComponent);

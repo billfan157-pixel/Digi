@@ -1,10 +1,37 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import i18n from '@/i18n';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { readQueue, clearQueue, writeQueue, resolveStrategy, MAX_RETRIES } from '@/lib/offlineQueue';
+import type { UseMutationResult } from '@tanstack/react-query';
 import type { QueueItem } from '@/lib/offlineQueue';
 import { devLog, devError, isRealUser } from './waterHelpers';
+
+type RecordHydrationParams = {
+  p_user_id: string;
+  p_amount_ml: number;
+  p_temp_c: number | null;
+  p_exercise_mins: number;
+  p_is_fasting: boolean;
+  p_client_event_id?: string;
+  p_name?: string;
+  p_day?: string;
+  p_created_at?: string;
+};
+
+type DeleteWaterParams = {
+  id: string;
+  userId: string;
+  day: string;
+};
+
+type UpdateWaterParams = {
+  id: string;
+  userId: string;
+  day: string;
+  amount: number;
+  exp: number;
+};
 
 export function useOfflineWaterSync({
   profileId,
@@ -21,9 +48,9 @@ export function useOfflineWaterSync({
   wasOffline: boolean;
   onWaterLogged?: (optimisticAmount?: number, optimisticExp?: number) => void | Promise<void>;
   fetchAllWater: () => Promise<void>;
-  recordHydrationMutation: any;
-  deleteWaterMutation: any;
-  updateWaterMutation: any;
+  recordHydrationMutation: UseMutationResult<Record<string, unknown>, Error, RecordHydrationParams>;
+  deleteWaterMutation: UseMutationResult<DeleteWaterParams, Error, DeleteWaterParams>;
+  updateWaterMutation: UseMutationResult<UpdateWaterParams, Error, UpdateWaterParams>;
 }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [hasPendingCloudSync, setHasPendingCloudSync] = useState(false);
@@ -123,13 +150,13 @@ export function useOfflineWaterSync({
       setHasPendingCloudSync(final.length > 0);
 
       if (syncedCount > 0) {
-        toast.success(`Đã đồng bộ ${syncedCount} mục offline.`);
+        toast.success(i18n.t('water.offline_synced', { count: syncedCount }));
         await onWaterLogged?.();
         fetchAllWater();
       }
 
       if (failedCount > 0 && remaining.length > 0) {
-        toast.info(`Còn ${remaining.length} mục chờ đồng bộ.`);
+        toast.info(i18n.t('water.offline_pending', { count: remaining.length }));
       }
     } finally {
       offlineSyncInFlightRef.current = false;

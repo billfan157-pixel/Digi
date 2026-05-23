@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useState, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -111,17 +112,17 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
   const handleAddCircleMember = useCallback(async (targetUserId: string, nickname: string) => {
     if (!profile?.id) return;
     if (targetUserId === profile.id) {
-      toast.error('Không thể thêm chính bạn vào bạn bè.');
+      toast.error(i18n.t('social.cannot_add_self'));
       return;
     }
     if (closeCircleIds.includes(targetUserId)) {
-      toast.info(`${nickname} đã là bạn bè.`);
+      toast.info(i18n.t('social.already_friends', { nickname }));
       return;
     }
-    const toastId = toast.loading(`Đang thêm ${nickname} vào bạn bè...`);
+    const toastId = toast.loading(i18n.t('social.adding_friend', { nickname }));
     try {
       await followMuts.addFollow.mutateAsync(targetUserId);
-      toast.success(`Đã thêm ${nickname} vào bạn bè.`, { id: toastId });
+      toast.success(i18n.t('social.friend_added', { nickname }), { id: toastId });
     } catch (err: unknown) {
       toast.error(getSocialErrorMessage(err instanceof Error ? err.message : String(err)), { id: toastId });
     }
@@ -129,10 +130,10 @@ export function useSocialData({ profile, setActiveTab, waterIntake, waterGoal, s
 
   const handleRemoveCircleMember = useCallback(async (targetUserId: string, nickname: string) => {
     if (!profile?.id) return;
-    const toastId = toast.loading(`Đang gỡ ${nickname} khỏi bạn bè...`);
+    const toastId = toast.loading(i18n.t('social.removing_friend', { nickname }));
     try {
       await followMuts.removeFollow.mutateAsync(targetUserId);
-      toast.success(`Đã gỡ ${nickname} khỏi bạn bè.`, { id: toastId });
+      toast.success(i18n.t('social.friend_removed', { nickname }), { id: toastId });
     } catch (err: unknown) {
       toast.error(getSocialErrorMessage(err instanceof Error ? err.message : String(err)), { id: toastId });
     }

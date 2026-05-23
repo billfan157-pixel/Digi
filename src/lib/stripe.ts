@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { supabase } from './supabase';
@@ -8,7 +9,7 @@ type BillingPlan = 'monthly' | 'yearly';
 
 export const PREMIUM_CHECKOUT_AVAILABLE = true;
 
-export async function startPremiumCheckout(plan: BillingPlan) {
+export async function startPremiumCheckout(plan: BillingPlan, tier: 'plus' | 'pro' = 'pro') {
   const successUrl = Capacitor.isNativePlatform()
     ? 'digiwell://checkout-success'
     : `${window.location.origin}/checkout-success`;
@@ -16,30 +17,30 @@ export async function startPremiumCheckout(plan: BillingPlan) {
     ? 'digiwell://checkout-cancel'
     : `${window.location.origin}/checkout-cancel`;
 
-  import('@/lib/analytics').then(({ track }) => track('checkout_started', { plan }));
-  Sentry.setContext('stripe-checkout', { plan, successUrl });
+  import('@/lib/analytics').then(({ track }) => track('checkout_started', { plan, tier }));
+  Sentry.setContext('stripe-checkout', { plan, tier, successUrl });
 
   const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
-    body: { plan, successUrl, cancelUrl },
+    body: { plan, tier, successUrl, cancelUrl },
   });
 
   if (error) {
-    Sentry.captureMessage('Stripe checkout failed', { extra: { plan, error: error.message } });
+    Sentry.captureMessage('Stripe checkout failed', { extra: { plan, tier, error: error.message } });
     throw new Error(error.message || 'Không thể kết nối thanh toán.');
   }
   if (!data?.url) {
-    Sentry.captureMessage('Stripe checkout missing URL', { extra: { plan, data } });
+    Sentry.captureMessage('Stripe checkout missing URL', { extra: { plan, tier, data } });
     throw new Error('Không thể tạo phiên thanh toán.');
   }
 
   return { sessionId: data.id as string, url: data.url as string };
 }
 
-export async function redirectToCheckout(plan: BillingPlan) {
-  const toastId = toast.loading('Đang kết nối thanh toán...');
+export async function redirectToCheckout(plan: BillingPlan, tier: 'plus' | 'pro' = 'pro') {
+  const toastId = toast.loading(i18n.t('premium.connecting'));
 
   try {
-    const { url } = await startPremiumCheckout(plan);
+    const { url } = await startPremiumCheckout(plan, tier);
     toast.dismiss(toastId);
 
     if (Capacitor.isNativePlatform()) {

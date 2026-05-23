@@ -13,6 +13,7 @@ interface ExportParams {
   completionRate?: number;
   isWatchConnected?: boolean;
   watchData?: { heartRate?: number; steps?: number } | null;
+  dateRange?: { start: string; end: string } | null;
 }
 
 interface ExportDataJSON {
@@ -60,6 +61,22 @@ interface FullExportData {
   quests: {
     title: string; status: string; progress: number; claimed_at: string | null
   }[];
+}
+
+function inDateRange(dateStr: string, range: { start: string; end: string } | null | undefined): boolean {
+  if (!range) return true;
+  const d = dateStr.slice(0, 10);
+  return d >= range.start && d <= range.end;
+}
+
+function filterParamsByDateRange(params: ExportParams): ExportParams {
+  const { dateRange } = params;
+  if (!dateRange) return params;
+  return {
+    ...params,
+    weeklyChartData: params.weeklyChartData.filter(d => inDateRange(d.d, dateRange)),
+    waterEntries: params.waterEntries.filter(e => inDateRange(e.day || e.created_at || '', dateRange)),
+  };
 }
 
 export async function exportFullDataAsJSON(data: FullExportData) {
@@ -187,7 +204,8 @@ export async function fetchAllUserData(profileId: string): Promise<FullExportDat
 }
 
 export function exportToJSON(params: ExportParams) {
-  const { profile, waterIntake, waterGoal, streak, waterEntries } = params;
+  const filtered = filterParamsByDateRange(params);
+  const { profile, waterIntake, waterGoal, streak, waterEntries } = filtered;
   const totalMl = waterEntries.reduce((s, e) => s + (e.amount || 0), 0);
   const avgDaily = waterEntries.length > 0 ? Math.round(totalMl / waterEntries.length) : 0;
 
@@ -223,7 +241,8 @@ export function exportToJSON(params: ExportParams) {
 }
 
 export function exportToCSV(params: ExportParams, filename = 'digiwell-hydration-report.csv') {
-  const { profile, waterIntake, waterGoal, streak, weeklyChartData, waterEntries, watchData } = params;
+  const filtered = filterParamsByDateRange(params);
+  const { profile, waterIntake, waterGoal, streak, weeklyChartData, waterEntries, watchData } = filtered;
 
   const totalMl = waterEntries.reduce((s, e) => s + (e.amount || 0), 0);
   const headers = ['Ngày', 'Lượng nước (ml)', 'Hoàn thành (%)', 'Nhịp tim', 'Số bước', 'Ghi chú'];
@@ -256,7 +275,8 @@ export function exportToCSV(params: ExportParams, filename = 'digiwell-hydration
 }
 
 export async function exportDetailedPDF(params: ExportParams) {
-  const { profile, waterIntake, waterGoal, streak, weeklyChartData, waterEntries, avgWeekly, completionRate, isWatchConnected, watchData } = params;
+  const filtered = filterParamsByDateRange(params);
+  const { profile, waterIntake, waterGoal, streak, weeklyChartData, waterEntries, avgWeekly, completionRate, isWatchConnected, watchData } = filtered;
 
   const todayLabel = new Date().toLocaleDateString('vi-VN');
   const totalEntries = waterEntries.length;
@@ -284,7 +304,8 @@ export function getExportDataURI(params: ExportParams): { json: string; csv: str
 }
 
 function buildExportJSON(params: ExportParams): ExportDataJSON {
-  const { profile, waterIntake, waterGoal, streak, waterEntries } = params;
+  const filtered = filterParamsByDateRange(params);
+  const { profile, waterIntake, waterGoal, streak, waterEntries } = filtered;
   const totalMl = waterEntries.reduce((s, e) => s + (e.amount || 0), 0);
   const avgDaily = waterEntries.length > 0 ? Math.round(totalMl / waterEntries.length) : 0;
 
@@ -316,7 +337,8 @@ function buildExportJSON(params: ExportParams): ExportDataJSON {
 }
 
 function buildCSVContent(params: ExportParams): string {
-  const { profile, waterIntake, waterGoal, streak, weeklyChartData, waterEntries, watchData } = params;
+  const filtered = filterParamsByDateRange(params);
+  const { profile, waterIntake, waterGoal, streak, weeklyChartData, waterEntries, watchData } = filtered;
   const totalMl = waterEntries.reduce((s, e) => s + (e.amount || 0), 0);
   const headers = ['Ngày', 'Lượng nước (ml)', 'Hoàn thành (%)', 'Nhịp tim', 'Số bước', 'Ghi chú'];
   const rows = weeklyChartData.map(day => {

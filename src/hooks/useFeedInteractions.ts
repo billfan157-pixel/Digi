@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useState, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -32,7 +33,7 @@ export function useFeedInteractions({
     },
     onMutate: () => {
       if (hasCheered) {
-        toast.error('Bạn đã cụng ly bài này rồi!');
+        toast.error(i18n.t('feed.clinked_already'));
         throw new Error('already_cheered');
       }
       setHasCheered(true);
@@ -42,7 +43,7 @@ export function useFeedInteractions({
       if ((err as Error).message === 'already_cheered') return;
       setHasCheered(false);
       setCheersCount(prev => prev - 1);
-      toast.error('Lỗi khi cụng ly, thử lại sau!');
+      toast.error(i18n.t('feed.clink_failed'));
     },
     onSuccess: () => {
       pulsePostApi(postId);
@@ -54,11 +55,11 @@ export function useFeedInteractions({
     onMutate: (amount) => {
       const waterAvailable = useAppStore.getState().waterIntake;
       if (currentUserId === postAuthorId) {
-        toast.error('Không thể tự châm nước cho chính mình!');
+        toast.error(i18n.t('feed.cannot_self_splash'));
         throw new Error('self_drop');
       }
       if (waterAvailable < amount) {
-        toast.error(`Bạn cần ít nhất ${amount}ml để châm nước cho bạn bè!`);
+        toast.error(i18n.t('feed.splash_min_amount', { amount }));
         throw new Error('insufficient_water');
       }
     },
@@ -66,11 +67,11 @@ export function useFeedInteractions({
       setDropsCount(prev => prev + amount);
       const current = useAppStore.getState().waterIntake;
       useAppStore.setState({ waterIntake: Math.max(0, current - amount) });
-      toast.success(`Đã châm ${amount}ml cho bạn! (-${amount}ml của bạn)`);
+      toast.success(i18n.t('feed.splash_sent', { amount }));
     },
     onError: (err) => {
       if ((err as Error).message === 'self_drop' || (err as Error).message === 'insufficient_water') return;
-      toast.error('Chưa thể châm nước lúc này!');
+      toast.error(i18n.t('feed.splash_failed'));
     },
   });
 
@@ -78,16 +79,16 @@ export function useFeedInteractions({
     mutationFn: () => sendNudgeApi(currentUserId!, postAuthorId, postId),
     onMutate: () => {
       if (currentUserId === postAuthorId) {
-        toast.error('Không thể tự nudge chính mình!');
+        toast.error(i18n.t('feed.cannot_self_nudge'));
         throw new Error('self_nudge');
       }
     },
     onSuccess: () => {
-      toast.success('Đã gửi Nudge.');
+      toast.success(i18n.t('home.nudge_sent'));
     },
     onError: (err) => {
       if ((err as Error).message === 'self_nudge') return;
-      toast.error('Chưa thể gửi Nudge lúc này!');
+      toast.error(i18n.t('home.nudge_failed'));
     },
   });
 

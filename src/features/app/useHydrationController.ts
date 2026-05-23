@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useAppBootstrapSync } from '@/features/app/useAppBootstrapSync';
@@ -157,7 +158,7 @@ export function useHydrationController({
       .reduce((sum: number, entry: { amount?: number }) => sum + (entry.amount || 0), 0);
 
     if (waterInLastHour + amount > 1000) {
-      toast.error(`Cảnh báo: Bạn đã uống ${waterInLastHour}ml trong 1 giờ qua. Tránh nạp quá 1000ml/giờ để không gây ngộ độc nước (hạ natri máu)!`, { duration: 6000 });
+      toast.error(i18n.t('water.hydration_warning', { amount: waterInLastHour }), { duration: 6000 });
       return;
     }
 
@@ -213,7 +214,7 @@ export function useHydrationController({
     refetchProfile,
   });
 
-  const handleExportPDF = useCallback(async () => {
+  const handleExportPDF = useCallback(async (dateRange?: { start: string; end: string } | null) => {
     await exportReportPdf({
       profile,
       waterIntake,
@@ -230,10 +231,11 @@ export function useHydrationController({
       completionRate: weeklyHistory.length > 0 
         ? Math.round((weeklyHistory.filter((d: { ml: number }) => d.ml >= waterGoal).length / weeklyHistory.length) * 100) 
         : 0,
+      dateRange,
     });
   }, [exportReportPdf, isWatchConnected, profile, progress, streak, watchData, waterGoal, waterIntake, weeklyHistory, waterEntries]);
 
-  const handleExportCSV = useCallback(() => {
+  const handleExportCSV = useCallback((dateRange?: { start: string; end: string } | null) => {
     exportReportCsv({
       profile,
       waterIntake,
@@ -241,10 +243,11 @@ export function useHydrationController({
       streak,
       weeklyChartData: weeklyHistory,
       waterEntries,
+      dateRange,
     });
   }, [exportReportCsv, profile, waterIntake, waterGoal, streak, weeklyHistory, waterEntries]);
 
-  const handleExportJSON = useCallback(() => {
+  const handleExportJSON = useCallback((dateRange?: { start: string; end: string } | null) => {
     exportReportJson({
       profile,
       waterIntake,
@@ -252,6 +255,7 @@ export function useHydrationController({
       streak,
       weeklyChartData: weeklyHistory,
       waterEntries,
+      dateRange,
     });
   }, [exportReportJson, profile, waterIntake, waterGoal, streak, weeklyHistory, waterEntries]);
 

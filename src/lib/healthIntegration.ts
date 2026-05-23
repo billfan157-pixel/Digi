@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { Capacitor } from '@capacitor/core';
 import { Health, type HealthDataType } from '@capgo/capacitor-health';
 import { toast } from 'sonner';
@@ -12,14 +13,14 @@ function coerceAvailable(raw: unknown): boolean {
 
 export async function requestHealthReadStepsAndHeartRate(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) {
-    toast.info('Đồng bộ Apple Health / Health Connect chỉ dùng trên app iOS hoặc Android.');
+    toast.info(i18n.t('health.app_only'));
     return false;
   }
 
   try {
     const availRes = await Health.isAvailable();
     if (!coerceAvailable(availRes)) {
-      toast.error('Dịch vụ sức khỏe không khả dụng trên thiết bị này.');
+      toast.error(i18n.t('health.service_unavailable'));
       return false;
     }
 
@@ -32,7 +33,7 @@ export async function requestHealthReadStepsAndHeartRate(): Promise<boolean> {
       !Array.isArray(readAuthorized) || readAuthorized.includes('steps' as HealthDataType);
 
     if (!stepsAllowed) {
-      toast.error('Bạn chưa cấp quyền đọc số bước trong ứng dụng Sức khỏe.');
+      toast.error(i18n.t('health.steps_no_permission'));
       return false;
     }
 
@@ -40,9 +41,9 @@ export async function requestHealthReadStepsAndHeartRate(): Promise<boolean> {
   } catch (error: unknown) {
     console.error('[healthIntegration]', error);
     if (error instanceof Error && error.message?.includes?.('denied')) {
-      toast.error('Quyền đọc sức khỏe bị từ chối. Kiểm tra Cài đặt → Quyền riêng tư.');
+      toast.error(i18n.t('health.health_permission_denied'));
     } else {
-      toast.error('Không kết nối được Apple Health / Health Connect.');
+      toast.error(i18n.t('health.health_connect_failed'));
     }
     return false;
   }

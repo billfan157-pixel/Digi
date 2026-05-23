@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import type { UserChallenge } from '../config/questConfig';
@@ -120,11 +121,11 @@ async function updateMilestoneChallenge(
       }
     }
 
-    toast.success(`🏔️ Mốc ${m.label}: ⚡ +${m.exp} EXP · 💰 +${m.coins} xu!`, { duration: 4000 });
+    toast.success(i18n.t('quest.milestone_reached', { label: m.label, exp: m.exp, coins: m.coins }), { duration: 4000 });
   }
 
   if (isCompleted) {
-    toast.success(`🎉 Hoàn thành: ${ch.title}!`, {
+    toast.success(i18n.t('quest.challenge_completed', { title: ch.title }), {
       duration: 5000,
       action: { label: '🎁 Nhận thưởng', onClick: () => claimChallengeReward(ctx.userId, uc.id) },
     });
@@ -205,10 +206,10 @@ async function updateTimeLimitedChallenge(
     .eq('id', uc.id);
 
   if (isFailed) {
-    toast.error(`💔 Thất bại: ${ch.title} — Bạn có thể thử lại!`);
+    toast.error(i18n.t('quest.challenge_failed', { title: ch.title }));
   }
   if (isCompleted) {
-    toast.success(`🎉 Hoàn thành: ${ch.title}!`, {
+    toast.success(i18n.t('quest.challenge_completed', { title: ch.title }), {
       duration: 5000,
       action: { label: '🎁 Nhận thưởng', onClick: () => claimChallengeReward(ctx.userId, uc.id) },
     });
@@ -226,11 +227,11 @@ export async function claimChallengeReward(
   });
 
   if (error) {
-    toast.error('Lỗi nhận thưởng: ' + error.message);
+    toast.error(i18n.t('quest.reward_error', { error: error.message }));
     return null;
   }
 
-  toast.success('🎁 Đã nhận phần thưởng thành công!');
+    toast.success(i18n.t('quest.reward_received'));
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('hydrationEvent', { detail: { refresh_profile: true } }));
   }

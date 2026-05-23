@@ -1,4 +1,5 @@
 import { useState, useEffect, memo, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Swords, Loader2, Crown } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ interface ArenaTabProps {
 }
 
 const ArenaTab = memo(({ profile }: ArenaTabProps) => {
+  const { t } = useTranslation();
   const [selectedMode, setSelectedMode] = useState<'daily' | 'quick' | 'tournament' | null>(null);
   const [showBattleDetail, setShowBattleDetail] = useState<Battle | null>(null);
   const [battles, setBattles] = useState<Battle[]>([]);
@@ -67,11 +69,11 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
         }
       } catch (err) {
         console.error(err);
-        toast.error('Lỗi tải dữ liệu Đấu trường');
+        toast.error(t('battle.load_error'));
       } finally {
         setIsLoading(false);
       }
-  }, [profile?.id]);
+  }, [profile?.id, t]);
   fetchArenaDataRef.current = fetchArenaData;
 
   useEffect(() => {

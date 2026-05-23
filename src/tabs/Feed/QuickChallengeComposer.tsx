@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Send, Swords, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,13 +12,14 @@ interface QuickChallengeComposerProps {
 }
 
 export const QuickChallengeComposer = ({ onPublish, onClose }: QuickChallengeComposerProps) => {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
 
   const handleSubmit = async () => {
     const content = text.trim();
     if (!content) {
-      toast.error('Viết lời Duel trước khi đăng.');
+      toast.error(t('feed.duel_content_required'));
       return;
     }
 

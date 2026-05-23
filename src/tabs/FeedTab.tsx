@@ -129,7 +129,9 @@ const FeedTab = memo(function FeedTab({
     return () => {
       if (currentTarget) observer.unobserve(currentTarget);
     };
-  }, [finalRankedFeed.length, visibleCount, hasMore, isFetchingMore]);
+    // visibleCount omitted intentionally — functional update keeps closure fresh
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finalRankedFeed.length, hasMore, isFetchingMore]);
 
   return (
     <div data-feed-scroll-container className="animate-in slide-in-from-right duration-300 relative">

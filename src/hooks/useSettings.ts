@@ -30,6 +30,8 @@ export interface AppSettings {
   moodTracking: boolean;        // Enable mood check-ins
   syncWellnessData: boolean;    // Sync with Apple Health/Google Fit
   energyTracking: boolean;      // Track daily energy levels
+  shareCalendarStatus: boolean; // Allow sharing calendar status for insights
+  calendarPrivacyLevel: 'strict' | 'standard' | 'off';
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -58,6 +60,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   moodTracking: true,
   syncWellnessData: false,
   energyTracking: true,
+  shareCalendarStatus: true,
+  calendarPrivacyLevel: 'standard',
 };
 
 export function useSettings(profile: AppProfile | null) {
@@ -96,6 +100,7 @@ export function useSettings(profile: AppProfile | null) {
           climate: normalizedClimate,
           waterGoal: Number(profile!.water_goal) || parsedCache.waterGoal || 2000,
           biometricEnabled,
+          calendarPrivacyLevel: profile!.calendar_privacy_level || parsedCache.calendarPrivacyLevel || DEFAULT_SETTINGS.calendarPrivacyLevel,
         };
 
         if (parsedCache.activity !== normalizedActivity || parsedCache.climate !== normalizedClimate) {
@@ -124,6 +129,7 @@ export function useSettings(profile: AppProfile | null) {
            moodTracking: Boolean(profile!.mood_tracking) || DEFAULT_SETTINGS.moodTracking,
            syncWellnessData: Boolean(profile!.sync_wellness_data) || DEFAULT_SETTINGS.syncWellnessData,
            energyTracking: Boolean(profile!.energy_tracking) || DEFAULT_SETTINGS.energyTracking,
+           calendarPrivacyLevel: profile!.calendar_privacy_level || DEFAULT_SETTINGS.calendarPrivacyLevel,
        }));
     };
 
@@ -186,6 +192,7 @@ export function useSettings(profile: AppProfile | null) {
              mood_tracking: updatedSettings.moodTracking,
              sync_wellness_data: updatedSettings.syncWellnessData,
              energy_tracking: updatedSettings.energyTracking,
+             calendar_privacy_level: updatedSettings.calendarPrivacyLevel,
              updated_at: new Date().toISOString()
            });
          }

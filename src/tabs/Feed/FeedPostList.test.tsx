@@ -100,6 +100,25 @@ describe('FeedPostList', () => {
     expect(screen.getByText('Second post')).toBeInTheDocument();
   });
 
+  it('virtualizes long post lists instead of rendering every post card', () => {
+    const posts = Array.from({ length: 100 }, (_, index) =>
+      makePost({ id: `post-${index + 1}`, content: `Post ${index + 1}` })
+    );
+
+    render(
+      <FeedPostList
+        posts={posts}
+        isLoading={false}
+        socialError=""
+        {...baseProps}
+      />
+    );
+
+    expect(screen.getAllByTestId(/^post-card-/).length).toBeLessThan(posts.length);
+    expect(screen.getByText('Post 1')).toBeInTheDocument();
+    expect(screen.queryByText('Post 100')).not.toBeInTheDocument();
+  });
+
   it('renders nothing when posts empty and not loading, no error', () => {
     const { container } = render(
       <FeedPostList

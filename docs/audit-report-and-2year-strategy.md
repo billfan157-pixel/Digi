@@ -283,8 +283,8 @@
 
 ### Sprint 9: Premium Features
 - [ ] AI-powered hydration coaching (personalized schedules based on behavior)
-- [ ] Advanced analytics dashboard (trends, correlations, predictions)
-- [ ] Export to PDF/CSV with custom date ranges
+- [x] Advanced analytics dashboard (trends, correlations, predictions) — **Phase 3.1 COMPLETED**
+- [x] Export to PDF/CSV with custom date ranges — **Phase 3.2 COMPLETED**
 - [ ] Family plan support (shared goals, family leaderboard)
 - [ ] Integration with Apple Health / Google Fit (bidirectional sync)
 

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Cpu, Sparkles, RefreshCw } from 'lucide-react';
 import BasicTodayRingUpgraded from '../../components/BasicTodayRingUpgraded';
 import WellnessDashboard from '../../components/Wellness/WellnessDashboard';
+import CoachHero from './CoachHero';
 import type { HydrationSchedule } from '../../lib/HydrationEngine';
 
 interface OverviewSectionProps {
@@ -42,12 +43,19 @@ export default function OverviewSection({
   yesterdayIntake,
   greeting,
   primaryStory,
+  nextBestAction,
+  actions,
   aiAdvice,
   isAiLoading,
   fetchAIAdvice,
   isPremium,
   setShowPremiumModal,
 }: OverviewSectionProps) {
+  const handleHeroClick = () => {
+    if (nextBestAction.ml > 0 && actions?.handleAddWater) {
+      actions.handleAddWater(nextBestAction.ml, 0, 'Gợi ý AI');
+    }
+  };
   if (waterGoal === 0) {
     return (
       <div className="px-6 py-12">
@@ -63,25 +71,14 @@ export default function OverviewSection({
 
   return (
     <>
+      <CoachHero
+        greeting={greeting}
+        primaryStory={primaryStory}
+        nextBestAction={nextBestAction}
+        onClickAction={handleHeroClick}
+      />
+
       <div className="px-6 mb-3 mt-4 space-y-4">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-xl font-black tracking-tight text-white"
-          >
-            {greeting}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mt-1 text-xs text-slate-400 leading-relaxed"
-          >
-            {primaryStory}
-          </motion.p>
-        </div>
 
         {/* AI Morning Briefing Card */}
         <motion.div

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { Trophy, Target, Lock, CheckCircle2, Flame, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 interface Challenge {
@@ -28,6 +29,7 @@ interface ChallengesListProps {
 }
 
 export default function ChallengesList({ userId, userPoints, onChallengeJoined }: ChallengesListProps) {
+  const { t } = useTranslation();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [userChallenges, setUserChallenges] = useState<UserChallenge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,11 +52,11 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
       setUserChallenges(userChallengesRes.data || []);
     } catch (error: unknown) {
       console.error("Error fetching challenges:", error);
-      toast.error("Không thể tải danh sách thử thách");
+      toast.error(t('challenge.load_failed'));
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     fetchData();
@@ -62,12 +64,12 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
 
   const handleJoin = async (challenge: Challenge) => {
     if (userPoints < challenge.stake_wp) {
-      toast.error("Không đủ WP để tham gia thử thách này!");
+      toast.error(t('challenge.not_enough_wp'));
       return;
     }
 
     setJoiningId(challenge.id);
-    const toastId = toast.loading("Đang đăng ký tham gia...");
+    const toastId = toast.loading(t('challenge.joining'));
 
     try {
       const { error } = await supabase.rpc('join_challenge', {
@@ -78,7 +80,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
 
       if (error) throw error;
 
-      toast.success(`Đã tham gia: ${challenge.title}`, { id: toastId });
+      toast.success(t('challenge.joined', { title: challenge.title }), { id: toastId });
 
       // Notify the parent component that the challenge was joined and pass the staked amount.
       onChallengeJoined(challenge.stake_wp);
@@ -95,7 +97,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
 
     } catch (error: unknown) {
       console.error("Error joining challenge:", error);
-      toast.error("Lỗi khi tham gia thử thách. Vui lòng thử lại.", { id: toastId });
+      toast.error(t('challenge.join_failed'), { id: toastId });
     } finally {
       setJoiningId(null);
     }

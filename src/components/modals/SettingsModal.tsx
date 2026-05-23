@@ -1,12 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera, Activity, Droplets, Heart, Bell,
   MoonStar, Send, Smartphone, Ruler, CloudUpload, Fingerprint,
   FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Sparkles,
   Crown, ExternalLink, CloudSun, Skull, AlertTriangle, Key, Code, Copy, Check,
-  Globe, Clock
+  Globe, Clock, DollarSign, Gauge, Cpu
 } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useUIStore } from '../../store/useUIStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -27,6 +29,9 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { usePremiumStatus } from '@/hooks/useIsPremium';
 import { supabase } from '@/lib/supabase';
 import { WidgetPlugin } from '@/lib/widgetService';
+import { getSlowQueries } from '@/lib/supabase';
+import { initWebVitals, getWebVitals, getMetricStatus } from '@/lib/webVitals';
+import { getDailyAIUsage, calculateEstimatedCosts, getCostDisclaimer } from '@/lib/aiUsageQueries';
 
 // ================= BUTTON VARIANTS =================
 const btnIcon = "p-2 rounded-full hover:bg-slate-300 dark:hover:bg-white/10 active:scale-95 transition-all text-slate-700 dark:text-white/80";
@@ -123,6 +128,7 @@ interface WebhookDelivery {
 }
 
 export default function SettingsModal() {
+  const { t } = useTranslation();
   const isOpen = useUIStore(s => s.showProfileSettings);
   const onClose = () => useUIStore.getState().setShowProfileSettings(false);
   const profile = useAppStore(s => s.profile);
@@ -154,7 +160,19 @@ export default function SettingsModal() {
   const [isLoadingDevData, setIsLoadingDevData] = useState(false);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
-  const loadDeveloperData = async () => {
+  // Sprint 1: Web Vitals and AI Cost states
+  const [webVitals, setWebVitals] = useState<ReturnType<typeof getWebVitals>>({
+    fcp: null,
+    lcp: null,
+    cls: null,
+    fid: null,
+    ttfb: null
+  });
+  const [slowQueries, setSlowQueries] = useState<ReturnType<typeof getSlowQueries>>([]);
+  const [aiCostData, setAiCostData] = useState<ReturnType<typeof calculateEstimatedCosts> | null>(null);
+  const [isLoadingAiCost, setIsLoadingAiCost] = useState(false);
+
+  const loadDeveloperData = useCallback(async () => {
     if (!profile?.id) return;
     setIsLoadingDevData(true);
     try {
@@ -190,21 +208,38 @@ export default function SettingsModal() {
     } finally {
       setIsLoadingDevData(false);
     }
-  };
+  }, [profile?.id]);
 
   React.useEffect(() => {
     if (activeSheet === 'developer') {
       loadDeveloperData();
+      // Sprint 1: Load Web Vitals and slow queries
+      initWebVitals();
+      setWebVitals(getWebVitals());
+      setSlowQueries(getSlowQueries());
+      
+      // Sprint 1: Load AI cost data
+      if (profile?.id) {
+        setIsLoadingAiCost(true);
+        getDailyAIUsage(profile.id, 30).then(usage => {
+          const costs = calculateEstimatedCosts(usage);
+          setAiCostData(costs);
+          setIsLoadingAiCost(false);
+        }).catch(err => {
+          console.error('Error loading AI cost data:', err);
+          setIsLoadingAiCost(false);
+        });
+      }
     }
-  }, [activeSheet]);
+  }, [activeSheet, loadDeveloperData, profile?.id]);
 
   const handleCreateApiKey = async () => {
     triggerHaptic();
     if (!newKeyName.trim()) {
-      toast.error('Vui lòng nhập tên khóa API.');
+      toast.error(t('settings.api_key_name_required'));
       return;
     }
-    const toastId = toast.loading('Đang tạo khóa API...');
+    const toastId = toast.loading(t('settings.creating_api_key'));
     try {
       const { data: newKey, error } = await supabase.rpc('create_api_key', {
         p_name: newKeyName.trim()
@@ -214,10 +249,10 @@ export default function SettingsModal() {
       
       setGeneratedKey(newKey);
       setNewKeyName('');
-      toast.success('Tạo khóa API thành công!', { id: toastId });
+      toast.success(t('settings.api_key_created'), { id: toastId });
       loadDeveloperData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Không thể tạo khóa API.', { id: toastId });
+      toast.error(err instanceof Error ? err.message : t('settings.api_key_create_failed'), { id: toastId });
     }
   };
 
@@ -233,7 +268,7 @@ export default function SettingsModal() {
     
     if (!ok) return;
     
-    const toastId = toast.loading('Đang thu hồi...');
+    const toastId = toast.loading(t('settings.revoking'));
     try {
       const { error } = await supabase
         .from('public_api_keys')
@@ -242,29 +277,29 @@ export default function SettingsModal() {
 
       if (error) throw error;
       
-      toast.success('Đã thu hồi khóa API thành công.', { id: toastId });
+      toast.success(t('settings.api_key_revoked'), { id: toastId });
       setGeneratedKey(null);
       loadDeveloperData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Không thể thu hồi khóa API.', { id: toastId });
+      toast.error(err instanceof Error ? err.message : t('settings.api_key_revoke_failed'), { id: toastId });
     }
   };
 
   const handleCreateSubscription = async () => {
     triggerHaptic();
     if (!newWebhookUrl.trim()) {
-      toast.error('Vui lòng nhập URL webhook.');
+      toast.error(t('settings.webhook_url_required'));
       return;
     }
     
     try {
       new URL(newWebhookUrl);
     } catch {
-      toast.error('Định dạng URL không hợp lệ. Vui lòng bắt đầu bằng http:// hoặc https://');
+      toast.error(t('settings.webhook_invalid_url'));
       return;
     }
 
-    const toastId = toast.loading('Đang đăng ký webhook...');
+    const toastId = toast.loading(t('settings.registering_webhook'));
     try {
       const { error } = await supabase
         .from('webhook_subscriptions')
@@ -279,10 +314,10 @@ export default function SettingsModal() {
 
       setNewWebhookUrl('');
       setWebhookEvents(['*']);
-      toast.success('Đăng ký webhook thành công!', { id: toastId });
+      toast.success(t('settings.webhook_registered'), { id: toastId });
       loadDeveloperData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Không thể đăng ký webhook.', { id: toastId });
+      toast.error(err instanceof Error ? err.message : t('settings.webhook_register_failed'), { id: toastId });
     }
   };
 
@@ -298,7 +333,7 @@ export default function SettingsModal() {
 
     if (!ok) return;
 
-    const toastId = toast.loading('Đang xóa...');
+    const toastId = toast.loading(t('settings.deleting'));
     try {
       const { error } = await supabase
         .from('webhook_subscriptions')
@@ -307,10 +342,10 @@ export default function SettingsModal() {
 
       if (error) throw error;
 
-      toast.success('Đã xóa webhook thành công.', { id: toastId });
+      toast.success(t('settings.webhook_deleted'), { id: toastId });
       loadDeveloperData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Không thể xóa webhook.', { id: toastId });
+      toast.error(err instanceof Error ? err.message : t('settings.webhook_delete_failed'), { id: toastId });
     }
   };
 
@@ -318,7 +353,7 @@ export default function SettingsModal() {
     triggerHaptic();
     navigator.clipboard.writeText(text);
     setCopiedKeyId(id);
-    toast.success('Đã sao chép vào bộ nhớ tạm.');
+    toast.success(t('settings.copied'));
     setTimeout(() => setCopiedKeyId(null), 2000);
   };
 
@@ -370,7 +405,7 @@ export default function SettingsModal() {
   const handleCropConfirm = async () => {
     if (!cropImage || !croppedAreaPixels || !profile?.id) return;
     
-    const toastId = toast.loading('Đang cắt và tải ảnh lên...');
+    const toastId = toast.loading(t('settings.uploading_avatar'));
     try {
       const croppedBlob = await getCroppedImg(cropImage, croppedAreaPixels);
       if (!croppedBlob) throw new Error('Không thể cắt ảnh');
@@ -391,11 +426,11 @@ export default function SettingsModal() {
 
       setProfile({ ...profile, avatar_url: newAvatarUrl });
       
-      toast.success('Đã cập nhật ảnh đại diện', { id: toastId });
+      toast.success(t('settings.avatar_updated'), { id: toastId });
       setCropImage(null);
       triggerHaptic();
     } catch (err: unknown) {
-      toast.error('Lỗi tải ảnh: ' + (err instanceof Error ? err.message : String(err)), { id: toastId });
+      toast.error(t('settings.avatar_load_error', { error: err instanceof Error ? err.message : String(err) }), { id: toastId });
     }
   };
 
@@ -411,7 +446,7 @@ export default function SettingsModal() {
         toast.warning(result.message);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Không gửi được thông báo thử.');
+      toast.error(err instanceof Error ? err.message : t('settings.test_notification_failed'));
     }
   };
 
@@ -425,10 +460,10 @@ export default function SettingsModal() {
       if (data?.url) {
         window.open(data.url, '_blank');
       } else {
-        toast.error('Không thể mở trang quản lý.');
+        toast.error(t('settings.stripe_portal_failed'));
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Lỗi kết nối Stripe');
+      toast.error(err instanceof Error ? err.message : t('settings.stripe_connect_error'));
     }
   };
 
@@ -444,7 +479,7 @@ export default function SettingsModal() {
     }
     
     const data = parsed.data;
-    const toastId = toast.loading('Đang cập nhật hồ sơ...');
+    const toastId = toast.loading(t('settings.updating_profile'));
     try {
       const { error } = await supabase.from('profiles').update({
         nickname: data.nickname,
@@ -470,17 +505,17 @@ export default function SettingsModal() {
         climate: data.climate
       });
       
-      toast.success('Cập nhật hồ sơ thành công!', { id: toastId });
+      toast.success(t('settings.profile_updated'), { id: toastId });
       closeSheet();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : String(err) || 'Lỗi cập nhật hồ sơ', { id: toastId });
+      toast.error(err instanceof Error ? err.message : String(err) || t('settings.profile_update_error'), { id: toastId });
     }
   };
 
   const handleSyncAppleHealth = async () => {
     const granted = await requestHealthReadStepsAndHeartRate();
     if (granted) {
-      toast.success('Đã kết nối Apple Health / Health Connect.');
+      toast.success(t('settings.health_connected'));
     }
     return granted;
   };
@@ -615,7 +650,7 @@ export default function SettingsModal() {
                  <div className="mt-4">
                     <button
                       disabled={isWeatherSyncing}
-                      onClick={() => { triggerHaptic(); void syncWeather(); }}
+                      onClick={() => { triggerHaptic(); void syncWeather({ force: true }); }}
                       className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-60 disabled:active:scale-100"
                     >
                      <div className="flex items-center gap-3">
@@ -759,6 +794,51 @@ export default function SettingsModal() {
                   </div>
                   <button onClick={() => { triggerHaptic(); updateSettings({}); }} className="text-sm font-semibold text-cyan-500 dark:text-cyan-400 p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">Đồng bộ ngay</button>
                 </div>
+
+                <div className="w-full flex items-center justify-between p-4 bg-transparent border-b border-slate-200 dark:border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center"><Calendar size={18} /></div>
+                    <div className="flex flex-col text-left">
+                      <span className="text-slate-800 dark:text-white font-medium">Chia sẻ trạng thái lịch</span>
+                      <span className="text-xs text-slate-500 dark:text-white/40">Cho phép AI phân tích lịch trình</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      triggerHaptic();
+                      const newShareCalendarStatus = !settings.shareCalendarStatus;
+                      await updateSettings({ shareCalendarStatus: newShareCalendarStatus });
+                      // Update public_profiles.is_calendar_synced in database
+                      if (profile?.id) {
+                        const { supabase } = await import('@/lib/supabase');
+                        await supabase
+                          .from('public_profiles')
+                          .update({ is_calendar_synced: newShareCalendarStatus })
+                          .eq('id', profile.id);
+                      }
+                    }}
+                    className={`w-12 h-7 rounded-full p-1 transition-colors ${settings.shareCalendarStatus ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                  >
+                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${settings.shareCalendarStatus ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+
+                <button 
+                  onClick={() => { 
+                    triggerHaptic(); 
+                    useUIStore.getState().setShowProfileSettings(false);
+                    useUIStore.getState().setShowHardwareWaitlist(true);
+                  }} 
+                  className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 active:bg-slate-200 dark:active:bg-white/10 transition-colors border-b border-slate-200 dark:border-white/5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                      <Cpu size={18} />
+                    </div>
+                    <span className="text-slate-800 dark:text-white font-medium">Danh sách chờ DigiBottle</span>
+                  </div>
+                  <ChevronRight size={18} className="text-slate-400 dark:text-white/40" />
+                </button>
 
                 <button onClick={() => { triggerHaptic(); setActiveSheet('privacy'); }} className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 active:bg-slate-200 dark:active:bg-white/10 transition-colors border-b border-slate-200 dark:border-white/5">
                   <div className="flex items-center gap-3">
@@ -928,7 +1008,7 @@ export default function SettingsModal() {
                 <h4 className="text-white font-bold text-sm mb-2">2. Cách chúng tôi sử dụng dữ liệu</h4>
                 <ul className="space-y-1.5 pl-4 text-xs list-disc marker:text-cyan-500/50">
                   <li>Tính toán mục tiêu nước cá nhân hóa và đưa ra khuyến nghị theo thời gian thực.</li>
-                  <li>Phân tích AI (qua Google Gemini) để tạo báo cáo tuần và lời khuyên — dữ liệu được ẩn danh hóa.</li>
+                  <li>Phân tích AI (qua Groq Cloud) để tạo báo cáo tuần và lời khuyên — dữ liệu được ẩn danh hóa.</li>
                   <li>Hiển thị bảng xếp hạng và tính năng xã hội (league, club, feed).</li>
                   <li>Cải thiện sản phẩm dựa trên phân tích tổng hợp, không nhận dạng cá nhân.</li>
                 </ul>
@@ -940,7 +1020,7 @@ export default function SettingsModal() {
                 <ul className="space-y-1.5 pl-4 mt-1.5 text-xs list-disc marker:text-cyan-500/50">
                   <li><strong className="text-white/80">Supabase</strong> (cơ sở dữ liệu) — lưu trữ mã hóa, tuân thủ SOC 2.</li>
                   <li><strong className="text-white/80">Stripe</strong> (thanh toán) — chỉ xử lý giao dịch, không nhận dữ liệu sức khỏe.</li>
-                  <li><strong className="text-white/80">Google Gemini</strong> (AI) — phản hồi tạm thời, không huấn luyện mô hình từ dữ liệu của bạn.</li>
+                  <li><strong className="text-white/80">Groq Cloud</strong> (AI) — phản hồi tạm thời, không huấn luyện mô hình từ dữ liệu của bạn.</li>
                 </ul>
               </div>
 
@@ -1053,7 +1133,7 @@ export default function SettingsModal() {
                   if (profile?.id) updateWidgetCache(profile.id).catch(() => {});
                 }
 
-                 toast.success('Đã đồng bộ giao diện và dữ liệu ra Widget!'); 
+                 toast.success(t('settings.widget_synced')); 
                  closeSheet(); 
                }} className="w-full py-3 rounded-xl text-white font-semibold hover:opacity-90 transition-colors" style={{ backgroundColor: settings.themeColor }}>
                  Đồng bộ ngay ra Widget
@@ -1478,6 +1558,119 @@ export default function SettingsModal() {
                  </div>
                </div>
 
+               {/* 5. Giám sát Hiệu năng (Performance Monitoring) - Sprint 1 */}
+               <div className="space-y-4">
+                 <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
+                   <Gauge className="text-cyan-500" size={18} />
+                   <h3 className="font-bold text-sm uppercase tracking-wider">Giám sát Hiệu năng</h3>
+                 </div>
+
+                 {/* Web Vitals */}
+                 <div className="p-4 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-2xl space-y-3">
+                   <h4 className="font-semibold text-sm">Core Web Vitals</h4>
+                   <div className="grid grid-cols-2 gap-2">
+                     {[
+                      { label: 'FCP', value: webVitals.fcp, unit: 'ms', metric: 'fcp' as const },
+                      { label: 'LCP', value: webVitals.lcp, unit: 'ms', metric: 'lcp' as const },
+                      { label: 'CLS', value: webVitals.cls, unit: '', metric: 'cls' as const },
+                      { label: 'FID', value: webVitals.fid, unit: 'ms', metric: 'fid' as const },
+                      { label: 'TTFB', value: webVitals.ttfb, unit: 'ms', metric: 'ttfb' as const },
+                     ].map(vital => {
+                      const status = getMetricStatus(vital.metric, vital.value);
+                      return (
+                        <div key={vital.label} className="p-2 bg-slate-200 dark:bg-slate-900/60 rounded-lg">
+                          <div className="text-[10px] text-slate-500 dark:text-white/40 mb-1">{vital.label}</div>
+                          <div className="text-xs font-bold text-slate-900 dark:text-white">
+                            {vital.value !== null && vital.value !== undefined ? `${vital.metric === 'cls' ? vital.value.toFixed(3) : vital.value.toFixed(0)}${vital.unit}` : 'N/A'}
+                          </div>
+                          <div className={`text-[10px] px-1.5 py-0.5 rounded mt-1 inline-block ${status.color} ${status.bg}`}>
+                            {status.label}
+                          </div>
+                        </div>
+                      );
+                     })}
+                   </div>
+                 </div>
+
+                 {/* Slow Queries */}
+                 <div className="p-4 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-2xl space-y-3">
+                   <div className="flex items-center justify-between">
+                     <h4 className="font-semibold text-sm">Truy vấn chậm ({'>'}200ms)</h4>
+                     <span className="text-[10px] text-slate-500 dark:text-white/40">{slowQueries.length} bản ghi</span>
+                   </div>
+                   <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+                     {slowQueries.length === 0 ? (
+                       <p className="text-center text-xs text-slate-500 dark:text-white/30 py-4">Không có truy vấn chạm nào.</p>
+                     ) : (
+                       slowQueries.map((query, idx) => (
+                         <div key={idx} className="p-2 bg-slate-200 dark:bg-slate-900/60 rounded-lg text-xs">
+                           <div className="flex items-center justify-between gap-2">
+                             <span className="font-mono text-slate-700 dark:text-white/80 truncate flex-1">{query.query}</span>
+                             <span className="text-amber-400 font-bold whitespace-nowrap">{query.duration.toFixed(0)}ms</span>
+                           </div>
+                           <div className="text-[10px] text-slate-500 dark:text-white/30 mt-1">
+                             {new Date(query.timestamp).toLocaleString()}
+                           </div>
+                         </div>
+                       ))
+                     )}
+                   </div>
+                 </div>
+               </div>
+
+               {/* 6. Bảng phân tích Chi phí AI (AI Cost Dashboard) - Sprint 1 */}
+               <div className="space-y-4">
+                 <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
+                   <DollarSign className="text-cyan-500" size={18} />
+                   <h3 className="font-bold text-sm uppercase tracking-wider">Phân tích Chi phí AI</h3>
+                 </div>
+
+                 {isLoadingAiCost ? (
+                   <div className="flex justify-center p-4"><Loader2 className="animate-spin text-cyan-400" size={20} /></div>
+                 ) : aiCostData ? (
+                   <div className="space-y-3">
+                     {/* Summary Card */}
+                     <div className="p-4 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-2xl space-y-2">
+                       <h4 className="font-semibold text-sm">Tổng chi phí 30 ngày</h4>
+                       <div className="flex items-baseline gap-2">
+                         <span className="text-2xl font-black text-cyan-400">${aiCostData.totalCostUSD.toFixed(6)}</span>
+                         <span className="text-sm text-slate-500 dark:text-white/40">(~{aiCostData.totalCostVND.toFixed(0)}đ VND)</span>
+                       </div>
+                       <div className="flex gap-4 text-xs text-slate-500 dark:text-white/60">
+                         <span>{aiCostData.totalMessages} tin nhắn</span>
+                         <span>{aiCostData.totalAdvice} lời khuyên</span>
+                         <span>{aiCostData.totalScans} quét</span>
+                       </div>
+                     </div>
+
+                     {/* Daily Breakdown */}
+                     <div className="p-4 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-2xl space-y-2">
+                       <h4 className="font-semibold text-sm">Lịch sử sử dụng hàng ngày</h4>
+                       <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+                         {aiCostData.dailyBreakdown.map(day => (
+                           <div key={day.date} className="p-2 bg-slate-200 dark:bg-slate-900/60 rounded-lg flex items-center justify-between text-xs">
+                             <div className="flex items-center gap-2">
+                               <span className="text-slate-500 dark:text-white/40 w-20">{day.date}</span>
+                               <span className="text-slate-700 dark:text-white/80">
+                                 {day.messages} msg, {day.advice} advice, {day.scans} scan
+                               </span>
+                             </div>
+                             <span className="text-cyan-400 font-bold">${day.costUSD.toFixed(6)}</span>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+
+                     {/* Disclaimer */}
+                     <p className="text-[10px] text-yellow-400/80 leading-relaxed p-2 bg-yellow-500/5 border border-yellow-500/10 rounded-lg">
+                       ⚠️ {getCostDisclaimer()}
+                     </p>
+                   </div>
+                 ) : (
+                   <p className="text-center text-xs text-slate-500 dark:text-white/30 py-4">Không có dữ liệu sử dụng AI.</p>
+                 )}
+               </div>
+
              </div>
            </BottomSheetWrapper>
          )}
@@ -1604,7 +1797,7 @@ export default function SettingsModal() {
                       if (result.success) {
                         setDeleteStep(null);
                         window.location.href = '/';
-                        toast.success('Đã xóa thành công.');
+                        toast.success(t('settings.deleted'));
                       }
                     }}
                     disabled={isDeleting || !password}

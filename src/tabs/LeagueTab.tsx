@@ -4,8 +4,7 @@ import { motion } from 'framer-motion';
 import TabHeader from '../components/layout/TabHeader';
 import ClubsView from '../components/ClubsView';
 import type { Profile } from '../models';
-import { useAppStore } from '../store/useAppStore';
-import { useShallow } from 'zustand/react/shallow';
+import { useIsPremium } from '../hooks/useIsPremium';
 import { PodiumSection } from './League/PodiumSection';
 import { LeaderboardRow } from './League/LeaderboardRow';
 import { EmptyState } from './League/EmptyState';
@@ -36,7 +35,7 @@ const LeagueTab = memo(function LeagueTab({
 }: LeagueTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [leagueView, setLeagueView] = useState<LeagueView>('all');
-  const isPremium = useAppStore(useShallow(s => s.isPremium));
+  const isPremium = useIsPremium();
 
   useEffect(() => { const t = window.setTimeout(() => { setSearchQuery(''); setLeagueView('all'); }, 0); return () => window.clearTimeout(t); }, [leagueMode]);
 

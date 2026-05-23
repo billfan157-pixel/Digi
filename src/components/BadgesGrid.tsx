@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Medal, Droplet, Target, Anchor, Beer, Moon, Trophy, CircleDashed, Star, Award, Flame, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { useTranslation } from 'react-i18next';
 
 interface Badge {
   id: string;
@@ -28,6 +29,7 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default function BadgesGrid({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const [badges, setBadges] = useState<Badge[]>([]);
   const [unlockedBadgeIds, setUnlockedBadgeIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export default function BadgesGrid({ userId }: { userId: string }) {
         setUnlockedBadgeIds(new Set((userBadgesRes.data || []).map((ub: { badge_id: string }) => ub.badge_id)));
       } catch (error: unknown) {
         console.error("Error fetching badges:", error);
-        toast.error("Không thể tải danh sách huy hiệu");
+        toast.error(t('badges.load_failed'));
       } finally {
         setLoading(false);
       }
@@ -79,7 +81,7 @@ export default function BadgesGrid({ userId }: { userId: string }) {
             colors: ['#06b6d4', '#f59e0b', '#10b981', '#a855f7'] // Cyan, Amber, Emerald, Purple
           });
 
-          toast.success("Tuyệt vời! Bạn vừa mở khóa một Huy hiệu mới!", { icon: '🎉' });
+          toast.success(t('badges.new_badge'), { icon: '🎉' });
         }
       )
       .subscribe();
@@ -87,7 +89,7 @@ export default function BadgesGrid({ userId }: { userId: string }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, t]);
 
   if (loading) return null;
   if (badges.length === 0) return null;

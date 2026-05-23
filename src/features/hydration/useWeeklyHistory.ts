@@ -8,6 +8,7 @@ export interface WeeklyHistoryPoint {
   d: string;
   ml: number;
   isToday: boolean;
+  fullDate?: string;
 }
 
 interface UseWeeklyHistoryOptions {
@@ -42,6 +43,7 @@ export function useWeeklyHistory({
           d: index === 6 ? 'HN' : dayLabels[dateItem.date.getDay()],
           ml: 0,
           isToday: index === 6,
+          fullDate: dateItem.dayStr,
         })));
         setWeeklyLogCount(0);
         return;
@@ -85,6 +87,7 @@ export function useWeeklyHistory({
           d: index === 6 ? 'HN' : dayLabels[dateItem.date.getDay()],
           ml: index === 6 ? waterIntake : (dataMap.get(dateItem.dayStr) || 0),
           isToday: index === 6,
+          fullDate: dateItem.dayStr,
         }));
 
         const nextWeeklyLogCount = dateList.reduce((sum, dateItem, index) => (

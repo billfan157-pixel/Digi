@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useMemo, useState, useEffect, memo, useCallback } from 'react';
 import {
   Cpu, Droplets, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock, Loader2
@@ -48,6 +49,7 @@ const InsightTab = memo(function InsightTab({
    isWeeklyReportLoading,
    generateWeeklyReport,
   }: InsightTabProps) {
+  const { t } = useTranslation();
   
   const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, hydrationResult, waterIntake, waterEntries, actions } = useAppStore(useShallow((state: AppState) => ({
     profile: state.profile,
@@ -156,7 +158,7 @@ const InsightTab = memo(function InsightTab({
       setDayLogs(data || []);
     } catch (err) {
       const { toast } = await import('sonner');
-      toast.error('Không thể tải chi tiết ngày');
+      toast.error(t('water.day_detail_load_error'));
       console.error('Lỗi tải lịch sử ngày:', err);
     } finally {
       setIsDayLogsLoading(false);
@@ -210,7 +212,7 @@ const InsightTab = memo(function InsightTab({
 
   if (isInsightLoading && !profile) {
     return (
-      <div className="space-y-6 pb-28 animate-in fade-in duration-300 flex items-center justify-center min-h-[60vh]">
+      <div className="space-y-6 pb-28 animate-in fade-in duration-300 flex items-center justify-center min-h-[60vh]" role="status" aria-live="polite" aria-busy="true">
         <div className="flex flex-col items-center gap-3">
           <Loader2 size={32} className="animate-spin text-cyan-400" />
           <p className="text-sm font-medium text-slate-400">Đang tải dữ liệu...</p>
@@ -222,7 +224,7 @@ const InsightTab = memo(function InsightTab({
   return (
     <div className="space-y-6 pb-28 animate-in fade-in duration-300">
       {insightError && (
-        <div className="px-5">
+        <div className="px-5" role="alert" aria-live="assertive">
           <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3">
             <AlertTriangle size={16} className="text-rose-400 shrink-0" />
             <p className="text-xs text-rose-300">{insightError}</p>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Send, X, Beaker, Coffee, ChefHat, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,12 +19,13 @@ const CATEGORIES: { key: TipCategory; label: string; icon: typeof Beaker; color:
 ];
 
 export const QuickTipComposer = ({ onPublish, onClose }: QuickTipComposerProps) => {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [category, setCategory] = useState<TipCategory>('practical');
   const [isPublishing, setIsPublishing] = useState(false);
 
   const handleSubmit = async () => {
-    if (!text.trim()) { toast.error('Nhập nội dung mẹo hydration!'); return; }
+    if (!text.trim()) { toast.error(t('feed.tip_content_required')); return; }
     setIsPublishing(true);
     try {
       await onPublish({ content: text.trim(), postKind: 'tip', extra: { tip_category: category } });

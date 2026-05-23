@@ -36,7 +36,7 @@ describe('stripe', () => {
       expect(result.sessionId).toBe('cs_test_123');
       expect(result.url).toBe('https://checkout.stripe.com/cs_test_123');
       expect(mockInvoke).toHaveBeenCalledWith('create-stripe-checkout', {
-        body: { plan: 'monthly', successUrl: 'http://localhost:3000/checkout-success', cancelUrl: 'http://localhost:3000/checkout-cancel' },
+        body: { plan: 'monthly', tier: 'pro', successUrl: 'http://localhost:3000/checkout-success', cancelUrl: 'http://localhost:3000/checkout-cancel' },
       });
     });
 

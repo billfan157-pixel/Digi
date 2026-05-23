@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
@@ -21,7 +22,7 @@ export const seedSampleQuests = async () => {
   if (existingTitles.size > 0) {
     const shouldContinue = confirm(`Đã có ${existingTitles.size} quests. Tiếp tục seed sẽ tạo duplicate. Clear trước?`);
     if (!shouldContinue) {
-      toast.info('Đã hủy seeding để tránh duplicate.');
+      toast.info(i18n.t('dev.seed_cancelled'));
       return;
     }
   }
@@ -43,10 +44,10 @@ export const seedSampleQuests = async () => {
       });
     }
 
-    toast.success('Đã seed quest mẫu.');
+    toast.success(i18n.t('dev.quest_seeded'));
   } catch (error) {
     console.error('[seedSampleQuests]', error);
-    toast.error('Lỗi khi seed quests.');
+    toast.error(i18n.t('dev.quest_seed_error'));
   }
 };
 
@@ -75,10 +76,10 @@ export const seedSampleWaterLogs = async (userId: string) => {
       });
     }
 
-    toast.success('Đã thêm sample data để test.');
+    toast.success(i18n.t('dev.sample_data_added'));
     await seedSampleQuests();
   } catch (error) {
     console.error('[seedSampleWaterLogs]', error);
-    toast.error('Lỗi khi seed water logs.');
+    toast.error(i18n.t('dev.water_log_seed_error'));
   }
 };

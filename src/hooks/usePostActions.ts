@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
@@ -27,11 +28,11 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
       if (newState) {
         const { error } = await supabase.from('saved_posts').insert({ user_id: currentUserId, post_id: postId });
         if (error) throw error;
-        toast.success('Đã lưu bài viết vào mục Lưu trữ', { icon: '🔖' });
+        toast.success(i18n.t('feed.post_saved'), { icon: '🔖' });
       } else {
         const { error } = await supabase.from('saved_posts').delete().eq('user_id', currentUserId).eq('post_id', postId);
         if (error) throw error;
-        toast.info('Đã bỏ lưu bài viết');
+        toast.info(i18n.t('feed.post_unsaved'));
       }
       return true;
     } catch {
@@ -41,26 +42,26 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
         else next.delete(postId);
         return next;
       });
-      toast.error('Có lỗi xảy ra, vui lòng thử lại sau.');
+      toast.error(i18n.t('validation.something_wrong'));
       return false;
     }
   }, [currentUserId, savedPosts]);
 
   const cheersPost = useCallback(async (post: { id: string; author_id: string }) => {
     if (!currentUserId || !post.id) {
-      toast.error("Lỗi dữ liệu: Bài viết này không có ID!");
+      toast.error(i18n.t('feed.post_no_id'));
       return false;
     }
 
     if (cheeredPosts.has(post.id)) {
-      toast.error('Bạn đã cụng ly bài này rồi!');
+      toast.error(i18n.t('feed.clinked_already'));
       return false;
     }
 
     setCheeredPosts(prev => new Set(prev).add(post.id));
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const tid = toast.loading('Đang cụng ly... 🍻', { icon: '💦' });
+    const tid = toast.loading(i18n.t('feed.cheers_loading'), { icon: '💦' });
 
     try {
       const { data, error } = await supabase.rpc('action_cheers_post', {
@@ -72,11 +73,11 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
       if (error) throw error;
 
       if (data === true) {
-        toast.success('+200ml vào mục tiêu hôm nay!', { id: tid, icon: '✨' });
+        toast.success(i18n.t('home.water_goal_added'), { id: tid, icon: '✨' });
         await supabase.rpc('pulse_post', { p_post_id: String(post.id) });
         return true;
       } else {
-        toast.error('Bạn đã cụng ly bài này rồi!', { id: tid });
+        toast.error(i18n.t('feed.clinked_already'), { id: tid });
         setCheeredPosts(prev => {
           const next = new Set(prev);
           next.delete(post.id);
@@ -90,7 +91,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
         next.delete(post.id);
         return next;
       });
-      toast.error('Lỗi máy chủ, chưa thể cộng nước!', { id: tid, icon: '💦' });
+      toast.error(i18n.t('validation.something_wrong'), { id: tid, icon: '💦' });
       return false;
     }
   }, [currentUserId, cheeredPosts]);
@@ -100,7 +101,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
     const ok = await confirmDialog({ title: 'Xóa bài viết', message: 'Bạn có chắc chắn muốn xóa bài viết này?', confirmLabel: 'Xóa', variant: 'danger' });
     if (!ok) return false;
 
-    const tid = toast.loading('Đang xóa bài viết...');
+    const tid = toast.loading(i18n.t('feed.post_deleting'));
     try {
       const { error } = await supabase
         .from('social_posts')
@@ -108,11 +109,11 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
         .eq('id', postId)
         .eq('author_id', currentUserId);
       if (error) throw error;
-      toast.success('Đã xóa bài viết thành công', { id: tid });
+      toast.success(i18n.t('feed.post_deleted'), { id: tid });
       return true;
     } catch (err: unknown) {
       console.error("Lỗi xóa bài viết:", err);
-      toast.error('Không thể xóa bài viết lúc này!', { id: tid });
+      toast.error(i18n.t('feed.post_delete_failed'), { id: tid });
       return false;
     }
   }, [currentUserId]);
@@ -133,15 +134,15 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
     const reasonMap = ['spam', 'inappropriate', 'harassment', 'misinformation', 'violence', 'other'];
     const selectedReason = reasonMap[idx - 1];
 
-    const tid = toast.loading('Đang gửi báo cáo đến hệ thống...');
+    const tid = toast.loading(i18n.t('feed.report_sending'));
     try {
       const { error } = await supabase.from('reports').insert({ target_id: postId, target_type: 'post', reporter_id: currentUserId, reason: selectedReason });
       if (error) throw error;
-      toast.success('Đã ghi nhận báo cáo. Bài viết đã được ẩn khỏi Feed của bạn.', { id: tid });
+      toast.success(i18n.t('feed.post_reported'), { id: tid });
       return true;
     } catch (err) {
       console.warn('Report error:', err);
-      toast.error('Gửi báo cáo thất bại, vui lòng thử lại sau.', { id: tid });
+      toast.error(i18n.t('feed.report_failed'), { id: tid });
       return false;
     }
   }, [currentUserId]);
@@ -149,7 +150,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
   const editPost = useCallback(async (postId: string, currentContent: string) => {
     const newContent = window.prompt('Chỉnh sửa bài viết:', currentContent);
     if (newContent !== null && newContent.trim() !== currentContent) {
-      const tid = toast.loading('Đang cập nhật...');
+      const tid = toast.loading(i18n.t('feed.post_updating'));
       try {
         const { error } = await supabase
           .from('social_posts')
@@ -157,10 +158,10 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
           .eq('id', postId)
           .eq('author_id', currentUserId);
         if (error) throw error;
-        toast.success('Đã cập nhật bài viết', { id: tid });
+        toast.success(i18n.t('feed.post_updated'), { id: tid });
         return newContent.trim();
       } catch {
-        toast.error('Lỗi khi cập nhật!', { id: tid });
+        toast.error(i18n.t('feed.post_update_failed'), { id: tid });
         return null;
       }
     }
@@ -169,24 +170,24 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
  
   const joinChallenge = useCallback(async (opponentId: string) => {
     if (!currentUserId || !opponentId) {
-      toast.error("Vui lòng đăng nhập để thách đấu!");
+      toast.error(i18n.t('feed.challenge_need_login'));
       return false;
     }
 
     if (currentUserId === opponentId) {
-      toast.error("Sếp không thể tự thách đấu chính mình!");
+      toast.error(i18n.t('feed.challenge_self'));
       return false;
     }
 
-    const tid = toast.loading('Đang gửi chiến thư...');
+    const tid = toast.loading(i18n.t('feed.challenge_sending'));
     try {
       const { error } = await supabase.from('hydration_battles').insert({ challenger_id: currentUserId, opponent_id: opponentId, stake_coins: 0, status: 'pending' });
       if (error) throw error;
-      toast.success('Đã gửi chiến thư! Đối thủ sẽ nhận được thông báo trong Đấu trường. ⚔️', { id: tid });
+      toast.success(i18n.t('feed.challenge_letter_sent'), { id: tid });
       return true;
     } catch (err: unknown) {
       console.error("Lỗi gửi chiến thư:", err);
-      toast.error('Không thể gửi chiến thư lúc này!', { id: tid });
+      toast.error(i18n.t('feed.challenge_letter_failed'), { id: tid });
       return false;
     }
   }, [currentUserId]);

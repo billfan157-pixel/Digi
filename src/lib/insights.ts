@@ -9,22 +9,24 @@ export async function fetchMonthlyWaterData(
   year: number,
   month: number
 ): Promise<MonthlyDataResult> {
-  const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-  const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${new Date(year, month + 1, 0).getDate()}`;
+  const monthStr = String(month + 1).padStart(2, '0');
+  const startDateStr = `${year}-${monthStr}-01`;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const endDateStr = `${year}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
 
   const { data, error } = await supabase
-    .from('water_logs')
-    .select('amount, day')
-    .eq('user_id', userId)
-    .gte('day', startDate)
-    .lte('day', endDate);
+    .rpc('get_monthly_water_aggregated', {
+      p_user_id: userId,
+      p_start_date: startDateStr,
+      p_end_date: endDateStr
+    });
 
   if (error) throw error;
 
   const dataMap: MonthlyDataResult = {};
-  (data || []).forEach((log: { day: string; amount: number }) => {
-    if (log.day && log.amount) {
-      dataMap[log.day] = (dataMap[log.day] || 0) + log.amount;
+  (data || []).forEach((log: { day: string; total_amount: number }) => {
+    if (log.day && log.total_amount) {
+      dataMap[log.day] = log.total_amount;
     }
   });
 

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -8,6 +9,7 @@ import { getFallbackStoryDrink, getFallbackStoryPercent, getFallbackStoryTempera
 import type { SocialFeedPost } from '../../models';
 import { useAppStore } from '../../store/useAppStore';
 import { useUIStore } from '../../store/useUIStore';
+import { LazyImage } from '../../components/LazyImage';
 
 interface HydrationStoryViewerProps {
   story: SocialFeedPost;
@@ -19,6 +21,7 @@ interface HydrationStoryViewerProps {
 const QUICK_EMOJIS = ['💧', '🔥', '👏', '❤️', '🙌', '✨'];
 
 export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: HydrationStoryViewerProps) => {
+  const { t } = useTranslation();
   const [paused, setPaused] = useState(false);
   const { setActiveCommentPost } = useUIStore();
   const [reactedEmojis, setReactedEmojis] = useState<Set<string>>(new Set());
@@ -37,7 +40,7 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
 
   const handleReact = useCallback(async (emoji: string) => {
     if (!currentUserId) {
-      toast.error('Vui lòng đăng nhập để tương tác');
+      toast.error(t('feed.login_required_interact'));
       return;
     }
     if (reactedEmojis.has(emoji)) return;
@@ -54,7 +57,7 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
         content: emoji,
       });
       if (error) throw error;
-      toast.success(`Đã thả ${emoji}`, { duration: 1200 });
+      toast.success(t('feed.reaction_sent', { emoji }), { duration: 1200 });
     } catch {
       setReactedEmojis(prev => {
         const next = new Set(prev);
@@ -64,7 +67,7 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
     }
 
     setTimeout(() => setPaused(false), 500);
-  }, [currentUserId, story.id, reactedEmojis]);
+  }, [currentUserId, story.id, reactedEmojis, t]);
 
   const pct = story.author?.water_goal
     ? Math.round(Math.min(100, (((typeof story.hydration_ml === 'number' ? story.hydration_ml : 0) || story.author?.water_today || 0) / story.author.water_goal) * 100))
@@ -93,7 +96,7 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
         <div className="absolute top-16 left-4 right-4 z-30 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/50 flex items-center justify-center overflow-hidden shadow-lg">
-              {story.author?.avatar_url ? <img src={story.author.avatar_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold">{(story.author?.nickname || 'U')[0].toUpperCase()}</span>}
+              {story.author?.avatar_url ? <LazyImage src={story.author.avatar_url} alt="avatar" className="w-full h-full object-cover" /> : <span className="text-white font-bold">{(story.author?.nickname || 'U')[0].toUpperCase()}</span>}
             </div>
             <div className="drop-shadow-md">
               <p className="text-white font-bold text-sm leading-tight">{story.author?.nickname}</p>
@@ -119,7 +122,7 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
 
         {/* Background Media */}
         <div className="absolute inset-0 z-0">
-          {story.image_url ? <img src={story.image_url} className="w-full h-full object-cover opacity-90" /> : <div className={`w-full h-full bg-gradient-to-br ${pct >= 100 ? 'from-emerald-900 to-teal-950' : pct >= 50 ? 'from-cyan-900 to-blue-950' : 'from-amber-900 to-orange-950'}`} />}
+          {story.image_url ? <LazyImage src={story.image_url} alt="story" className="w-full h-full object-cover opacity-90" /> : <div className={`w-full h-full bg-gradient-to-br ${pct >= 100 ? 'from-emerald-900 to-teal-950' : pct >= 50 ? 'from-cyan-900 to-blue-950' : 'from-amber-900 to-orange-950'}`} />}
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/90" />
         </div>
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, ShoppingBag, Check, Palette, Frame, Droplets, Coins, Loader2, Package, Music, Box, ShoppingCart, Gem, Shield, Lock, Zap, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFrameConfig } from '../../config/avatarFrames';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import CountUp from '../CountUp';
@@ -191,6 +192,7 @@ const ShopItemCard: React.FC<ShopItemCardProps> = ({ item, isOwned, isEquipped, 
 };
 
 export default function ShopModal() {
+  const { t } = useTranslation();
   const isOpen = useUIStore(s => s.showShopModal);
   const onClose = () => useUIStore.getState().setShowShopModal(false);
   const profile = useAppStore(s => s.profile);
@@ -252,7 +254,7 @@ export default function ShopModal() {
         });
         setProfile(updatedProfile);
       }
-      toast.success(`🎉 Đã sở hữu ${item.name}!`);
+      toast.success(t('shop.purchased', { name: item.name }));
     },
   });
 
@@ -280,7 +282,7 @@ export default function ShopModal() {
         window.dispatchEvent(new CustomEvent('themeUpdated', { detail: { themeColor } }));
       }
       
-      toast.success(`✨ Đã trang bị ${item.name}!`);
+      toast.success(t('shop.equipped', { name: item.name }));
     },
   });
 
@@ -288,12 +290,12 @@ export default function ShopModal() {
     if (!profileId || !profile) return;
     if (ownedItems.has(item.id)) return;
     if ((profile?.coins || 0) < item.price) {
-      toast.error('Cần thêm xu!');
+      toast.error(t('shop.need_more_coins'));
       return;
     }
     setProcessingId(item.id);
     try { await buyMutation.mutateAsync(item); } 
-    catch { toast.error('Giao dịch thất bại'); }
+    catch { toast.error(t('shop.transaction_failed')); }
     finally { setProcessingId(null); }
   };
 
@@ -304,7 +306,7 @@ export default function ShopModal() {
       await equipMutation.mutateAsync(item);
       if (item.category === 'bottle') window.dispatchEvent(new CustomEvent('bottleEquipped', { detail: { equipped_bottle_id: item.id } }));
       if (item.category === 'frame') setEquippedFrameId(item.id);
-    } catch { toast.error('Thử lại sau'); }
+    } catch { toast.error(t('shop.try_again')); }
     finally { setProcessingId(null); }
   };
 

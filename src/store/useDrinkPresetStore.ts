@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 
 import { AppStorage } from '@/lib/storage';
@@ -60,7 +61,7 @@ export const useDrinkPresetStore = create<DrinkPresetState>((set, get) => ({
     const { editingPresets } = get();
     AppStorage.setItem('digiwell_presets', JSON.stringify(editingPresets));
     set({ drinkPresets: editingPresets });
-    toast.success("Đã lưu cấu hình đồ uống mặc định!");
+    toast.success(i18n.t('settings.drink_presets_saved'));
   },
 
   handleUpdatePreset: (index, field, value) => {

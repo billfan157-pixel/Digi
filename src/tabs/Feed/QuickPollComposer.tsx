@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { BarChart3, Send, X, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -17,18 +18,19 @@ const DURATIONS = [
 ];
 
 export const QuickPollComposer = ({ onPublish, onClose }: QuickPollComposerProps) => {
+  const { t } = useTranslation();
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [duration, setDuration] = useState('24h');
   const [isPublishing, setIsPublishing] = useState(false);
 
   const addOption = () => {
-    if (options.length >= 4) { toast.error('Tối đa 4 lựa chọn!'); return; }
+    if (options.length >= 4) { toast.error(t('feed.max_poll_options')); return; }
     setOptions(prev => [...prev, '']);
   };
 
   const removeOption = (idx: number) => {
-    if (options.length <= 2) { toast.error('Cần ít nhất 2 lựa chọn!'); return; }
+    if (options.length <= 2) { toast.error(t('feed.min_poll_options')); return; }
     setOptions(prev => prev.filter((_, i) => i !== idx));
   };
 
@@ -38,8 +40,8 @@ export const QuickPollComposer = ({ onPublish, onClose }: QuickPollComposerProps
 
   const handleSubmit = async () => {
     const filled = options.filter(o => o.trim());
-    if (!question.trim()) { toast.error('Nhập câu hỏi khảo sát!'); return; }
-    if (filled.length < 2) { toast.error('Cần ít nhất 2 lựa chọn!'); return; }
+    if (!question.trim()) { toast.error(t('feed.poll_question_required')); return; }
+    if (filled.length < 2) { toast.error(t('feed.min_poll_options')); return; }
 
     setIsPublishing(true);
     try {

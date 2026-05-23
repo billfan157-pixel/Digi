@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Droplets, Clock, Bluetooth, Loader2 } from 'lucide-react';
 import type { WaterLog } from '../../models';
@@ -19,11 +20,56 @@ export default function SelectedDateModal({
   waterEntries,
   waterIntake
 }: SelectedDateModalProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!selectedDateModal) return;
+
+    // Auto-focus close button when modal opens
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+      // Focus trap: Tab and Shift+Tab
+      if (e.key === 'Tab') {
+        if (!modalRef.current) return;
+        const focusableElements = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement?.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement?.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedDateModal, onClose]);
+
   return (
     <AnimatePresence>
       {selectedDateModal && (
-        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-slate-950/80 backdrop-blur-sm" onClick={onClose}>
+        <div className="fixed inset-0 z-[200] flex items-end justify-center bg-slate-950/80 backdrop-blur-sm" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
           <motion.div
+            ref={modalRef}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -38,11 +84,24 @@ export default function SelectedDateModal({
                 <p className="text-cyan-400 text-[10px] font-black uppercase tracking-[0.2em]">
                   Nhật ký ngày
                 </p>
-                <h3 className="text-2xl font-black text-white">
-                  {new Date(selectedDateModal.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                <h3 id="modal-title" className="text-2xl font-black text-white">
+                  {(() => {
+                    const parts = selectedDateModal.date.split('-');
+                    if (parts.length === 3) {
+                      const [year, month, day] = parts;
+                      return `${day}/${month}/${year}`;
+                    }
+                    return selectedDateModal.date;
+                  })()}
                 </h3>
               </div>
-              <button onClick={onClose} aria-label="Đóng nhật ký" title="Đóng" className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors">
+              <button 
+                ref={closeButtonRef}
+                onClick={onClose} 
+                aria-label="Đóng nhật ký" 
+                title="Đóng" 
+                className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -60,7 +119,7 @@ export default function SelectedDateModal({
               
               if (isDayLogsLoading) {
                 return (
-                  <div className="flex flex-col items-center justify-center py-16 flex-1">
+                  <div className="flex flex-col items-center justify-center py-16 flex-1" role="status" aria-live="polite">
                     <Loader2 size={32} className="text-cyan-400 animate-spin mb-3" />
                     <p className="text-slate-400 text-sm font-medium">Đang tải lịch sử...</p>
                   </div>

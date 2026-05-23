@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 import { AppStorage } from '@/lib/storage';
 import {
@@ -87,7 +88,7 @@ export const useReminderStore = create<ReminderState>((set, get) => ({
 
     try {
       if (!supportsNativeHydrationReminders()) {
-        toast.success('Đã lưu lịch nhắc. Hãy chạy bản Android/iOS để nhận thông báo nền.');
+        toast.success(i18n.t('schedule.saved_schedule'));
         return;
       }
 
@@ -97,10 +98,10 @@ export const useReminderStore = create<ReminderState>((set, get) => ({
       if (reminderSettings.enabled && !granted) throw new Error('Bạn cần cấp quyền thông báo để DigiWell nhắc uống nước.');
 
       const result = await scheduleHydrationReminders(reminderSettings, { dailyGoal: waterGoal, nickname: nickname });
-      toast.success(result.scheduled ? `Đã lên lịch ${result.count} lời nhắc uống nước mỗi ngày!` : 'Đã tắt lịch nhắc uống nước định kỳ.');
+      toast.success(result.scheduled ? i18n.t('schedule.schedule_updated', { count: result.count }) : i18n.t('schedule.schedule_disabled'));
       get().saveReminderSettingsToLocal(profileId, reminderSettings); // Save after successful application
     } catch (err: unknown) {
-      toast.error((err as Error).message || 'Không thể cập nhật lịch nhắc uống nước.');
+      toast.error((err as Error).message || i18n.t('schedule.schedule_update_failed'));
     } finally {
       set({ isApplyingReminderSettings: false });
     }

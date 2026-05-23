@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Send, Loader2, MessageSquare, AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import AvatarFrame, { getFrameEffects, getRankTitle } from "../AvatarFrame";
 
@@ -19,6 +20,7 @@ interface Message {
 }
 
 export default function ClubChat({ clubId, userId }: { clubId: string; userId: string }) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -46,14 +48,14 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
 
     if (error) {
       setError(error.message);
-      toast.error("Không thể tải tin nhắn");
+      toast.error(t('social.load_failed'));
     } else if (data) {
       setMessages(data);
       setTimeout(scrollBottom, 100);
     }
 
     setLoading(false);
-  }, [clubId]);
+  }, [clubId, t]);
 
   // HÀM TỐI ƯU REALTIME: Chỉ fetch tin mới nhất
   const fetchNewMessage = useCallback(async (msgId: string) => {
@@ -107,7 +109,7 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
     });
 
     if (error) {
-      toast.error("Không gửi được tin nhắn");
+      toast.error(t('social.send_failed'));
       setText(tempText); // Trả lại text cho user
     }
 

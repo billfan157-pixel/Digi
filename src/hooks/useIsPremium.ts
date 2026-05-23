@@ -1,44 +1,53 @@
 import { useAppStore } from '@/store/useAppStore';
+import type { PremiumTier } from '@/config/premium';
 
 export type PremiumStatus = 'active' | 'grace' | 'expired' | 'none';
 
-export function useIsPremium(): boolean {
-  const isPremium = useAppStore(s => s.isPremium);
+export function useSubscriptionTier(): PremiumTier {
   const profile = useAppStore(s => s.profile);
-  const status = getPremiumStatus(isPremium, profile?.subscription_end, profile?.grace_period_end);
-  return status === 'active' || status === 'grace';
-}
+  if (!profile) return 'free';
 
+  const tier = (profile.subscription_tier || 'free') as PremiumTier;
+  if (tier === 'free') return 'free';
 
-export function usePremiumStatus(): PremiumStatus {
-  const isPremium = useAppStore(s => s.isPremium);
-  const profile = useAppStore(s => s.profile);
-  return getPremiumStatus(isPremium, profile?.subscription_end, profile?.grace_period_end);
-}
-
-
-function getPremiumStatus(
-  isPremium: boolean,
-  subscriptionEnd: string | null | undefined,
-  gracePeriodEnd: string | null | undefined,
-): PremiumStatus {
-  if (!isPremium) return 'none';
-
+  // Check subscription validity
   const now = new Date();
-
-  if (subscriptionEnd) {
-    const end = new Date(subscriptionEnd);
-    if (end > now) return 'active';
+  if (profile.subscription_end) {
+    const end = new Date(profile.subscription_end);
+    if (end > now) return tier;
 
     // Subscription has expired, check grace period
-    if (gracePeriodEnd) {
-      const grace = new Date(gracePeriodEnd);
-      if (grace > now) return 'grace';
+    if (profile.grace_period_end) {
+      const grace = new Date(profile.grace_period_end);
+      if (grace > now) return tier; // valid in grace period
     }
 
-    return 'expired';
+    return 'free'; // expired
   }
 
-  // No subscription_end (legacy or lifetime)
+  // No subscription_end means lifetime/legacy premium (map to pro)
+  return tier === 'pro' || (tier as string) === 'premium' ? 'pro' : tier;
+}
+
+export function useIsPremium(): boolean {
+  const tier = useSubscriptionTier();
+  return tier === 'plus' || tier === 'pro';
+}
+
+export function usePremiumStatus(): PremiumStatus {
+  const profile = useAppStore(s => s.profile);
+  const tier = useSubscriptionTier();
+  if (tier === 'free') return 'none';
+
+  const now = new Date();
+  if (profile?.subscription_end) {
+    const end = new Date(profile.subscription_end);
+    if (end > now) return 'active';
+    if (profile.grace_period_end) {
+      const grace = new Date(profile.grace_period_end);
+      if (grace > now) return 'grace';
+    }
+    return 'expired';
+  }
   return 'active';
 }

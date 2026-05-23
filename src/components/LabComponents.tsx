@@ -17,6 +17,7 @@ export interface DiagnosticsPanelProps {
   rawSensorSeries: number[];
   temperature: number;
   signalStrength: number;
+  healthScore?: number;
   isOpen: boolean;
   onToggle: () => void;
 }
@@ -122,7 +123,7 @@ export function SensorWaveChart({ series, isConnected }: { series: number[]; isC
 // ============================================================================
 // DIAGNOSTICS PANEL
 // ============================================================================
-export function DiagnosticsPanel({ isConnected, batteryHealth, batteryCycleCount, latencyMs, rawSensorSeries, temperature, signalStrength, isOpen, onToggle }: DiagnosticsPanelProps) {
+export function DiagnosticsPanel({ isConnected, batteryHealth, batteryCycleCount, latencyMs, rawSensorSeries, temperature, signalStrength, healthScore = 100, isOpen, onToggle }: DiagnosticsPanelProps) {
   return (
     <div className="rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl overflow-hidden transition-all hover:border-white/10">
       <button onClick={onToggle} className="w-full p-6 flex items-center justify-between gap-4 text-left group">
@@ -147,7 +148,7 @@ export function DiagnosticsPanel({ isConnected, batteryHealth, batteryCycleCount
                 <MetricCard icon={<Activity size={20} />} label="Health" value={`${batteryHealth}%`} hint={`Cycles: ${batteryCycleCount}`} accent="cyan" />
                 <MetricCard icon={<Zap size={20} />} label="Latency" value={latencyMs > 0 ? `${latencyMs}ms` : '--'} hint="BLE Response" accent="violet" />
                 <MetricCard icon={<Thermometer size={20} />} label="Temp" value={`${temperature}°C`} hint="Board Core" accent="amber" />
-                <MetricCard icon={<Wifi size={20} />} label="Tín hiệu" value={`${signalStrength}%`} hint="Cường độ RSSI" accent="emerald" />
+                <MetricCard icon={<Wifi size={20} />} label="Tín hiệu" value={`${signalStrength}%`} hint={`Sức khỏe BLE: ${healthScore}%`} accent="emerald" />
               </div>
               <div className="rounded-[2rem] border border-white/5 bg-slate-950/40 p-5">
                 <div className="flex items-center justify-between mb-4">

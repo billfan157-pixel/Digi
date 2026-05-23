@@ -97,6 +97,7 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
     if (weeklyHistory.length < 3) return 'stable';
     const recent = weeklyHistory.slice(-3).map(d => d.ml);
     const older = weeklyHistory.slice(-6, -3).map(d => d.ml);
+    if (older.length === 0) return 'stable';
     const avgRecent = recent.reduce((a, b) => a + b, 0) / recent.length;
     const avgOlder = older.reduce((a, b) => a + b, 0) / older.length;
     const diff = avgRecent - avgOlder;

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 interface CustomDrinkForm {
@@ -21,6 +22,7 @@ export default function CustomDrinkModal({
   setCustomDrinkForm,
   handleAddWater
 }: CustomDrinkModalProps) {
+  const { t } = useTranslation();
   if (!showCustomDrink) return null;
 
   return (
@@ -38,7 +40,7 @@ export default function CustomDrinkModal({
           <button onClick={() => setShowCustomDrink(false)} className="flex-1 py-3 rounded-xl text-slate-400 font-bold text-sm border border-slate-700 bg-slate-800">Huỷ</button>
           <button onClick={() => {
             const amt = Number(customDrinkForm.amount) || 0;
-            if (amt <= 0) return toast.error("Dung tích không hợp lệ!");
+            if (amt <= 0) return toast.error(t('validation.invalid_volume'));
             handleAddWater(amt, customDrinkForm.factor, customDrinkForm.name || 'Đồ uống tùy chỉnh');
             setShowCustomDrink(false);
           }} className="flex-1 py-3 rounded-xl font-bold text-slate-900 text-sm" style={{ background: 'linear-gradient(135deg, #06b6d4, #0ea5e9)' }}>Thêm ngay</button>

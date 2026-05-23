@@ -1,4 +1,5 @@
 import { useState, useMemo, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Sparkles, Trophy, Zap, UserPlus, Settings, Flame, Lock, BarChart2, Grid, Droplets, Target, Award, Shield, Heart, Crown, Share2 } from 'lucide-react';
 import TabHeader from '../components/layout/TabHeader';
 import { PostCard } from './FeedTab';
@@ -37,6 +38,7 @@ const ProfileTab = memo(function ProfileTab({
   streakFreezes, needsFreeze, onUseStreakFreeze, socialProfileStats,
   posts, handleToggleLikePost
 }: ProfileTabProps) {
+  const { t } = useTranslation();
   const { profile, isPremium, streak, waterIntake, waterGoal, weeklyHistory, actions: { handleLogout } } = useAppStore(useShallow((state) => ({
     profile: state.profile,
     isPremium: state.isPremium,
@@ -105,7 +107,7 @@ const ProfileTab = memo(function ProfileTab({
                   <span className="text-orange-400 text-[10px] font-bold">{streak}</span>
                 </div>
                 {isPremium && streakFreezes !== undefined && <div className={`px-2 py-1 rounded-lg border flex items-center gap-1 cursor-pointer transition-all ${needsFreeze ? 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30 animate-pulse' : 'bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20'}`} title={needsFreeze ? 'Dùng Streak Freeze để bảo vệ chuỗi!' : `Streak Freeze: ${streakFreezes} lần/tháng`} onClick={needsFreeze ? () => onUseStreakFreeze?.().then((success: boolean) => {
-                      if (success) toast.success('🛡️ Đã sử dụng Streak Freeze! Chuỗi của bạn được bảo vệ.');
+                      if (success) toast.success(t('premium.streak_freeze_used'));
                     }) : undefined}>
                     <Shield size={10} className={needsFreeze ? 'text-red-400' : 'text-blue-400'} />
                     <span className={`text-[10px] font-bold ${needsFreeze ? 'text-red-400' : 'text-blue-400'}`}>

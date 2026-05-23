@@ -1,8 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
-import React from 'react';
+import React, { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { getFrameConfig } from '../config/avatarFrames';
+import { LazyImage } from './LazyImage';
 
 interface AvatarFrameProps {
   level: number;
@@ -140,7 +141,7 @@ const sizeClasses = {
 };
 
 // Component chính
-export default function AvatarFrame({ level, avatarUrl, size = 'md', showBadge = true, nickname, frameId }: AvatarFrameProps) {
+const AvatarFrame = memo(({ level, avatarUrl, size = 'md', showBadge = true, nickname, frameId }: AvatarFrameProps) => {
   const levelConfig = getFrameEffects(level);
   const customFrame = getFrameConfig(frameId);
 
@@ -160,7 +161,7 @@ export default function AvatarFrame({ level, avatarUrl, size = 'md', showBadge =
       {/* 2. Khung chính chứa Avatar */}
       <div className={`relative w-full h-full rounded-full p-[3px] bg-slate-950 z-10 ${frameClasses} transition-all flex items-center justify-center ${customFrame ? '' : 'overflow-hidden'}`}>
         {avatarUrl ? (
-          <img src={avatarUrl} alt="avatar" className="rounded-full object-cover w-full h-full" />
+          <LazyImage src={avatarUrl} alt="avatar" className="rounded-full object-cover w-full h-full" />
         ) : (
           <span className="font-black text-cyan-400" style={{ fontSize: size === 'sm' ? '1.25rem' : size === 'md' ? '1.75rem' : '2.5rem' }}>
             {(nickname || 'U').charAt(0).toUpperCase()}
@@ -189,4 +190,6 @@ export default function AvatarFrame({ level, avatarUrl, size = 'md', showBadge =
       </div>
     </div>
   );
-}
+});
+
+export default AvatarFrame;

@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Health, type HealthDataType } from '@capgo/capacitor-health';
@@ -30,7 +31,7 @@ export function useDeviceHealth(profileId?: string) {
   // Request permissions and check authorization status
   const requestPermissions = useCallback(async (): Promise<boolean> => {
     if (!Capacitor.isNativePlatform()) {
-      toast.info("Tính năng đồng bộ sức khỏe chỉ hoạt động trên thiết bị thật (iOS/Android).");
+      toast.info(i18n.t('health.native_only'));
       return false;
     }
 
@@ -38,7 +39,7 @@ export function useDeviceHealth(profileId?: string) {
     try {
       const available = await checkHealthAvailability();
       if (!available) {
-        toast.error("Thiết bị của bạn không hỗ trợ đồng bộ dữ liệu sức khỏe.");
+        toast.error(i18n.t('health.not_supported'));
         return false;
       }
 
@@ -47,14 +48,14 @@ export function useDeviceHealth(profileId?: string) {
         read: ['steps' as HealthDataType, 'heartRate' as HealthDataType]
       });
 
-      toast.success("Đã cấp quyền truy cập dữ liệu sức khỏe!");
+      toast.success(i18n.t('health.permission_granted'));
       return true;
     } catch (error: unknown) {
       console.error('Lỗi khi yêu cầu quyền:', error);
       if (error instanceof Error && error.message?.includes('denied')) {
-        toast.error("Quyền truy cập dữ liệu sức khỏe bị từ chối. Vui lòng cấp quyền trong cài đặt thiết bị.");
+        toast.error(i18n.t('health.permission_denied'));
       } else {
-        toast.error("Không thể kết nối với Apple Health / Health Connect.");
+        toast.error(i18n.t('health.cannot_connect'));
       }
       return false;
     } finally {
@@ -102,7 +103,7 @@ export function useDeviceHealth(profileId?: string) {
     const hasPermission = await requestPermissions();
     if (hasPermission) {
       setIsWatchConnected(true);
-      toast.success("Đã kết nối với Apple Health / Health Connect!");
+      toast.success(i18n.t('health.connected'));
     }
   }, [requestPermissions]);
 
@@ -110,7 +111,7 @@ export function useDeviceHealth(profileId?: string) {
   const disconnectHealth = useCallback(() => {
     setIsWatchConnected(false);
     setWatchData({ steps: 0, heartRate: 0 });
-    toast.info("Đã ngắt kết nối với Apple Health / Health Connect.");
+    toast.info(i18n.t('health.disconnected'));
   }, []);
 
   // Toggle connection

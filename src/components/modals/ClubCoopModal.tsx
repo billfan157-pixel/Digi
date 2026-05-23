@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Flame, Droplet, Trophy, Users, Target, Shield, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 
@@ -8,6 +9,7 @@ import { useUIStore } from '@/store/useUIStore';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function ClubCoopModal() {
+  const { t } = useTranslation();
   const isOpen = useUIStore(s => s.showClubCoopModal);
   const onClose = () => useUIStore.getState().setShowClubCoopModal(false);
   const waterIntake = useAppStore(s => s.waterIntake);
@@ -25,7 +27,7 @@ export default function ClubCoopModal() {
 
   const handleContribute = () => {
     if (waterIntake <= 0) {
-      toast.error('Sếp chưa uống giọt nào hôm nay để góp sát thương cả!');
+      toast.error(t('club.no_water_today'));
       return;
     }
     
@@ -42,7 +44,7 @@ export default function ClubCoopModal() {
         colors: ['#f59e0b', '#ef4444', '#fcd34d', '#10b981'] // Hiệu ứng nổ rực rỡ hơn
       });
       if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200, 100, 300]); // Rung dài hơn
-      toast.success('🎉 Sếp đã tiêu diệt Boss!');
+      toast.success(t('club.boss_defeated'));
     } else {
       // Hiệu ứng ăn mừng bình thường
       confetti({
@@ -52,7 +54,7 @@ export default function ClubCoopModal() {
         colors: ['#06b6d4', '#3b82f6', '#60a5fa'] // Nước bắn tung tóe
       });
       if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
-      toast.success(`💥 Chí mạng! Bạn đã góp ${waterIntake}ml sát thương vào Boss!`);
+      toast.success(t('club.boss_critical_hit', { amount: waterIntake }));
     }
   };
 

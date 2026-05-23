@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { 
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
   Camera, Loader2, RefreshCw, Repeat2, X, Zap, ZapOff, 
   Grid as GridIcon, Timer, Settings, Check
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -170,6 +171,7 @@ export const QuickDropCameraUltimate = ({
   onCapture, 
   onClose 
 }: QuickDropCameraProps) => {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -265,7 +267,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
     setTimeout(() => setFocusPoint(null), 1000);
   };
 
-  const handleCapture = () => {
+  const handleCapture = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas || isPublishing || isCameraLoading) return;
@@ -273,7 +275,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
     const width = video.videoWidth;
     const height = video.videoHeight;
     if (!width || !height) {
-      toast.error('Camera chưa sẵn sàng.');
+      toast.error(t('feed.camera_not_ready'));
       return;
     }
 
@@ -281,7 +283,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
     canvas.height = height;
     const context = canvas.getContext('2d');
     if (!context) {
-      toast.error('Không thể chụp Drop lúc này.');
+      toast.error(t('feed.cannot_capture_drop'));
       return;
     }
 
@@ -298,12 +300,12 @@ const handleCaptureRef = useRef<() => void>(()=>{});
 
     canvas.toBlob((blob) => {
       if (!blob) {
-        toast.error('Không thể tạo ảnh Drop.');
+        toast.error(t('feed.cannot_create_drop_image'));
         return;
       }
       void onCapture(blob);
     }, 'image/jpeg', 0.95);
-  };
+  }, [isPublishing, isCameraLoading, zoom, onCapture, t]);
   useEffect(() => {
     handleCaptureRef.current = handleCapture;
   }, [handleCapture]);

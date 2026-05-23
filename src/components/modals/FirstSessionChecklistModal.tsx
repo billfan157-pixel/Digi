@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Droplets, Target, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { useModalStore } from '@/store/useModalStore';
 
 export default function FirstSessionChecklistModal() {
+  const { t } = useTranslation();
   const show = useModalStore((s) => s.showFirstSessionChecklist);
   const setShow = useModalStore((s) => s.setShowFirstSessionChecklist);
   const setShowProfileSettings = useModalStore((s) => s.setShowProfileSettings);
@@ -51,13 +53,13 @@ export default function FirstSessionChecklistModal() {
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
               <p className="text-[10px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">
-                Bắt đầu nhanh
+                {t('first_session.quick_start')}
               </p>
               <h2 className="text-xl font-black text-slate-900 dark:text-white">
-                3 bước để dùng DigiWell hiệu quả
+                {t('first_session.title')}
               </h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                Làm trong 1–2 phút để app nhắc đúng và thống kê chuẩn.
+                {t('first_session.subtitle')}
               </p>
             </div>
             <button
@@ -81,11 +83,11 @@ export default function FirstSessionChecklistModal() {
                   <Target size={18} aria-hidden />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-slate-900 dark:text-white">Đặt mục tiêu nước</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Chạm để xem mục tiêu và điều chỉnh nếu cần</p>
+                  <p className="font-bold text-slate-900 dark:text-white">{t('first_session.set_goal')}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{t('first_session.set_goal_desc')}</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-cyan-600 dark:text-cyan-300">Mở</span>
+              <span className="text-xs font-bold text-cyan-600 dark:text-cyan-300">{t('first_session.open')}</span>
             </button>
 
             <button
@@ -98,11 +100,11 @@ export default function FirstSessionChecklistModal() {
                   <Droplets size={18} aria-hidden />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-slate-900 dark:text-white">Ghi nước lần đầu</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Tạo một log để bắt đầu thống kê hôm nay</p>
+                  <p className="font-bold text-slate-900 dark:text-white">{t('first_session.log_water')}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{t('first_session.log_water_desc')}</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-300">Thêm</span>
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-300">{t('first_session.add')}</span>
             </button>
 
             <button
@@ -115,11 +117,11 @@ export default function FirstSessionChecklistModal() {
                   <Bell size={18} aria-hidden />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-slate-900 dark:text-white">Bật nhắc nhở</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Để DigiWell nhắc đúng khung giờ bạn muốn</p>
+                  <p className="font-bold text-slate-900 dark:text-white">{t('first_session.enable_reminders')}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{t('first_session.enable_reminders_desc')}</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-amber-600 dark:text-amber-300">Bật</span>
+              <span className="text-xs font-bold text-amber-600 dark:text-amber-300">{t('first_session.enable')}</span>
             </button>
           </div>
 
@@ -129,7 +131,7 @@ export default function FirstSessionChecklistModal() {
               onClick={() => setShow(false)}
               className="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-slate-800 active:scale-95 transition-all dark:bg-white/10 dark:hover:bg-white/15 border border-slate-900/10 dark:border-white/10"
             >
-              Để sau
+              {t('first_session.later')}
             </button>
           </div>
         </motion.div>

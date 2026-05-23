@@ -1,8 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS } from '../_shared/rateLimit.ts';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const Deno: any;
+/// <reference lib="deno.ns" />
 
 const appUrl = Deno.env.get('APP_URL') ?? 'https://digiwell-app.vercel.app';
 const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
@@ -94,6 +93,14 @@ function extractSubDetails(obj: Record<string, unknown>) {
   return { priceId, periodEnd, customer };
 }
 
+function extractTier(obj: Record<string, unknown>): string {
+  const metadata = obj.metadata as Record<string, string> | undefined;
+  if (metadata?.tier) return metadata.tier;
+  const subData = obj.subscription_data as { metadata?: Record<string, string> } | undefined;
+  if (subData?.metadata?.tier) return subData.metadata.tier;
+  return 'pro'; // default fallback
+}
+
 Deno.serve(async (request: Request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -139,6 +146,7 @@ Deno.serve(async (request: Request) => {
     if (eventType === 'checkout.session.completed' && obj) {
       const userId = await extractUserId(obj);
       const subscriptionId = typeof obj.subscription === 'string' ? obj.subscription : '';
+      const tier = extractTier(obj);
 
       if (userId && subscriptionId) {
         const resp = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
@@ -147,15 +155,16 @@ Deno.serve(async (request: Request) => {
         if (resp.ok) {
           const sub = await resp.json() as Record<string, unknown>;
           const { priceId, periodEnd, customer } = extractSubDetails(sub);
+          const subTier = extractTier(sub) || tier;
           await updateProfile(userId, {
-            subscription_tier: 'premium',
+            subscription_tier: subTier,
             subscription_end: periodEnd,
             stripe_customer_id: customer,
             stripe_subscription_id: subscriptionId,
             stripe_price_id: priceId,
             grace_period_end: null,
           });
-          await logEvent(userId, 'subscription_created', 'premium', eventId);
+          await logEvent(userId, 'subscription_created', subTier, eventId);
         }
       }
     }
@@ -164,13 +173,14 @@ Deno.serve(async (request: Request) => {
       const userId = await extractUserId(obj);
       const status = String(obj.status ?? '');
       const { priceId, periodEnd, customer } = extractSubDetails(obj);
+      const tier = extractTier(obj);
 
       if (userId) {
         const isActive = status !== 'canceled' && status !== 'incomplete_expired' && status !== 'unpaid';
         const cancelAtPeriodEnd = Boolean(obj.cancel_at_period_end);
 
         await updateProfile(userId, {
-          subscription_tier: isActive ? 'premium' : 'free',
+          subscription_tier: isActive ? tier : 'free',
           subscription_end: periodEnd,
           stripe_customer_id: customer,
           stripe_subscription_id: String(obj.id ?? ''),
@@ -178,7 +188,7 @@ Deno.serve(async (request: Request) => {
           cancel_at_period_end: cancelAtPeriodEnd,
           grace_period_end: status === 'active' ? null : undefined,
         });
-        await logEvent(userId, isActive ? 'subscription_updated' : 'subscription_expired', isActive ? 'premium' : 'free', eventId);
+        await logEvent(userId, isActive ? 'subscription_updated' : 'subscription_expired', isActive ? tier : 'free', eventId);
       }
     }
 
@@ -208,15 +218,16 @@ Deno.serve(async (request: Request) => {
         if (resp.ok) {
           const sub = await resp.json() as Record<string, unknown>;
           const { priceId, periodEnd } = extractSubDetails(sub);
+          const tier = extractTier(sub);
           await updateProfile(userId, {
-            subscription_tier: 'premium',
+            subscription_tier: tier,
             subscription_end: periodEnd,
             stripe_price_id: priceId,
             grace_period_end: null,
             cancel_at_period_end: false,
           });
+          await logEvent(userId, 'payment_succeeded', tier, eventId, amountVnd);
         }
-        await logEvent(userId, 'payment_succeeded', 'premium', eventId, amountVnd);
       }
     }
 

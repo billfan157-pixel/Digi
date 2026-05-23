@@ -1,10 +1,15 @@
+import { lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, BarChart2, Lock, Crown, Sparkles, Target, CheckCircle2, Flame, Droplets, TrendingUp, HeartPulse, Moon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart2, Lock, Crown, Sparkles, Target, CheckCircle2, Flame, Droplets, TrendingUp, HeartPulse, Moon, Loader2 } from 'lucide-react';
 import CalendarView from '../../components/insight/CalendarView';
-import HourlyHeatmap from '../../components/HourlyHeatmap';
 import WeeklyChart from '../../components/WeeklyChart';
+import TrendForecastingChart from '../../components/TrendForecastingChart';
+import { WeekOverWeekCard } from '../../components/insight/WeekOverWeekCard';
+import { StreakAnalyticsCard } from '../../components/insight/StreakAnalyticsCard';
 import BehaviorInsightCards from './BehaviorInsightCards';
 import ContextInsightCard from '../../components/insight/ContextInsightCard';
+
+const HourlyHeatmap = lazy(() => import('../../components/HourlyHeatmap'));
 import { useBehaviorAnalysis } from '@/hooks/useBehaviorAnalysis';
 import { useContextAwareInsights } from '@/hooks/useContextAwareInsights';
 import { useWellnessData } from '@/hooks/useWellnessData';
@@ -331,6 +336,23 @@ export default function AnalyticsSection({
         )}
       </section>
 
+      {/* Advanced Analytics: Trend Forecast + Week-over-Week + Streak */}
+      {isPremium && weeklyChartData.length >= 3 && (
+        <section className="px-6 space-y-4">
+          <TrendForecastingChart weeklyChartData={weeklyChartData} waterGoal={waterGoal} />
+          <WeekOverWeekCard
+            currentWeek={weeklyChartData}
+            previousWeek={previousWeekData || []}
+            waterGoal={waterGoal}
+          />
+          <StreakAnalyticsCard
+            weeklyData={weeklyChartData}
+            waterGoal={waterGoal}
+            currentStreak={streak}
+          />
+        </section>
+      )}
+
       {/* Behavior Insights Section */}
       {patterns.length > 0 && (
         <section className="px-6">
@@ -364,7 +386,16 @@ export default function AnalyticsSection({
           <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Tần suất uống (giờ)</h4>
         </div>
         {isPremium ? (
-          <HourlyHeatmap userId={profile?.id} />
+          <Suspense fallback={
+            <div className="glass-card p-6 min-h-[420px] flex items-center justify-center" role="status" aria-live="polite">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 size={32} className="text-cyan-400 animate-spin" />
+                <p className="text-sm text-slate-400">Đang tải heatmap...</p>
+              </div>
+            </div>
+          }>
+            <HourlyHeatmap userId={profile?.id} />
+          </Suspense>
         ) : (
           <div className="relative rounded-2xl overflow-hidden border border-slate-700/50">
             <div className="opacity-30 blur-[2px] pointer-events-none p-6 flex items-center justify-center h-32 bg-slate-900/60">

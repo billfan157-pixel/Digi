@@ -7,6 +7,7 @@ import {
   Flame,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { playSuccessSound } from '@/lib/audio';
@@ -34,6 +35,7 @@ const tabConfig = {
 };
 
 export default function QuestModal() {
+  const { t } = useTranslation();
   const isOpen = useUIStore(s => s.showQuestModal);
   const onClose = () => useUIStore.getState().setShowQuestModal(false);
   const profile = useAppStore(s => s.profile);
@@ -103,7 +105,7 @@ export default function QuestModal() {
     if (!quest) return;
 
     setClaimingId(userQuestId);
-    const toastId = toast.loading('Đang nhận thưởng...');
+    const toastId = toast.loading(t('quest.claiming'));
 
     try {
       const result = await claimQuest(userQuestId);
@@ -115,11 +117,11 @@ export default function QuestModal() {
       playSuccessSound();
 
       toast.success(
-        `🎉 +${quest.quest.reward_exp} EXP • +${quest.quest.reward_coins} WP`,
+        t('quest.exp_reward', { exp: quest.quest.reward_exp, coins: quest.quest.reward_coins }),
         { id: toastId }
       );
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra', {
+      toast.error(error instanceof Error ? error.message : t('quest.generic_error'), {
         id: toastId,
       });
     } finally {

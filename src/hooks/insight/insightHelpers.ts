@@ -36,9 +36,9 @@ export type EventCategory =
 export const CATEGORY_KEYWORDS: Record<Exclude<EventCategory, 'other'>, { vi: string; en: string }> = {
   sleep:        { vi: 'ngủ|nghỉ trưa|nap',                  en: 'sleep|nap|rest|break' },
   meal:         { vi: 'ăn|ăn trưa|ăn sáng|ăn tối|cơm|bữa',  en: 'lunch|dinner|breakfast|meal|eat|food|coffee|tea' },
+  school:       { vi: 'học|lớp|bài|thi|ôn',                  en: 'class|lecture|study|lesson|course|exam|test' },
   exercise:     { vi: 'tập|gym|chạy|yoga|bơi|đạp|thể dục',  en: 'gym|workout|run|yoga|swim|bike|exercise|sport' },
   meeting:      { vi: 'họp|meeting|cocall|call|pitch',       en: 'meeting|call|sync|standup|review|interview' },
-  school:       { vi: 'học|lớp|bài|thi|ôn',                  en: 'class|lecture|study|lesson|course|exam|test' },
   social:       { vi: 'đi chơi|hẹn|date|party|nhậu|gặp',     en: 'date|party|hangout|dinner|drinks|friend' },
   medical:      { vi: 'khám|bác sĩ|bệnh|tái khám|chích',     en: 'doctor|hospital|clinic|appointment|checkup|medical|dentist' },
   travel:       { vi: 'đi|bay|máy bay|tàu|xe khách|lái',     en: 'travel|flight|drive|commute|trip|journey' },
@@ -46,13 +46,68 @@ export const CATEGORY_KEYWORDS: Record<Exclude<EventCategory, 'other'>, { vi: st
   work:         { vi: 'làm việc|work|project|sprint|task',    en: 'work|task|project|sprint|deadline|office' },
 };
 
+export function sanitizeCalendarTitle(title: string): string {
+  if (!title) return '';
+  const sanitized = title
+    .replace(/[${}<>]/g, '') // Remove template literal and tag chars
+    // eslint-disable-next-line no-control-regex -- Intentionally removing control characters for security
+    .replace(/[\u0000-\u001F\u007F]/g, '') // Remove control characters
+    .trim();
+  return sanitized.slice(0, 200);
+}
+
 export function classifyEvent(title: string): EventCategory {
-  const t = title.toLowerCase().trim();
+  const sanitized = sanitizeCalendarTitle(title);
+  const t = sanitized.toLowerCase();
   for (const [cat, kw] of Object.entries(CATEGORY_KEYWORDS)) {
     const pattern = `${kw.vi}|${kw.en}`;
-    if (new RegExp(pattern, 'i').test(t)) return cat as EventCategory;
+    const parts = pattern.split('|');
+    const matched = parts.some(part => {
+      const escaped = part.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'ui');
+      return regex.test(t);
+    });
+    if (matched) return cat as EventCategory;
   }
   return 'meeting';
+}
+
+const PII_PATTERNS = [
+  /\b\d{10,11}\b/g, // Phone numbers
+  /\b[A-ZĐ][a-zàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]+\s+[A-ZĐ][a-zàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]+\b/g, // Names (basic with Vietnamese support)
+  /\b(anh|chị|em|bạn|bác|cô|chú|ông|bà|mr|ms|mrs)\s+[A-ZĐ][a-zàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]+\b/gi, // Names with pronouns
+  /\b\d+\s+[A-Za-zĐđàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]+\s+(Street|St|Avenue|Ave|Road|Rd|Đường|Phố|Ngõ|Ngách)/gi, // Addresses
+];
+
+export function anonymizeTitle(title: string, privacyLevel: 'strict' | 'standard' | 'off' = 'standard'): string {
+  const sanitized = sanitizeCalendarTitle(title);
+  if (privacyLevel === 'off') {
+    return sanitized;
+  }
+  
+  if (privacyLevel === 'strict') {
+    const category = classifyEvent(sanitized);
+    switch (category) {
+      case 'sleep': return '[Lịch nghỉ ngơi]';
+      case 'meal': return '[Lịch ăn uống]';
+      case 'exercise': return '[Lịch tập luyện]';
+      case 'school': return '[Lịch học tập]';
+      case 'social': return '[Lịch hẹn]';
+      case 'medical': return '[Lịch y tế]';
+      case 'travel': return '[Lịch di chuyển]';
+      case 'entertainment': return '[Lịch giải trí]';
+      case 'work': return '[Lịch làm việc]';
+      case 'meeting': return '[Lịch họp]';
+      default: return '[Lịch trình]';
+    }
+  }
+  
+  // standard privacy
+  let anonymized = sanitized;
+  PII_PATTERNS.forEach(pattern => {
+    anonymized = anonymized.replace(pattern, '[REDACTED]');
+  });
+  return anonymized;
 }
 
 export const CATEGORY_PROFILES: Record<EventCategory, {
@@ -74,13 +129,18 @@ export const CATEGORY_PROFILES: Record<EventCategory, {
   other:   { label: 'lịch trình', risk: 'medium', extraMl: 150,  advice: 'Giữ chai nước bên cạnh, uống từng ngụm nhỏ đều đặn.' },
 };
 
-export function classifyEvents(events: CalendarEventItem[], dateKey: string) {
+export function classifyEvents(events: CalendarEventItem[], dateKey: string, privacyLevel: 'strict' | 'standard' | 'off' = 'standard') {
   const busy = getBusyEvents(events, dateKey);
-  return busy.map(ev => ({
-    ...ev,
-    category: classifyEvent(ev.title),
-    profile: CATEGORY_PROFILES[classifyEvent(ev.title)],
-  }));
+  return busy.map(ev => {
+    const category = classifyEvent(ev.title);
+    const anonTitle = anonymizeTitle(ev.title, privacyLevel);
+    return {
+      ...ev,
+      title: anonTitle,
+      category,
+      profile: CATEGORY_PROFILES[category],
+    };
+  });
 }
 
 export function summarizeProfile(categorized: ReturnType<typeof classifyEvents>): {

@@ -48,9 +48,9 @@ export default function TrendForecastingChart({
     const yMean = sumY / n;
     const ssRes = y.reduce((sum, yi, i) => {
       const predicted = slope * x[i] + intercept;
-      return sum + Math.pow(yi - predicted, 0);
+      return sum + Math.pow(yi - predicted, 2);
     }, 0);
-    const ssTot = y.reduce((sum, yi) => sum + Math.pow(yi - yMean, 0), 0);
+    const ssTot = y.reduce((sum, yi) => sum + Math.pow(yi - yMean, 2), 0);
     const r2 = ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
 
     // Forecast next 7 days

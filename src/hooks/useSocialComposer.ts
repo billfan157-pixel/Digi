@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
@@ -82,7 +83,7 @@ export function useSocialComposer({
 
   const openSocialComposer = useCallback((kind: SocialComposerState['postKind'] = 'status') => {
     if (!profile?.id) {
-      toast.error('Vui lòng đăng nhập lại để đăng bài.');
+      toast.error(i18n.t('social.login_required_post'));
       return;
     }
 
@@ -120,7 +121,7 @@ export function useSocialComposer({
 
   const openQuickDropCamera = () => {
     if (!profile?.id) {
-      toast.error('Vui lòng đăng nhập lại để đăng Drop.');
+      toast.error(i18n.t('social.login_required_drop'));
       return;
     }
     setActiveTab?.('feed');
@@ -136,13 +137,13 @@ export function useSocialComposer({
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Chỉ hỗ trợ ảnh JPG, PNG, WEBP hoặc HEIC.');
+      toast.error(i18n.t('social.invalid_image_format'));
       event.target.value = '';
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ảnh tối đa 5MB để upload nhanh hơn.');
+      toast.error(i18n.t('social.image_too_large'));
       event.target.value = '';
       return;
     }
@@ -160,13 +161,13 @@ export function useSocialComposer({
 
   const handleQuickDropCapture = async (blob: Blob) => {
     if (!profile?.id) {
-      toast.error('Vui lòng đăng nhập lại để đăng Drop.');
+      toast.error(i18n.t('social.login_required_drop'));
       return;
     }
 
     const file = new File([blob], `drop-${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' });
     setIsPublishingQuickDrop(true);
-    const toastId = toast.loading('Đang đăng Drop...');
+    const toastId = toast.loading(i18n.t('social.uploading_drop'));
     try {
       const imageUrl = await uploadSocialImage(file);
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -183,7 +184,7 @@ export function useSocialComposer({
       if (error) throw error;
       if (!data?.id) throw new Error('Không nhận được Drop vừa tạo.');
 
-      toast.success('Drop đã lên sóng.', { id: toastId });
+      toast.success(i18n.t('social.drop_published'), { id: toastId });
       setShowQuickDropCamera(false);
       onPostPublished?.();
     } catch (err: unknown) {
@@ -202,17 +203,17 @@ export function useSocialComposer({
     const trimmedImageUrl = socialComposer.imageUrl.trim();
 
     if (socialComposer.postKind === 'story' && !trimmedImageUrl && !socialImageFile) {
-      toast.error('Drop cần ảnh chụp nhanh trước khi đăng.');
+      toast.error(i18n.t('social.drop_requires_image'));
       return;
     }
 
     if (socialComposer.postKind !== 'story' && !trimmedContent && !trimmedImageUrl && !socialImageFile) {
-      toast.error('Viết gì đó hoặc thêm ảnh trước khi đăng.');
+      toast.error(i18n.t('social.content_or_image_required'));
       return;
     }
 
     setIsPublishingSocialPost(true);
-    const toastId = toast.loading(socialComposer.postKind === 'story' ? 'Đang đăng story...' : 'Đang đăng bài...');
+    const toastId = toast.loading(socialComposer.postKind === 'story' ? i18n.t('social.uploading_story') : i18n.t('social.uploading_post'));
 
     try {
       let imageUrl = trimmedImageUrl || null;
@@ -239,10 +240,10 @@ export function useSocialComposer({
       if (!data?.id) throw new Error('Không nhận được bài viết vừa tạo.');
 
       const successMessage = socialComposer.postKind === 'story'
-        ? 'Drop đã lên sóng.'
+        ? i18n.t('social.story_published')
         : socialComposer.postKind === 'challenge'
-          ? 'Duel đã lên feed.'
-          : 'Pulse đã xuất hiện trên feed.';
+          ? i18n.t('social.duel_published')
+          : i18n.t('social.pulse_published');
       toast.success(successMessage, { id: toastId });
       closeSocialComposer();
       onPostPublished?.();

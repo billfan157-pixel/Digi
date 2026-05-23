@@ -4,8 +4,7 @@ import { redis } from '../_shared/redis.ts';
 import { captureException } from '../_shared/sentry.ts';
 import { logMetric } from '../_shared/metrics.ts';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const Deno: any;
+/// <reference lib="deno.ns" />
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? 'https://plbwqjdrivyffrhpbmvm.supabase.co';
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? 'dummy-key';

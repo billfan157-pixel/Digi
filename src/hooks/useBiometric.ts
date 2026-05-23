@@ -3,6 +3,7 @@
 // NATIVE BIOMETRIC (Face ID / Touch ID) via Capacitor Plugin
 // ============================================================
 
+import i18n from '@/i18n';
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
@@ -31,7 +32,7 @@ export function useBiometric() {
     setIsRegistering(true);
     try {
       if (!Capacitor.isNativePlatform()) {
-        toast.error('Tính năng này chỉ hoạt động trên thiết bị di động thật!');
+        toast.error(i18n.t('biometric.native_only'));
         return false;
       }
 
@@ -46,10 +47,10 @@ export function useBiometric() {
       });
 
       await setBiometricEnabled(userId, true);
-      toast.success('✅ Bật khóa sinh trắc học thành công!');
+      toast.success(i18n.t('biometric.enabled_successfully'));
       return true;
     } catch {
-      toast.error('Thiết lập thất bại hoặc đã bị hủy.');
+      toast.error(i18n.t('biometric.setup_failed_or_cancelled'));
       return false;
     } finally {
       setIsRegistering(false);
@@ -63,7 +64,7 @@ export function useBiometric() {
 
       const isEnabled = await getBiometricEnabled(userId);
       if (!isEnabled) {
-        toast.error('Bạn chưa bật tính năng khóa ứng dụng');
+        toast.error(i18n.t('biometric.not_enabled'));
         return false;
       }
 
@@ -74,7 +75,7 @@ export function useBiometric() {
       
       return true;
     } catch {
-      toast.error('Xác thực không thành công.');
+      toast.error(i18n.t('biometric.authentication_failed'));
       return false;
     } finally {
       setIsAuthenticating(false);
@@ -83,7 +84,7 @@ export function useBiometric() {
 
   const disableBiometric = useCallback(async (userId: string) => {
     await clearBiometricEnabled(userId);
-    toast.info('🔒 Đã tắt đăng nhập sinh trắc học');
+    toast.info(i18n.t('biometric.disabled'));
   }, []);
 
   const getBiometricStatus = useCallback(async (userId: string) => {

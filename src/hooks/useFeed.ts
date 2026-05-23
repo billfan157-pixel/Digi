@@ -80,24 +80,15 @@ export function useFeed(currentUserId: string | undefined, friendIds: string[] =
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const friendIdSet = useMemo(() => new Set(friendIds), [friendIds]);
 
-  // Reset local state when userId changes — render-phase setState is valid per React docs
-  // eslint-disable-next-line react-hooks/refs
-  if (currentUserId !== initialUserId.current) {
-    // eslint-disable-next-line react-hooks/refs
-    initialUserId.current = currentUserId;
-    setMergedPending([]);
-    setPendingPosts([]);
-    setNewPostsCount(0);
-  }
-
+  // Reset local state when userId changes
   useEffect(() => {
-    if (currentUserId === initialUserId.current) return;
     initialUserId.current = currentUserId;
+    /* eslint-disable react-hooks/set-state-in-effect */
     setMergedPending([]);
     setPendingPosts([]);
     setNewPostsCount(0);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [currentUserId]);
-  // eslint-enable react-hooks/set-state-in-effect
 
   useEffect(() => {
     if (currentUserId && currentUserId !== 'undefined') {

@@ -1,4 +1,5 @@
 import { calculateWeatherBandAdjustment } from './HydrationEngine';
+import { supabase } from './supabase';
 
 export interface WeatherData {
   temp: number;
@@ -39,40 +40,32 @@ function mapWeatherData(data: WeatherApiResponse): WeatherData {
   };
 }
 
-export const getWeatherData = async (lookup: WeatherLookup, signal?: AbortSignal): Promise<WeatherData | null> => {
+export const getWeatherData = async (lookup: WeatherLookup): Promise<WeatherData | null> => {
   try {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       console.warn('[Weather] Offline — skipping fetch');
       return null;
     }
 
-    const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
-    if (!apiKey) {
-      console.warn("OpenWeatherMap API key is missing. Please set VITE_OPENWEATHER_API_KEY.");
+    const { data, error } = await supabase.functions.invoke('weather-proxy', {
+      body: {
+        lat: lookup.coords?.latitude,
+        lon: lookup.coords?.longitude,
+        city: lookup.city,
+      },
+    });
+
+    if (error) {
+      console.error('Weather proxy error:', error);
       return null;
     }
 
-    const query = lookup.coords
-      ? `lat=${lookup.coords.latitude}&lon=${lookup.coords.longitude}`
-      : lookup.city
-        ? `q=${encodeURIComponent(lookup.city)}`
-        : '';
-
-    if (!query) {
-      throw new Error('Missing location input for weather lookup.');
+    if (!data) {
+      console.warn('Weather proxy returned no data');
+      return null;
     }
 
-    const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?${query}&units=metric&appid=${apiKey}`,
-      { signal }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch weather data: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return mapWeatherData(data);
+    return mapWeatherData(data as WeatherApiResponse);
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') return null;
     console.error("Error fetching weather data:", error);

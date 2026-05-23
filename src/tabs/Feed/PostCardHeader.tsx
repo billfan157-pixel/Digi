@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Share2, MoreHorizontal } from 'lucide-react';
 import { getRelativeTimeLabel } from '../../lib/social';
 import type { SocialFeedPost } from '../../models';
@@ -12,7 +13,7 @@ interface PostCardHeaderProps {
   onOpenMenu: () => void;
 }
 
-export const PostCardHeader = ({
+export const PostCardHeader = memo(({
   post,
   isChallenge,
   isAchievement,
@@ -76,4 +77,4 @@ export const PostCardHeader = ({
       </button>
     </div>
   </div>
-);
+));

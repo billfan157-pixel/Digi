@@ -19,3 +19,28 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Capacitor Core — do not obfuscate bridge and plugin classes
+-keep class com.getcapacitor.** { *; }
+-keep class com.getcapacitor.annotation.** { *; }
+
+# Cordova plugins — keep all plugin classes
+-keep class org.apache.cordova.** { *; }
+-keep class * extends org.apache.cordova.CordovaPlugin { *; }
+
+# Keep JS interfaces for WebView
+-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+   public *;
+}
+
+# Preserve line numbers for debugging
+-keepattributes SourceFile,LineNumberTable
+
+# Hide original source file name
+-renamesourcefileattribute SourceFile
+
+# Keep classes annotated with Capacitor plugin annotations
+-keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
+-keepclassmembers class * {
+    @com.getcapacitor.annotation.PluginMethod *;
+}

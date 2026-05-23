@@ -109,9 +109,9 @@ export default function QuickAmountsEditor({
                     if (parsed.length === 3) {
                       onSave();
                       onClose();
-                      toast.success("✅ Đã cập nhật mức nạp nhanh!");
+                      toast.success(t('water.quick_amounts_updated'));
                     } else {
-                      toast.error("⚠️ Vui lòng nhập 3 mức từ 50-2000ml");
+                      toast.error(t('water.invalid_quick_amounts'));
                     }
                   }}
                   className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold transition-all hover:from-cyan-400 hover:to-blue-400 shadow-[0_0_20px_rgba(6,182,212,0.3)]"

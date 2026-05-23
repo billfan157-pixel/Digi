@@ -1,4 +1,5 @@
 import { useState, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Droplets, Lightbulb, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ interface PostCardProps {
 }
 
 export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardProps) => {
+  const { t } = useTranslation();
   // New interaction system: Cheers + Drop + Freeze replace Likes
   const {
     cheersCount,
@@ -67,7 +69,7 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
       await navigator.share({ title: 'DigiWell', text: postContent, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Đã sao chép link chia sẻ');
+      toast.success(t('feed.link_copied'));
     }
   };
 

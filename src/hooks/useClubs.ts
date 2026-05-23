@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
@@ -56,10 +57,10 @@ export function useClubs(userId?: string) {
       return data;
     },
     onSuccess: () => {
-      toast.success('Đã tham gia club thành công');
+      toast.success(i18n.t('club.join_success'));
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: () => toast.error('Không thể tham gia club'),
+    onError: () => toast.error(i18n.t('club.join_error')),
   });
 
   const leaveMut = useMutation({
@@ -73,10 +74,10 @@ export function useClubs(userId?: string) {
       return data;
     },
     onSuccess: () => {
-      toast.success('Đã rời câu lạc bộ');
+      toast.success(i18n.t('club.leave_success'));
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: () => toast.error('Không thể rời club'),
+    onError: () => toast.error(i18n.t('club.leave_error')),
   });
 
   // Realtime subscription

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import type { HealthReport } from '@/lib/aiReports';
@@ -66,7 +67,7 @@ export function usePremiumGamification({
         const now = new Date();
         const endDate = data.subscription_end ? new Date(data.subscription_end) : null;
         const graceEnd = data.grace_period_end ? new Date(data.grace_period_end) : null;
-        const tierActive = data.subscription_tier === 'premium';
+        const tierActive = data.subscription_tier === 'plus' || data.subscription_tier === 'pro' || data.subscription_tier === 'premium';
         const withinEnd = !endDate || endDate > now;
         const withinGrace = !!graceEnd && graceEnd > now;
         const premiumActive = tierActive && (withinEnd || withinGrace);
@@ -137,7 +138,7 @@ export function usePremiumGamification({
     playSuccessSound();
 
     setTimeout(() => {
-      toast.success(`Lên cấp ${newLevel}! Thành tích đã được ghi nhận.`, { icon: '⭐', duration: 5000 });
+      toast.success(i18n.t('premium.leveled_up', { level: newLevel }), { icon: '⭐', duration: 5000 });
     }, 500);
 
     previousLevelRef.current = profileLevel;
@@ -168,7 +169,7 @@ export function usePremiumGamification({
           });
 
           if (!error) {
-            toast.success('🎉 Bạn đã nhận được Huy hiệu: Giọt Nước Nhỏ!');
+            toast.success(i18n.t('premium.badge_unlocked'));
             AppStorage.setItem(storageKey, 'true');
           }
           return;
@@ -273,7 +274,7 @@ export function usePremiumGamification({
     }
 
     setIsWeeklyReportLoading(true);
-    const toastId = toast.loading('AI đang tạo báo cáo tuần...');
+    const toastId = toast.loading(i18n.t('premium.weekly_report_creating'));
 
     try {
       const report = await generateWeeklyReport(profile.id as string, waterGoal, {
@@ -284,9 +285,9 @@ export function usePremiumGamification({
       });
 
       setWeeklyReport(report);
-      toast.success('Đã tạo báo cáo tuần thành công.', { id: toastId });
+      toast.success(i18n.t('premium.weekly_report_created'), { id: toastId });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Không thể tạo báo cáo tuần lúc này.';
+      const message = error instanceof Error ? error.message : i18n.t('premium.weekly_report_failed');
       toast.error(message, { id: toastId });
     } finally {
       setIsWeeklyReportLoading(false);

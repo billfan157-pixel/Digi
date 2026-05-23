@@ -1,8 +1,8 @@
 // ============================================================
-// DigiWell — Premium Feature Config (Upgraded)
+// DigiWell — Premium Feature Config (Upgraded to 3-Tier Model)
 // ============================================================
 
-export type PremiumTier = 'free' | 'premium';
+export type PremiumTier = 'free' | 'plus' | 'pro';
 
 // ── Giới hạn sử dụng mỗi ngày ─────────────────────────────
 
@@ -10,11 +10,19 @@ export const DAILY_LIMITS = {
   free: {
     aiMessages:   5,   
     aiAdvice:     3,   
+    aiScans:      2,
     historyDays:  7,   
   },
-  premium: {
+  plus: {
+    aiMessages:   15,
+    aiAdvice:     5,
+    aiScans:      10,
+    historyDays:  30,
+  },
+  pro: {
     aiMessages:   Infinity,
     aiAdvice:     Infinity,
+    aiScans:      Infinity,
     historyDays:  365,
   },
 } as const;
@@ -23,49 +31,49 @@ export const DAILY_LIMITS = {
 
 export const FEATURES = {
   // AI Features
-  aiChat:               { free: true,  premium: true  },
-  aiUnlimitedChat:      { free: false, premium: true  },
-  aiWeeklyReport:       { free: false, premium: true  },
-  aiMonthlyReport:      { free: false, premium: true  },
+  aiChat:               { free: true,  plus: true,  pro: true  },
+  aiUnlimitedChat:      { free: false, plus: false, pro: true  },
+  aiWeeklyReport:       { free: false, plus: true,  pro: true  },
+  aiMonthlyReport:      { free: false, plus: false, pro: true  },
 
-  aiHydrationCoach:     { free: false, premium: true  },
-  premiumHealthScore:   { free: false, premium: true  },
+  aiHydrationCoach:     { free: false, plus: false, pro: true  },
+  premiumHealthScore:   { free: false, plus: false, pro: true  },
 
   // Analytics & Specialized
-  basicStats:           { free: true,  premium: true  },
-  weeklyChart:          { free: false, premium: true  },
-  monthlyChart:         { free: false, premium: true  },
-  exportReport:         { free: false, premium: true  },
-  streakCalendar:       { free: true,  premium: true  },
-  advancedInsights:     { free: false, premium: true  },
+  basicStats:           { free: true,  plus: true,  pro: true  },
+  weeklyChart:          { free: false, plus: true,  pro: true  },
+  monthlyChart:         { free: false, plus: false, pro: true  },
+  exportReport:         { free: false, plus: false, pro: true  },
+  streakCalendar:       { free: true,  plus: true,  pro: true  },
+  advancedInsights:     { free: false, plus: false, pro: true  },
 
   // Device Integration
-  weatherSync:          { free: true,  premium: true  },
-  calendarSync:         { free: false, premium: true  },
-  smartwatchSync:       { free: false, premium: true  },
+  weatherSync:          { free: true,  plus: true,  pro: true  },
+  calendarSync:         { free: false, plus: false, pro: true  },
+  smartwatchSync:       { free: false, plus: false, pro: true  },
 
-  // NEW: Smart Reminder Engine
-  smartReminders:       { free: false, premium: true  },
+  // Smart Reminder Engine
+  smartReminders:       { free: false, plus: false, pro: true  },
 
-  // NEW: Streak Freeze
-  streakFreeze:         { free: false, premium: true  },
-  // NEW: Redemption Quest
-  redemptionQuest:      { free: false, premium: true  },
-  // NEW: Advanced Drink System
-  advancedDrinkSystem:  { free: false, premium: true  },
+  // Streak Freeze
+  streakFreeze:         { free: false, plus: true,  pro: true  },
+  // Redemption Quest
+  redemptionQuest:      { free: false, plus: false, pro: true  },
+  // Advanced Drink System
+  advancedDrinkSystem:  { free: false, plus: true,  pro: true  },
 
   // Customization & UX
-  customReminders:      { free: false, premium: true  },
-  customGoals:          { free: true,  premium: true  },
-  themes:               { free: false, premium: true  },
+  customReminders:      { free: false, plus: true,  pro: true  },
+  customGoals:          { free: true,  plus: true,  pro: true  },
+  themes:               { free: false, plus: true,  pro: true  },
 
-  // NEW: Premium Profile Frame
-  premiumProfileFrame:  { free: false, premium: true  },
-  // NEW: VIP Club Tools
-  vipClubTools:         { free: false, premium: true  },
+  // Premium Profile Frame
+  premiumProfileFrame:  { free: false, plus: true,  pro: true  },
+  // VIP Club Tools
+  vipClubTools:         { free: false, plus: false, pro: true  },
 
-  // MỚI: Gỡ quảng cáo
-  ads:                  { free: true,  premium: false },
+  // Gỡ quảng cáo
+  ads:                  { free: true,  plus: false, pro: false },
 } as const;
 
 export type FeatureKey = keyof typeof FEATURES;
@@ -73,19 +81,31 @@ export type FeatureKey = keyof typeof FEATURES;
 // ── Pricing ────────────────────────────────────────────────
 
 export const PRICING = {
-  monthly: {
-    vnd: 49_000,
-    label: '49.000₫/tháng',
+  plus: {
+    monthly: {
+      vnd: 49_000,
+      label: '49.000₫/tháng',
+    },
+    yearly: {
+      vnd: 399_000,
+      label: '399.000₫/năm',
+      perMonth: '33.250₫/tháng',
+      discount: 'Tiết kiệm 32%',
+    },
   },
-  yearly: {
-    vnd: 399_000,
-    label: '399.000₫/năm',
-    perMonth: '33.250₫/tháng',
-    discount: 'Tiết kiệm 32%',
+  pro: {
+    monthly: {
+      vnd: 99_000,
+      label: '99.000₫/tháng',
+    },
+    yearly: {
+      vnd: 799_000,
+      label: '799.000₫/năm',
+      perMonth: '66.580₫/tháng',
+      discount: 'Tiết kiệm 33%',
+    },
   },
 } as const;
-
-export type BillingPlan = keyof typeof PRICING;
 
 // ── Danh sách tính năng hiển thị ────────
 
@@ -95,69 +115,82 @@ export const PREMIUM_HIGHLIGHTS = [
     title: 'AI Hydration Coach thông minh',
     description: 'AI tự động điều chỉnh mục tiêu nước theo thời tiết, vận động, giấc ngủ và cafe',
     free: 'Mục tiêu cố định',
-    premium: 'AI tự động điều chỉnh',
+    plus: 'Mục tiêu cố định',
+    pro: 'AI tự động điều chỉnh',
   },
   {
     icon: '💎',
     title: 'Premium Health Score',
     description: 'Dashboard điểm số Hydration, Recovery, Energy, Consistency',
     free: '—',
-    premium: '4 điểm số chi tiết',
+    plus: '—',
+    pro: '4 điểm số chi tiết',
   },
   {
     icon: '🔔',
     title: 'Smart Reminder Engine',
     description: 'AI biết bạn đang ngủ, họp, lái xe và tự động điều chỉnh nhắc nhở',
     free: 'Nhắc cố định',
-    premium: 'AI context-aware',
+    plus: 'Nhắc cố định',
+    pro: 'AI context-aware',
   },
   {
     icon: '🛡️',
     title: 'Streak Freeze',
-    description: '2 ngày bảo vệ streak mỗi tháng, không mất tiến độ nếu quên uống',
+    description: 'Bảo vệ streak hàng tháng, không mất tiến độ nếu quên uống',
     free: '—',
-    premium: '2 ngày/tháng',
+    plus: '1 ngày/tháng',
+    pro: '3 ngày/tháng',
   },
   {
     icon: '🔄',
     title: 'Redemption Quest',
     description: 'Nếu gãy streak, AI cho nhiệm vụ cứu để khôi phục lại',
     free: '—',
-    premium: 'Nhiệm vụ cứu streak',
+    plus: '—',
+    pro: 'Nhiệm vụ cứu streak',
   },
   {
     icon: '🍹',
     title: 'Advanced Drink System',
     description: 'Hệ số nước cho từng loại đồ uống (Water=1.0, Coffee=-0.2, Alcohol=-0.5)',
     free: '—',
-    premium: 'Hệ số chi tiết',
+    plus: 'Hệ số cơ bản',
+    pro: 'Hệ số chi tiết',
   },
   {
     icon: '⌚',
     title: 'Smartwatch & Health Sync',
     description: 'Kết nối Apple Watch, Wear OS, Apple Health, Google Fit',
     free: '—',
-    premium: 'Tất cả thiết bị',
+    plus: '—',
+    pro: 'Tất cả thiết bị',
   },
   {
     icon: '👑',
     title: 'Premium Profile Frame',
     description: 'Viền avatar động, tên vàng, hiệu ứng log nước, danh hiệu hiếm',
     free: '—',
-    premium: 'Frame cao cấp',
+    plus: 'Khung viền bạc',
+    pro: 'Khung viền vàng động',
   },
   {
     icon: '⚔️',
     title: 'VIP Club Tools',
     description: 'Tạo bang lớn, logo riêng, quest club, thông báo VIP, xếp hạng nâng cao',
     free: '—',
-    premium: 'Công cụ VIP',
+    plus: '—',
+    pro: 'Công cụ VIP',
   },
   {
     icon: '🚫',
     title: 'Không quảng cáo',
     description: 'Trải nghiệm app mượt mà, sạch sẽ, không bị làm phiền bởi quảng cáo',
     free: 'Có Ads',
-    premium: '100% Sạch',
+    plus: '100% Sạch',
+    pro: '100% Sạch',
   },
 ] as const;
+
+export type BillingPlan = 'monthly' | 'yearly';
+

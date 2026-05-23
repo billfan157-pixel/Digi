@@ -1,12 +1,14 @@
 // --- SENTRY ERROR TRACKING ---
 import { initSentry, Sentry } from './lib/sentry';
 initSentry();
+import { initWebVitals } from './lib/webVitals';
 // --- HẾT SENTRY ---
 
 // --- CODE BẮT LỖI MÀN HÌNH TRẮNG (DEV MODE) ---
 // DEV: overlay trực quan + forward to Sentry
 // PROD: chỉ forward to Sentry (không làm hỏng UI)
 if (typeof window !== 'undefined') {
+  initWebVitals();
   window.onerror = function (msg, _url, line, _col, error) {
     console.error(`LỖI: ${msg} (dòng ${line})`);
     if (error) Sentry.captureException(error);

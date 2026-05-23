@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 import { levelFromExp } from '@/config/questConfig';
 import { appQueryKeys } from '@/lib/queryKeys';
@@ -36,9 +37,9 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
   }, [isEnabled, profile, setProfile]);
 
   const syncProfileData = useCallback(async () => {
-    const toastId = toast.loading('Đang đồng bộ dữ liệu...');
+    const toastId = toast.loading(i18n.t('settings.syncing'));
     await refetchProfile();
-    toast.success('Đồng bộ thành công!', { id: toastId });
+    toast.success(i18n.t('premium.sync_success'), { id: toastId });
   }, [refetchProfile]);
 
   const handleWaterSync = useCallback(async (optimisticAmount?: number) => {
@@ -72,7 +73,7 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
     if (amount <= 0) return true;
     if (!profile?.id || profile.id === 'undefined') return false;
 
-    toast.error('Giao dịch xu đang bị khóa cho tới khi mutation phía server được xác nhận đầy đủ.');
+    toast.error(i18n.t('premium.sync_locked'));
     await refetchProfile();
     return false;
   }, [profile, refetchProfile]);

@@ -28,7 +28,11 @@ export function useNetworkState(): NetworkState {
 
     import('@/lib/supabase').then(({ supabase }) => {
       const ch = supabase.channel('network-state');
-      ch.subscribe((status) => {
+      ch.subscribe((status, err) => {
+        if (err) {
+          // Suppress noisy WebSocket errors — Supabase client auto-reconnects internally
+          return;
+        }
         setIsRealtimeConnected(status === 'SUBSCRIBED');
       });
       channelRef.current = ch;

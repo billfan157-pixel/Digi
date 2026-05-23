@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, type ChangeEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Activity, Camera, Droplets, Flame, Globe2, Send, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,6 +13,7 @@ interface QuickStatusComposerProps {
 }
 
 export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish, onClose }: QuickStatusComposerProps) => {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [imagePreview, setImagePreview] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'followers'>('followers');
@@ -28,15 +30,15 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
   const handleImagePick = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error('Ảnh tối đa 5MB'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error(t('feed.image_too_large')); return; }
     if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setImagePreview(URL.createObjectURL(file));
     e.target.value = '';
-  }, [imagePreview]);
+  }, [imagePreview, t]);
 
   const handleSubmit = async () => {
     if (!text.trim() && !imagePreview) {
-      toast.error('Viết ghi chú hoặc thêm ảnh.');
+      toast.error(t('feed.note_or_image_required'));
       return;
     }
     setIsPublishing(true);

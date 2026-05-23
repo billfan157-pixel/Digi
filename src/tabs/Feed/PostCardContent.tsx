@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Droplets, Flame, Swords, Trophy, Sparkles, Zap, Lightbulb, BarChart3 } from 'lucide-react';
 import type { SocialFeedPost } from '../../models';
 import { sanitizeHtml } from '@/lib/sanitize';
@@ -14,7 +15,7 @@ interface PostCardContentProps {
   handleJoinChallenge: () => void;
 }
 
-export const PostCardContent = ({
+export const PostCardContent = memo(({
   post,
   postContent,
   isAchievement,
@@ -279,4 +280,4 @@ export const PostCardContent = ({
        )}
      </>
    );
-};
+});

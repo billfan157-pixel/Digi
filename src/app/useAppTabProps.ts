@@ -19,9 +19,9 @@ interface UseAppTabPropsOptions {
   profile: Profile | null;
   smartBottle: Record<string, unknown> | null;
   isExportingPDF: boolean;
-  handleExportPDF: () => Promise<void>;
-  handleExportCSV: () => void;
-  handleExportJSON: () => void;
+  handleExportPDF: (dateRange?: { start: string; end: string } | null) => Promise<void>;
+  handleExportCSV: (dateRange?: { start: string; end: string } | null) => void;
+  handleExportJSON: (dateRange?: { start: string; end: string } | null) => void;
   geminiProps: Record<string, unknown>;
   weeklyReport: HealthReport | null;
   isWeeklyReportLoading: boolean;

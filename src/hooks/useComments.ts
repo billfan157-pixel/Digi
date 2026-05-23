@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
@@ -75,7 +76,7 @@ export function useComments(postId: string, currentUserId: string | undefined): 
     },
     onError: (_err, _content, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(queryKey, ctx.prev);
-      toast.error('Gửi bình luận thất bại');
+      toast.error(i18n.t('feed.comment_error'));
     },
     onSuccess: (data) => {
       if (data) {
@@ -103,7 +104,7 @@ export function useComments(postId: string, currentUserId: string | undefined): 
     },
     onError: (_err, _id, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(queryKey, ctx.prev);
-      toast.error('Không thể xóa bình luận');
+      toast.error(i18n.t('feed.delete_comment_error'));
     },
   });
 
@@ -152,7 +153,7 @@ export function useComments(postId: string, currentUserId: string | undefined): 
     comments: query.data ?? [],
     isLoading: query.isLoading,
     addComment: useCallback(async (content: string) => {
-      if (!currentUserId) { toast.error('Vui lòng đăng nhập để bình luận'); return; }
+      if (!currentUserId) { toast.error(i18n.t('feed.login_required_comment')); return; }
       if (!content.trim()) return;
       await addCommentMut.mutateAsync(content);
     }, [currentUserId, addCommentMut]),

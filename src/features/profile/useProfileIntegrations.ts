@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Activity, Calendar, CloudSun, Watch } from 'lucide-react';
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 import { normalizeActivity, normalizeClimate } from '@/lib/profileNormalization';
 import { updateProfileFields, type AppProfile } from '@/services/profile.service';
@@ -21,7 +22,7 @@ interface UseProfileIntegrationsOptions {
   setProfile: React.Dispatch<React.SetStateAction<AppProfile | null>>;
   setShowEditProfile: (value: boolean) => void;
   isWeatherSynced: boolean;
-  syncWeather: () => Promise<boolean>;
+  syncWeather: (options?: { force?: boolean; silent?: boolean }) => Promise<boolean>;
   isCalendarSynced: boolean;
   syncCalendar: () => unknown;
   isWatchConnected: boolean;
@@ -78,7 +79,7 @@ export function useProfileIntegrations({
     }
 
     setIsUpdatingProfile(true);
-    const toastId = toast.loading('Đang cập nhật hồ sơ...');
+    const toastId = toast.loading(i18n.t('settings.updating_profile'));
 
     try {
       const normalizedProfileData = {
@@ -101,17 +102,17 @@ export function useProfileIntegrations({
 
       setEditProfileData(normalizedProfileData);
       setProfile(updatedProfile);
-      toast.success('Cập nhật hồ sơ thành công! ✅', { id: toastId });
+      toast.success(i18n.t('settings.profile_updated_plain'), { id: toastId });
       setShowEditProfile(false);
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Lỗi cập nhật hồ sơ!', { id: toastId });
+      toast.error(error instanceof Error ? error.message : i18n.t('settings.profile_update_error'), { id: toastId });
     } finally {
       setIsUpdatingProfile(false);
     }
   }, [editProfileData, profile?.id, setProfile, setShowEditProfile]);
 
   const handleConnectStrava = useCallback(async () => {
-    toast.info('Strava / Garmin chưa được phát hành trong build public này. Flow manual token đã bị tắt để tránh gây hiểu nhầm.');
+    toast.info(i18n.t('settings.integration_strava_unavailable'));
   }, []);
 
   const connectedSystems = useMemo(() => [
@@ -120,7 +121,7 @@ export function useProfileIntegrations({
       label: 'Trạm thời tiết',
       sub: 'Đồng bộ theo vị trí hiện tại',
       active: isWeatherSynced,
-      action: () => syncWeather(),
+      action: () => syncWeather({ force: true }),
       activeColor: '#f97316',
       activeBg: 'rgba(249,115,22,0.2)',
       activeBorder: 'rgba(249,115,22,0.4)',

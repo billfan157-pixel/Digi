@@ -17,6 +17,7 @@ export interface AppProfile extends Profile {
   sync_wellness_data?: boolean;
   energy_tracking?: boolean;
   grace_period_end?: string | null;
+  calendar_privacy_level?: 'strict' | 'standard' | 'off';
 }
 
 const getTodayKey = () => {
@@ -59,6 +60,7 @@ interface ProfileRow {
   grace_period_end?: string | null;
   last_water_date?: string;
   level?: number;
+  calendar_privacy_level?: 'strict' | 'standard' | 'off';
   [key: string]: unknown;
 }
 
@@ -102,6 +104,7 @@ function toAppProfile(profileRow: ProfileRow): AppProfile {
     sync_wellness_data: normalizedProfile.sync_wellness_data,
     energy_tracking: normalizedProfile.energy_tracking,
     grace_period_end: normalizedProfile.grace_period_end,
+    calendar_privacy_level: (normalizedProfile.calendar_privacy_level as AppProfile['calendar_privacy_level']) || 'standard',
   };
 }
 

@@ -53,6 +53,8 @@ interface UIState {
   setShowFirstSessionChecklist: (show: boolean) => void;
   activeCommentPost: unknown | null;
   setActiveCommentPost: (post: unknown | null) => void;
+  showHardwareWaitlist: boolean;
+  setShowHardwareWaitlist: (show: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()((set) => ({
@@ -81,4 +83,5 @@ export const useUIStore = create<UIState>()((set) => ({
   showFastingModal: false, setShowFastingModal: (show) => set({ showFastingModal: show }),
   showFirstSessionChecklist: false, setShowFirstSessionChecklist: (show) => set({ showFirstSessionChecklist: show }),
   activeCommentPost: null, setActiveCommentPost: (post) => set({ activeCommentPost: post }),
+  showHardwareWaitlist: false, setShowHardwareWaitlist: (show) => set({ showHardwareWaitlist: show }),
 }));

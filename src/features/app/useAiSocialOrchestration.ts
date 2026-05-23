@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 import { useFeed } from '@/hooks/useFeed';
 import { useGroqAI } from '@/hooks/useGroqAI';
@@ -29,8 +30,8 @@ export function useAiSocialOrchestration() {
 
   // Dummy handlers for now that will be wired to actual implementations 
   // or extracted from another store if available
-  const handleExportPDF = async () => { toast.success('Tính năng xuất PDF đang phát triển') };
-  const toggleFastingMode = () => { toast.success('Tính năng chế độ nhịn ăn đang phát triển') };
+  const handleExportPDF = async () => { toast.success(i18n.t('fasting.pdf_export_coming')) };
+  const toggleFastingMode = () => { toast.success(i18n.t('fasting.fasting_mode_coming')) };
 
   const socialProps = useSocialData({
     profile,

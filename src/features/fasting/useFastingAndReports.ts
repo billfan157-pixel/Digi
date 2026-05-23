@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 import { exportHealthReportPDF } from '@/lib/pdfExport';
 import { supabase } from '@/lib/supabase';
@@ -28,6 +29,7 @@ interface ExportPdfOptions {
   waterEntries?: WaterLog[];
   avgWeekly?: number;
   completionRate?: number;
+  dateRange?: { start: string; end: string } | null;
 }
 
 interface ExportCsvOptions {
@@ -37,6 +39,7 @@ interface ExportCsvOptions {
   streak: number;
   weeklyChartData: { d: string; ml: number }[];
   waterEntries: WaterLog[];
+  dateRange?: { start: string; end: string } | null;
 }
 
 const FASTING_PLAN_PREFIX = 'digiwell_fasting_plan_';
@@ -132,6 +135,7 @@ const exportReportPdf = useCallback(async ({
      waterEntries,
      avgWeekly,
      completionRate,
+     dateRange,
    }: ExportPdfOptions) => {
      if (!isPremium) {
        setShowPremiumModal(true);
@@ -139,7 +143,7 @@ const exportReportPdf = useCallback(async ({
      }
 
      setIsExportingPDF(true);
-     const toastId = toast.loading('Đang tạo báo cáo Y khoa PDF...');
+      const toastId = toast.loading(i18n.t('fasting.creating_pdf'));
 
       try {
         if (weeklyChartData && waterEntries) {
@@ -152,6 +156,9 @@ const exportReportPdf = useCallback(async ({
             waterEntries,
             avgWeekly: avgWeekly || 0,
             completionRate: completionRate || 0,
+            isWatchConnected,
+            watchData,
+            dateRange,
           });
         } else {
           await exportHealthReportPDF({
@@ -165,9 +172,9 @@ const exportReportPdf = useCallback(async ({
          });
        }
 
-       toast.success('Da mo giao dien in. Chon Save as PDF de luu bao cao.', { id: toastId });
+       toast.success(i18n.t('fasting.pdf_print'), { id: toastId });
      } catch {
-       toast.error('Khong the tao bao cao PDF luc nay.', { id: toastId });
+       toast.error(i18n.t('fasting.pdf_failed'), { id: toastId });
      } finally {
        setIsExportingPDF(false);
      }
@@ -180,6 +187,7 @@ const exportReportPdf = useCallback(async ({
      streak,
      weeklyChartData,
      waterEntries,
+     dateRange,
    }: ExportCsvOptions) => {
      if (!isPremium) {
        setShowPremiumModal(true);
@@ -195,10 +203,11 @@ const exportReportPdf = useCallback(async ({
           weeklyChartData,
           waterEntries,
           watchData: null,
+          dateRange,
         });
-        toast.success('Đã xuất file CSV thành công!');
+        toast.success(i18n.t('fasting.csv_exported'));
       } catch {
-        toast.error('Không thể xuất file CSV lúc này.');
+        toast.error(i18n.t('fasting.csv_export_failed'));
       }
    }, [isPremium, setShowPremiumModal]);
 
@@ -213,7 +222,7 @@ const exportReportPdf = useCallback(async ({
 
   const startFasting = useCallback(async (hours: number) => {
     if (!userId || userId === 'undefined') {
-      toast.error('Khong the bat fasting khi chua xac dinh duoc tai khoan.');
+      toast.error(i18n.t('fasting.cannot_start'));
       return;
     }
 
@@ -224,7 +233,7 @@ const exportReportPdf = useCallback(async ({
     const startedAt = Date.now();
     setFastingStartTime(startedAt);
     AppStorage.setItem(getFastingStartStorageKey(userId), startedAt.toString());
-    toast.success(`Bật Fasting ${hours}:${24 - hours}. Bắt đầu đếm giờ!`);
+    toast.success(i18n.t('fasting.started', { start: hours, end: 24 - hours }));
     setShowFastingModal(false);
 
     try {
@@ -267,7 +276,7 @@ const exportReportPdf = useCallback(async ({
     setIsFastingMode(false);
     setFastingStartTime(null);
     AppStorage.removeItem(getFastingStartStorageKey(userId));
-    toast.info('Đã kết thúc chế độ Nhịn ăn gián đoạn.');
+    toast.info(i18n.t('fasting.ended'));
     setShowFastingModal(false);
     await cancelFastingNotifications(userId);
   }, [cancelFastingNotifications, userId]);
@@ -281,6 +290,7 @@ const exportReportPdf = useCallback(async ({
      streak,
      weeklyChartData,
      waterEntries,
+     dateRange,
    }: ExportCsvOptions) => {
      if (!isPremium) {
        setShowPremiumModal(true);
@@ -296,10 +306,11 @@ const exportReportPdf = useCallback(async ({
          weeklyChartData,
          waterEntries,
          watchData: null,
+         dateRange,
        });
-       toast.success('Đã xuất file JSON thành công!');
-     } catch {
-       toast.error('Không thể xuất file JSON lúc này.');
+        toast.success(i18n.t('fasting.json_exported'));
+      } catch {
+        toast.error(i18n.t('fasting.json_export_failed'));
      }
    }, [isPremium, setShowPremiumModal]);
 
@@ -313,10 +324,10 @@ const exportReportPdf = useCallback(async ({
            p_event_data: { type: 'full-json', version: 2, timestamp: new Date().toISOString() },
          });
        } catch { /* log fail không block export */ }
-       toast.success('Xuất dữ liệu thành công');
-     } catch (err) {
-       console.error(err);
-       toast.error('Không thể xuất dữ liệu');
+        toast.success(i18n.t('fasting.data_exported'));
+      } catch (err) {
+        console.error(err);
+        toast.error(i18n.t('fasting.data_export_failed'));
      }
    }, []);
 

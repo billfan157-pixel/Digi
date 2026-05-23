@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Lock as LockIcon
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import ClubDashboard from "./clubs/ClubDashboard";
@@ -36,6 +37,7 @@ const REQ_FRIENDS = 10;       // 4. 10 người bạn
 const CREATION_FEE_WP = 10000; // 5. Phí 10.000 WP
 
 export default function ClubsView({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [myRoles, setMyRoles] = useState<Record<string, string>>({});
   
@@ -105,11 +107,11 @@ export default function ClubsView({ userId }: { userId: string }) {
       
     } catch (err: unknown) {
       console.error(err);
-      toast.error("Không thể kết nối với bộ não Bang hội");
+      toast.error(t('club.brain_not_connected'));
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     fetchData();
@@ -126,10 +128,10 @@ export default function ClubsView({ userId }: { userId: string }) {
 
       if (error) throw error;
 
-      toast.success("Chào mừng đồng chí gia nhập bang! 🤝");
+      toast.success(t('club.joined'));
       await fetchData(); 
     } catch (err: unknown) {
-      toast.error("Không thể gia nhập: " + (err instanceof Error ? err.message : String(err)));
+      toast.error(t('club.failed_join', { error: err instanceof Error ? err.message : String(err) }));
     } finally {
       setJoiningId(null);
     }
@@ -141,19 +143,19 @@ export default function ClubsView({ userId }: { userId: string }) {
     const trimmedDesc = newClubDesc.trim();
 
     if (!trimmedName) {
-      toast.error("Tên bang hội không được để trống sếp ơi!");
+      toast.error(t('club.name_empty'));
       return;
     }
     if (trimmedName.length < 3) {
-      toast.error("Tên bang phải có ít nhất 3 ký tự.");
+      toast.error(t('club.name_too_short'));
       return;
     }
     if (trimmedName.length > 50) {
-      toast.error("Tên bang không được dài quá 50 ký tự.");
+      toast.error(t('club.name_too_long'));
       return;
     }
     if (trimmedDesc.length > 200) {
-      toast.error("Mô tả không được dài quá 200 ký tự.");
+      toast.error(t('club.desc_too_long'));
       return;
     }
 
@@ -204,14 +206,14 @@ export default function ClubsView({ userId }: { userId: string }) {
 
       if (wpError) console.error("Lỗi khấu trừ WP:", wpError);
 
-      toast.success(`Bang hội "${trimmedName}" đã khai sinh! Sếp đã chi ${CREATION_FEE_WP} WP! 🚩`);
+      toast.success(t('club.created', { name: trimmedName, fee: CREATION_FEE_WP }));
       setShowCreateModal(false);
       setNewClubName("");
       setNewClubDesc("");
       setNewClubMinLevel(1);
       await fetchData(); 
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Lỗi tạo bang hội.");
+      toast.error(err instanceof Error ? err.message : t('club.failed_create'));
     } finally {
       setIsCreating(false);
     }
@@ -220,23 +222,23 @@ export default function ClubsView({ userId }: { userId: string }) {
   const handleOpenCreateModal = async () => {
     const { totalWater, level, currentStreak, friendCount, currentWP, ownedClubs } = userStats;
 
-    if (ownedClubs >= 1) return toast.error("Sếp đã lãnh đạo một bang rồi, nhường sân chơi cho ae khác nhé! 👑");
+    if (ownedClubs >= 1) return toast.error(t('club.already_leading'));
 
     // KIỂM TRA NGŨ ĐẠI THỬ THÁCH
     if (totalWater < REQ_WATER_ML) 
-      return toast.error(`Thử thách 1: Cần 50L nước (Sếp có ${(totalWater/1000).toFixed(1)}L) 💧`);
+      return toast.error(t('club.challenge_water', { amount: (totalWater / 1000).toFixed(1) }));
     
     if (level < REQ_LEVEL) 
-      return toast.error(`Thử thách 2: Cần Level ${REQ_LEVEL} (Sếp đang Level ${level}) 🆙`);
+      return toast.error(t('club.challenge_level', { required: REQ_LEVEL, current: level }));
     
     if (currentStreak < REQ_STREAK) 
-      return toast.error(`Thử thách 3: Cần chuỗi ${REQ_STREAK} ngày (Sếp có ${currentStreak} ngày) 🔥`);
+      return toast.error(t('club.challenge_streak', { required: REQ_STREAK, current: currentStreak }));
     
     if (friendCount < REQ_FRIENDS) 
-      return toast.error(`Thử thách 4: Cần ${REQ_FRIENDS} chiến hữu (Sếp có ${friendCount}) 🤝`);
+      return toast.error(t('club.challenge_friends', { required: REQ_FRIENDS, current: friendCount }));
     
     if (currentWP < CREATION_FEE_WP) 
-      return toast.error(`Thử thách 5: Thiếu ${CREATION_FEE_WP.toLocaleString()} WP (Sếp còn ${currentWP.toLocaleString()}) 💎`);
+      return toast.error(t('club.challenge_wp', { required: CREATION_FEE_WP.toLocaleString(), current: currentWP.toLocaleString() }));
 
     // XÁC NHẬN CHI TRẢ WP
     const { confirmDialog } = await import('@/store/useConfirmDialog');
@@ -366,7 +368,7 @@ export default function ClubsView({ userId }: { userId: string }) {
                           if (canJoin) {
                             handleJoin(club.id);
                           } else {
-                            toast.error(`Cảnh giới chưa đủ! Yêu cầu cấp ${club.min_level_required} để gia nhập.`);
+                            toast.error(t('club.level_required', { level: club.min_level_required }));
                           }
                         }}
                         disabled={isJoining || !canJoin}

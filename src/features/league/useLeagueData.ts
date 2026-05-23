@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { calculateWP } from '@/utils/healthMath';
@@ -146,9 +147,9 @@ export function useLeagueData({
   }, [profile?.id]);
 
   const handleAddFriend = useCallback(async (friendId: string, friendName: string) => {
-    const toastId = toast.loading('Đang gửi lời mời...');
+    const toastId = toast.loading(i18n.t('league.sending_invite'));
     if (!profile?.id) {
-      toast.error('Không thể gửi lời mời lúc này.', { id: toastId });
+      toast.error(i18n.t('league.invite_error'), { id: toastId });
       return;
     }
     const { error } = await supabase!
@@ -157,14 +158,14 @@ export function useLeagueData({
 
     if (error) {
       if (error.code === '23505') {
-        toast.error(`Bạn và ${friendName} đã là bạn bè!`, { id: toastId });
+        toast.error(i18n.t('social.friend_already', { name: friendName }), { id: toastId });
       } else {
-        toast.error(`Lỗi: ${error.message}`, { id: toastId });
+        toast.error(i18n.t('social.error_with_message', { message: error.message }), { id: toastId });
       }
       return;
     }
 
-    toast.success(`Đã thêm ${friendName} vào danh sách theo dõi!`, { id: toastId });
+    toast.success(i18n.t('social.friend_request_sent', { name: friendName }), { id: toastId });
     setShowAddFriend(false);
     setSearchQuery('');
     setSearchResults([]);

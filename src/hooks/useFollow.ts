@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
@@ -19,7 +20,7 @@ export function useFollow(targetUserId: string, currentUserId: string | undefine
 
   const toggleFollow = useCallback(async () => {
     if (!currentUserId || !targetUserId) {
-      toast.error('Vui lòng đăng nhập để thực hiện');
+      toast.error(i18n.t('fasting.login_required'));
       return;
     }
     const prev = isFollowing;
@@ -41,7 +42,7 @@ export function useFollow(targetUserId: string, currentUserId: string | undefine
       }
     } catch (err: unknown) {
       setIsFollowing(prev);
-      toast.error('Lỗi thao tác, thử lại sau');
+      toast.error(i18n.t('fasting.operation_error'));
       console.error('[useFollow] Toggle error:', err);
     }
   }, [targetUserId, currentUserId, isFollowing]);

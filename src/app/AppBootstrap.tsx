@@ -5,6 +5,7 @@ import { Browser } from '@capacitor/browser';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster, toast } from 'sonner';
 import { Target, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeProvider';
 import { queryClient } from '@/lib/queryClient';
@@ -12,6 +13,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { readCheckoutResult, clearCheckoutResult } from '@/lib/stripe';
 import { providerTokenStore } from '@/lib/providerTokenStore';
 import { setSentryUser } from '@/lib/sentry';
+import { initVitals } from '@/lib/vitals';
 
 function MissingConfigScreen() {
   return (
@@ -65,16 +67,22 @@ function AppChrome({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppBootstrap({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    initVitals();
+  }, []);
+
   useEffect(() => {
     const handleCheckoutResult = (result: { status: 'success' | 'cancel'; sessionId: string | null }) => {
       if (result.status === 'success') {
-        toast.success('Bạn đã trở thành DigiWell PRO!', {
+        toast.success(t('premium.became_pro'), {
           icon: <Sparkles className="text-amber-400" />,
           duration: 5000,
         });
         queryClient.invalidateQueries({ queryKey: ['profile'] });
       } else {
-        toast.info('Thanh toán đã bị hủy. Bạn vẫn có thể nâng cấp sau.');
+        toast.info(t('premium.payment_cancelled'));
       }
       clearCheckoutResult();
     };
@@ -137,7 +145,7 @@ export default function AppBootstrap({ children }: { children: React.ReactNode }
     });
 
     return () => subscription?.unsubscribe();
-  }, []);
+  }, [t]);
 
   if (!isSupabaseConfigured || !supabase) {
     return <MissingConfigScreen />;

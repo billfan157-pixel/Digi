@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, Swords, Coins, Shield, Loader2, Trophy, Zap, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { Profile, Battle } from '../../models';
 
@@ -10,6 +11,7 @@ import { useAppStore } from '../../store/useAppStore';
 import AvatarFrame from '../AvatarFrame';
 
 export default function BattleArenaModal() {
+  const { t } = useTranslation();
   const isOpen = useUIStore(s => s.showBattleArena);
   const onClose = () => useUIStore.getState().setShowBattleArena(false);
   const profile = useAppStore(s => s.profile);
@@ -47,9 +49,9 @@ export default function BattleArenaModal() {
           const { data: result, error: staleError } = await supabase.rpc('resolve_stale_battle', { battle_id: currentActive.id });
           if (staleError) console.error('Lỗi resolve battle:', staleError);
           if (result) {
-            if (result.status === 'won') toast.success(`🎉 Bạn THẮNG trận hôm qua: +${result.reward} WP!`);
-            else if (result.status === 'draw') toast.info(`Trận hôm qua HÒA. Đã hoàn WP.`);
-            else if (result.status === 'lost') toast.error(`Thua cuộc! Đối thủ đã uống nhiều hơn bạn.`);
+            if (result.status === 'won') toast.success(t('battle.won', { reward: result.reward }));
+            else if (result.status === 'draw') toast.info(t('battle.draw'));
+            else if (result.status === 'lost') toast.error(t('battle.lost'));
           }
           currentActive = null;
         }
@@ -69,11 +71,11 @@ export default function BattleArenaModal() {
       }
     } catch (err) {
       console.error(err);
-      toast.error('Lỗi tải dữ liệu Võ Đài');
+      toast.error(t('battle.load_failed'));
     } finally {
       setIsLoading(false);
     }
-  }, [profile]);
+  }, [profile, t]);
 
   useEffect(() => {
     if (isOpen) loadArenaData();
@@ -82,37 +84,37 @@ export default function BattleArenaModal() {
   // Handle Challenge
   const handleChallenge = async (opponentId: string) => {
     if (!profile) return;
-    if (profile.coins < stakeAmount) return toast.error('Không đủ Vàng để cược!');
+    if (profile.coins < stakeAmount) return toast.error(t('battle.not_enough_gold_bet'));
     
-    const tid = toast.loading('Đang gửi chiến thư...');
+    const tid = toast.loading(t('battle.sending_challenge'));
     try {
       const { error } = await supabase.from('hydration_battles').insert({
         challenger_id: profile?.id, opponent_id: opponentId, stake_coins: stakeAmount, status: 'pending'
       });
       if (error) throw error;
-      toast.success('Đã gửi thách đấu!', { id: tid });
+      toast.success(t('battle.challenge_sent'), { id: tid });
       loadArenaData();
     } catch {
-      toast.error('Lỗi gửi thách đấu', { id: tid });
+      toast.error(t('battle.challenge_failed'), { id: tid });
     }
   };
 
   // Handle Accept
   const handleAccept = async (battle: Battle) => {
     if (!profile) return;
-    if (profile.coins < battle.stake_coins) return toast.error('Bạn không đủ Vàng!');
+    if (profile.coins < battle.stake_coins) return toast.error(t('battle.not_enough_gold'));
 
-    const tid = toast.loading('Đang lên đài...');
+    const tid = toast.loading(t('battle.entering_arena'));
     try {
       const { error } = await supabase.rpc('accept_battle', {
         p_user_id: profile.id,
         p_battle_id: battle.id,
       });
       if (error) throw error;
-      toast.success('🔥 Bắt đầu cuộc đua!', { id: tid });
+      toast.success(t('battle.battle_started'), { id: tid });
       loadArenaData();
     } catch {
-      toast.error('Lỗi vào trận', { id: tid });
+      toast.error(t('battle.battle_failed'), { id: tid });
     }
   };
 

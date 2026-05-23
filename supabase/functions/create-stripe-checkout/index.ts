@@ -1,10 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
 import { checkRateLimit, RATE_LIMITS } from '../_shared/rateLimit.ts';
 import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
+import { validateRedirectUrl } from '../_shared/validateUrl.ts';
 
+type SubscriptionTier = 'plus' | 'pro';
 type BillingPlan = 'monthly' | 'yearly';
 
 type CheckoutRequest = {
+  tier?: SubscriptionTier;
   plan: BillingPlan;
   successUrl: string;
   cancelUrl: string;
@@ -13,8 +16,10 @@ type CheckoutRequest = {
 };
 
 const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
-const stripeMonthlyPriceId = Deno.env.get('STRIPE_PRICE_MONTHLY') ?? '';
-const stripeYearlyPriceId = Deno.env.get('STRIPE_PRICE_YEARLY') ?? '';
+const stripePricePlusMonthly = Deno.env.get('STRIPE_PRICE_PLUS_MONTHLY') ?? '';
+const stripePricePlusYearly = Deno.env.get('STRIPE_PRICE_PLUS_YEARLY') ?? '';
+const stripePriceProMonthly = Deno.env.get('STRIPE_PRICE_PRO_MONTHLY') ?? '';
+const stripePriceProYearly = Deno.env.get('STRIPE_PRICE_PRO_YEARLY') ?? '';
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
@@ -22,23 +27,10 @@ const ALLOWED_REDIRECT_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'capacitor://localhost',
-  'digiwell://',
+  'digiwell://localhost',
   ...(Deno.env.get('APP_URL') ? [Deno.env.get('APP_URL')!] : []),
   ...(Deno.env.get('EXTRA_ALLOWED_ORIGINS') ? Deno.env.get('EXTRA_ALLOWED_ORIGINS')!.split(',') : []),
 ];
-
-function isUrlAllowed(url: string): boolean {
-  // Allow digiwell:// deep links
-  if (url.startsWith('digiwell://')) return true;
-  // Allow capacitor:// deep links
-  if (url.startsWith('capacitor://')) return true;
-  try {
-    const parsed = new URL(url);
-    return ALLOWED_REDIRECT_ORIGINS.some(allowed => parsed.origin === allowed);
-  } catch {
-    return false;
-  }
-}
 
 const json = (body: Record<string, unknown>, status = 200, origin: string | null = null) =>
   new Response(JSON.stringify(body), {
@@ -46,7 +38,12 @@ const json = (body: Record<string, unknown>, status = 200, origin: string | null
     headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
   });
 
-const getPriceId = (plan: BillingPlan) => (plan === 'yearly' ? stripeYearlyPriceId : stripeMonthlyPriceId);
+const getPriceId = (tier: SubscriptionTier, plan: BillingPlan) => {
+  if (tier === 'plus') {
+    return plan === 'yearly' ? stripePricePlusYearly : stripePricePlusMonthly;
+  }
+  return plan === 'yearly' ? stripePriceProYearly : stripePriceProMonthly;
+};
 
 Deno.serve(async (request) => {
   const origin = request.headers.get('Origin');
@@ -89,17 +86,20 @@ Deno.serve(async (request) => {
   }
 
   const body = (await request.json()) as CheckoutRequest;
-  const priceId = getPriceId(body.plan);
+  const tier = body.tier || 'pro';
+  const priceId = getPriceId(tier, body.plan);
 
   if (!priceId) {
-    return json({ error: `Missing Stripe price id for plan "${body.plan}".` }, 500, origin);
+    return json({ error: `Missing Stripe price id for ${tier} plan "${body.plan}".` }, 500, origin);
   }
 
-  if (!isUrlAllowed(body.successUrl)) {
-    return json({ error: 'Invalid successUrl: not in allowlist.' }, 400, origin);
+  const successCheck = validateRedirectUrl(body.successUrl, ALLOWED_REDIRECT_ORIGINS);
+  if (!successCheck.valid) {
+    return json({ error: `Invalid successUrl: ${successCheck.reason}` }, 400, origin);
   }
-  if (!isUrlAllowed(body.cancelUrl)) {
-    return json({ error: 'Invalid cancelUrl: not in allowlist.' }, 400, origin);
+  const cancelCheck = validateRedirectUrl(body.cancelUrl, ALLOWED_REDIRECT_ORIGINS);
+  if (!cancelCheck.valid) {
+    return json({ error: `Invalid cancelUrl: ${cancelCheck.reason}` }, 400, origin);
   }
 
   const payload = new URLSearchParams({
@@ -110,9 +110,11 @@ Deno.serve(async (request) => {
     cancel_url: body.cancelUrl,
     client_reference_id: user.id,
     'metadata[userId]': user.id,
-    'metadata[plan]': body.plan,
+    'metadata[plan]': `${tier}_${body.plan}`,
+    'metadata[tier]': tier,
     'subscription_data[metadata][userId]': user.id,
-    'subscription_data[metadata][plan]': body.plan,
+    'subscription_data[metadata][plan]': `${tier}_${body.plan}`,
+    'subscription_data[metadata][tier]': tier,
     ...(body.customerEmail ? { customer_email: body.customerEmail } : {}),
   });
 

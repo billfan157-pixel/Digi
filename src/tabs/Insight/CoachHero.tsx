@@ -13,9 +13,10 @@ interface CoachHeroProps {
     color: string;
     bg: string;
   };
+  onClickAction?: () => void;
 }
 
-const CoachHero: React.FC<CoachHeroProps> = ({ greeting, primaryStory, nextBestAction }) => {
+const CoachHero: React.FC<CoachHeroProps> = ({ greeting, primaryStory, nextBestAction, onClickAction }) => {
   const Icon = nextBestAction.icon;
 
   return (
@@ -50,6 +51,7 @@ const CoachHero: React.FC<CoachHeroProps> = ({ greeting, primaryStory, nextBestA
       {/* 2. Premium Action Card (Minimalist Glass) */}
       <motion.button
         whileTap={{ scale: 0.98 }}
+        onClick={onClickAction}
         className="w-full text-left relative overflow-hidden bg-gradient-to-br from-white/[0.05] to-transparent backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl group transition-all duration-500"
       >
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />

@@ -23,6 +23,7 @@ import {
   X,
   AlertTriangle
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import ClubChat from "./ClubChat"; // Cực kỳ quan trọng: Nhớ import file Chat vào đây sếp nhé!
 
@@ -72,6 +73,7 @@ export default function ClubDashboard({
   userId: string; // THÊM PROP NÀY
   onBack: () => void;
 }) {
+  const { t } = useTranslation();
   const [club, setClub] = useState<Club | null>(null);
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -112,9 +114,9 @@ export default function ClubDashboard({
       .eq('user_id', userId)
       .eq('club_id', clubId);
     if (error) {
-      toast.error('Cập nhật vai trò thất bại');
+      toast.error(t('club.failed_role'));
     } else {
-      toast.success('Cập nhật vai trò thành công');
+      toast.success(t('club.role_updated'));
       fetchDashboard();
     }
   };
@@ -127,9 +129,9 @@ export default function ClubDashboard({
       .eq('user_id', userId)
       .eq('club_id', clubId);
     if (error) {
-      toast.error('Loại thành viên thất bại');
+      toast.error(t('club.failed_remove'));
     } else {
-      toast.success('Thành viên đã được loại ra');
+      toast.success(t('club.member_removed'));
       fetchDashboard();
     }
   };
@@ -148,9 +150,9 @@ export default function ClubDashboard({
       .eq('id', club.id);
     setIsUpdating(false);
     if (error) {
-      toast.error('Cập nhật bang hội thất bại');
+      toast.error(t('club.failed_update'));
     } else {
-      toast.success('Cập nhật bang hội thành công');
+      toast.success(t('club.updated'));
       setClub({ ...club, name: editingClubName, description: editingClubDesc, min_level_required: editingClubMinLevel });
       setShowEditModal(false);
     }
@@ -163,9 +165,9 @@ export default function ClubDashboard({
     const { error } = await supabase.from('clubs').delete().eq('id', club.id);
     setIsDisbanding(false);
     if (error) {
-      toast.error('Giải tán bang hội thất bại');
+      toast.error(t('club.failed_disband'));
     } else {
-      toast.success('Bang hội đã được giải tán');
+      toast.success(t('club.disbanded'));
       onBack();
     }
   };
@@ -650,7 +652,7 @@ export default function ClubDashboard({
                 <button
                   onClick={async () => {
                     if (!challengeTitle.trim() || challengeTargetMl < 1000) {
-                      toast.error('Vui lòng nhập tên và mục tiêu hợp lệ');
+                      toast.error(t('club.invalid_name_goal'));
                       return;
                     }
                     setIsCreatingChallenge(true);
@@ -663,14 +665,14 @@ export default function ClubDashboard({
                     });
                     setIsCreatingChallenge(false);
                     if (result) {
-                      toast.success('Đã tạo thử thách!');
+                      toast.success(t('club.challenge_created'));
                       setShowCreateChallenge(false);
                       setChallengeTitle('');
                       setChallengeTargetMl(100000);
                       setChallengeDays(7);
                       fetchDashboard();
                     } else {
-                      toast.error('Không thể tạo thử thách');
+                      toast.error(t('club.failed_challenge'));
                     }
                   }}
                   disabled={isCreatingChallenge}

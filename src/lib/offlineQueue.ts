@@ -45,6 +45,7 @@ function scopedKey(userId: string): string {
 
 const queueCache = new Map<string, QueueItem[]>();
 const keyCache = new Map<string, CryptoKey>();
+const writeChains = new Map<string, Promise<void>>();
 const STATIC_SALT = 'digiwell-offline-salt-key-12345';
 
 function uint8ArrayToBase64(bytes: Uint8Array): string {
@@ -69,6 +70,7 @@ function base64ToUint8Array(base64: string): Uint8Array {
 export function clearMemoryCaches() {
   queueCache.clear();
   keyCache.clear();
+  writeChains.clear();
 }
 
 async function encryptAndSaveQueue(userId: string, items: QueueItem[], key: CryptoKey): Promise<void> {
@@ -177,9 +179,15 @@ function writeRaw(userId: string, items: QueueItem[]) {
   queueCache.set(userId, items);
   const key = keyCache.get(userId);
   if (key) {
-    encryptAndSaveQueue(userId, items, key).catch(err => {
-      console.error('[offlineQueue] Background encryption failed:', err);
+    const currentChain = writeChains.get(userId) || Promise.resolve();
+    const nextChain = currentChain.then(async () => {
+      try {
+        await encryptAndSaveQueue(userId, items, key);
+      } catch (err) {
+        console.error('[offlineQueue] Background encryption failed:', err);
+      }
     });
+    writeChains.set(userId, nextChain);
   } else {
     if (items.length > 0) {
       localStorage.setItem(scopedKey(userId), JSON.stringify(items));

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import i18n from '@/i18n';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 
@@ -28,7 +29,7 @@ export function useLike(postId: string, currentUserId: string | undefined, initi
       // Rollback
       setIsLiked(!newState);
       setCount(prev => (!newState ? prev + 1 : prev - 1));
-      toast.error('Lỗi thao tác, thử lại sau!');
+      toast.error(i18n.t('validation.generic_error'));
     } finally {
       setIsProcessing(false);
     }

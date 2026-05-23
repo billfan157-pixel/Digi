@@ -5,6 +5,8 @@
     <!-- CẤU HÌNH CƠ BẢN -->
     <key>CAPACITOR_DEBUG</key>
     <string>$(CAPACITOR_DEBUG)</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
@@ -84,6 +86,12 @@
     <!-- 6. Local Notifications (Nhắc uống nước) -->
     <key>NSUserNotificationsUsageDescription</key>
     <string>DigiWell cần gửi thông báo để nhắc bạn uống nước đúng giờ.</string>
+
+    <!-- 7. Bluetooth (Kết nối DigiBottle) -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>DigiWell cần kết nối Bluetooth để tìm kiếm và tự động đồng bộ lượng nước từ bình DigiBottle của bạn.</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>DigiWell cần kết nối Bluetooth để đồng bộ lượng nước từ bình DigiBottle.</string>
 
     <!-- CẤU HÌNH URL SCHEME (Cho Deep Linking) -->
     <key>CFBundleURLTypes</key>

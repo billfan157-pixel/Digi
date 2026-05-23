@@ -1,0 +1,26 @@
+DigiWell là ứng dụng theo dõi uống nước và sức khỏe thông minh, được cá nhân hóa cho từng người dùng.
+
+TÍNH NĂNG CHÍNH:
+
+• Theo dõi uống nước — Ghi lại lượng nước uống hàng ngày với các loại đồ uống khác nhau
+
+• AI Hydration Coach — Trí tuệ nhân tạo tự động điều chỉnh mục tiêu uống nước dựa trên thời tiết, vận động, giấc ngủ
+
+• Nhắc nhở thông minh — Hệ thống nhắc nhở biết bạn đang ngủ, họp hay lái xe
+
+• Phân tích sâu — Biểu đồ hàng tuần, hàng tháng và báo cáo sức khỏe chi tiết
+
+• Kết nối thiết bị — Đồng bộ với Google Fit và bình thông minh DigiBottle qua Bluetooth
+
+• Cộng đồng — Chia sẻ tiến độ, tham gia bang hội, thi đua xếp hạng
+
+• Bảo mật — Xác thực sinh trắc học, đồng bộ dữ liệu đám mây an toàn
+
+DigiWell giúp bạn xây dựng thói quen uống nước lành mạnh.
+
+---
+
+Tải miễn phí. Nâng cấp lên DigiWell Pro để mở khóa toàn bộ tính năng AI.
+
+Chính sách bảo mật: https://digiwell.app/privacy-policy.html
+Điều khoản sử dụng: https://digiwell.app/terms-of-service.html

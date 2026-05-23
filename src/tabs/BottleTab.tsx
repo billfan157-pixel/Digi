@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, FlaskConical, Trophy, ArrowLeft, Box, Sparkles, Cpu } from 'lucide-react';
+import { Activity, FlaskConical, Trophy, ArrowLeft, Box, Sparkles, Cpu, ChevronRight } from 'lucide-react';
 import { DeviceHero, ControlDeck, ArenaPaywall } from '../components/DeviceComponents';
+import { useUIStore } from '../store/useUIStore';
 import { DiagnosticsPanel, LedPatternStudio, AutomationCenter } from '../components/LabComponents';
 import type { LedPattern, RuleTrigger, RuleAction, AutomationRule } from '../components/types';
 import { AuraPulseEffect } from '../components/effects/AuraPulseEffect';
@@ -11,11 +12,19 @@ interface SmartBottleMetrics {
   batteryLevel?: number;
   temperature?: number;
   signalStrength?: number;
+  latencyMs?: number;
+  healthScore?: number;
 }
 
 interface SmartBottleProps {
   isConnected?: boolean;
+  isSyncing?: boolean;
   metrics?: SmartBottleMetrics;
+  connectDevice?: () => Promise<void>;
+  disconnectDevice?: () => Promise<void>;
+  handleDrinkEvent?: (amount: number) => Promise<void>;
+  refillBottle?: () => Promise<void>;
+  forceSync?: () => Promise<void>;
   [key: string]: unknown;
 }
 
@@ -39,18 +48,17 @@ export default function BottleTab({
   const [activeTab, setActiveTab] = useState<'lab' | 'arena'>('lab');
   const [labTab, setLabTab] = useState<'control' | 'diagnostics' | 'aura' | 'logic'>('control');
   
-  // Local state for Demo/Lab controls
+  // Controls derived from smartBottle props
   const CAPACITY = 750;
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [isConnected, setIsConnected] = useState(Boolean(smartBottle?.isConnected));
-  const [currentVolume, setCurrentVolume] = useState(smartBottle?.metrics?.currentVolume ?? CAPACITY);
-  const [fillPercentage, setFillPercentage] = useState(
-    smartBottle?.metrics?.currentVolume != null ? (smartBottle.metrics.currentVolume / CAPACITY) * 100 : 100
-  );
-  const [batteryLevel, setBatteryLevel] = useState(smartBottle?.metrics?.batteryLevel ?? 84);
-  const [temperature, setTemperature] = useState(smartBottle?.metrics?.temperature ?? 24);
-  const [latencyMs] = useState(24);
-  const [signalStrength, setSignalStrength] = useState(smartBottle?.metrics?.signalStrength ?? 92);
+  const isConnected = Boolean(smartBottle?.isConnected);
+  const isSyncing = Boolean(smartBottle?.isSyncing);
+  const currentVolume = smartBottle?.metrics?.currentVolume ?? CAPACITY;
+  const fillPercentage = (currentVolume / CAPACITY) * 100;
+  const batteryLevel = smartBottle?.metrics?.batteryLevel ?? 100;
+  const temperature = smartBottle?.metrics?.temperature ?? 24;
+  const signalStrength = smartBottle?.metrics?.signalStrength ?? 100;
+  const latencyMs = smartBottle?.metrics?.latencyMs ?? 24;
+  const healthScore = smartBottle?.metrics?.healthScore ?? 100;
   const [rawSensorSeries] = useState<number[]>(() => 
     Array.from({ length: 20 }, () => Math.random() * 100)
   );
@@ -63,46 +71,6 @@ export default function BottleTab({
   const [ruleTime, setRuleTime] = useState('20:00');
   const [ruleThreshold, setRuleThreshold] = useState(50);
   const [rules, setRules] = useState<AutomationRule[]>([]);
-  const [, setSyncLogs] = useState<Array<{id: number; action: string; timestamp: string}>>([]);
-
-  // Sync from props (useSmartBottle returns metrics.currentVolume, not top-level)
-  useEffect(() => {
-    if (smartBottle) {
-      setTimeout(() => {
-        setIsConnected(Boolean(smartBottle.isConnected));
-        const vol = smartBottle.metrics?.currentVolume ?? currentVolume;
-        setCurrentVolume(vol);
-        setFillPercentage((vol / CAPACITY) * 100);
-        if (smartBottle.metrics?.batteryLevel != null) setBatteryLevel(smartBottle.metrics.batteryLevel);
-        if (smartBottle.metrics?.temperature != null) setTemperature(smartBottle.metrics.temperature);
-        if (smartBottle.metrics?.signalStrength != null) setSignalStrength(smartBottle.metrics.signalStrength);
-      }, 0);
-    }
-  }, [smartBottle, currentVolume]);
-
-  // Handle drink simulation
-  const handleDrink = (amount: number) => {
-    if (!isConnected) return;
-    setIsSyncing(true);
-    setTimeout(() => {
-      const newVol = Math.max(0, currentVolume - amount);
-      setCurrentVolume(newVol);
-      setFillPercentage((newVol / CAPACITY) * 100);
-      setIsSyncing(false);
-      setSyncLogs(prev => [...prev, { id: Date.now(), action: `Đã uống ${amount}ml`, timestamp: new Date().toISOString() }]);
-    }, 800);
-  };
-
-  const handleRefill = () => {
-    if (!isConnected) return;
-    setIsSyncing(true);
-    setTimeout(() => {
-      setCurrentVolume(CAPACITY);
-      setFillPercentage(100);
-      setIsSyncing(false);
-      setSyncLogs(prev => [...prev, { id: Date.now(), action: 'Đã đổ đầy (100%)', timestamp: new Date().toISOString() }]);
-    }, 1200);
-  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-cyan-500/30 selection:text-cyan-200 font-sans relative overflow-hidden pb-32">
@@ -182,9 +150,45 @@ export default function BottleTab({
                 signalStrength={signalStrength}
                 latencyMs={latencyMs}
                 temperature={temperature}
-                onConnect={() => setIsConnected(true)}
-                onDisconnect={() => setIsConnected(false)}
+                healthScore={healthScore}
+                onConnect={smartBottle?.connectDevice || (() => {})}
+                onDisconnect={smartBottle?.disconnectDevice || (() => {})}
               />
+
+              {!isConnected && (
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative overflow-hidden rounded-[2.5rem] border border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 to-slate-900/60 p-6 backdrop-blur-3xl shadow-xl flex flex-col gap-4"
+                >
+                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl animate-pulse" />
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 shadow-lg">
+                      <Cpu size={22} />
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-500/10 px-2 py-0.5 rounded-full">
+                        Độc quyền DigiWell
+                      </span>
+                      <h3 className="text-base font-black text-white mt-1.5 leading-tight">
+                        Đặt trước Bình nước Thông minh DigiBottle
+                      </h3>
+                      <p className="text-slate-400 text-xs mt-1 leading-relaxed font-medium">
+                        Tích hợp cảm biến lượng nước tự động, đồng bộ trực tiếp với AI Hydration Coach, chống va đập, sạc nhanh không dây. Đăng ký nhận ưu đãi 20% khi ra mắt.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => useUIStore.getState().setShowHardwareWaitlist(true)}
+                    className="w-full py-3.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 active:scale-95 text-slate-950 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/10 transition-all"
+                  >
+                    <span>Tham gia Danh sách chờ</span>
+                    <ChevronRight size={14} />
+                  </button>
+                </motion.div>
+              )}
 
               {/* Lab Sub-navigation (Glass Bubbles) */}
               <div className="flex gap-3 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
@@ -212,9 +216,9 @@ export default function BottleTab({
                     <ControlDeck 
                       isConnected={isConnected}
                       isSyncing={isSyncing}
-                      onDrink={handleDrink}
-                      onRefill={handleRefill}
-                      onForceSync={() => {}}
+                      onDrink={smartBottle?.handleDrinkEvent || (() => {})}
+                      onRefill={smartBottle?.refillBottle || (() => {})}
+                      onForceSync={smartBottle?.forceSync || (() => {})}
                     />
                   </motion.div>
                 )}
@@ -230,6 +234,7 @@ export default function BottleTab({
                       rawSensorSeries={rawSensorSeries}
                       temperature={temperature}
                       signalStrength={signalStrength}
+                      healthScore={healthScore}
                       isOpen={true}
                       onToggle={() => {}}
                     />

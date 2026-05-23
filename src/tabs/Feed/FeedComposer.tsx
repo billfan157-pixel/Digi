@@ -1,4 +1,5 @@
 import { useState, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Activity, Droplets, Swords } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -17,6 +18,7 @@ interface FeedComposerProps {
 }
 
 export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }: FeedComposerProps) {
+  const { t } = useTranslation();
   const { waterIntake, waterGoal, streak } = useAppStore(useShallow(s => ({
     waterIntake: s.waterIntake,
     waterGoal: s.waterGoal,
@@ -37,11 +39,11 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
     extra?: Record<string, unknown>;
   }) => {
     if (!profile?.id) {
-      toast.error('Bạn cần đăng nhập để đăng bài.');
+      toast.error(t('feed.login_required_post'));
       return;
     }
 
-    const toastId = toast.loading('Đang đăng bài...');
+    const toastId = toast.loading(t('feed.posting'));
     try {
       let finalImageUrl: string | null = null;
       if (postData.imageUrl) {
@@ -75,10 +77,10 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
       if (error) throw error;
       if (!data?.id) throw new Error('Không nhận được bài viết vừa tạo.');
       
-      toast.success(postData.postKind === 'duel' ? 'Duel đã lên feed.' : 'Pulse đã được đăng.', { id: toastId });
+      toast.success(postData.postKind === 'duel' ? t('feed.duel_published') : t('feed.pulse_published'), { id: toastId });
       setActiveComposer(null);
     } catch {
-      toast.error('Không thể đăng bài lúc này!', { id: toastId });
+      toast.error(t('feed.post_error'), { id: toastId });
     }
   };
 

@@ -1,0 +1,27 @@
+DigiWell is a smart water tracking and wellness app, personalized for every user.
+
+KEY FEATURES:
+
+• Water Tracking — Log your daily water intake with different drink types (water, coffee, tea, juice, and more)
+
+• AI Hydration Coach — Artificial intelligence automatically adjusts your daily water goal based on weather, activity, sleep, and personal habits
+
+• Smart Reminders — The notification system knows when you're sleeping, in a meeting, or driving so it never interrupts at the wrong time
+
+• Deep Analytics — Weekly and monthly charts with detailed health reports
+
+• Device Integration — Sync with Apple Health, Google Fit, and the DigiBottle smart cup via Bluetooth
+
+• Community — Share progress, join clubs, compete on leaderboards, and complete quests with friends
+
+• Security — Biometric authentication (Face ID / Touch ID), safe cloud data sync
+
+DigiWell helps you build healthy hydration habits naturally and scientifically.
+
+---
+
+Download for free. Upgrade to DigiWell Pro to unlock full AI features and advanced analytics.
+
+Privacy Policy: https://digiwell.app/privacy-policy.html
+Terms of Service: https://digiwell.app/terms-of-service.html
+Support: https://digiwell.app/support

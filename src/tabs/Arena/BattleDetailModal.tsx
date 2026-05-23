@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Swords, Clock, Coins, TrendingUp, X, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,6 +15,7 @@ interface BattleDetailModalProps {
 }
 
 const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, now, onClose, onActionComplete }) => {
+  const { t } = useTranslation();
   const [isActing, setIsActing] = useState(false);
   const isChallenger = battle.challenger_id === profile?.id;
   const me = isChallenger ? battle.challenger : battle.opponent;
@@ -118,7 +120,7 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
           {battle.status === 'active' && (
             <button
               onClick={() => {
-                toast.success('💧 Đã nạp thêm nước và đẩy tiến độ!', {
+                toast.success(t('battle.water_pushed'), {
                   className: "bg-slate-900 border border-white/10 text-white rounded-2xl"
                 });
                 onClose();
@@ -141,11 +143,11 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
                       p_battle_id: battle.id,
                     });
                     if (error) throw error;
-                    toast.error('Đã từ chối thách đấu');
+                    toast.error(t('battle.challenge_declined'));
                     onActionComplete();
                     onClose();
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : 'Lỗi từ chối');
+                    toast.error(err instanceof Error ? err.message : t('battle.decline_failed'));
                   } finally {
                     setIsActing(false);
                   }
@@ -165,11 +167,11 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
                       p_battle_id: battle.id,
                     });
                     if (error) throw error;
-                    toast.success('⚔️ Đã chấp nhận thách đấu!');
+                    toast.success(t('battle.challenge_accepted'));
                     onActionComplete();
                     onClose();
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : 'Lỗi chấp nhận');
+                    toast.error(err instanceof Error ? err.message : t('battle.accept_failed'));
                   } finally {
                     setIsActing(false);
                   }

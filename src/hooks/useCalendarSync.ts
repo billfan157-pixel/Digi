@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
+import i18n from '@/i18n';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 import { useAppStore } from '../store/useAppStore';
@@ -261,7 +262,7 @@ export function useCalendarSync() {
       return calendarEvents.length;
     }
 
-    const tid = silent ? '' : toast.loading('Đang cập nhật lịch Google...', { id: CALENDAR_SYNC_TOAST_ID });
+    const tid = silent ? '' : toast.loading(i18n.t('calendar.syncing'), { id: CALENDAR_SYNC_TOAST_ID });
     if (!silent) setIsSyncing(true);
 
     try {
@@ -293,12 +294,26 @@ export function useCalendarSync() {
       const newEventsStr = JSON.stringify(events);
 
       // Cập nhật dữ liệu mới nhất
-      store.setAppState({ 
+      store.setAppState({
         calendarEvents: events,
-        isCalendarSynced: true 
+        isCalendarSynced: true
       });
       localStorage.setItem(CALENDAR_CACHE_KEY, newEventsStr);
       localStorage.setItem(CALENDAR_SYNCED_KEY, 'true');
+
+      // Update public_profiles.is_calendar_synced based on user's shareCalendarStatus preference
+      const profileId = profile?.id;
+      if (profileId) {
+        const settingsKey = `digiwell_settings_${profileId}`;
+        const cachedSettings = localStorage.getItem(settingsKey);
+        const shareCalendarStatus = cachedSettings 
+          ? JSON.parse(cachedSettings).shareCalendarStatus 
+          : true; // Default to true if not set
+        await supabase
+          .from('public_profiles')
+          .update({ is_calendar_synced: shareCalendarStatus })
+          .eq('id', profileId);
+      }
 
       clearRetry();
       writeCalendarOAuthPendingFlag(false);
@@ -306,8 +321,8 @@ export function useCalendarSync() {
       if (!silent) {
         toast.success(
           events.length > 0
-            ? `Đã đồng bộ ${events.length} sự kiện mới nhất.`
-            : 'Lịch trình trống.',
+            ? i18n.t('calendar.synced_count', { count: events.length })
+            : i18n.t('calendar.synced_empty'),
           { id: tid },
         );
       }
@@ -315,13 +330,13 @@ export function useCalendarSync() {
       return events.length;
     } catch (error) {
       if (!silent) {
-        const message = error instanceof Error ? error.message : 'Lỗi đồng bộ.';
+        const message = error instanceof Error ? error.message : i18n.t('calendar.sync_error');
         toast.error(message, { id: tid });
       }
       setIsSyncing(false);
       return false;
     }
-  }, [calendarEvents.length, clearRetry, setIsCalendarSynced]);
+  }, [calendarEvents.length, clearRetry, setIsCalendarSynced, profile]);
 
   const scheduleRetry = useCallback(() => {
     clearRetry();

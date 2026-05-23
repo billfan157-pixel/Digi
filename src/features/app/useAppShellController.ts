@@ -127,6 +127,10 @@ export function useAppShellController(): AppShellProps {
       hasPendingCloudSync: hydration.hasPendingCloudSync,
       hydrationResult: hydration.hydrationResult,
       isPremium: hydration.isPremium,
+      weatherData,
+      isWeatherSynced,
+      isCalendarSynced,
+      calendarEvents,
       fastingState: {
         isFastingMode: hydration.isFastingMode,
         fastingPlanHours: hydration.fastingPlanHours,
@@ -152,6 +156,10 @@ export function useAppShellController(): AppShellProps {
     profile,
     setAppState,
     watchData,
+    weatherData,
+    isWeatherSynced,
+    isCalendarSynced,
+    calendarEvents,
   ]);
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Coffee, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 import { AppStorage } from '@/lib/storage';
 
@@ -16,6 +17,7 @@ interface OnboardingModalProps {
 export default function OnboardingModal({
   showOnboarding, setShowOnboarding, onboardingStep, setOnboardingStep, profileId, phoenixNode
 }: OnboardingModalProps) {
+  const { t } = useTranslation();
   if (!showOnboarding) return null;
 
   return (
@@ -28,26 +30,26 @@ export default function OnboardingModal({
             <div className="w-20 h-20 mx-auto bg-cyan-500/20 border-2 border-cyan-500/50 rounded-3xl flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(6,182,212,0.4)] overflow-hidden">
               {phoenixNode}
             </div>
-            <h3 className="text-2xl font-black text-white mb-3">Holo-Pet</h3>
-            <p className="text-slate-400 text-sm leading-relaxed mb-8">Nhắc bạn uống nước mỗi ngày.</p>
+            <h3 className="text-2xl font-black text-white mb-3">{t('onboarding.holo_pet_title')}</h3>
+            <p className="text-slate-400 text-sm leading-relaxed mb-8">{t('onboarding.holo_pet_desc')}</p>
           </div>
         )}
         {onboardingStep === 2 && (
           <div className="animate-in fade-in slide-in-from-right duration-500">
             <div className="w-20 h-20 mx-auto bg-orange-500/20 border-2 border-orange-500/50 rounded-3xl flex items-center justify-center mb-6"><Coffee size={32} className="text-orange-400" /></div>
-            <h3 className="text-2xl font-black text-white mb-3">Đồ uống</h3>
-            <p className="text-slate-400 text-sm leading-relaxed mb-8">Mỗi loại đồ uống có hệ số khác nhau.</p>
+            <h3 className="text-2xl font-black text-white mb-3">{t('onboarding.drinks_title')}</h3>
+            <p className="text-slate-400 text-sm leading-relaxed mb-8">{t('onboarding.drinks_desc')}</p>
           </div>
         )}
         {onboardingStep === 3 && (
           <div className="animate-in fade-in slide-in-from-right duration-500">
             <div className="w-20 h-20 mx-auto bg-emerald-500/20 border-2 border-emerald-500/50 rounded-3xl flex items-center justify-center mb-6"><Sparkles size={32} className="text-emerald-400" /></div>
-            <h3 className="text-2xl font-black text-white mb-3">Tiện ích</h3>
-            <p className="text-slate-400 text-sm leading-relaxed mb-8">Mở góc phải màn hình để xem kết nối và lời nhắc.</p>
+            <h3 className="text-2xl font-black text-white mb-3">{t('onboarding.utilities_title')}</h3>
+            <p className="text-slate-400 text-sm leading-relaxed mb-8">{t('onboarding.utilities_desc')}</p>
           </div>
         )}
 
-        <button onClick={() => { if (onboardingStep < 3) setOnboardingStep(onboardingStep + 1); else { AppStorage.setItem(`digiwell_onboarded_${profileId}`, 'true'); setShowOnboarding(false); toast.success("Đã hoàn tất thiết lập!"); } }} className="w-full py-4 rounded-xl font-bold text-slate-900 text-sm active:scale-95 transition-all shadow-lg" style={{ background: 'linear-gradient(135deg, #06b6d4, #0ea5e9)' }}>{onboardingStep < 3 ? 'Tiếp tục' : 'Bắt đầu'}</button>
+        <button onClick={() => { if (onboardingStep < 3) setOnboardingStep(onboardingStep + 1); else { AppStorage.setItem(`digiwell_onboarded_${profileId}`, 'true'); setShowOnboarding(false); toast.success(t('onboarding.completed')); } }} className="w-full py-4 rounded-xl font-bold text-slate-900 text-sm active:scale-95 transition-all shadow-lg" style={{ background: 'linear-gradient(135deg, #06b6d4, #0ea5e9)' }}>{onboardingStep < 3 ? t('onboarding.continue') : t('onboarding.start')}</button>
         <div className="flex justify-center gap-2 mt-6">{[1, 2, 3].map(i => (<div key={i} className={`w-2 h-2 rounded-full transition-all duration-300 ${onboardingStep === i ? 'bg-cyan-400 w-6' : 'bg-slate-700'}`} />))}</div>
       </div>
     </div>

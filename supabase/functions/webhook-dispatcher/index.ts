@@ -88,7 +88,30 @@ async function calculateHmac256(secret: string, data: string): Promise<string> {
 Deno.serve(async (req) => {
   // 1. Authenticate request from Database Trigger
   const dbSecret = req.headers.get('x-database-secret');
-  const expectedSecret = Deno.env.get('DATABASE_WEBHOOK_SECRET') || '';
+  
+  // Get expected secret from env var or fallback to app_settings table
+  let expectedSecret = Deno.env.get('DATABASE_WEBHOOK_SECRET') || '';
+  
+  // If env var not set, query app_settings table (same fallback as DB trigger)
+  if (!expectedSecret) {
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      const { data: settings } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'webhook_secret')
+        .single();
+      
+      if (settings && settings.value) {
+        expectedSecret = settings.value;
+      }
+    } catch (err) {
+      console.error('Failed to fetch webhook_secret from app_settings:', err);
+    }
+  }
 
   if (!dbSecret || dbSecret !== expectedSecret) {
     return new Response(JSON.stringify({ error: 'Không được phép truy cập từ nguồn này.' }), {

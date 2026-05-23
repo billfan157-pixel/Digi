@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Target, Clock, Zap, Trophy, Coins } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -8,6 +9,7 @@ interface BattleModesProps {
 }
 
 const BattleModes: React.FC<BattleModesProps> = ({ selectedMode, setSelectedMode }) => {
+  const { t } = useTranslation();
   const modes = [
     { id: 'daily' as const, icon: Clock, label: 'Hằng ngày', desc: '24h', wager: '50-200', color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
     { id: 'quick' as const, icon: Zap, label: 'Tức thời', desc: '1h', wager: '10-100', color: 'text-rose-400', bg: 'bg-rose-500/10' },
@@ -25,7 +27,7 @@ const BattleModes: React.FC<BattleModesProps> = ({ selectedMode, setSelectedMode
             key={m.id}
             onClick={() => {
               setSelectedMode(m.id);
-              toast.info('Sử dụng nút ⚔️ Đấu ở trang chủ để tìm đối thủ nhé!', { 
+              toast.info(t('battle.use_home_button'), { 
                 icon: <Zap size={16} className="text-cyan-400" />,
                 className: "bg-slate-900 border border-white/10 text-white rounded-2xl"
               });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Activity, ArrowRight, ArrowLeft, Droplets, Loader2, User } from 'lucide-react';
 import { track } from '@/lib/analytics';
@@ -11,6 +12,7 @@ interface OnboardingModalProps {
 }
 
 export default function OnboardingModal({ profile, onComplete }: OnboardingModalProps) {
+  const { t } = useTranslation();
   // Initialize with existing weight if available, otherwise empty
   const [step, setStep] = useState(1);
   const [name, setName] = useState<string>(profile?.nickname || '');
@@ -28,7 +30,7 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error('Vui lòng nhập tên của bạn!');
+      toast.error(t('onboarding.name_required'));
       return;
     }
     setStep(2);
@@ -38,7 +40,7 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
     e.preventDefault();
     const numWeight = Number(weight);
     if (!numWeight || numWeight <= 0 || numWeight > 300) {
-      toast.error('Vui lòng nhập cân nặng hợp lệ!');
+      toast.error(t('onboarding.weight_required'));
       return;
     }
 
@@ -51,11 +53,11 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
 
       if (error) throw error;
 
-      toast.success('Đã cập nhật mục tiêu của bạn!');
+      toast.success(t('onboarding.goal_updated'));
       track('onboarding_completed', { weight: numWeight, water_goal: waterGoal });
       onComplete(numWeight, waterGoal, name.trim());
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Lỗi cập nhật hồ sơ!');
+      toast.error(error instanceof Error ? error.message : t('onboarding.profile_update_error'));
     } finally {
       setIsSubmitting(false);
     }

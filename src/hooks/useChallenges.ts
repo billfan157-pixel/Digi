@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -70,7 +71,7 @@ export function useChallenges(userId: string) {
       localStorage.setItem(`digiwell_user_challenges_cache_${userId}`, JSON.stringify(newUserChallenges));
     } catch (error: unknown) {
       console.error("Error fetching challenges:", error);
-      toast.error("Không thể tải danh sách thử thách");
+      toast.error(i18n.t('challenge.fetch_error'));
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,7 @@ export function useChallenges(userId: string) {
 
   const handleJoinChallenge = async (challenge: Challenge) => {
     setJoiningId(challenge.id);
-    const toastId = toast.loading("Đang đăng ký tham gia...");
+    const toastId = toast.loading(i18n.t('challenge.joining'));
 
     try {
       const { error } = await supabase.from('user_challenges').insert({
@@ -97,7 +98,7 @@ export function useChallenges(userId: string) {
 
       if (error) throw error;
 
-      toast.success(`Đã tham gia: ${challenge.title}`, { id: toastId });
+      toast.success(i18n.t('challenge.joined_success', { title: challenge.title }), { id: toastId });
       
       const { data: updatedUserChallenges, error: refetchError } = await supabase
         .from('user_challenges')
@@ -110,7 +111,7 @@ export function useChallenges(userId: string) {
 
     } catch (error: unknown) {
       console.error("Error joining challenge:", error);
-      toast.error("Lỗi khi tham gia thử thách. Vui lòng thử lại.", { id: toastId });
+      toast.error(i18n.t('challenge.join_error'), { id: toastId });
     } finally {
       setJoiningId(null);
     }

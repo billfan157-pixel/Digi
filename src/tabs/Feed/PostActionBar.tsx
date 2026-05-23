@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Bell, Bookmark, Droplets, GlassWater, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -16,7 +17,7 @@ interface PostActionBarProps {
   onSave: () => void;
 }
 
-export const PostActionBar = ({
+export const PostActionBar = memo(({
   cheersCount,
   dropsCount,
   hasCheered,
@@ -106,4 +107,4 @@ export const PostActionBar = ({
       </button>
     </div>
   </div>
-);
+));

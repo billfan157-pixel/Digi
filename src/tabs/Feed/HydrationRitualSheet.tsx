@@ -6,6 +6,7 @@ import {
   useState,
   type ChangeEvent,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera,
@@ -88,6 +89,7 @@ export const HydrationRitualSheet = ({
   onPublish,
   onClose,
 }: HydrationRitualSheetProps) => {
+  const { t } = useTranslation();
   const [selectedKind, setSelectedKind] = useState<RitualKind | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [customText, setCustomText] = useState('');
@@ -161,12 +163,12 @@ export const HydrationRitualSheet = ({
       if (!file) return;
 
       if (!file.type.startsWith('image/')) {
-        toast.error('Chỉ hỗ trợ ảnh!');
+        toast.error(t('feed.images_only'));
         return;
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Ảnh tối đa 5MB');
+        toast.error(t('feed.image_too_large'));
         return;
       }
 
@@ -178,7 +180,7 @@ export const HydrationRitualSheet = ({
       setImagePreview(URL.createObjectURL(file));
       e.target.value = '';
     },
-    [imagePreview]
+    [imagePreview, t]
   );
 
   const handleRemoveImage = useCallback(() => {
@@ -193,7 +195,7 @@ export const HydrationRitualSheet = ({
     if (isPublishing || !selectedKind) return;
 
     if (selectedKind === 'baptism' && !imageFile && !customText.trim()) {
-      toast.error('Thêm ảnh hoặc viết gì đó để ghi lại khoảnh khắc!');
+      toast.error(t('feed.content_required'));
       return;
     }
 
@@ -223,6 +225,7 @@ export const HydrationRitualSheet = ({
     previewText,
     reset,
     selectedKind,
+    t,
   ]);
 
   return (

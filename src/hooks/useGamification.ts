@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -22,7 +23,7 @@ export function useGamification(userId: string | undefined) {
       if (error) throw error;
       if (data) setAvailableChallenges(data as Challenge[]);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Lỗi tải danh sách thử thách');
+      toast.error(err instanceof Error ? err.message : i18n.t('gamification.fetch_error'));
     } finally {
       setIsLoading(false);
     }
@@ -66,10 +67,10 @@ export function useGamification(userId: string | undefined) {
   // 4. Tham gia Thử thách (Giao dịch an toàn qua RPC)
   const joinChallenge = async (challengeId: string, stakeWp: number) => {
     if (!userId || userId === 'undefined') {
-      toast.error('Bạn cần đăng nhập để tham gia!');
+      toast.error(i18n.t('gamification.login_required'));
       return false;
     }
-    const toastId = toast.loading('Đang làm thủ tục đóng họ...');
+    const toastId = toast.loading(i18n.t('gamification.joining'));
 
     try {
       // Gọi hàm RPC Backend
@@ -83,7 +84,7 @@ export function useGamification(userId: string | undefined) {
         throw new Error(error.message);
       }
 
-      toast.success(`Chốt kèo thành công! Đã cược ${stakeWp} WP.`, { id: toastId, icon: '🔥' });
+      toast.success(i18n.t('gamification.joined_success', { stake: stakeWp }), { id: toastId, icon: '🔥' });
       
       // Optimistic Update: Thêm thử thách vào state hiện tại để UI cập nhật tức thì
       const joinedChallenge = availableChallenges.find(c => c.id === challengeId);
@@ -100,7 +101,7 @@ export function useGamification(userId: string | undefined) {
       }
       return true;
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Lỗi khi tham gia thử thách', { id: toastId });
+      toast.error(err instanceof Error ? err.message : i18n.t('gamification.join_error'), { id: toastId });
       return false;
     }
   };

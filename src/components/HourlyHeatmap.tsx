@@ -57,7 +57,8 @@ interface Forecast {
 // Loading skeleton component
 function HeatmapSkeleton() {
   return (
-    <div className="glass-card p-6 min-h-[420px]">
+    <div className="glass-card p-6 min-h-[420px]" role="status" aria-live="polite">
+      <span className="sr-only">Đang tải dữ liệu biểu đồ...</span>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 animate-pulse" />
@@ -275,7 +276,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
   if (isLoading) return <HeatmapSkeleton />;
   if (error) {
     return (
-      <div className="glass-card p-6 text-center">
+      <div className="glass-card p-6 text-center" role="alert" aria-live="assertive">
         <p className="text-rose-400 font-medium">{error}</p>
       </div>
     );

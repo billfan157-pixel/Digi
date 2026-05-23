@@ -1,6 +1,6 @@
 import React from 'react';
 import { Lock } from 'lucide-react';
-import { useIsPremium } from '@/hooks/useIsPremium';
+import { useSubscriptionTier } from '@/hooks/useIsPremium';
 import { useUIStore } from '@/store/useUIStore';
 
 export const PremiumBadge: React.FC<{ className?: string }> = ({ className = '' }) => (
@@ -10,13 +10,24 @@ export const PremiumBadge: React.FC<{ className?: string }> = ({ className = '' 
   </span>
 );
 
-export const RequirePremium: React.FC<{ children: React.ReactNode; fallback?: React.ReactNode }> = ({ children, fallback }) => {
-  const isPremium = useIsPremium();
+export const RequirePremium: React.FC<{
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  requiredTier?: 'plus' | 'pro';
+}> = ({ children, fallback, requiredTier }) => {
+  const tier = useSubscriptionTier();
   const setShowPremiumModal = useUIStore(s => s.setShowPremiumModal);
 
-  if (isPremium) return <>{children}</>;
+  const hasAccess = (() => {
+    if (requiredTier === 'pro') return tier === 'pro';
+    return tier === 'plus' || tier === 'pro';
+  })();
+
+  if (hasAccess) return <>{children}</>;
 
   if (fallback) return <>{fallback}</>;
+
+  const buttonText = requiredTier === 'pro' ? 'Mở khóa Pro' : 'Mở khóa Premium';
 
   return (
     <div className="relative">
@@ -29,9 +40,10 @@ export const RequirePremium: React.FC<{ children: React.ReactNode; fallback?: Re
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/25 active:scale-95 transition-all"
         >
           <Lock size={14} />
-          Mở khóa Premium
+          {buttonText}
         </button>
       </div>
     </div>
   );
 };
+

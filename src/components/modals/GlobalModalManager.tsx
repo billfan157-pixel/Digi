@@ -21,6 +21,7 @@ const ClubCoopModal = React.lazy(() => import('./ClubCoopModal'));
 const ConfirmDialog = React.lazy(() => import('../ui/ConfirmDialog'));
 const SocialDiscoverModal = React.lazy(() => import('./SocialDiscoverModal'));
 const CommentsView = React.lazy(() => import('../../tabs/Feed/CommentsView').then(m => ({ default: m.CommentsView })));
+const HardwareWaitlistModal = React.lazy(() => import('./HardwareWaitlistModal'));
 
 export default function GlobalModalManager() {
   const { 
@@ -257,6 +258,7 @@ export default function GlobalModalManager() {
         <SettingsModal />
         <EditEntryModal />
         <ConfirmDialog />
+        <HardwareWaitlistModal />
         <SocialDiscoverModal
           showDiscoverPeople={!!showDiscoverPeople}
           setShowDiscoverPeople={setShowDiscoverPeople}

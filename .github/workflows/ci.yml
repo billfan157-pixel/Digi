@@ -22,14 +22,20 @@ jobs:
       - name: Migration lint
         run: node scripts/check-migrations.mjs
 
+      - name: NPM security audit
+        run: npm audit --audit-level=high --omit=dev
+
       - name: Lint
         run: npm run lint
 
       - name: Type check
         run: npm run typecheck
 
+      - name: Dependency scan
+        run: npm run check:dependencies
+
       - name: Tests
-        run: npm run test
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
@@ -39,11 +45,17 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_RELEASE: ${{ github.sha }}
 
+      - name: Verify Migrations (PostgreSQL Reset)
+        run: npx supabase db reset
+
       - name: Smoke test built app
         run: npm run smoke
 
       - name: Build size guard
         run: npm run size
+
+      - name: Bundle composition analysis
+        run: node scripts/analyze-bundle.mjs
 
   deploy:
     if: github.ref == 'refs/heads/main'

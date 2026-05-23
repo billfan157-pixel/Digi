@@ -4,6 +4,7 @@
 // Tự động check tất cả điều kiện và cập nhật tiến độ
 // ============================================================
 
+import i18n from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -154,7 +155,7 @@ async function runQuestEngineOnce(ctx: QuestEngineContext): Promise<void> {
     }
 
     for (const uq of newlyCompleted) {
-      toast.success(`🎯 Hoàn thành: ${uq.quest.title} · ⚡ +${uq.quest.reward_exp} EXP!`, {
+      toast.success(i18n.t('quest.completed', { title: uq.quest.title, exp: uq.quest.reward_exp }), {
         duration: 4000,
         action: {
           label: '🎁 Nhận thưởng',
@@ -185,7 +186,7 @@ export async function claimQuestReward(
   // Validate inputs
   if (!userId || userId === 'undefined' || !userQuestId || userQuestId === 'undefined') {
     console.error('[QuestEngine] Invalid parameters:', { userId, userQuestId });
-    toast.error('Thông tin user không hợp lệ');
+    toast.error(i18n.t('validation.error_occurred'));
     return null;
   }
 
@@ -198,18 +199,18 @@ export async function claimQuestReward(
 
   if (error) {
     console.error('[QuestEngine] claimQuestReward error:', error);
-    toast.error('Lỗi nhận thưởng: ' + error.message);
+    toast.error(i18n.t('quest.reward_error', { error: error.message }));
     return null;
   }
 
   if (data?.leveled_up) {
-    toast.success(`⬆️ Level Up! Bạn đạt Level ${data.new_level}! 🎊`, { duration: 5000 });
+    toast.success(i18n.t('quest.level_up', { level: data.new_level }), { duration: 5000 });
   }
   if (data?.ranked_up) {
-    toast.success(`⭐ Rank mới: ${data.new_rank}! 🏅`, { duration: 5000 });
+    toast.success(i18n.t('quest.new_rank', { rank: data.new_rank }), { duration: 5000 });
   }
 
-  toast.success('🎁 Đã nhận phần thưởng thành công!');
+  toast.success(i18n.t('quest.reward_received'));
   
   // Kích hoạt ép tải lại Profile ngay lập tức để Vàng & EXP nảy số
   if (typeof window !== 'undefined') {
@@ -336,11 +337,11 @@ async function updateMilestoneChallenge(
       }
     }
 
-    toast.success(`🏔️ Mốc ${m.label}: ⚡ +${m.exp} EXP · 💰 +${m.coins} xu!`, { duration: 4000 });
+    toast.success(i18n.t('quest.milestone_reached', { label: m.label, exp: m.exp, coins: m.coins }), { duration: 4000 });
   }
 
   if (isCompleted) {
-    toast.success(`🎉 Hoàn thành: ${ch.title}!`, {
+    toast.success(i18n.t('quest.challenge_completed', { title: ch.title }), {
       duration: 5000,
       action: { label: '🎁 Nhận thưởng', onClick: () => claimChallengeReward(ctx.userId, uc.id) },
     });
@@ -422,10 +423,10 @@ async function updateTimeLimitedChallenge(
     .eq('id', uc.id);
 
   if (isFailed) {
-    toast.error(`💔 Thất bại: ${ch.title} — Bạn có thể thử lại!`);
+    toast.error(i18n.t('quest.challenge_failed', { title: ch.title }));
   }
   if (isCompleted) {
-    toast.success(`🎉 Hoàn thành: ${ch.title}!`, {
+    toast.success(i18n.t('quest.challenge_completed', { title: ch.title }), {
       duration: 5000,
       action: { label: '🎁 Nhận thưởng', onClick: () => claimChallengeReward(ctx.userId, uc.id) },
     });
@@ -446,11 +447,11 @@ export async function claimChallengeReward(
   });
 
   if (error) {
-    toast.error('Lỗi nhận thưởng: ' + error.message);
+    toast.error(i18n.t('quest.reward_error', { error: error.message }));
     return null;
   }
 
-  toast.success('🎁 Đã nhận phần thưởng thành công!');
+  toast.success(i18n.t('quest.reward_received'));
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('hydrationEvent', { detail: { refresh_profile: true } }));
   }
@@ -615,7 +616,14 @@ export const triggerRewardNotification = async (title: string, body: string, rec
       });
     }
 
-    // 2. Đăng ký nút bấm "Nhận thưởng ngay" cho Push Notification ngoài màn hình khóa
+    // 2. Push Notification chỉ hoạt động trên Capacitor (mobile app)
+    // Skip trên web/desktop environment
+    const { Capacitor } = await import('@capacitor/core');
+    if (!Capacitor.isNativePlatform()) {
+      return; // Skip push notifications on web/desktop
+    }
+
+    // Đăng ký nút bấm "Nhận thưởng ngay" cho Push Notification ngoài màn hình khóa
     await LocalNotifications.registerActionTypes({
       types: [{
         id: 'QUEST_COMPLETED_ACTIONS',

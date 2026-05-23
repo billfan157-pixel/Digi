@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Trash2, Save, ChevronUp, ChevronDown, Settings2, Sparkles, AlertTriangle } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AppStorage } from '@/lib/storage';
 import type { HydrationSchedule } from '@/lib/HydrationEngine';
@@ -40,6 +41,7 @@ export default function ScheduleManager({
   dateKey = 'today',
   waterEntries = [],
 }: ScheduleManagerProps) {
+  const { t } = useTranslation();
   const [isScheduleOpen, setIsScheduleOpen] = useState(isOpen || alwaysExpanded);
   const [customSchedule, setCustomSchedule] = useState<ScheduleItem[]>([]);
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
@@ -106,9 +108,9 @@ export default function ScheduleManager({
     
     const dayLabel = dateKey === 'tomorrow' ? 'ngày mai' : 'hôm nay';
     if (smartScheduleResult && smartScheduleResult.totalAdjustedCount > 0) {
-      toast.success(`Đã tải lịch tối ưu cho ${dayLabel} — ${smartScheduleResult.totalAdjustedCount} mốc được điều chỉnh.`);
+      toast.success(t('schedule.ai_schedule_loaded', { day: dayLabel, count: smartScheduleResult.totalAdjustedCount }));
     } else {
-      toast.success(`Đã tải lịch đề xuất từ AI cho ${dayLabel}.`);
+      toast.success(t('schedule.ai_suggestion_loaded', { day: dayLabel }));
     }
   };
 
@@ -142,7 +144,7 @@ export default function ScheduleManager({
 
     if (Capacitor.getPlatform() === 'web') {
       const dayLabel = dateKey === 'tomorrow' ? 'ngày mai' : 'hôm nay';
-      toast.success(`Đã lưu lịch ${dayLabel}. Thông báo chỉ hoạt động trên app di động.`);
+      toast.success(t('schedule.saved', { day: dayLabel }));
       return;
     }
 
@@ -184,9 +186,9 @@ export default function ScheduleManager({
       if (notificationsToSchedule.length > 0) {
         await LocalNotifications.schedule({ notifications: notificationsToSchedule });
       }
-      toast.success(`Đã bật ${notificationsToSchedule.length} nhắc nhở cho ${dayLabel.toLowerCase()}.`);
+      toast.success(t('schedule.reminders_enabled', { count: notificationsToSchedule.length, day: dayLabel.toLowerCase() }));
     } catch {
-      toast.error("Lỗi cài đặt thông báo.");
+      toast.error(t('schedule.reminder_error'));
     }
   };
 

@@ -4,6 +4,7 @@ import {
   LocalNotifications,
   type ActionPerformed,
 } from '@capacitor/local-notifications';
+import i18n from '@/i18n';
 import { toast } from 'sonner';
 import {
   clearHydrationReminders,
@@ -165,7 +166,7 @@ export function useHydrationNotifications({
       if (!profile?.id || profile.id === 'undefined') return;
       await claimQuestReward(profile.id as string, String(extra.id));
       await refetchProfile();
-      toast.success('Đã nhận thưởng nhiệm vụ thành công!');
+      toast.success(i18n.t('quest.claimed'));
       return;
     }
 
@@ -173,7 +174,7 @@ export function useHydrationNotifications({
       if (!profile?.id || profile.id === 'undefined') return;
       await claimChallengeReward(profile.id as string, String(extra.id));
       await refetchProfile();
-      toast.success('🎁 Đã nhận thưởng thử thách thành công!');
+      toast.success(i18n.t('challenge.reward_claimed'));
       return;
     }
 
@@ -190,7 +191,7 @@ export function useHydrationNotifications({
             extra,
           }],
         });
-        toast.info('Đã lùi lịch nhắc nước lại 10 phút.');
+        toast.info(i18n.t('notification.snoozed_10min'));
         return;
       }
 
@@ -229,7 +230,7 @@ export function useHydrationNotifications({
         dailyGoal: waterGoal,
         nickname: profile?.nickname || '',
       });
-      toast.info(`Đã nhắc lại sau ${intent.minutes} phút.`);
+      toast.info(i18n.t('notification.remind_after', { minutes: intent.minutes }));
       return;
     }
 
@@ -290,7 +291,7 @@ export function useHydrationNotifications({
       for (const action of matchingActions) {
         await handleAddWater(action.amount, 1, action.name);
       }
-      toast.success(`Đã ghi nhận ${matchingActions.length} lần uống nước từ notification.`);
+      toast.success(i18n.t('notification.actions_recorded', { count: matchingActions.length }));
     })();
   }, [handleAddWater, profile, view]);
 }
