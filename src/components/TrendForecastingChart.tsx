@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, AlertTriangle, Target, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { glassCard } from '../styles/glass';
 
 interface WeeklyHistoryPoint {
   d: string;
@@ -142,7 +143,7 @@ export default function TrendForecastingChart({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-5 shadow-xl"
+      className={`${glassCard} p-5`}
     >
       <div className="flex items-start justify-between mb-4">
         <div>
@@ -189,7 +190,7 @@ export default function TrendForecastingChart({
             </span>
           </div>
 
-          <div className="w-full bg-slate-800/50 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-white/[0.05] border border-white/[0.06] rounded-full h-2 overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(100, (trendAnalysis.forecast[6] / waterGoal) * 100)}%` }}

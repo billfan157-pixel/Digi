@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { Droplets, Zap } from 'lucide-react';
+import { Droplets, Zap, AlertTriangle } from 'lucide-react';
 import { getTimeBasedNudge, getNextRecommendedDrink, TINT_STYLES } from '../lib/habitEngine';
+import type { UserHydrationPattern } from '../lib/patternEngine';
 
 interface HabitNudgeBarProps {
   hour: number;
@@ -8,6 +9,7 @@ interface HabitNudgeBarProps {
   waterGoal: number;
   streak: number;
   isFirstOpen: boolean;
+  pattern?: UserHydrationPattern | null;
   onQuickDrink?: (amount: number) => void;
 }
 
@@ -17,11 +19,21 @@ export default function HabitNudgeBar({
   waterGoal,
   streak,
   isFirstOpen,
+  pattern,
   onQuickDrink,
 }: HabitNudgeBarProps) {
   const nudge = getTimeBasedNudge({ hour, waterIntake, waterGoal, streak, isFirstOpen });
   const nextDrink = getNextRecommendedDrink({ waterIntake, waterGoal, hour });
   const styles = TINT_STYLES[nudge.tint];
+
+  // Check if current hour is approaching a blind spot
+  const currentHourSlot = Math.floor(hour / 3) * 3; // Group by 3-hour slots
+  const upcomingBlindSpot = pattern?.blindSpots.find(
+    (bs) => {
+      const slotHour = parseInt(bs.slot.split('-')[0], 10);
+      return slotHour >= currentHourSlot && slotHour < currentHourSlot + 3;
+    }
+  );
 
   return (
     <motion.div
@@ -51,6 +63,16 @@ export default function HabitNudgeBar({
           <p className="text-xs text-slate-300 mt-1 leading-relaxed">
             {nudge.message}
           </p>
+
+          {/* Blind spot warning */}
+          {upcomingBlindSpot && (
+            <div className="mt-2 flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <AlertTriangle size={12} className="text-amber-400 shrink-0" />
+              <p className="text-[10px] text-amber-300 font-medium">
+                Bạn thường quên uống nước trong khoảng {upcomingBlindSpot.slot.replace('-', 'h - ')}h. Còn {upcomingBlindSpot.completionRate < 30 ? 'rất ít' : 'ít'} hôm nay!
+              </p>
+            </div>
+          )}
 
           {/* Action row */}
           <div className="flex items-center gap-2 mt-3">

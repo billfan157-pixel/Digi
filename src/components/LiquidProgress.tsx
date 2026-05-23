@@ -8,10 +8,10 @@ interface LiquidProgressProps {
 export const LiquidProgress: React.FC<LiquidProgressProps> = ({ percentage }) => {
   // Giới hạn an toàn từ 0 - 100%
   const clamped = Math.min(Math.max(percentage, 0), 100);
-  
+
   return (
-    <div 
-      className="relative w-56 h-56 rounded-full border-[6px] border-slate-700 dark:border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 overflow-hidden shadow-2xl shadow-cyan-900/40 mx-auto hover:shadow-cyan-900/60 transition-all ring-2 ring-cyan-500/20"
+    <div
+      className="glass-card-strong relative w-56 h-56 rounded-full overflow-hidden mx-auto transition-all"
       role="progressbar"
       aria-label="Tiến độ nước"
       aria-valuenow={clamped}

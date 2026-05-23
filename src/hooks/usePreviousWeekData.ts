@@ -33,6 +33,7 @@ export function usePreviousWeekData(userId: string | undefined, enabled: boolean
 
       return dates.map(d => ({
         d: d.split('-')[2],
+        fullDate: d,
         ml: dayMap[d] || 0,
         isToday: false,
       }));

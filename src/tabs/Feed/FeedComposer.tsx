@@ -11,6 +11,7 @@ import type { SignaturePostKind } from './types';
 import { QuickStatusComposer } from './QuickStatusComposer';
 import { QuickChallengeComposer } from './QuickChallengeComposer';
 import { sanitizeInput } from '@/lib/sanitize';
+import { glassCard } from '../../styles/glass';
 
 interface FeedComposerProps {
   profile: Profile | null;
@@ -86,7 +87,7 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
 
   return (
     <div className="mx-4 space-y-2.5">
-      <div className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-xl p-4 shadow-2xl">
+      <div className={`${glassCard} rounded-[2rem] p-4 shadow-2xl`}>
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-50" />
         
         <div className="relative space-y-4">

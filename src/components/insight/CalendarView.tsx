@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Info, Check } from 'lucide-react';
+import { glassCard } from '../../styles/glass';
 
 interface CalendarCell {
   dayNum: number | null;
@@ -138,7 +139,7 @@ export default function CalendarView({
   return (
     <div className="space-y-6">
         {/* Main Calendar Card */}
-        <div className="glass-card-strong p-5 rounded-[32px] border border-white/10 bg-slate-900/40 relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+        <div className={`${glassCard} p-5`}>
             {/* Ambient background glow */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/10 blur-[80px] rounded-full pointer-events-none" />
             
@@ -196,7 +197,7 @@ export default function CalendarView({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="glass-card p-5 rounded-[24px] border border-cyan-500/20 bg-slate-900/60 relative overflow-hidden"
+              className={`${glassCard} p-5 border-cyan-500/20`}
             >
               <div className="flex items-center justify-between relative z-10">
                   <div>
@@ -223,7 +224,7 @@ export default function CalendarView({
         </AnimatePresence>
 
         {/* Summary Card */}
-        <div className="glass-card p-4 flex items-center justify-between border border-white/5 bg-slate-900/30">
+        <div className={`${glassCard} p-4 flex items-center justify-between`}>
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 flex items-center justify-center">
                     <TrendingUp size={20} className="text-cyan-400" />

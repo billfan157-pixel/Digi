@@ -58,8 +58,9 @@ export function useLeagueData({
 
       const { data: profilesData } = await supabase!
         .from('public_profiles')
-        .select('id, nickname')
-        .in('id', friendIds);
+        .select('id, nickname, leaderboard_opt_in')
+        .in('id', friendIds)
+        .eq('leaderboard_opt_in', true);
       const { data: waterLogs } = await supabase!
         .from('water_logs')
         .select('user_id, amount')
@@ -96,7 +97,8 @@ export function useLeagueData({
     try {
       const { data, error } = await supabase!
         .from('public_profiles')
-        .select('id, nickname, wp')
+        .select('id, nickname, wp, leaderboard_opt_in')
+        .eq('leaderboard_opt_in', true)
         .order('wp', { ascending: false })
         .limit(50);
 

@@ -10,6 +10,7 @@ import { PostCardContent } from './PostCardContent';
 import { PostMenuDropdown } from './PostMenuDropdown';
 import { PostActionBar } from './PostActionBar';
 import type { SocialFeedPost } from '../../models';
+import { glassCard } from '../../styles/glass';
 
 interface PostCardProps {
   post: SocialFeedPost;
@@ -123,7 +124,7 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
       initial={{ opacity: 0, y: 25, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, type: 'spring', bounce: 0.3 }}
-      className={`transition-all duration-500 bg-slate-900/50 rounded-3xl shadow-lg p-5 border backdrop-blur-sm relative overflow-hidden ${borderClass}`}
+      className={`${glassCard} rounded-3xl shadow-lg p-5 relative overflow-hidden ${borderClass}`}
     >
       {/* Header */}
       <PostCardHeader

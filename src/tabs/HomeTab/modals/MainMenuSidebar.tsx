@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Sparkles,
   Activity,
+  Target,
 } from 'lucide-react';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,7 +36,7 @@ export default function MainMenuSidebar({
 }: MainMenuSidebarProps) {
   const { t } = useTranslation();
   const profile = useAppStore((state: { profile: unknown }) => state.profile) as Record<string, unknown> | null;
-  const { setShowShopModal, setShowBattleArena, setShowQuestModal } =
+  const { setShowShopModal, setShowBattleArena, setShowQuestModal, setShowChallengeModal } =
     useUIStore();
 
   return (
@@ -179,6 +180,15 @@ export default function MainMenuSidebar({
                   onClick={() => {
                     onClose();
                     setShowQuestModal(true);
+                  }}
+                />
+                <SidebarButton
+                  icon={<Target size={16} className="text-cyan-400" />}
+                  label="Đấu trường Thử thách"
+                  highlight="Cược WP"
+                  onClick={() => {
+                    onClose();
+                    setShowChallengeModal(true);
                   }}
                 />
                 <SidebarButton

@@ -8,7 +8,7 @@ import { Preferences } from '@capacitor/preferences';
 class StorageManager {
   private static cache: Record<string, string> = {};
   private static initialized = false;
-  private static readonly initTimeoutMs = 1200;
+  private static readonly initTimeoutMs = 5000;
 
   private static async withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
     return Promise.race([
@@ -34,7 +34,10 @@ class StorageManager {
    */
   static async init() {
     if (this.initialized) return;
-    
+
+    // Pre-hydrate from localStorage for immediate availability
+    this.hydrateFromLocalStorage();
+
     try {
       const { keys } = await this.withTimeout(Preferences.keys(), this.initTimeoutMs);
       for (const key of keys) {
@@ -43,14 +46,11 @@ class StorageManager {
           this.cache[key] = value;
         }
       }
-      this.initialized = true;
       console.log(`[AppStorage] Initialized with ${keys.length} keys`);
     } catch (err) {
       console.error('[AppStorage] Failed to init Preferences', err);
-      // Fallback to localstorage if capacitor plugin fails (e.g., SSR or weird web environments)
-      this.initialized = true;
-      this.hydrateFromLocalStorage();
     }
+    this.initialized = true;
   }
 
   static getItem(key: string): string | null {

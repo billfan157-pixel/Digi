@@ -106,6 +106,34 @@ export async function generateHydrationAdvice(context: DigiwellAiContext): Promi
   }
 }
 
+export type AiReportResponse = {
+  analysis: string;
+  recommendations: string[];
+};
+
+export async function generateWeeklyReportAdvice(
+  stats: { goalsAchieved: number; totalDays: number; achievementRate: number },
+  entries: Array<{ date: string; waterIntake: number; waterGoal: number; achieved: boolean }>,
+  periodLabel: string,
+  profile: { nickname?: string; avgHeartRate?: number },
+): Promise<AiReportResponse> {
+  try {
+    const response = await invokeAiGateway<AiReportResponse>('report-analysis', {
+      stats,
+      entries,
+      periodLabel,
+      profile,
+    });
+    return {
+      analysis: response.analysis || '',
+      recommendations: Array.isArray(response.recommendations) ? response.recommendations : [],
+    };
+  } catch (error) {
+    console.warn('[generateWeeklyReportAdvice] Failed:', error);
+    throw error;
+  }
+}
+
 export async function sendAiChatMessage(
   input: string,
   context: DigiwellAiContext,

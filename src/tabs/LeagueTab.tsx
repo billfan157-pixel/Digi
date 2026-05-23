@@ -1,9 +1,10 @@
 import React, { memo, useMemo, useState, useEffect } from 'react';
-import { Trophy, UserPlus, Zap, Users, Search, Medal, Target } from 'lucide-react';
+import { Trophy, UserPlus, Zap, Users, Search, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TabHeader from '../components/layout/TabHeader';
 import ClubsView from '../components/ClubsView';
 import type { Profile } from '../models';
+import { useUIStore } from '../store/useUIStore';
 import { useIsPremium } from '../hooks/useIsPremium';
 import { PodiumSection } from './League/PodiumSection';
 import { LeaderboardRow } from './League/LeaderboardRow';
@@ -88,7 +89,8 @@ const LeagueTab = memo(function LeagueTab({
           label="Đấu trường"
           title={<span className="flex items-center gap-2">Xếp hạng <Trophy size={22} className="text-yellow-400" /></span>}
           profile={profile}
-          actionIcon={<Medal size={18} />}
+          actionIcon={<Target size={18} />}
+          onActionClick={() => useUIStore.getState().setShowChallengeModal(true)}
         />
       </div>
 
@@ -134,6 +136,51 @@ const LeagueTab = memo(function LeagueTab({
           )
         ) : (
           <div className="space-y-6">
+            {/* ── Leaderboard Privacy Warning Banner ── */}
+            {profile?.leaderboard_opt_in === false && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 flex items-center justify-between gap-4 backdrop-blur-xl"
+              >
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-yellow-400">Thứ hạng của bạn đang bị ẩn</p>
+                  <p className="text-[10px] text-slate-400 mt-1">Bạn đã tắt chia sẻ xếp hạng. Bật chia sẻ xếp hạng để so tài cùng mọi người.</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    const { toast } = await import('sonner');
+                    const toastId = toast.loading('Đang bật chia sẻ xếp hạng...');
+                    try {
+                      const { supabase } = await import('@/lib/supabase');
+                      const { error } = await supabase
+                        .from('profiles')
+                        .update({ leaderboard_opt_in: true })
+                        .eq('id', profile.id);
+                      if (error) throw error;
+                      
+                      const { useAppStore } = await import('@/store/useAppStore');
+                      const currentProfile = useAppStore.getState().profile;
+                      if (currentProfile) {
+                        useAppStore.getState().setAppState({
+                          profile: { ...currentProfile, leaderboard_opt_in: true }
+                        });
+                      }
+                      
+                      toast.success('Đã bật chia sẻ xếp hạng!', { id: toastId });
+                      // Dispatch event to reload league data
+                      window.dispatchEvent(new CustomEvent('hydrationEvent', { detail: { refresh_profile: true } }));
+                    } catch {
+                      toast.error('Không thể cập nhật cấu hình xếp hạng', { id: toastId });
+                    }
+                  }}
+                  className="px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-xl text-[10px] font-black uppercase tracking-wider border border-yellow-500/30 whitespace-nowrap active:scale-95 transition-all"
+                >
+                  Hiện tài khoản
+                </button>
+              </motion.div>
+            )}
+
             {/* ── Hero Profile (Spotlight) ── */}
             {currentUser && (
                <motion.div 

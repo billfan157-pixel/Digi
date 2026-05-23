@@ -79,11 +79,33 @@ export function useStreak(userId: string | undefined, waterGoal: number, todayIn
 
   useEffect(() => {
     if (!waterLogsQuery.isFetched || !userId) return;
-    if (streak === 3 || streak === 7) {
+    if (streak === 3 || streak === 7 || streak === 14 || streak === 30) {
       const key = `streak_milestone_${streak}_${userId}`;
       if (!localStorage.getItem(key)) {
         localStorage.setItem(key, '1');
         import('@/lib/analytics').then(({ track }) => track(`streak_${streak}`, { streak }));
+        
+        // Trigger confetti celebration
+        import('canvas-confetti').then((confettiModule) => {
+          const confetti = confettiModule.default;
+          confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 },
+            zIndex: 9999,
+            colors: ['#06b6d4', '#f59e0b', '#10b981', '#a855f7']
+          });
+        });
+        
+        // Show success toast
+        import('sonner').then(({ toast }) => {
+          toast.success(`Chúc mừng! Bạn đã đạt chuỗi ${streak} ngày uống nước liên tiếp và mở khóa huy hiệu mới!`, { icon: '🎉' });
+        });
+
+        // Play success sound
+        import('@/lib/audio').then(({ playSound }) => {
+          playSound('streak');
+        });
       }
     }
   }, [streak, userId, waterLogsQuery.isFetched]);

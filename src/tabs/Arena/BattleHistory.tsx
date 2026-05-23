@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingUp, Trophy, Shield, X, Coins } from 'lucide-react';
 import type { Battle, Profile } from '../../models';
+import { glassInner } from '../../styles/glass';
 
 interface BattleHistoryProps {
   battles: Battle[];
@@ -31,7 +32,7 @@ const BattleHistory: React.FC<BattleHistoryProps> = ({ battles, profile }) => {
           const opponent = isChallenger ? battle.opponent : battle.challenger;
 
           return (
-            <div key={battle.id || `history-battle-${index}`} className="flex items-center justify-between py-4 px-5 rounded-3xl bg-slate-900/40 border border-white/5 hover:bg-white/5 transition-all group">
+            <div key={battle.id || `history-battle-${index}`} className={`${glassInner} flex items-center justify-between py-4 px-5 rounded-3xl hover:bg-white/5 transition-all group`}>
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all duration-300 ${
                   isWin ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)] group-hover:scale-110' : 

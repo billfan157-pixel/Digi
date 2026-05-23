@@ -1,11 +1,11 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Camera, Activity, Droplets, Heart, Bell,
+  Camera, Activity, Droplets, Heart, Bell, BellRing,
   MoonStar, Send, Smartphone, Ruler, CloudUpload, Fingerprint,
   FileText, LogOut, Trash2, ChevronLeft, ChevronRight, X, Loader2, Sparkles,
   Crown, ExternalLink, CloudSun, Skull, AlertTriangle, Key, Code, Copy, Check,
-  Globe, Clock, DollarSign, Gauge, Cpu
+  Globe, Clock, DollarSign, Gauge, Cpu, Trophy
 } from 'lucide-react';
 import { Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -434,7 +434,7 @@ export default function SettingsModal() {
     }
   };
 
-  const { sendTestNotification, isSendingTest } = usePushNotifications(profile?.id);
+  const { sendTestNotification, isSendingTest, isSubscribed, subscribe, unsubscribe, isRegistering: isPushRegistering } = usePushNotifications(profile?.id);
 
   const testNotification = async () => {
     triggerHaptic();
@@ -621,6 +621,42 @@ export default function SettingsModal() {
                    </div>
                  </button>
 
+                  {/* WELLNESS LEADERBOARD PRIVACY */}
+                  <button 
+                    onClick={async () => {
+                      triggerHaptic();
+                      const currentOptIn = profile?.leaderboard_opt_in !== false;
+                      const nextOptIn = !currentOptIn;
+                      const toastId = toast.loading(nextOptIn ? 'Đang bật chia sẻ xếp hạng...' : 'Đang tắt chia sẻ xếp hạng...');
+                      try {
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ leaderboard_opt_in: nextOptIn })
+                          .eq('id', profile?.id);
+                        if (error) throw error;
+                        
+                        if (profile) {
+                          setProfile({ ...profile, leaderboard_opt_in: nextOptIn });
+                        }
+                        toast.success(nextOptIn ? 'Đã bật chia sẻ xếp hạng' : 'Đã tắt chia sẻ xếp hạng', { id: toastId });
+                      } catch {
+                        toast.error('Không thể cập nhật cấu hình xếp hạng', { id: toastId });
+                      }
+                    }} 
+                    className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-yellow-500/20 text-yellow-400 flex items-center justify-center"><Trophy size={18} /></div>
+                      <div className="text-left">
+                        <span className="text-white font-medium block">Chia sẻ xếp hạng (Leaderboard)</span>
+                        <span className="text-[10px] text-slate-500">Hiển thị tiến trình trên Bảng xếp hạng</span>
+                      </div>
+                    </div>
+                    <div className={`w-10 h-6 rounded-full p-1 transition-colors ${profile?.leaderboard_opt_in !== false ? 'bg-cyan-500' : 'bg-slate-700'}`}>
+                      <div className={`w-4 h-4 bg-white rounded-full transition-transform ${profile?.leaderboard_opt_in !== false ? 'translate-x-4' : ''}`} />
+                    </div>
+                  </button>
+
                  {/* WELLNESS SETTINGS BUTTON */}
                  <button
                    onClick={() => {
@@ -683,6 +719,38 @@ export default function SettingsModal() {
                   </div>
                   <div className={`w-10 h-6 rounded-full p-1 transition-colors ${settings.smartReminders ? 'bg-cyan-500' : 'bg-slate-700'}`}>
                     <div className={`w-4 h-4 bg-white rounded-full transition-transform ${settings.smartReminders ? 'translate-x-4' : ''}`} />
+                  </div>
+                </button>
+
+                <button 
+                  disabled={isPushRegistering} 
+                  onClick={async () => {
+                    triggerHaptic();
+                    if (isSubscribed) {
+                      await unsubscribe();
+                      toast.success('Đã tắt thông báo đẩy.');
+                    } else {
+                      const ok = await subscribe();
+                      if (ok) {
+                        toast.success('Đã bật thông báo đẩy thành công!');
+                      } else {
+                        toast.error('Không thể kích hoạt thông báo đẩy. Vui lòng cấp quyền thông báo.');
+                      }
+                    }
+                  }} 
+                  className="w-full flex items-center justify-between p-4 bg-transparent hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5 disabled:opacity-50"
+                >
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                      {isPushRegistering ? <Loader2 size={18} className="animate-spin" /> : <BellRing size={18} />}
+                    </div>
+                    <div>
+                      <span className="text-white font-medium block">Thông báo đẩy thiết bị</span>
+                      <span className="text-[10px] text-slate-400 block">Nhận nhắc nhở uống nước tức thì</span>
+                    </div>
+                  </div>
+                  <div className={`w-10 h-6 rounded-full p-1 transition-colors ${isSubscribed ? 'bg-cyan-500' : 'bg-slate-700'} shrink-0`}>
+                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isSubscribed ? 'translate-x-4' : ''}`} />
                   </div>
                 </button>
 

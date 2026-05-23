@@ -1,5 +1,6 @@
 import { Filter, RotateCcw, Users } from 'lucide-react';
 import type { FeedFilter, FeedMode } from './types';
+import { glassCard } from '../../styles/glass';
 
 interface EmptyFeedStateProps {
   feedSearch: string;
@@ -52,7 +53,7 @@ export const EmptyFeedState = ({
     : EMPTY_STATE_BY_FILTER[feedFilter];
 
   return (
-    <div className="mx-4 bg-slate-900/50 border border-white/5 rounded-3xl shadow-lg p-8 text-center backdrop-blur-sm mt-8 sm:mx-0">
+    <div className={`mx-4 ${glassCard} rounded-3xl shadow-lg p-8 text-center mt-8 sm:mx-0`}>
       <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-700">
         <Filter size={28} className="text-slate-500" />
       </div>

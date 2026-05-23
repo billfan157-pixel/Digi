@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Zap, Flame } from 'lucide-react';
+import { glassCard } from '../../styles/glass';
 
 interface ProgressSummaryProps {
   level: number;
@@ -17,7 +18,7 @@ export default function ProgressSummary({
   const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
 
   return (
-    <div className="mx-6 rounded-[1.75rem] bg-gradient-to-br from-slate-900/80 to-slate-800/40 border border-white/[0.06] backdrop-blur-xl p-5 overflow-hidden relative">
+    <div className={`${glassCard} mx-6 bg-gradient-to-br from-slate-900/80 to-slate-800/40 p-5`}>
       {/* Subtle glow */}
       <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-cyan-500/5 blur-3xl pointer-events-none" />
       

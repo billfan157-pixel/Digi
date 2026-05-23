@@ -219,10 +219,10 @@ Objective: "Ship DigiWell to real users"
 #### Sprint 11–12: Freemium Model + Performance Audit
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Full performance audit (Phase 8 unaudited areas) | Theme 3 | 4 | None | Low | ⏳ PENDING |
-| Database query optimization từ performance audit | Theme 3 | 3 | Performance audit | Medium | ⏳ PENDING |
-| Freemium tier definition + feature gating | Theme 6 | 3 | None | Low | ⏳ PENDING |
-| Premium waitlist (pre-DigiBottle hardware) | Theme 6 | 2 | None | Low | ⏳ PENDING |
+| Full performance audit (Phase 8 unaudited areas) | Theme 3 | 4 | None | Low | ✅ COMPLETED |
+| Database query optimization từ performance audit | Theme 3 | 3 | Performance audit | Medium | ✅ COMPLETED |
+| Freemium tier definition + feature gating | Theme 6 | 3 | None | Low | ✅ COMPLETED |
+| Premium waitlist (pre-DigiBottle hardware) | Theme 6 | 2 | None | Low | ✅ COMPLETED |
 
 **Sprint Goal:** App live + performance baseline clean + freemium model defined.
 
@@ -256,14 +256,22 @@ Objective: "Make users come back every day"
 
 ### Sprint Breakdown
 
-#### Sprint 13–14: AI Personalization Engine
+#### Sprint 13: Pattern Analysis + Smart Reminders
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
 | Hydration pattern analysis (time-of-day, weather correlation) | Theme 4 | 4 | Observability data từ Q1 | Medium | ⏳ PENDING |
 | Smart reminder system (AI-driven, không fixed schedule) | Theme 4 | 4 | Pattern analysis | Medium | ⏳ PENDING |
-| AI weekly hydration report (push notification) | Theme 4 | 3 | None | Low | ⏳ PENDING |
 
 **Sprint Goal:** App remind user đúng lúc họ thường quên uống nước.
+
+---
+
+#### Sprint 14: AI Weekly Hydration Report
+| Story | Theme | Points | Dependencies | Risk | Status |
+|---|---|---|---|---|---|
+| AI weekly hydration report (push notification) | Theme 4 | 3 | None | Low | ⏳ PENDING |
+
+**Sprint Goal:** User nhận báo cáo tuần về thói quen uống nước.
 
 ---
 

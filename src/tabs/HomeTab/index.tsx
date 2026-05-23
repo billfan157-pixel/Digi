@@ -18,6 +18,15 @@ import { useAppStore } from '../../store/useAppStore';
 import DayCompleteCard from '../../components/DayCompleteCard';
 import ProgressSummary from '../../components/home/ProgressSummary';
 import { useShallow } from 'zustand/react/shallow';
+import { useVolumeFormat } from '../../hooks/useVolumeFormat';
+import { useHydrationPattern } from '../../hooks/useHydrationPattern';
+import { useSmartReminders } from '../../hooks/useSmartReminders';
+import { useWeeklyReport } from '../../hooks/useWeeklyReport';
+import { usePreviousWeekData } from '../../hooks/usePreviousWeekData';
+import { useWaterData } from '../../hooks/useWaterData';
+import { buildWeatherHistoryFromCurrent } from '../../lib/weatherHistory';
+import SmartReminderBanner from '../../components/home/SmartReminderBanner';
+import WeeklyReportModal from '../../components/modals/WeeklyReportModal';
 
 import { HomeHeader, QuickAddSection, TelemetryGrid } from './components';
 import { MainMenuSidebar, QuickAmountsEditor, DrinkMenuModal } from './modals';
@@ -53,6 +62,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
   const {
     profile, streak, waterIntake, waterGoal,
     weatherData, weatherLastUpdatedAt, watchData, hydrationResult,
+    calendarEvents,
     actions: { handleAddWater: _rawAddWater, handleLogout }
   } = useAppStore(useShallow((state) => ({
     profile: state.profile,
@@ -63,6 +73,7 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     weatherLastUpdatedAt: state.weatherLastUpdatedAt,
     watchData: state.watchData,
     hydrationResult: state.hydrationResult,
+    calendarEvents: state.calendarEvents,
     actions: state.actions,
   })));
 
@@ -92,7 +103,9 @@ const HomeTab = React.memo((props: HomeTabProps) => {
   const [showLevelDetail, setShowLevelDetail] = useState(false);
   const [showGoalDetail, setShowGoalDetail] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [showWeeklyReport, setShowWeeklyReport] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { formatVolume, getUnitLabel } = useVolumeFormat();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -114,6 +127,48 @@ const HomeTab = React.memo((props: HomeTabProps) => {
   const { connectionState = 'idle', isSyncing: isConnecting, isConnected, lastError, metrics, connectDevice: connectBottle, disconnectDevice: disconnectBottle, retryConnection: retryBottle, forceSync: syncData } = props.smartBottle;
   const showBottleHero = bottleDemoEnabled && connectionState !== 'idle';
   const batteryLevel = metrics?.batteryLevel || 0;
+
+  // Water data for pattern analysis
+  const { waterEntries } = useWaterData(profile, undefined, {});
+  const { data: previousWeekRaw } = usePreviousWeekData(profile?.id);
+  const previousWeekLogs = (previousWeekRaw || []).map(d => ({
+    id: d.fullDate,
+    user_id: profile?.id || '',
+    amount: d.ml,
+    name: 'Water',
+    day: d.fullDate,
+    exp: 0,
+    created_at: d.fullDate,
+  }));
+
+  // Hydration pattern (7-day weather history from localStorage)
+  const weatherHistory = buildWeatherHistoryFromCurrent(weatherData);
+  const { pattern } = useHydrationPattern({
+    waterLogs: waterEntries.map(e => ({ ...e, day: e.day || e.created_at?.slice(0, 10) || new Date().toISOString().slice(0, 10) })),
+    waterGoal,
+    userId: profile?.id || null,
+    weatherHistory,
+  });
+
+  // Smart reminders với calendarEvents thực tế
+  const { currentReminder, dismissReminder, snoozeReminder, respondToReminder, canUseSmartReminders } = useSmartReminders({
+    pattern,
+    calendarEvents: calendarEvents || [],
+    weatherTemp: weatherData?.temp || null,
+    currentIntake: waterIntake,
+    waterGoal,
+    lastDrinkTime: waterEntries[0]?.created_at || null,
+    userId: profile?.id || null,
+    onQuickDrink: (amount) => handleAddWater(amount, 1, 'Smart Reminder'),
+  });
+
+  // Weekly report
+  const { report, isLoading: isReportLoading, hasNewReport, shareReport } = useWeeklyReport({
+    currentWeekLogs: waterEntries.map(e => ({ ...e, day: e.day || e.created_at?.slice(0, 10) || new Date().toISOString().slice(0, 10) })),
+    previousWeekLogs,
+    waterGoal,
+    userId: profile?.id || null,
+  });
 
   useEffect(() => {
     const handleOpenMenu = () => setIsDrinkMenuOpen(true);
@@ -150,6 +205,8 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       <HomeHeader 
         profile={profile} 
         onMenuOpen={() => setIsMenuOpen(true)} 
+        onWeeklyReportClick={() => setShowWeeklyReport(true)}
+        hasNewReport={hasNewReport}
       />
 
       {/* 2. Progress Summary (merged LevelBar + HabitNudgeBar) */}
@@ -175,11 +232,11 @@ const HomeTab = React.memo((props: HomeTabProps) => {
           <div className="absolute text-center z-10 drop-shadow-xl pointer-events-none flex flex-col items-center">
             <h2 className="text-5xl font-black text-white flex items-baseline justify-center">
               <AnimatedCounter value={waterIntake} /> 
-              <span className="text-2xl ml-2 text-slate-300 font-bold">ml</span>
+              <span className="text-2xl ml-2 text-slate-300 font-bold">{getUnitLabel()}</span>
             </h2>
             <div className="mt-3 px-4 py-2 bg-slate-900/70 backdrop-blur-lg rounded-full border border-white/15 flex items-center gap-2 shadow-lg">
               <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">
-                {t('home.goal')}: <span className="text-white font-black">{waterGoal} ml</span>
+                {t('home.goal')}: <span className="text-white font-black">{formatVolume(waterGoal)}</span>
               </span>
             </div>
             {waterIntake === 0 && (
@@ -239,7 +296,19 @@ const HomeTab = React.memo((props: HomeTabProps) => {
         <TelemetryGrid weatherData={weatherData} watchData={watchData} weatherLastUpdatedAt={weatherLastUpdatedAt} />
       </div>
 
-      {/* 6. Day Complete + Bottle Demo */}
+      {/* 6. Smart Reminder Banner */}
+      {canUseSmartReminders && (
+        <div className="px-5">
+          <SmartReminderBanner
+            reminder={currentReminder}
+            onDismiss={dismissReminder}
+            onSnooze={snoozeReminder}
+            onDrink={respondToReminder}
+          />
+        </div>
+      )}
+
+      {/* 7. Day Complete + Bottle Demo */}
       {showDayComplete && isGoalReached && (
         <div className="px-5">
           <DayCompleteCard
@@ -367,6 +436,14 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       )}
 
       <HydrationGoalModal isOpen={showGoalDetail} onClose={() => setShowGoalDetail(false)} waterIntake={waterIntake} hydrationResult={hydrationResult} />
+
+      <WeeklyReportModal
+        report={report}
+        isOpen={showWeeklyReport}
+        onClose={() => setShowWeeklyReport(false)}
+        onShare={shareReport}
+        isLoading={isReportLoading}
+      />
     </div>
   );
 });

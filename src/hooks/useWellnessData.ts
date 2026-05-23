@@ -23,6 +23,7 @@ interface UseWellnessDataReturn {
   sleepData: SleepData;
   activityData: ActivityData;
   insights: WellnessCorrelation[];
+  hasRealWellnessData: boolean;
 }
 
 import type { AppProfile } from '@/services/profile.service';
@@ -152,6 +153,13 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
     ];
   }, [weeklyHistory, sleepData.hours, activityData.steps, waterGoal]);
 
+  // CHECK FOR REAL WELLNESS DATA (not mocked)
+  const hasRealWellnessData = useMemo(() => {
+    // Activity data is currently mocked (steps = 0, activeMinutes = 0)
+    // Return true only when we have real activity data from health integration
+    return activityData.steps > 0 || activityData.activeMinutes > 0;
+  }, [activityData.steps, activityData.activeMinutes]);
+
   return {
     wellnessScore,
     tier,
@@ -164,5 +172,6 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
     sleepData,
     activityData,
     insights,
+    hasRealWellnessData,
   };
 }

@@ -11,6 +11,44 @@ interface CachedThemes {
   timestamp: number;
 }
 
+function parseDoubleEscaped(str: unknown): any {
+  if (typeof str !== 'string') return str;
+
+  try {
+    // Step 1: Parse the outer string if it is stringified/escaped
+    const parsed = JSON.parse(str);
+    
+    // Step 2: If the parsed result is still a string, it means it was double-stringified
+    if (typeof parsed === 'string') {
+      let clean = parsed.trim();
+      if (clean.includes('}{')) {
+        clean = clean.split('}{')[0] + '}';
+      }
+      return JSON.parse(clean);
+    }
+    
+    return parsed;
+  } catch (e) {
+    // Fallback: If initial JSON.parse failed, the string might not be wrapped in outer quotes but still contain escape sequences and concatenated objects.
+    try {
+      let unescaped = str;
+      if (unescaped.startsWith('"') && unescaped.endsWith('"')) {
+        unescaped = unescaped.substring(1, unescaped.length - 1);
+      }
+      unescaped = unescaped.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+      
+      if (unescaped.includes('}{')) {
+        unescaped = unescaped.split('}{')[0] + '}';
+      }
+      
+      return JSON.parse(unescaped);
+    } catch (innerErr: any) {
+      console.error(`Failed to parse double-escaped JSON: ${innerErr.message}`);
+      return null;
+    }
+  }
+}
+
 // Load themes from shop_items (server) with local cache fallback
 export async function loadThemesFromServer(): Promise<Record<string, ThemeConfig>> {
   try {
@@ -27,13 +65,26 @@ export async function loadThemesFromServer(): Promise<Record<string, ThemeConfig
     for (const item of shopItems || []) {
       if (item.meta_value) {
         try {
-          const themeConfig = typeof item.meta_value === 'string' 
-            ? JSON.parse(item.meta_value) 
-            : item.meta_value;
-          
-          // Validate theme config structure
-          if (themeConfig.id && themeConfig.colors) {
-            themes[themeConfig.id] = themeConfig as ThemeConfig;
+          const themeConfig = parseDoubleEscaped(item.meta_value);
+
+          if (themeConfig && themeConfig.id && themeConfig.colors) {
+            // Clean up extra fields that might cause issues
+            const cleanConfig: ThemeConfig = {
+              id: themeConfig.id,
+              name: themeConfig.name || themeConfig.id,
+              blurLevel: themeConfig.blurLevel || '20px',
+              effect: themeConfig.effect || 'none',
+              borderRadius: themeConfig.borderRadius || '16px',
+              borderWidth: themeConfig.borderWidth || '1px',
+              glassOpacity: themeConfig.glassOpacity || '0.04',
+              glassPattern: themeConfig.glassPattern || 'none',
+              glassGlowIntensity: themeConfig.glassGlowIntensity || 0.15,
+              glassInnerGlow: themeConfig.glassInnerGlow || false,
+              glassGradient: themeConfig.glassGradient,
+              glassHoverEffect: themeConfig.glassHoverEffect || 'opacity',
+              colors: themeConfig.colors,
+            };
+            themes[themeConfig.id] = cleanConfig;
           }
         } catch (parseError) {
           console.error(`Failed to parse theme config for ${item.id}:`, parseError);

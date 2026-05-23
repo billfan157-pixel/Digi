@@ -1,5 +1,6 @@
 import { CloudSun, Heart, TrendingUp, TrendingDown, Footprints, Wind, Droplets as WaterDrop, Zap, Activity } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import { glassCard } from '../../../styles/glass';
 
 interface TelemetryGridProps {
   weatherData: { 
@@ -139,7 +140,7 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
     : null;
 
   return (
-    <div className="mb-6 px-5">
+    <div className="px-5">
       <div className="flex items-center gap-2 mb-3 px-1">
         <Activity size={16} className="text-slate-500" />
         <h3 className="text-sm font-black text-white tracking-tight">Đo lường sinh học</h3>
@@ -148,7 +149,7 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
       <div className="grid grid-cols-2 gap-3">
         {/* Card Môi trường */}
         <div 
-          className="glass-card p-4 flex flex-col justify-between min-h-[105px] relative overflow-hidden transition-all duration-300 hover:border-white/10 hover:bg-slate-800/40"
+          className={`${glassCard} p-4 flex flex-col justify-between min-h-[105px] relative overflow-hidden transition-all duration-300 hover:border-white/10 hover:bg-slate-800/40`}
           onMouseEnter={() => setIsHoveringWeather(true)}
           onMouseLeave={() => setIsHoveringWeather(false)}
         >
@@ -212,7 +213,7 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
         
         {/* Card Sinh hiệu */}
         <div 
-          className="glass-card p-4 flex flex-col justify-between min-h-[105px] relative overflow-hidden transition-all duration-300 hover:border-white/10 hover:bg-slate-800/40 cursor-pointer active:scale-95"
+          className={`${glassCard} p-4 flex flex-col justify-between min-h-[105px] relative overflow-hidden transition-all duration-300 hover:border-white/10 hover:bg-slate-800/40 cursor-pointer active:scale-95`}
           onMouseEnter={() => setIsHoveringWatch(true)}
           onMouseLeave={() => setIsHoveringWatch(false)}
         >

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Target } from 'lucide-react';
 import { generateEveningSummary } from '../utils/healthMath';
 import StreakTierBadge from './StreakTierBadge';
+import { glassCard, glassInner } from '../styles/glass';
 
 interface DayCompleteCardProps {
   waterIntake: number;
@@ -26,7 +27,7 @@ export default function DayCompleteCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -20, scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-      className="relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-gradient-to-br from-slate-800/80 to-slate-900/90 backdrop-blur-2xl p-5 shadow-2xl"
+      className={`${glassCard} relative overflow-hidden rounded-[28px] bg-gradient-to-br from-slate-800/80 to-slate-900/90 p-5 shadow-2xl`}
     >
       {/* Ambient glow */}
       <div className="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none" />
@@ -67,7 +68,7 @@ export default function DayCompleteCard({
         </div>
 
         {/* Tomorrow tip */}
-        <div className="flex items-start gap-2 p-3 rounded-2xl bg-white/5 border border-white/5">
+        <div className={`${glassInner} flex items-start gap-2 p-3 rounded-2xl`}>
           <Target size={16} className="text-cyan-400 mt-0.5 shrink-0" />
           <div>
             <p className="text-[10px] text-cyan-400 font-black uppercase tracking-widest mb-0.5">

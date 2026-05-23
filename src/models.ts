@@ -33,6 +33,7 @@ export interface Profile {
   subscription_tier?: 'free' | 'premium';
   subscription_end?: string;
   grace_period_end?: string | null;
+  leaderboard_opt_in?: boolean;
 }
 
 export interface WaterLog {

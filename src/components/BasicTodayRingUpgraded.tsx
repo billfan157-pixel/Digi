@@ -1,16 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { 
-  Droplets, Sparkles, Target, Flame, TrendingUp, TrendingDown, 
-  Award, Zap, ChevronDown, ChevronUp, Clock
+  Droplets, Sparkles, TrendingUp, TrendingDown, 
+  Award, Clock, Flame
 } from 'lucide-react';
 
 interface BasicTodayRingProps {
   waterIntake: number;
   waterGoal: number;
   streak: number;
-  completionRate: number;
   yesterdayIntake?: number;
-  weeklyTrend?: number[];
 }
 
 // Animated counter with proper easing
@@ -74,7 +72,7 @@ function ConfettiParticle({ delay, index }: { delay: number; index: number }) {
   );
 }
 
-// Enhanced metric row with hover states
+// Enhanced metric row (simplified - no expandable)
 function MetricRow({
   icon: Icon,
   title,
@@ -84,9 +82,6 @@ function MetricRow({
   accentClass,
   bgClass,
   borderClass,
-  isExpandable = false,
-  isExpanded = false,
-  onToggle,
 }: {
   icon: React.ElementType;
   title: string;
@@ -96,21 +91,9 @@ function MetricRow({
   accentClass: string;
   bgClass: string;
   borderClass: string;
-  isExpandable?: boolean;
-  isExpanded?: boolean;
-  onToggle?: () => void;
 }) {
   return (
-    <button
-      onClick={isExpandable ? onToggle : undefined}
-      disabled={!isExpandable}
-      className={`w-full flex items-center justify-between rounded-2xl border ${borderClass} ${bgClass} p-4 backdrop-blur-xl transition-all duration-200 ease-out ${
-        isExpandable ? 'hover:bg-slate-800/60 hover:border-cyan-500/30 active:scale-[0.98]' : ''
-      }`}
-      aria-label={`${title}: ${value}`}
-      role={isExpandable ? 'button' : undefined}
-      aria-expanded={isExpandable ? isExpanded : undefined}
-    >
+    <div className="flex items-center justify-between rounded-2xl border border-white/5 bg-slate-900/50 p-4 backdrop-blur-xl">
       <div className="flex items-center gap-3">
         <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${borderClass} ${bgClass}`}>
           <Icon size={18} className={accentClass} aria-hidden="true" />
@@ -122,20 +105,13 @@ function MetricRow({
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <div className="text-right">
-          <span className="text-lg font-black text-white">{value}</span>
-          {secondaryInfo && (
-            <span className="text-[10px] text-slate-400 mt-0.5 block">{secondaryInfo}</span>
-          )}
-        </div>
-        {isExpandable && (
-          <div className="text-slate-400">
-            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </div>
+      <div className="text-right">
+        <span className="text-lg font-black text-white">{value}</span>
+        {secondaryInfo && (
+          <span className="text-[10px] text-slate-400 mt-0.5 block">{secondaryInfo}</span>
         )}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -175,19 +151,14 @@ export default function BasicTodayRingUltimate({
   waterIntake,
   waterGoal,
   streak,
-  completionRate,
   yesterdayIntake = 0,
-  weeklyTrend = [],
 }: BasicTodayRingProps) {
   const [showCelebration, setShowCelebration] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
   const prevCompletedRef = useRef(false);
 
   const todayProgressRaw = waterGoal > 0 ? (waterIntake / waterGoal) * 100 : 0;
   const dailyPercent = Math.min(Math.max(todayProgressRaw, 0), 100);
-  const weeklyPercent = Math.min(Math.max(completionRate, 0), 100);
-  const streakPercent = Math.min(Math.max((streak / 30) * 100, 0), 100);
   const isCompleted = dailyPercent >= 100;
 
   const animatedPercent = useAnimatedCounter(dailyPercent, 1000);
@@ -196,23 +167,17 @@ export default function BasicTodayRingUltimate({
   // Comparison with yesterday
   const comparison = yesterdayIntake > 0 ? waterIntake - yesterdayIntake : 0;
 
-  // Ring configuration - design system compliant
+  // Ring configuration - single volume ring
   const ring = useMemo(
     () => ({
-      outer: { r: 110, strokeWidth: 14 },
-      middle: { r: 90, strokeWidth: 14 },
-      inner: { r: 70, strokeWidth: 14 },
+      r: 90,
+      strokeWidth: 16,
     }),
     []
   );
 
-  const cOuter = 2 * Math.PI * ring.outer.r;
-  const cMiddle = 2 * Math.PI * ring.middle.r;
-  const cInner = 2 * Math.PI * ring.inner.r;
-
-  const offOuter = cOuter - (dailyPercent / 100) * cOuter;
-  const offMiddle = cMiddle - (weeklyPercent / 100) * cMiddle;
-  const offInner = cInner - (streakPercent / 100) * cInner;
+  const c = 2 * Math.PI * ring.r;
+  const offset = c - (dailyPercent / 100) * c;
 
   useEffect(() => {
     const t = window.setTimeout(() => setMounted(true), 120);
@@ -291,9 +256,9 @@ export default function BasicTodayRingUltimate({
           </div>
         </div>
 
-        {/* 3 Rings visualization */}
+        {/* Single Volume Ring visualization */}
         <div className="relative z-10 flex justify-center mb-6">
-          <div className="relative h-64 w-64">
+          <div className="relative h-48 w-48">
             <svg 
               className="ring-glow h-full w-full -rotate-90" 
               viewBox="0 0 256 256" 
@@ -301,84 +266,30 @@ export default function BasicTodayRingUltimate({
               role="img"
             >
               <defs>
-                {/* Design system compliant gradients */}
                 <linearGradient id="volGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#22d3ee" /> {/* cyan-400 */}
-                  <stop offset="100%" stopColor="#06b6d4" /> {/* cyan-500 */}
-                </linearGradient>
-                <linearGradient id="consGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#34d399" /> {/* emerald-400 */}
-                  <stop offset="100%" stopColor="#10b981" /> {/* emerald-500 */}
-                </linearGradient>
-                <linearGradient id="streakGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#fb923c" /> {/* orange-400 */}
-                  <stop offset="100%" stopColor="#f97316" /> {/* orange-500 */}
+                  <stop offset="0%" stopColor="#22d3ee" />
+                  <stop offset="100%" stopColor="#06b6d4" />
                 </linearGradient>
               </defs>
 
-              {/* Outer ring - Volume (Cyan) */}
               <circle
                 cx="128"
                 cy="128"
-                r={ring.outer.r}
+                r={ring.r}
                 fill="none"
                 stroke="var(--dw-surface-2)"
-                strokeWidth={ring.outer.strokeWidth}
+                strokeWidth={ring.strokeWidth}
               />
               <circle
                 cx="128"
                 cy="128"
-                r={ring.outer.r}
+                r={ring.r}
                 fill="none"
                 stroke="url(#volGradient)"
-                strokeWidth={ring.outer.strokeWidth}
+                strokeWidth={ring.strokeWidth}
                 strokeLinecap="round"
-                strokeDasharray={cOuter}
-                strokeDashoffset={mounted ? offOuter : cOuter}
-                style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
-              />
-
-              {/* Middle ring - Consistency (Emerald) */}
-              <circle
-                cx="128"
-                cy="128"
-                r={ring.middle.r}
-                fill="none"
-                stroke="var(--dw-surface-2)"
-                strokeWidth={ring.middle.strokeWidth}
-              />
-              <circle
-                cx="128"
-                cy="128"
-                r={ring.middle.r}
-                fill="none"
-                stroke="url(#consGradient)"
-                strokeWidth={ring.middle.strokeWidth}
-                strokeLinecap="round"
-                strokeDasharray={cMiddle}
-                strokeDashoffset={mounted ? offMiddle : cMiddle}
-                style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
-              />
-
-              {/* Inner ring - Streak (Orange) */}
-              <circle
-                cx="128"
-                cy="128"
-                r={ring.inner.r}
-                fill="none"
-                stroke="var(--dw-surface-2)"
-                strokeWidth={ring.inner.strokeWidth}
-              />
-              <circle
-                cx="128"
-                cy="128"
-                r={ring.inner.r}
-                fill="none"
-                stroke="url(#streakGradient)"
-                strokeWidth={ring.inner.strokeWidth}
-                strokeLinecap="round"
-                strokeDasharray={cInner}
-                strokeDashoffset={mounted ? offInner : cInner}
+                strokeDasharray={c}
+                strokeDashoffset={mounted ? offset : c}
                 style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
               />
 
@@ -386,29 +297,14 @@ export default function BasicTodayRingUltimate({
               {[25, 50, 75, 100].map((milestone) => {
                 const angle = (milestone / 100) * 2 * Math.PI - Math.PI / 2;
                 return (
-                  <g key={milestone}>
-                    <circle
-                      cx={128 + ring.outer.r * Math.cos(angle)}
-                      cy={128 + ring.outer.r * Math.sin(angle)}
-                      r="2.5"
-                      fill={dailyPercent >= milestone ? "#22d3ee" : "rgba(255,255,255,0.08)"}
-                      className="transition-all duration-300"
-                    />
-                    <circle
-                      cx={128 + ring.middle.r * Math.cos(angle)}
-                      cy={128 + ring.middle.r * Math.sin(angle)}
-                      r="2.5"
-                      fill={weeklyPercent >= milestone ? "#34d399" : "rgba(255,255,255,0.08)"}
-                      className="transition-all duration-300"
-                    />
-                    <circle
-                      cx={128 + ring.inner.r * Math.cos(angle)}
-                      cy={128 + ring.inner.r * Math.sin(angle)}
-                      r="2.5"
-                      fill={streakPercent >= milestone ? "#fb923c" : "rgba(255,255,255,0.08)"}
-                      className="transition-all duration-300"
-                    />
-                  </g>
+                  <circle
+                    key={milestone}
+                    cx={128 + ring.r * Math.cos(angle)}
+                    cy={128 + ring.r * Math.sin(angle)}
+                    r="3"
+                    fill={dailyPercent >= milestone ? "#22d3ee" : "rgba(255,255,255,0.08)"}
+                    className="transition-all duration-300"
+                  />
                 );
               })}
             </svg>
@@ -427,25 +323,11 @@ export default function BasicTodayRingUltimate({
                 {isCompleted ? 'Hoàn thành' : 'Hôm nay'}
               </p>
             </div>
-
-            {/* Rotating Lightning Bolt */}
-            <div 
-              className="absolute inset-0 pointer-events-none flex items-center justify-center z-20"
-              style={{ animation: 'spin 12s linear infinite' }}
-            >
-              <div 
-                className="w-5 h-5 rounded-full bg-slate-950 border border-amber-500/50 flex items-center justify-center shadow-[0_0_12px_rgba(251,191,36,0.6)]" 
-                style={{ transform: `translateY(-${ring.outer.r}px)` }}
-              >
-                <Zap size={10} className="text-amber-400" />
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Metric rows */}
-        <div className="relative z-10 space-y-2.5">
-          {/* Volume metric */}
+        {/* Simple metric row */}
+        <div className="relative z-10">
           <MetricRow
             icon={Droplets}
             title="Nạp nước"
@@ -478,78 +360,6 @@ export default function BasicTodayRingUltimate({
             accentClass="text-cyan-400"
             bgClass="bg-cyan-500/10"
             borderClass="border-cyan-500/20"
-            isExpandable={weeklyTrend.length > 0}
-            isExpanded={expandedMetric === 'volume'}
-            onToggle={() => setExpandedMetric(expandedMetric === 'volume' ? null : 'volume')}
-          />
-
-          {/* Expanded volume details */}
-          {expandedMetric === 'volume' && weeklyTrend.length > 0 && (
-            <div className="glass-card p-4 space-y-3 animate-in fade-in slide-in-from-top duration-200">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Xu hướng 7 ngày
-              </p>
-              <div className="flex items-end justify-center gap-1 h-16">
-                {weeklyTrend.slice(-7).map((value, i) => {
-                  const max = Math.max(...weeklyTrend);
-                  const min = Math.min(...weeklyTrend);
-                  const range = max - min || 1;
-                  const height = ((value - min) / range) * 64;
-                  const isToday = i === weeklyTrend.length - 1;
-                  return (
-                    <div
-                      key={i}
-                      className={`w-6 rounded-t-lg transition-all duration-300 ${
-                        isToday ? 'bg-cyan-400' : 'bg-cyan-400/40'
-                      }`}
-                      style={{ height: `${Math.max(height, 8)}px` }}
-                      role="presentation"
-                    />
-                  );
-                })}
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Trung bình</span>
-                <span className="font-bold text-white">
-                  {Math.round(weeklyTrend.reduce((a, b) => a + b, 0) / weeklyTrend.length)}%
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Consistency metric */}
-          <MetricRow
-            icon={Target}
-            title="Mục tiêu tuần"
-            subtitle="Đều đặn"
-            value={
-              <>
-                {Math.round(weeklyPercent)}
-                <span className="ml-1 text-xs font-medium text-slate-500">%</span>
-              </>
-            }
-            accentClass="text-emerald-400"
-            bgClass="bg-emerald-500/10"
-            borderClass="border-emerald-500/20"
-          />
-
-          {/* Streak metric */}
-          <MetricRow
-            icon={Flame}
-            title="Độ kiên trì"
-            subtitle="Liên tục"
-            value={
-              <>
-                {streak}
-                <span className="ml-1 text-xs font-medium text-slate-500">ngày</span>
-              </>
-            }
-            secondaryInfo={
-              streak >= 7 ? <span className="text-orange-400"><Flame size={14} className="inline mr-1" />Đang cháy</span> : undefined
-            }
-            accentClass="text-orange-400"
-            bgClass="bg-orange-500/10"
-            borderClass="border-orange-500/20"
           />
         </div>
 

@@ -2,6 +2,7 @@ import { X, Bell } from 'lucide-react';
 import { useRef, useCallback } from 'react';
 import { getRelativeTimeLabel } from '../../lib/social';
 import type { SocialNotification } from '../../models';
+import { glassCard } from '../../styles/glass';
 interface NotificationsViewProps {
   notifications: SocialNotification[];
   unreadCount: number;
@@ -40,7 +41,7 @@ export const NotificationsView = ({ notifications, unreadCount, markAllRead, mar
 
   return (
     <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end animate-in fade-in duration-200">
-      <div className="bg-slate-900 w-full h-[85vh] rounded-t-3xl border-t border-white/10 flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
+      <div className={`${glassCard} w-full h-[85vh] rounded-t-3xl flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300`}>
         <div className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-900 rounded-t-3xl">
           <div className="flex items-center gap-2">
             <h3 className="text-white font-bold text-lg">Thông báo</h3>

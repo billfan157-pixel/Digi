@@ -4,6 +4,7 @@ import { Medal, Droplet, Target, Anchor, Beer, Moon, Trophy, CircleDashed, Star,
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { useTranslation } from 'react-i18next';
+import { useAppStore } from '../store/useAppStore';
 
 interface Badge {
   id: string;
@@ -11,6 +12,10 @@ interface Badge {
   icon: string;
   rarity: string;
   description: string;
+}
+
+interface VirtualBadge extends Badge {
+  minStreak: number;
 }
 
 const iconMap: Record<string, React.ElementType> = {
@@ -91,8 +96,18 @@ export default function BadgesGrid({ userId }: { userId: string }) {
     };
   }, [userId, t]);
 
-  if (loading) return null;
-  if (badges.length === 0) return null;
+  const streak = useAppStore(s => s.streak);
+
+  const allBadges = React.useMemo(() => {
+    const virtualStreakBadges: VirtualBadge[] = [
+      { id: 'streak_3', name: 'Giọt Nước Kiên Trì', icon: 'flame', rarity: 'common', description: 'Đạt chuỗi 3 ngày uống nước', minStreak: 3 },
+      { id: 'streak_7', name: 'Dòng Chảy Bền Bỉ', icon: 'zap', rarity: 'rare', description: 'Đạt chuỗi 7 ngày uống nước', minStreak: 7 },
+      { id: 'streak_14', name: 'Thủy Thủ Cần Mẫn', icon: 'award', rarity: 'epic', description: 'Đạt chuỗi 14 ngày uống nước', minStreak: 14 },
+      { id: 'streak_30', name: 'Hải Vương Bất Bại', icon: 'trophy', rarity: 'legendary', description: 'Đạt chuỗi 30 ngày uống nước', minStreak: 30 }
+    ];
+    const dbBadgesFiltered = badges.filter(b => !virtualStreakBadges.some(vb => vb.id === b.id));
+    return [...virtualStreakBadges, ...dbBadgesFiltered];
+  }, [badges]);
 
   // Phân bổ màu sắc dựa trên Rarity
   const getRarityStyles = (rarity: string, isUnlocked: boolean) => {
@@ -107,8 +122,11 @@ export default function BadgesGrid({ userId }: { userId: string }) {
   };
 
   // Chỉ hiển thị 3 badges đầu tiên ban đầu
-  const displayedBadges = showAllBadges ? badges : badges.slice(0, 3);
-  const hasMoreBadges = badges.length > 3;
+  const displayedBadges = showAllBadges ? allBadges : allBadges.slice(0, 3);
+  const hasMoreBadges = allBadges.length > 3;
+
+  if (loading) return null;
+  if (allBadges.length === 0) return null;
 
   return (
     <div className="space-y-4">
@@ -121,7 +139,10 @@ export default function BadgesGrid({ userId }: { userId: string }) {
 
       <div className="grid grid-cols-3 gap-3">
         {displayedBadges.map((badge, index) => {
-          const isUnlocked = unlockedBadgeIds.has(badge.id);
+          const isVirtualStreak = 'minStreak' in badge;
+          const isUnlocked = isVirtualStreak
+            ? streak >= (badge as { minStreak: number }).minStreak
+            : unlockedBadgeIds.has(badge.id);
           const rarityStyles = getRarityStyles(badge.rarity, isUnlocked);
           const Icon = badge.icon && iconMap[badge.icon.toLowerCase()] ? iconMap[badge.icon.toLowerCase()] : Trophy;
           // Kiểm tra xem icon có phải là một đường dẫn ảnh URL (từ Supabase Storage) hay không

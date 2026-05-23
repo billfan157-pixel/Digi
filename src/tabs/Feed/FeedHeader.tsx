@@ -3,6 +3,7 @@ import { Award, Search, Swords, Users, Sparkles, TrendingUp, Flame, Image, Dropl
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile } from '../../models';
 import type { FeedFilter, FeedMode } from './types';
+import { glassControl } from '../../styles/glass';
 
 interface FeedHeaderProps {
   profile: Profile | null;
@@ -93,7 +94,7 @@ export const FeedHeader = ({
               exit={{ height: 0, opacity: 0, y: -10 }}
               className="overflow-hidden"
             >
-              <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center gap-2 px-4 py-3 shadow-2xl">
+              <div className={`${glassControl} rounded-2xl flex items-center gap-2 px-4 py-3 shadow-2xl`}>
                 <Search size={16} className="text-cyan-400 shrink-0" />
                 <input
                   value={debouncedSearch}
@@ -124,7 +125,7 @@ export const FeedHeader = ({
                 <Users size={12} className="text-slate-600" />
                 {onlineFriendsCount} Online
              </p>
-             <div className="flex p-1 bg-slate-900/60 rounded-xl border border-white/5">
+             <div className={`${glassControl} rounded-xl flex p-1`}>
                  {modeOptions.map(({ key, label }) => {
                   const isActive = feedMode === key;
                   return (

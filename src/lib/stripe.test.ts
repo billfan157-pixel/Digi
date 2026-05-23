@@ -12,6 +12,10 @@ vi.mock('sonner', () => ({
   toast: { loading: vi.fn(() => 'toast-id'), dismiss: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+vi.mock('@/lib/analytics', () => ({
+  track: vi.fn(),
+}));
+
 const mockInvoke = vi.fn();
 vi.mock('./supabase', () => ({
   supabase: { functions: { invoke: (...args: unknown[]) => mockInvoke(...args) } },

@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus, Droplets, Target, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { glassCard, glassInner } from '../../styles/glass';
 
 interface WeekOverWeekCardProps {
   currentWeek: { d: string; ml: number }[];
@@ -54,7 +55,7 @@ export const WeekOverWeekCard = memo(function WeekOverWeekCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-5 shadow-xl"
+      className={`${glassCard} p-5`}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -69,19 +70,19 @@ export const WeekOverWeekCard = memo(function WeekOverWeekCard({
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-slate-800/50 rounded-xl p-3 text-center">
+        <div className={`${glassInner} p-3 text-center`}>
           <Droplets size={14} className="text-cyan-400 mx-auto mb-1.5" />
           <p className="text-white font-black text-sm">{comparison.curAvg.toLocaleString('vi-VN')}</p>
           <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">TB/ngày</p>
           <DeltaBadge value={comparison.avgDelta} suffix="%" />
         </div>
-        <div className="bg-slate-800/50 rounded-xl p-3 text-center">
+        <div className={`${glassInner} p-3 text-center`}>
           <Target size={14} className="text-violet-400 mx-auto mb-1.5" />
           <p className="text-white font-black text-sm">{comparison.curCompleted}/{currentWeek.length}</p>
           <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Đạt mục tiêu</p>
           <DeltaBadge value={comparison.completedDelta} suffix=" ngày" />
         </div>
-        <div className="bg-slate-800/50 rounded-xl p-3 text-center">
+        <div className={`${glassInner} p-3 text-center`}>
           <Flame size={14} className="text-amber-400 mx-auto mb-1.5" />
           <p className="text-white font-black text-sm">{comparison.curBestDay.toLocaleString('vi-VN')}</p>
           <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Ngày cao nhất</p>

@@ -19,6 +19,7 @@ import type { WellnessCorrelation } from '@/utils/wellnessMath';
 
 interface WellnessDashboardProps {
   onNavigateToInsight?: () => void;
+  streak?: number;
 }
 
 function getScoreColor(score: number): string {
@@ -157,7 +158,7 @@ function StreakBadge({ streak }: { streak: number }) {
   );
 }
 
-export default memo(function WellnessDashboard({ onNavigateToInsight }: WellnessDashboardProps) {
+export default memo(function WellnessDashboard({ onNavigateToInsight, streak = 0 }: WellnessDashboardProps) {
   const prefersReducedMotion = useReducedMotion();
   const {
     wellnessScore,
@@ -261,7 +262,7 @@ export default memo(function WellnessDashboard({ onNavigateToInsight }: Wellness
               </div>
             </div>
 
-            <StreakBadge streak={12} />
+            <StreakBadge streak={streak} />
           </div>
         </div>
 

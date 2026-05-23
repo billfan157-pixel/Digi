@@ -10,6 +10,7 @@ import type { SocialFeedPost } from '../../models';
 import { useAppStore } from '../../store/useAppStore';
 import { useUIStore } from '../../store/useUIStore';
 import { LazyImage } from '../../components/LazyImage';
+import { glassInner } from '../../styles/glass';
 
 interface HydrationStoryViewerProps {
   story: SocialFeedPost;
@@ -95,7 +96,7 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
         {/* Header */}
         <div className="absolute top-16 left-4 right-4 z-30 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/50 flex items-center justify-center overflow-hidden shadow-lg">
+            <div className={`${glassInner} w-10 h-10 rounded-full flex items-center justify-center overflow-hidden shadow-lg`}>
               {story.author?.avatar_url ? <LazyImage src={story.author.avatar_url} alt="avatar" className="w-full h-full object-cover" /> : <span className="text-white font-bold">{(story.author?.nickname || 'U')[0].toUpperCase()}</span>}
             </div>
             <div className="drop-shadow-md">

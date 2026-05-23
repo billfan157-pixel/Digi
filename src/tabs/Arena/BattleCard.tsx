@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Clock, Coins, Zap } from 'lucide-react';
 import type { Battle, Profile } from '../../models';
+import { glassCard } from '../../styles/glass';
 
 interface BattleCardProps {
   battle: Battle;
@@ -36,7 +37,7 @@ const BattleCard: React.FC<BattleCardProps> = ({ battle, profile, now, onClick }
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.98 }}
-      className="w-full text-left rounded-[2.5rem] border border-white/5 bg-slate-900/60 backdrop-blur-2xl hover:border-white/15 transition-all p-6 shadow-2xl group relative overflow-hidden"
+      className={`w-full text-left rounded-[2.5rem] ${glassCard} hover:border-white/15 transition-all p-6 group relative overflow-hidden`}
     >
       {/* Background Aura */}
       <div className={`absolute -right-20 -top-20 w-60 h-60 blur-[80px] rounded-full pointer-events-none transition-all duration-1000 ${
@@ -46,14 +47,14 @@ const BattleCard: React.FC<BattleCardProps> = ({ battle, profile, now, onClick }
       {/* Mode & Wager Badge */}
       <div className="flex justify-between items-center mb-6 relative z-10">
         <div className="flex items-center gap-2">
-          <div className="px-3 py-1 rounded-xl bg-slate-800/80 border border-white/5 text-[9px] font-black uppercase tracking-[0.15em] text-slate-300">
+          <div className="px-3 py-1 rounded-xl bg-slate-800/80 border border-white/5 text-[9px] font-black uppercase tracking-[0.15em] text-slate-300 glass-badge">
             {battle.mode === 'daily' ? 'Hằng ngày' : battle.mode === 'quick' ? 'Tức thời' : 'Giải đấu'}
           </div>
-          <div className="flex items-center gap-1.5 text-amber-400 text-[10px] font-black bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20 shadow-lg shadow-amber-500/5">
+          <div className="flex items-center gap-1.5 text-amber-400 text-[10px] font-black bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20 shadow-lg shadow-amber-500/5 glass-badge">
             <Coins size={12} className="fill-amber-400/20" /> {battle.stake_coins} WP
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-slate-400 text-xs font-black bg-slate-800/40 px-3 py-1 rounded-xl border border-white/5">
+        <div className="flex items-center gap-1.5 text-slate-400 text-xs font-black bg-slate-800/40 px-3 py-1 rounded-xl border border-white/5 glass-badge">
           <Clock size={14} className="text-cyan-400" />
           <span className="tabular-nums">{hoursLeft}h {minsLeft}m</span>
         </div>

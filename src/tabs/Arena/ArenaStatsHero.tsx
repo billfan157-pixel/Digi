@@ -1,6 +1,7 @@
 import React from 'react';
 import { Activity, Trophy, Flame } from 'lucide-react';
 import CountUp from '../../components/CountUp';
+import { glassCard } from '../../styles/glass';
 
 interface ArenaStatsHeroProps {
   winRate: number;
@@ -14,7 +15,7 @@ const ArenaStatsHero: React.FC<ArenaStatsHeroProps> = ({ winRate, wins, losses, 
   return (
     <div className="px-5 mb-8 grid grid-cols-2 gap-4">
       {/* Win Rate Card */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 relative overflow-hidden shadow-2xl group hover:border-cyan-500/30 transition-all duration-500">
+      <div className={`${glassCard} rounded-[2rem] p-6 relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-500`}>
         <div className="absolute -right-6 -top-6 w-24 h-24 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-500/20 transition-all duration-700" />
         <div className="flex justify-between items-start mb-4">
           <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shadow-inner">
@@ -29,17 +30,17 @@ const ArenaStatsHero: React.FC<ArenaStatsHeroProps> = ({ winRate, wins, losses, 
           <span className="text-lg font-bold text-cyan-400/80">%</span>
         </div>
         <div className="flex gap-2 mt-4 text-[10px] font-black uppercase tracking-wider">
-          <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+          <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg glass-badge">
             {wins} Thắng
           </span>
-          <span className="text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded-lg">
+          <span className="text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded-lg glass-badge">
             {losses} Bại
           </span>
         </div>
       </div>
 
       {/* Rank/Elo Card */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 relative overflow-hidden shadow-2xl group hover:border-amber-500/30 transition-all duration-500">
+      <div className={`${glassCard} rounded-[2rem] p-6 relative overflow-hidden group hover:border-amber-500/30 transition-all duration-500`}>
         <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-500/10 blur-3xl rounded-full group-hover:bg-amber-500/20 transition-all duration-700" />
         <div className="flex justify-between items-start mb-4">
           <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-inner">

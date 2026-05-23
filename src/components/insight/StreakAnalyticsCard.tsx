@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Flame, Trophy, Calendar, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { glassCard } from '../../styles/glass';
 
 interface StreakAnalyticsCardProps {
   weeklyData: { d: string; ml: number }[];
@@ -56,7 +57,7 @@ export const StreakAnalyticsCard = memo(function StreakAnalyticsCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-5 shadow-xl"
+      className={`${glassCard} p-5`}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

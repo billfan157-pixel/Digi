@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Grid, TrendingUp, Award, Sun, Cloud, Moon, MoonStar,
   TrendingDown, Minus, Trophy, Target
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { glassCard, glassInner } from '../styles/glass';
 
 interface HourlyHeatmapProps {
   userId?: string;
@@ -57,7 +58,7 @@ interface Forecast {
 // Loading skeleton component
 function HeatmapSkeleton() {
   return (
-    <div className="glass-card p-6 min-h-[420px]" role="status" aria-live="polite">
+    <div className={`${glassCard} p-6 min-h-[420px]`} role="status" aria-live="polite">
       <span className="sr-only">Đang tải dữ liệu biểu đồ...</span>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -88,7 +89,7 @@ function HeatmapSkeleton() {
 // Empty state component
 function EmptyState() {
   return (
-    <div className="glass-card p-8 flex flex-col items-center justify-center min-h-[420px]">
+    <div className={`${glassCard} p-8 flex flex-col items-center justify-center min-h-[420px]`}>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -276,7 +277,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
   if (isLoading) return <HeatmapSkeleton />;
   if (error) {
     return (
-      <div className="glass-card p-6 text-center" role="alert" aria-live="assertive">
+      <div className={`${glassCard} p-6 text-center`} role="alert" aria-live="assertive">
         <p className="text-rose-400 font-medium">{error}</p>
       </div>
     );
@@ -287,7 +288,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
                     forecast.trend === 'Giảm' ? TrendingDown : Minus;
 
   return (
-    <div className={`glass-card p-5 relative overflow-hidden group ${className}`}>
+    <div className={`${glassCard} p-5 relative overflow-hidden group ${className}`}>
       {/* Ambient glow - design system compliant */}
       <div 
         className="absolute -top-20 -right-20 w-64 h-64 blur-[120px] rounded-full pointer-events-none opacity-40 transition-opacity duration-500 group-hover:opacity-60"
@@ -409,7 +410,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
                             transition={{ duration: 0.15 }}
                             className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none"
                           >
-                            <div className="glass-card-strong px-3 py-2 text-xs shadow-2xl whitespace-nowrap">
+                            <div className={`${glassCard} px-3 py-2 text-xs shadow-2xl whitespace-nowrap`}>
                               <p className="text-white font-bold mb-0.5">
                                 {day.label} • {block.name}
                               </p>
@@ -435,7 +436,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="glass-stat px-3 py-2 flex items-center gap-2 border-emerald-500/20"
+          className={`${glassInner} px-3 py-2 flex items-center gap-2 border-emerald-500/20`}
         >
           <Trophy size={14} className="text-emerald-400" aria-hidden="true" />
           <div className="text-left">
@@ -452,7 +453,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.35 }}
-          className="glass-stat px-3 py-2 flex items-center gap-2 border-orange-500/20"
+          className={`${glassInner} px-3 py-2 flex items-center gap-2 border-orange-500/20`}
         >
           <Target size={14} className="text-orange-400" aria-hidden="true" />
           <div className="text-left">
@@ -473,7 +474,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="glass-card p-4 rounded-2xl"
+          className={`${glassInner} p-4`}
         >
           <div className="flex items-center gap-2 mb-2.5">
             <Award size={16} className="text-cyan-400" aria-hidden="true" />
@@ -491,7 +492,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="glass-card p-4 rounded-2xl border border-cyan-500/20"
+          className={`${glassInner} p-4 border-cyan-500/20`}
         >
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">

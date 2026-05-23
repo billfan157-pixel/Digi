@@ -29,6 +29,7 @@ interface ScheduleManagerProps {
   calendarEvents?: CalendarEventItem[];
   dateKey?: string; // e.g. "today" | "tomorrow"
   waterEntries?: WaterLog[];
+  onSave?: () => void;
 }
 
 export default function ScheduleManager({ 
@@ -40,6 +41,7 @@ export default function ScheduleManager({
   calendarEvents = [],
   dateKey = 'today',
   waterEntries = [],
+  onSave,
 }: ScheduleManagerProps) {
   const { t } = useTranslation();
   const [isScheduleOpen, setIsScheduleOpen] = useState(isOpen || alwaysExpanded);
@@ -141,6 +143,7 @@ export default function ScheduleManager({
     if (key) {
       AppStorage.setItem(`digiwell_custom_schedule_${key}`, JSON.stringify(customSchedule));
     }
+    onSave?.();
 
     if (Capacitor.getPlatform() === 'web') {
       const dayLabel = dateKey === 'tomorrow' ? 'ngày mai' : 'hôm nay';

@@ -25,7 +25,7 @@ export default function TabHeader({
   onAvatarClick,
 }: TabHeaderProps) {
   return (
-    <div className="flex justify-between items-center pt-2 pb-3 px-6 relative z-20">
+    <div className="flex justify-between items-center pt-2 pb-3 px-6 relative z-20 border-b-0 shadow-none">
       <div className="flex-1 pr-4">
         <p className="section-title text-slate-400 mb-1.5">{label}</p>
         <h1 className="text-3xl font-black tracking-tighter text-white leading-tight">

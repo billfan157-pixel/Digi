@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Target, Clock, Zap, Trophy, Coins } from 'lucide-react';
 import { toast } from 'sonner';
+import { glassControl } from '../../styles/glass';
 
 interface BattleModesProps {
   selectedMode: 'daily' | 'quick' | 'tournament' | null;
@@ -21,7 +22,7 @@ const BattleModes: React.FC<BattleModesProps> = ({ selectedMode, setSelectedMode
       <h3 className="text-white font-black text-lg mb-4 flex items-center gap-2 tracking-tight">
         <Target size={20} className="text-cyan-400" /> Chọn chế độ
       </h3>
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-2 flex gap-2 shadow-2xl">
+      <div className={`${glassControl} rounded-[2.5rem] p-2 flex gap-2 shadow-2xl`}>
         {modes.map(m => (
           <button
             key={m.id}

@@ -104,9 +104,9 @@ export default function AppShell({
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto relative overflow-hidden font-sans scanline-overlay bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top)]">
+    <div className="flex flex-col h-screen max-w-md mx-auto relative overflow-hidden font-sans scanline-overlay bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top)] border-0">
       <ThemeEngine profile={profile} />
-      <div className="absolute top-[-15%] left-[-20%] w-[70%] h-[50%] bg-cyan-500/15 blur-[60px] pointer-events-none rounded-full transition-colors duration-500" />
+      <div className="absolute top-[-10%] left-[-20%] w-[70%] h-[50%] bg-cyan-500/10 blur-[80px] pointer-events-none rounded-full transition-colors duration-500" />
       <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[40%] bg-indigo-500/10 blur-[60px] pointer-events-none rounded-full transition-colors duration-500" />
       <QuickDropCamera {...quickDropCameraProps} />
 
@@ -117,7 +117,7 @@ export default function AppShell({
         />
       )}
 
-      <div className="flex-1 overflow-y-auto px-5 pt-6 pb-28">
+      <div className="flex-1 overflow-y-auto px-5 pt-6 pb-28 border-0">
         <Suspense fallback={tabFallback}>
           {activeTab === 'home' && (
             <ErrorBoundary key="home-tab">

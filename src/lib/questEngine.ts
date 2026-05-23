@@ -13,6 +13,7 @@ import { getWeekStart } from '@/utils/dateUtils';
 import type { QuestLike } from './questProgress';
 import { normalizeQuestConditionType, resolveQuestProgress } from './questProgress';
 
+
 // ── Context truyền vào engine ──────────────────────────────
 
 export interface QuestEngineContext {
@@ -135,23 +136,19 @@ async function runQuestEngineOnce(ctx: QuestEngineContext): Promise<void> {
     }
 
     if (updates.length > 0) {
-      const results = await Promise.allSettled(
-        updates.map(async (u) => {
-          const { data, error } = await supabase.from('user_quests').update({
-            progress:     u.progress,
-            status:       u.status,
-            completed_at: u.completed_at,
-          }).eq('id', u.id).select('id');
-          
-          if (error) throw new Error(`Update quest ${u.id} failed: ${error.message}`);
-          if (!data || data.length === 0) throw new Error(`RLS chặn update quest ${u.id}`);
-          return u.id;
-        })
-      );
-      const failures = results.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.error(`[QuestEngine] ${failures.length}/${updates.length} quest updates failed`);
-      }
+      // Fire-and-forget updates to avoid blocking UI on slow DB queries
+      // Individual updates required due to RLS policy
+      updates.forEach((u) => {
+        void supabase.from('user_quests').update({
+          progress: u.progress,
+          status: u.status,
+          completed_at: u.completed_at,
+        }).eq('id', u.id).then(({ error }) => {
+          if (error) {
+            console.error(`[QuestEngine] Update quest ${u.id} failed: ${error.message}`);
+          }
+        });
+      });
     }
 
     for (const uq of newlyCompleted) {
@@ -584,18 +581,22 @@ export async function syncLevelQuestProgress(userId: string, userLevel: number):
 
     if (updates.length === 0) return;
 
-    await Promise.allSettled(
-      updates.map((update) =>
-        supabase
-          .from('user_quests')
-          .update({
-            progress: update.progress,
-            status: update.status,
-            completed_at: update.completed_at,
-          })
-          .eq('id', update.id),
-      ),
-    );
+    // Fire-and-forget updates to avoid blocking UI on slow DB queries
+    updates.forEach((update) => {
+      void supabase
+        .from('user_quests')
+        .update({
+          progress: update.progress,
+          status: update.status,
+          completed_at: update.completed_at,
+        })
+        .eq('id', update.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('[syncLevelQuestProgress] Update failed:', error.message);
+          }
+        });
+    });
   } catch (err) {
     console.error('[syncLevelQuestProgress]', err);
   }

@@ -2,7 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cpu, Activity, Calendar, ChevronRight, RefreshCw, ChevronDown, ChevronUp, Target, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ScheduleManager from '../../components/ScheduleManager';
+import ScheduleSummaryCard from '../../components/insight/ScheduleSummaryCard';
+import ScheduleDrawerModal from '../../components/insight/ScheduleDrawerModal';
+import { AppStorage } from '@/lib/storage';
 import DateRangeExportModal from '../../components/modals/DateRangeExportModal';
 import { useAppStore } from '../../store/useAppStore';
 import { useSettings } from '../../hooks/useSettings';
@@ -11,6 +13,7 @@ import type { HydrationSchedule } from '../../lib/HydrationEngine';
 import type { CalendarEventItem } from '../../hooks/useCalendarSync';
 import { supabase } from '../../lib/supabase';
 import { providerTokenStore } from '../../lib/providerTokenStore';
+import { glassInner } from '../../styles/glass';
 
 interface SystemSectionProps {
   profile: { id?: string } | null;
@@ -143,6 +146,44 @@ export default function SystemSection({
 
   const [selectedDay, setSelectedDay] = React.useState<'today' | 'tomorrow'>('today');
   const [isTomorrowExpanded, setIsTomorrowExpanded] = React.useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [scheduleUpdateTrigger, setScheduleUpdateTrigger] = useState(0);
+
+  const { todayCount, todayTotalMl } = useMemo(() => {
+    scheduleUpdateTrigger;
+    if (!profile?.id) return { todayCount: 0, todayTotalMl: 0 };
+    const saved = AppStorage.getItem(`digiwell_custom_schedule_today_${profile.id}`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const count = parsed.length;
+        const total = parsed.reduce((sum: number, item: { amount: number }) => sum + (item.amount || 0), 0);
+        return { todayCount: count, todayTotalMl: total };
+      } catch {
+        return { todayCount: 0, todayTotalMl: 0 };
+      }
+    }
+    return { todayCount: 0, todayTotalMl: 0 };
+  }, [profile?.id, scheduleUpdateTrigger]);
+
+  const { tomorrowCount, tomorrowTotalMl } = useMemo(() => {
+    scheduleUpdateTrigger;
+    if (!profile?.id) return { tomorrowCount: 0, tomorrowTotalMl: 0 };
+    const saved = AppStorage.getItem(`digiwell_custom_schedule_tomorrow_${profile.id}`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const count = parsed.length;
+        const total = parsed.reduce((sum: number, item: { amount: number }) => sum + (item.amount || 0), 0);
+        return { tomorrowCount: count, tomorrowTotalMl: total };
+      } catch {
+        return { tomorrowCount: 0, tomorrowTotalMl: 0 };
+      }
+    }
+    return { tomorrowCount: 0, tomorrowTotalMl: 0 };
+  }, [profile?.id, scheduleUpdateTrigger]);
+
+  const triggerScheduleRefresh = () => setScheduleUpdateTrigger(prev => prev + 1);
 
   const handleCalendarSync = async () => {
     await syncCalendar({ startOAuthIfNeeded: true });
@@ -203,65 +244,65 @@ export default function SystemSection({
   };
 
   return (
-    <div className="space-y-6 mt-2">
+    <div className="space-y-4 mt-2">
       {/* Calendar Events Section */}
       <div className="px-6">
         {/* Connect button when not synced */}
         {!isCalendarSynced && (
           <button
             onClick={handleCalendarSync}
-            className="w-full p-4 rounded-2xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20 text-white flex items-center justify-between hover:from-violet-500/20 hover:to-purple-500/20 transition-all active:scale-[0.98] mb-4"
+            className="w-full p-3 rounded-xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20 text-white flex items-center justify-between hover:from-violet-500/20 hover:to-purple-500/20 transition-all active:scale-[0.98] mb-3"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
-                <Calendar size={20} className="text-violet-400" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                <Calendar size={16} className="text-violet-400" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-bold">Kết nối Google Calendar</p>
-                <p className="text-[10px] text-slate-400">Tự động điều chỉnh lịch uống nước theo cuộc họp</p>
+                <p className="text-xs font-bold">Kết nối Google Calendar</p>
+                <p className="text-[9px] text-slate-400">Tự động điều chỉnh lịch uống nước theo cuộc họp</p>
               </div>
             </div>
-            <ChevronRight size={18} className="text-violet-400" />
+            <ChevronRight size={16} className="text-violet-400" />
           </button>
         )}
 
         {/* Events list */}
         {isCalendarSynced && (
-          <div className="space-y-4 mb-4">
+          <div className="space-y-3 mb-3">
             {/* Hôm nay */}
             <div>
-              <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                <Cpu size={120} />
+              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                <Cpu size={80} />
               </div>
-              <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Calendar size={14} className="text-cyan-400" />
-                  <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  <Calendar size={12} className="text-cyan-400" />
+                  <h3 className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
                     Lịch hôm nay
                   </h3>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <button
                     onClick={handleCalendarSync}
-                    className="flex items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-cyan-400 transition-colors"
+                    className="flex items-center gap-0.5 text-[9px] font-semibold text-slate-400 hover:text-cyan-400 transition-colors"
                   >
-                    <RefreshCw size={10} />
+                    <RefreshCw size={9} />
                     Đồng bộ
                   </button>
-                  <span className="text-[10px] text-slate-700">|</span>
+                  <span className="text-[9px] text-slate-700">|</span>
                   <button
                     onClick={handleDisconnectCalendar}
-                    className="flex items-center gap-1 text-[10px] font-medium text-rose-400 hover:text-rose-300 transition-colors"
+                    className="flex items-center gap-0.5 text-[9px] font-semibold text-rose-400 hover:text-rose-300 transition-colors"
                   >
-                    Ngắt kết nối
+                    Ngắt
                   </button>
                 </div>
               </div>
 
               {todayEvents.length > 0 ? (
-                <div className="space-y-[1px] bg-white/[0.04] rounded-xl overflow-hidden">
-                  {todayEvents.slice(0, 8).map((event) => (
-                    <div key={event.id} className="flex items-center gap-3 px-4 py-2.5 bg-slate-900/40">
+                <div className="space-y-[1px] bg-white/[0.03] rounded-xl overflow-hidden border border-white/5">
+                  {todayEvents.slice(0, 5).map((event) => (
+                    <div key={event.id} className={`${glassInner} flex items-center gap-2.5 px-3 py-2`}>
                       <div className="w-[3px] h-[3px] rounded-full bg-violet-400 shrink-0" />
                       <span className="flex-1 text-xs text-slate-300 truncate">{event.title}</span>
                       <span className="text-[10px] text-slate-500 tabular-nums shrink-0">
@@ -271,7 +312,7 @@ export default function SystemSection({
                   ))}
                 </div>
               ) : (
-                <p className="text-[11px] text-slate-500 px-1">Không có sự kiện nào hôm nay.</p>
+                <p className="text-[10px] text-slate-500 px-1">Không có sự kiện nào hôm nay.</p>
               )}
             </div>
 
@@ -280,15 +321,15 @@ export default function SystemSection({
               <div>
                 <button
                   onClick={() => setIsTomorrowExpanded(!isTomorrowExpanded)}
-                  className="w-full flex items-center justify-between mb-2.5 p-2 rounded-xl bg-purple-500/5 hover:bg-purple-500/10 transition-colors border border-purple-500/10"
+                  className="w-full flex items-center justify-between mb-2 p-1.5 rounded-lg bg-purple-500/5 hover:bg-purple-500/10 transition-colors border border-purple-500/10"
                 >
                   <div className="flex items-center gap-2">
-                    <Calendar size={14} className="text-purple-400" />
-                    <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    <Calendar size={12} className="text-purple-400" />
+                    <h3 className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
                       Lịch ngày mai
                     </h3>
                   </div>
-                  {isTomorrowExpanded ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+                  {isTomorrowExpanded ? <ChevronUp size={12} className="text-slate-500" /> : <ChevronDown size={12} className="text-slate-500" />}
                 </button>
                 
                 <AnimatePresence>
@@ -299,9 +340,9 @@ export default function SystemSection({
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="space-y-[1px] bg-white/[0.04] rounded-xl overflow-hidden border border-purple-500/10">
-                        {tomorrowEvents.slice(0, 5).map((event) => (
-                          <div key={event.id} className="flex items-center gap-3 px-4 py-2.5 bg-slate-900/40">
+                      <div className="space-y-[1px] bg-white/[0.03] rounded-xl overflow-hidden border border-purple-500/10">
+                        {tomorrowEvents.slice(0, 4).map((event) => (
+                          <div key={event.id} className={`${glassInner} flex items-center gap-2.5 px-3 py-2`}>
                             <div className="w-[3px] h-[3px] rounded-full bg-purple-400 shrink-0" />
                             <span className="flex-1 text-xs text-slate-400 truncate">{event.title}</span>
                             <span className="text-[10px] text-slate-500 tabular-nums shrink-0">
@@ -317,14 +358,14 @@ export default function SystemSection({
             )}
 
             {/* Chế độ riêng tư lịch */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-white/5 mt-2">
-              <div className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-400 border border-violet-500/10">
-                  <Shield size={12} />
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/5 mt-1.5">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-violet-500/10 flex items-center justify-center text-violet-400 border border-violet-500/10">
+                  <Shield size={10} />
                 </div>
                 <div className="text-left">
-                  <p className="text-[11px] font-bold text-slate-200">Riêng tư lịch trình</p>
-                  <p className="text-[9px] text-slate-500">Bảo vệ thông tin cá nhân của bạn</p>
+                  <p className="text-[10px] font-bold text-slate-200">Riêng tư lịch trình</p>
+                  <p className="text-[8px] text-slate-500">Bảo vệ thông tin cá nhân của bạn</p>
                 </div>
               </div>
               <select
@@ -342,93 +383,51 @@ export default function SystemSection({
                     });
                   }
                 }}
-                className="bg-slate-950 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-white outline-none focus:border-violet-500/50 transition-all cursor-pointer font-semibold"
+                className="bg-slate-950 border border-white/10 rounded-md px-1.5 py-0.5 text-[10px] text-white outline-none focus:border-violet-500/50 transition-all cursor-pointer font-semibold"
               >
                 <option value="off">Tắt (Công khai)</option>
-                <option value="standard">Tiêu chuẩn (Ẩn PII)</option>
-                <option value="strict">Nghiêm ngặt (Ẩn tiêu đề)</option>
+                <option value="standard">Tiêu chuẩn</option>
+                <option value="strict">Nghiêm ngặt</option>
               </select>
             </div>
           </div>
         )}
 
-        {/* Day Switcher for Schedule */}
-        <div className="flex p-1 bg-slate-900/60 rounded-xl mb-4 border border-white/5">
-          <button
-            onClick={() => setSelectedDay('today')}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-              selectedDay === 'today'
-                ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/20'
-                : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            Hôm nay
-          </button>
-          <button
-            onClick={() => setSelectedDay('tomorrow')}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-              selectedDay === 'tomorrow'
-                ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/20'
-                : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            Ngày mai
-          </button>
-        </div>
-
-        <ScheduleManager
-          profile={profile}
-          alwaysExpanded={true}
-          aiSchedule={aiSchedule}
-          waterGoal={waterGoal}
-          dateKey={selectedDay}
-          waterEntries={waterEntries}
-          calendarEvents={isCalendarSynced ? (selectedDay === 'today' ? todayEvents : tomorrowEvents) : []}
+        <ScheduleSummaryCard
+          selectedDay={selectedDay}
+          scheduleCount={selectedDay === 'today' ? todayCount : tomorrowCount}
+          totalMl={selectedDay === 'today' ? todayTotalMl : tomorrowTotalMl}
+          onClick={() => setIsScheduleModalOpen(true)}
         />
       </div>
 
       {/* Reporting & Exports */}
-      <div className="px-6 space-y-4 pb-6">
-        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Báo cáo & Dữ liệu</h3>
+      <div className="px-6 space-y-3 pb-6">
+        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Báo cáo & Dữ liệu</h3>
         <div className="grid grid-cols-3 gap-2">
           <button 
             onClick={() => handleExportClick('PDF')}
             disabled={isExportingPDF}
-            className="glass-card p-3 flex flex-col items-center gap-2 group hover:bg-slate-800/60 transition-all disabled:opacity-50 border border-white/5"
+            className="glass-card py-2 px-2.5 flex items-center justify-center gap-1.5 group hover:bg-slate-800/60 transition-all disabled:opacity-50 border border-white/5 rounded-xl"
           >
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-              {isExportingPDF ? <RefreshCw size={16} className="animate-spin" /> : <Activity size={16} />}
-            </div>
-            <div className="text-center">
-              <h4 className="text-white font-bold text-[10px] uppercase tracking-tight">PDF</h4>
-              <p className="text-slate-500 text-[7px] uppercase mt-0.5 font-black">Y khoa</p>
-            </div>
+            {isExportingPDF ? <RefreshCw size={12} className="animate-spin text-emerald-400" /> : <Activity size={12} className="text-emerald-400 group-hover:scale-110 transition-transform" />}
+            <span className="text-white font-bold text-[10px] tracking-tight">PDF</span>
           </button>
 
           <button 
             onClick={() => handleExportClick('CSV')}
-            className="glass-card p-3 flex flex-col items-center gap-2 group hover:bg-slate-800/60 transition-all border border-white/5"
+            className="glass-card py-2 px-2.5 flex items-center justify-center gap-1.5 group hover:bg-slate-800/60 transition-all border border-white/5 rounded-xl"
           >
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform">
-              <RefreshCw size={16} />
-            </div>
-            <div className="text-center">
-              <h4 className="text-white font-bold text-[10px] uppercase tracking-tight">CSV</h4>
-              <p className="text-slate-500 text-[7px] uppercase mt-0.5 font-black">Dữ liệu thô</p>
-            </div>
+            <RefreshCw size={12} className="text-blue-400 group-hover:scale-110 transition-transform" />
+            <span className="text-white font-bold text-[10px] tracking-tight">CSV</span>
           </button>
 
           <button 
             onClick={() => handleExportClick('JSON')}
-            className="glass-card p-3 flex flex-col items-center gap-2 group hover:bg-slate-800/60 transition-all border border-white/5"
+            className="glass-card py-2 px-2.5 flex items-center justify-center gap-1.5 group hover:bg-slate-800/60 transition-all border border-white/5 rounded-xl"
           >
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-transform">
-              <Target size={16} />
-            </div>
-            <div className="text-center">
-              <h4 className="text-white font-bold text-[10px] uppercase tracking-tight">JSON</h4>
-              <p className="text-slate-500 text-[7px] uppercase mt-0.5 font-black">Dữ liệu gốc</p>
-            </div>
+            <Target size={12} className="text-amber-400 group-hover:scale-110 transition-transform" />
+            <span className="text-white font-bold text-[10px] tracking-tight">JSON</span>
           </button>
         </div>
       </div>
@@ -438,6 +437,19 @@ export default function SystemSection({
         onClose={() => setDateRangeModalOpen(false)}
         onExport={handleDateRangeExport}
         exportType={selectedExportType || 'PDF'}
+      />
+
+      <ScheduleDrawerModal
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+        profile={profile}
+        aiSchedule={aiSchedule}
+        waterGoal={waterGoal}
+        waterEntries={waterEntries}
+        calendarEvents={isCalendarSynced ? (selectedDay === 'today' ? todayEvents : tomorrowEvents) : []}
+        selectedDay={selectedDay}
+        setSelectedDay={setSelectedDay}
+        onSave={triggerScheduleRefresh}
       />
     </div>
   );

@@ -4,10 +4,9 @@ import type InsightTab from '@/tabs/InsightTab';
 import type FeedTab from '@/tabs/FeedTab';
 import type ProfileTab from '@/tabs/ProfileTab';
 import type LeagueTab from '@/tabs/LeagueTab';
+import type { RankInfo } from '@/tabs/League/types';
 import type { Profile, SocialFeedPost } from '@/models';
 import type { CalendarEventItem } from '@/hooks/useCalendarSync';
-import type { RankInfo } from '@/tabs/League/types';
-import type { HealthReport } from '@/lib/aiReports';
 
 interface SocialProfileStats {
   followers: number;
@@ -23,9 +22,6 @@ interface UseAppTabPropsOptions {
   handleExportCSV: (dateRange?: { start: string; end: string } | null) => void;
   handleExportJSON: (dateRange?: { start: string; end: string } | null) => void;
   geminiProps: Record<string, unknown>;
-  weeklyReport: HealthReport | null;
-  isWeeklyReportLoading: boolean;
-  handleGenerateWeeklyReport: () => Promise<void>;
   weatherData: Record<string, unknown> | null | undefined;
   isWeatherSynced: boolean;
   watchData: Record<string, unknown> | null | undefined;
@@ -55,9 +51,6 @@ export function useAppTabProps({
   handleExportCSV,
   handleExportJSON,
   geminiProps,
-  weeklyReport,
-  isWeeklyReportLoading,
-  handleGenerateWeeklyReport,
   weatherData,
   isWeatherSynced,
   watchData,
@@ -79,8 +72,10 @@ export function useAppTabProps({
 }: UseAppTabPropsOptions) {
   const homeTabProps = useMemo(() => ({
     smartBottle,
+    calendarEvents,
   }) as unknown as React.ComponentProps<typeof HomeTab>, [
     smartBottle,
+    calendarEvents,
   ]);
 
   const insightTabProps = useMemo(() => ({
@@ -91,26 +86,18 @@ export function useAppTabProps({
     isAiLoading: Boolean((geminiProps as Record<string, unknown>).isAiLoading),
     aiAdvice: String((geminiProps as Record<string, unknown>).aiAdvice || ''),
     fetchAIAdvice: ((geminiProps as Record<string, unknown>).fetchAIAdvice as (() => void) | undefined) || (() => {}),
-    weeklyReport,
-    isWeeklyReportLoading,
-    generateWeeklyReport: handleGenerateWeeklyReport,
     calendarEvents,
     syncCalendar,
     weatherData,
-    isWeatherSynced,
   }) as React.ComponentProps<typeof InsightTab>, [
     geminiProps,
     handleExportPDF,
     handleExportCSV,
     handleExportJSON,
-    handleGenerateWeeklyReport,
     isExportingPDF,
-    isWeeklyReportLoading,
-    weeklyReport,
     calendarEvents,
     syncCalendar,
     weatherData,
-    isWeatherSynced,
   ]);
 
   const bottleTabProps = useMemo(() => ({

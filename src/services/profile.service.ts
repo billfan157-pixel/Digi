@@ -18,6 +18,7 @@ export interface AppProfile extends Profile {
   energy_tracking?: boolean;
   grace_period_end?: string | null;
   calendar_privacy_level?: 'strict' | 'standard' | 'off';
+  leaderboard_opt_in?: boolean;
 }
 
 const getTodayKey = () => {
@@ -61,6 +62,7 @@ interface ProfileRow {
   last_water_date?: string;
   level?: number;
   calendar_privacy_level?: 'strict' | 'standard' | 'off';
+  leaderboard_opt_in?: boolean;
   [key: string]: unknown;
 }
 
@@ -105,6 +107,7 @@ function toAppProfile(profileRow: ProfileRow): AppProfile {
     energy_tracking: normalizedProfile.energy_tracking,
     grace_period_end: normalizedProfile.grace_period_end,
     calendar_privacy_level: (normalizedProfile.calendar_privacy_level as AppProfile['calendar_privacy_level']) || 'standard',
+    leaderboard_opt_in: normalizedProfile.leaderboard_opt_in !== false,
   };
 }
 

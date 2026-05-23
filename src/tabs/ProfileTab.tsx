@@ -48,12 +48,13 @@ const ProfileTab = memo(function ProfileTab({
     weeklyHistory: state.weeklyHistory,
     actions: state.actions,
   })));
-  const { setShowPremiumModal, setShowAddFriend, setShowProfileSettings, setActiveTab, setActiveCommentPost } = useUIStore(useShallow((state) => ({
+  const { setShowPremiumModal, setShowAddFriend, setShowProfileSettings, setActiveTab, setActiveCommentPost, setShowChallengeModal } = useUIStore(useShallow((state) => ({
     setShowPremiumModal: state.setShowPremiumModal,
     setShowAddFriend: state.setShowAddFriend,
     setShowProfileSettings: state.setShowProfileSettings,
     setActiveTab: state.setActiveTab,
     setActiveCommentPost: state.setActiveCommentPost,
+    setShowChallengeModal: state.setShowChallengeModal,
   })));
   const wp = profile?.wp || 0;
   const currentRank = getRankInfo(wp);
@@ -149,9 +150,10 @@ const ProfileTab = memo(function ProfileTab({
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 mt-5 relative z-10">
-          <button onClick={() => setShowAddFriend(true)} className="flex-1 py-2.5 rounded-full border border-white/20 text-white/80 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all duration-200 ease-out hover:hover:bg-white/10"><UserPlus size={14} /> Thêm bạn</button>
-          <button onClick={() => setShowProfileSettings(true)} className="flex-1 py-2.5 rounded-full border border-white/20 text-white/80 text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-all duration-200 ease-out hover:hover:bg-white/10"><Settings size={14} /> Cài đặt</button>
+        <div className="grid grid-cols-3 gap-2.5 mt-5 relative z-10">
+          <button onClick={() => setShowAddFriend(true)} className="flex-1 py-2.5 rounded-full border border-white/20 text-white/80 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all duration-200 ease-out hover:bg-white/10"><UserPlus size={14} /> Thêm bạn</button>
+          <button onClick={() => setShowChallengeModal(true)} className="flex-1 py-2.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all duration-200 ease-out hover:bg-cyan-500/20"><Target size={14} /> Thử thách</button>
+          <button onClick={() => setShowProfileSettings(true)} className="flex-1 py-2.5 rounded-full border border-white/20 text-white/80 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all duration-200 ease-out hover:bg-white/10"><Settings size={14} /> Cài đặt</button>
         </div>
       </div>
     </div>

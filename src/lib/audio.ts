@@ -152,6 +152,53 @@ export const playHyperSound = () => {
   }
 };
 
+// Hiệu ứng Cyberpunk cho chuỗi ngày (Streak milestone)
+export const playStreakSound = () => {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const playTone = (freq: number, start: number, duration: number, type: OscillatorType = 'triangle') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now + start);
+      
+      gain.gain.setValueAtTime(0, now + start);
+      gain.gain.linearRampToValueAtTime(0.12, now + start + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + start + duration);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + start);
+      osc.stop(now + start + duration);
+    };
+
+    // 1. Âm thanh sạc năng lượng nhanh (sweeping note)
+    const oscSweep = ctx.createOscillator();
+    const gainSweep = ctx.createGain();
+    oscSweep.type = 'sawtooth';
+    oscSweep.frequency.setValueAtTime(220, now);
+    oscSweep.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+    gainSweep.gain.setValueAtTime(0, now);
+    gainSweep.gain.linearRampToValueAtTime(0.08, now + 0.1);
+    gainSweep.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    oscSweep.connect(gainSweep);
+    gainSweep.connect(ctx.destination);
+    oscSweep.start(now);
+    oscSweep.stop(now + 0.25);
+
+    // 2. Chơi hợp âm chói tai Cyberpunk (Sci-Fi chord)
+    playTone(523.25, 0.25, 0.6, 'sine');     // C5
+    playTone(659.25, 0.35, 0.6, 'triangle'); // E5
+    playTone(880.00, 0.45, 0.7, 'triangle'); // A5
+    playTone(1318.51, 0.55, 0.8, 'sine');    // E6
+  } catch (e) {
+    console.warn('Audio streak error:', e);
+  }
+};
+
 // Cổng điều hướng đa năng (Dành cho QuestCard và các module khác gọi)
 export const playSound = (name: string) => {
   switch(name) {
@@ -160,5 +207,6 @@ export const playSound = (name: string) => {
     case 'hover': playHoverSound(); break;
     case 'claim': playClaimSound(); break;
     case 'hyper': playHyperSound(); break;
+    case 'streak': playStreakSound(); break;
   }
 };

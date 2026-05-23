@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useMemo, useState, useEffect, memo, useCallback } from 'react';
 import {
-  Cpu, Droplets, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock, Loader2
+  Cpu, Droplets, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock, Loader2,
+  Award, Flame, Sparkles, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -12,6 +13,8 @@ import { useUIStore } from '../store/useUIStore';
 import { useShallow } from 'zustand/react/shallow';
 import { useInsightData } from '../hooks/useInsightData';
 import { usePreviousWeekData } from '../hooks/usePreviousWeekData';
+import { useHydrationPattern } from '../hooks/useHydrationPattern';
+import { useWeeklyReport } from '../hooks/useWeeklyReport';
 import TabHeader from '../components/layout/TabHeader';
 import OverviewSection from './Insight/OverviewSection';
 import AnalyticsSection from './Insight/AnalyticsSection';
@@ -19,8 +22,6 @@ import SystemSection from './Insight/SystemSection';
 import SelectedDateModal from './Insight/SelectedDateModal';
 
 import type { CalendarEventItem } from '../hooks/useCalendarSync';
-
-import type { HealthReport } from '../lib/aiReports';
 
 interface InsightTabProps {
    isExportingPDF: boolean;
@@ -33,10 +34,6 @@ interface InsightTabProps {
    calendarEvents: CalendarEventItem[];
    syncCalendar: (options?: { silent?: boolean; startOAuthIfNeeded?: boolean }) => Promise<number | false>;
    weatherData: { temp?: number; humidity?: number; feelsLike?: number; status?: string } | null | undefined;
-   isWeatherSynced: boolean;
-   weeklyReport: HealthReport | null;
-   isWeeklyReportLoading: boolean;
-   generateWeeklyReport: () => void;
  }
 
 const InsightTab = memo(function InsightTab({
@@ -44,20 +41,15 @@ const InsightTab = memo(function InsightTab({
    isAiLoading, aiAdvice, fetchAIAdvice,
    calendarEvents, syncCalendar,
    weatherData,
-   isWeatherSynced,
-   weeklyReport,
-   isWeeklyReportLoading,
-   generateWeeklyReport,
   }: InsightTabProps) {
   const { t } = useTranslation();
   
-  const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, hydrationResult, waterIntake, waterEntries, actions } = useAppStore(useShallow((state: AppState) => ({
+  const { profile, isPremium, waterGoal, weeklyHistory: weeklyChartData, streak, waterIntake, waterEntries, actions } = useAppStore(useShallow((state: AppState) => ({
     profile: state.profile,
     isPremium: state.isPremium,
     waterGoal: state.waterGoal,
     weeklyHistory: state.weeklyHistory,
     streak: state.streak,
-    hydrationResult: state.hydrationResult,
     waterIntake: state.waterIntake,
     waterEntries: state.waterEntries,
     actions: state.actions,
@@ -66,7 +58,6 @@ const InsightTab = memo(function InsightTab({
     setShowPremiumModal: state.setShowPremiumModal,
   })));
   
-  const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
   const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'system'>('overview');
 
   const [selectedDateModal, setSelectedDateModal] = useState<{date: string, ml: number} | null>(null);
@@ -167,6 +158,32 @@ const InsightTab = memo(function InsightTab({
 
   const { data: previousWeekData } = usePreviousWeekData(profile?.id);
 
+  // Hydration pattern analysis
+  const { pattern } = useHydrationPattern({
+    waterLogs: waterEntries.map(e => ({ ...e, day: e.day || e.created_at?.slice(0, 10) || new Date().toISOString().slice(0, 10) })),
+    waterGoal,
+    userId: profile?.id || null,
+    weatherHistory: (weatherData?.temp !== undefined && weatherData?.humidity !== undefined) 
+      ? [{ date: new Date().toISOString().slice(0, 10), temp: weatherData.temp, humidity: weatherData.humidity }] 
+      : [],
+  });
+
+  // Weekly report - use the hook instead of relying on parent props
+  const { report: weeklyReportHook, isLoading: isWeeklyReportLoadingHook, refreshReport } = useWeeklyReport({
+    currentWeekLogs: weeklyChartData?.map(d => ({
+      id: d.fullDate || d.d,
+      user_id: profile?.id || '',
+      amount: d.ml,
+      name: 'Water',
+      day: d.fullDate || '',
+      exp: 0,
+      created_at: d.fullDate || ''
+    })) || [],
+    previousWeekLogs: previousWeekData?.map(d => ({ id: d.fullDate, user_id: profile?.id || '', amount: d.ml, name: 'Water', day: d.fullDate, exp: 0, created_at: d.fullDate })) || [],
+    waterGoal,
+    userId: profile?.id || null,
+  });
+
   const stats = useMemo(() => {
     if (weeklyChartData.length === 0) return { avg: 0, completed: 0 };
     const total = weeklyChartData.reduce((acc: number, curr: { ml: number }) => acc + curr.ml, 0);
@@ -176,13 +193,6 @@ const InsightTab = memo(function InsightTab({
   }, [weeklyChartData, waterGoal]);
 
   const completionRate = weeklyChartData.length === 0 ? 0 : Math.round((stats.completed / weeklyChartData.length) * 100);
-
-  const yesterdayIntake = useMemo(() => {
-    if (weeklyChartData.length >= 2) {
-      return weeklyChartData[weeklyChartData.length - 2].ml;
-    }
-    return 0;
-  }, [weeklyChartData]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -202,13 +212,63 @@ const InsightTab = memo(function InsightTab({
   const nextBestAction = useMemo(() => {
     const remaining = Math.max(0, waterGoal - waterIntake);
     const hour = new Date().getHours();
-    if (waterGoal === 0) return { title: 'Thiết lập mục tiêu', action: 'Cập nhật thông tin để AI tính toán lượng nước.', ml: 0, icon: Target, color: 'text-slate-400', bg: 'bg-slate-500/20' };
-    if (remaining === 0) return { title: 'Hoàn thành xuất sắc', action: 'Bạn đã đạt mục tiêu. Chỉ uống thêm nếu thực sự khát.', ml: 0, icon: Crown, color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
-    if (hour >= 22) return { title: 'Trước khi ngủ', action: `Uống ${Math.min(remaining, 150)}ml nước ấm để tránh tiểu đêm.`, ml: Math.min(remaining, 150), icon: Clock, color: 'text-indigo-400', bg: 'bg-indigo-500/20' };
-    if (hour <= 9 && waterIntake < 300) return { title: 'Bắt đầu ngày mới', action: 'Đánh thức cơ thể với ly nước 250ml đầu ngày.', ml: 250, icon: CloudSun, color: 'text-amber-400', bg: 'bg-amber-500/20' };
-    if (remaining > waterGoal * 0.5 && hour > 15) return { title: 'Đang tụt hậu', action: 'Bạn đang uống quá chậm. Hãy bù ngay 300ml để theo kịp tiến độ.', ml: 300, icon: AlertTriangle, color: 'text-rose-400', bg: 'bg-rose-500/20' };
-    return { title: 'Duy trì nhịp độ', action: `Tiếp tục nạp ${Math.min(remaining, 250)}ml để cơ thể luôn tươi mới.`, ml: Math.min(remaining, 250), icon: Droplets, color: 'text-cyan-400', bg: 'bg-cyan-500/20' };
-  }, [waterIntake, waterGoal]);
+    const temp = weatherData?.temp || 25;
+    const humidity = weatherData?.humidity || 60;
+    
+    // Priority 1: No goal set
+    if (waterGoal === 0) return { title: 'Thiết lập mục tiêu', action: 'Cập nhật thông tin để AI tính toán lượng nước phù hợp với cơ thể bạn.', ml: 0, icon: Target, color: 'text-slate-400', bg: 'bg-slate-500/20' };
+    
+    // Priority 2: Already completed
+    if (remaining === 0) {
+      if (streak >= 7) return { title: 'Chuỗi tuyệt vời!', action: `${streak} ngày liên tục! Giữ phong độ này để đạt milestone 14 ngày.`, ml: 0, icon: Crown, color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
+      return { title: 'Hoàn thành hôm nay', action: 'Bạn đã đạt mục tiêu. Uống thêm 100ml nếu muốn vượt mục tiêu.', ml: 100, icon: Award, color: 'text-emerald-400', bg: 'bg-emerald-500/20' };
+    }
+    
+    // Priority 3: Critical deficit (>50% behind after 3PM)
+    if (remaining > waterGoal * 0.5 && hour > 15) {
+      const catchUp = Math.min(remaining, 400);
+      if (temp > 30) return { title: 'Nóng quá, cần bù ngay!', action: `Nhiệt độ ${temp}°C → cần ${catchUp}ml ngay để tránh mất nước.`, ml: catchUp, icon: AlertTriangle, color: 'text-rose-400', bg: 'bg-rose-500/20' };
+      return { title: 'Cần bù nước gấp', action: `Còn ${Math.round(remaining)}ml. Uống ${catchUp}ml để theo kịp tiến độ hôm nay.`, ml: catchUp, icon: AlertTriangle, color: 'text-rose-400', bg: 'bg-rose-500/20' };
+    }
+    
+    // Priority 4: Weather-based adjustments
+    if (temp > 32) {
+      const hotBonus = Math.min(remaining, 200);
+      return { title: 'Trời nóng quá', action: `Nhiệt độ ${temp}°C → cơ thể mất nước nhanh. Uống ${hotBonus}ml ngay.`, ml: hotBonus, icon: CloudSun, color: 'text-orange-400', bg: 'bg-orange-500/20' };
+    }
+    if (humidity < 40) {
+      const dryBonus = Math.min(remaining, 150);
+      return { title: 'Không khí khô', action: `Độ ẩm ${humidity}% → da và họng cần nước. Uống ${dryBonus}ml.`, ml: dryBonus, icon: CloudSun, color: 'text-amber-400', bg: 'bg-amber-500/20' };
+    }
+    
+    // Priority 5: Streak protection
+    if (streak >= 3 && waterIntake < waterGoal * 0.3 && hour > 18) {
+      const saveStreak = Math.min(remaining, 300);
+      return { title: 'Bảo vệ chuỗi!', action: `${streak} ngày liên tục đang nguy hiểm. Uống ${saveStreak}ml để giữ streak.`, ml: saveStreak, icon: Flame, color: 'text-orange-400', bg: 'bg-orange-500/20' };
+    }
+    
+    // Priority 6: Time-based specific advice
+    if (hour >= 22) return { title: 'Trước khi ngủ', action: `Uống ${Math.min(remaining, 120)}ml nước ấm để tránh tiểu đêm.`, ml: Math.min(remaining, 120), icon: Clock, color: 'text-indigo-400', bg: 'bg-indigo-500/20' };
+    if (hour <= 9 && waterIntake < 300) return { title: 'Đánh thức cơ thể', action: 'Sau 8h ngủ không uống nước → cần 250ml để khởi động metabolism.', ml: 250, icon: Sparkles, color: 'text-cyan-400', bg: 'bg-cyan-500/20' };
+    if (hour >= 11 && hour <= 13 && waterIntake < waterGoal * 0.4) return { title: 'Trưa uống nước', action: 'Bữa trưa làm mất nước → uống 200ml để duy trì năng lượng.', ml: 200, icon: Droplets, color: 'text-sky-400', bg: 'bg-sky-500/20' };
+    if (hour >= 15 && hour <= 17 && waterIntake < waterGoal * 0.6) return { title: 'Chiều bù nước', action: 'Buổi chiều mệt mỏi → uống 180ml để tỉnh táo làm việc.', ml: 180, icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
+    
+    // Priority 7: Pattern-based (if available)
+    if (pattern?.blindSpots && pattern.blindSpots.length > 0) {
+      const currentSlot = Math.floor(hour / 3) * 3;
+      const blindSpot = pattern.blindSpots.find(bs => {
+        const slotHour = parseInt(bs.slot.split('-')[0], 10);
+        return slotHour >= currentSlot && slotHour < currentSlot + 3;
+      });
+      if (blindSpot && blindSpot.completionRate < 40) {
+        return { title: 'Cảnh báo điểm mù', action: `Bạn thường quên uống ${blindSpot.slot}. Uống 200ml ngay để tránh.`, ml: 200, icon: AlertTriangle, color: 'text-rose-400', bg: 'bg-rose-500/20' };
+      }
+    }
+    
+    // Priority 8: Default maintain pace
+    const maintainAmount = Math.min(remaining, 200);
+    return { title: 'Duy trì nhịp độ', action: `Còn ${Math.round(remaining)}ml. Uống ${maintainAmount}ml để hoàn thành mục tiêu.`, ml: maintainAmount, icon: Droplets, color: 'text-cyan-400', bg: 'bg-cyan-500/20' };
+  }, [waterIntake, waterGoal, streak, weatherData, pattern]);
 
   if (isInsightLoading && !profile) {
     return (
@@ -238,8 +298,8 @@ const InsightTab = memo(function InsightTab({
         actionIcon={<Cpu size={18} />}
       />
 
-      <div className="px-5 mb-6 mt-1">
-        <div className="glass-control flex items-center p-1.5 shadow-inner overflow-x-auto scrollbar-hide">
+      <div className="px-5 mb-5 mt-1">
+        <div className="glass-control flex items-center p-1 shadow-inner overflow-x-auto scrollbar-hide bg-slate-950/40 border border-white/5 rounded-xl">
           {[
             { id: 'overview', label: 'Cố vấn', icon: Cpu },
             { id: 'analytics', label: 'Phân tích', icon: TrendingUp },
@@ -251,19 +311,19 @@ const InsightTab = memo(function InsightTab({
               <button
                 key={tab.id}
                 onClick={() => setActiveView(tab.id as 'overview' | 'analytics' | 'system')}
-                className={`flex-1 min-w-[72px] relative flex flex-col items-center justify-center py-2.5 transition-colors duration-200 z-10 rounded-xl ${
-                  isActive ? 'text-cyan-300' : 'text-meta hover:text-slate-300'
+                className={`flex-1 min-w-[80px] relative flex items-center justify-center gap-1.5 py-2 px-3 transition-colors duration-200 z-10 rounded-lg ${
+                  isActive ? 'text-cyan-300' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="insightSubTabIndicator"
-                    className="absolute inset-0 active-treatment rounded-xl -z-10"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 -z-10 shadow-[0_0_12px_rgba(34,211,238,0.15)]"
+                    transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                   />
                 )}
-                <Icon size={16} className={`mb-1 ${isActive ? '' : 'opacity-80'}`} />
-                <span className="text-[9px] font-bold tracking-wide whitespace-nowrap">{tab.label}</span>
+                <Icon size={14} className={isActive ? 'text-cyan-400' : 'opacity-70'} />
+                <span className="text-[10px] font-bold tracking-wide whitespace-nowrap">{tab.label}</span>
               </button>
             );
           })}
@@ -280,20 +340,13 @@ const InsightTab = memo(function InsightTab({
             transition={{ duration: 0.2 }}
           >
             <OverviewSection
-              profile={profile}
-              waterIntake={waterIntake}
-              waterGoal={waterGoal}
-              streak={streak}
-              completionRate={completionRate}
-              yesterdayIntake={yesterdayIntake}
               greeting={greeting}
               primaryStory={primaryStory}
               nextBestAction={nextBestAction}
               actions={actions}
-              schedule={hydrationResult?.schedule || null}
               aiAdvice={aiAdvice}
               isAiLoading={isAiLoading}
-              fetchAIAdvice={fetchAIAdvice}
+              fetchAiAdvice={fetchAIAdvice}
               isPremium={isPremium}
               setShowPremiumModal={setShowPremiumModal}
             />
@@ -311,8 +364,6 @@ const InsightTab = memo(function InsightTab({
             <AnalyticsSection
               isPremium={isPremium}
               setShowPremiumModal={setShowPremiumModal}
-              timeRange={timeRange}
-              setTimeRange={setTimeRange}
               calendarDate={calendarDate}
               handlePrevMonth={handlePrevMonth}
               handleNextMonth={handleNextMonth}
@@ -330,12 +381,10 @@ const InsightTab = memo(function InsightTab({
               profile={profile}
               streak={streak}
               completionRate={completionRate}
-              calendarEvents={calendarEvents}
-              weatherData={weatherData}
-              isWeatherSynced={isWeatherSynced}
-              weeklyReport={weeklyReport}
-              isWeeklyReportLoading={isWeeklyReportLoading}
-              generateWeeklyReport={generateWeeklyReport}
+              weeklyReport={weeklyReportHook}
+              isWeeklyReportLoading={isWeeklyReportLoadingHook}
+              generateWeeklyReport={refreshReport}
+              hydrationPattern={pattern}
             />
           </motion.div>
         )}

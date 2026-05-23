@@ -22,6 +22,7 @@ const ConfirmDialog = React.lazy(() => import('../ui/ConfirmDialog'));
 const SocialDiscoverModal = React.lazy(() => import('./SocialDiscoverModal'));
 const CommentsView = React.lazy(() => import('../../tabs/Feed/CommentsView').then(m => ({ default: m.CommentsView })));
 const HardwareWaitlistModal = React.lazy(() => import('./HardwareWaitlistModal'));
+const ChallengeModal = React.lazy(() => import('./ChallengeModal'));
 
 export default function GlobalModalManager() {
   const { 
@@ -259,6 +260,7 @@ export default function GlobalModalManager() {
         <EditEntryModal />
         <ConfirmDialog />
         <HardwareWaitlistModal />
+        <ChallengeModal />
         <SocialDiscoverModal
           showDiscoverPeople={!!showDiscoverPeople}
           setShowDiscoverPeople={setShowDiscoverPeople}

@@ -3,6 +3,7 @@ import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/useAppStore';
+import { glassCard, glassInner } from '../../../styles/glass';
 
 interface QuickAddSectionProps {
   quickAmounts: number[];
@@ -27,9 +28,9 @@ const QuickAddSection = React.memo(function QuickAddSection({
   }, [handleAddWater, t]);
 
   return (
-    <div className="px-5 mt-3 mb-6 space-y-3">
+    <div className="px-5 space-y-6">
       {/* Quick add buttons */}
-      <div className="relative rounded-[28px] border border-white/[0.06] bg-slate-900/60 backdrop-blur-2xl px-3 py-3 overflow-hidden">
+      <div className={`${glassCard} relative rounded-[28px] px-3 py-3`}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.06),transparent_60%)] pointer-events-none" />
 
         <div className="relative flex items-center gap-2">
@@ -71,21 +72,21 @@ const QuickAddSection = React.memo(function QuickAddSection({
       <div className="flex items-center gap-2">
         <button
           onClick={() => onDrinkMenu?.()}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-slate-900/50 border border-white/[0.04] text-slate-400 hover:text-cyan-400 hover:border-cyan-500/20 active:scale-95 transition-all"
+          className={`${glassInner} flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-slate-400 hover:text-cyan-400 hover:border-cyan-500/20 active:scale-95 transition-all`}
         >
           <LayoutGrid size={15} />
           <span className="text-[10px] font-black uppercase tracking-widest">Đồ uống</span>
         </button>
         <button
           onClick={() => onHistory?.()}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-slate-900/50 border border-white/[0.04] text-slate-400 hover:text-cyan-400 hover:border-cyan-500/20 active:scale-95 transition-all"
+          className={`${glassInner} flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-slate-400 hover:text-cyan-400 hover:border-cyan-500/20 active:scale-95 transition-all`}
         >
           <Clock size={15} />
           <span className="text-[10px] font-black uppercase tracking-widest">Lịch sử</span>
         </button>
 
         {hasPendingCloudSync && (
-          <div className="flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-500/10 px-2.5 py-2">
+          <div className={`${glassInner} flex items-center gap-1.5 rounded-full border-amber-400/20 bg-amber-500/10 px-2.5 py-2`}>
             <CloudOff size={14} className="text-amber-300" />
             <span className="text-[9px] font-black uppercase tracking-widest text-amber-200">Chờ đồng bộ</span>
           </div>
