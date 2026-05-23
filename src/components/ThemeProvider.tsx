@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { getThemeConfig } from '@/config/themes';
+import { getThemeConfigSync, preloadThemes } from '@/services/theme.service';
 import type { ThemeEffect } from '@/config/themes';
 
 const DynamicOverlay: React.FC<{ effect: ThemeEffect; accent: string }> = ({ effect, accent }) => {
@@ -166,7 +166,12 @@ const DynamicOverlay: React.FC<{ effect: ThemeEffect; accent: string }> = ({ eff
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const profile = useAppStore(state => state.profile);
   const themeId = profile?.equipped_theme_id;
-  const theme = useMemo(() => getThemeConfig(themeId), [themeId]);
+  const theme = useMemo(() => getThemeConfigSync(themeId), [themeId]);
+
+  // Preload themes from server on mount
+  useEffect(() => {
+    preloadThemes();
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -182,7 +187,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--dw-bg-gradient', colors.bgGradient);
     root.style.setProperty('--dw-glow-color', colors.glowColor);
     root.style.setProperty('--dw-blur-level', blurLevel);
-    
+
     root.style.setProperty('--dw-radius-card', borderRadius);
     root.style.setProperty('--dw-border-width', borderWidth);
 
@@ -192,12 +197,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <>
       <DynamicOverlay effect={theme.effect} accent={theme.colors.accent} />
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none z-[-2] opacity-30"
-        style={{ 
+        style={{
           background: `radial-gradient(circle at 50% 0%, ${theme.colors.accent}30, transparent 70%)`,
           transition: 'background 1s ease-in-out'
-        }} 
+        }}
       />
       {children}
     </>
