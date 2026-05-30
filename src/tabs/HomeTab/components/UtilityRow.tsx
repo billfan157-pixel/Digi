@@ -8,9 +8,9 @@ interface UtilityRowProps {
 }
 
 const actions = [
-  { key: 'quick_add', icon: Droplets, label: 'Uống nhanh', action: 'drink' as const },
-  { key: 'history', icon: Clock, label: 'Lịch sử', action: 'history' as const },
-  { key: 'menu', icon: LayoutGrid, label: 'Đồ uống', action: 'menu' as const },
+  { key: 'quick_add', icon: Droplets, label: 'Quick Drink', action: 'drink' as const },
+  { key: 'history', icon: Clock, label: 'History', action: 'history' as const },
+  { key: 'menu', icon: LayoutGrid, label: 'Drinks', action: 'menu' as const },
 ];
 
 const UtilityRow = React.memo(function UtilityRow({ onHistory, onDrinkMenu }: UtilityRowProps) {
@@ -46,7 +46,7 @@ const UtilityRow = React.memo(function UtilityRow({ onHistory, onDrinkMenu }: Ut
           <div className="flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-500/10 px-2.5 py-1">
             <CloudOff size={14} className="text-amber-300" />
             <span className="text-[9px] font-black uppercase tracking-widest text-amber-200">
-              Chờ đồng bộ
+              Pending sync
             </span>
           </div>
         </div>

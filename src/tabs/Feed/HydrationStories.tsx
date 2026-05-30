@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { getFallbackStoryPercent } from '../../lib/feedUtils';
 import type { Profile, SocialFeedPost } from '../../models';
@@ -18,6 +19,7 @@ export const HydrationStories = ({
   onCreateStory,
   onSelectStory,
 }: HydrationStoriesProps) => {
+  const { t } = useTranslation();
   return (
     <div className="pt-2 pb-5">
       <div className="flex gap-4 overflow-x-auto scrollbar-hide px-5 snap-x snap-mandatory">
@@ -78,7 +80,7 @@ export const HydrationStories = ({
                   <div className="w-full h-full rounded-full bg-slate-950 p-[2px]">
                     <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
                       {story.author?.avatar_url ? (
-                        <img src={story.author.avatar_url} alt={`Story của ${story.author?.nickname || 'người dùng'}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                        <img src={story.author.avatar_url} alt={t('feed.avatar_of_user', { name: story.author?.nickname || t('common.user') })} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                       ) : (
                         <span className="text-xl font-black text-white">{(story.author?.nickname || 'U').charAt(0).toUpperCase()}</span>
                       )}

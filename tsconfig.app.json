@@ -16,7 +16,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["./supabase/functions/_shared/*"]
     },
 
     /* Linting */
@@ -27,7 +28,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"],
+  "include": ["src", "supabase/functions/_shared/aiValidation.ts"],
   "exclude": [
     "src/dev",
     "src/**/*.test.ts",

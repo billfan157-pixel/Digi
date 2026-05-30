@@ -38,7 +38,7 @@ export function useBiometric() {
 
       // Kiểm tra thiết bị có hỗ trợ không
       const available = await NativeBiometric.isAvailable();
-      if (!available.isAvailable) throw new Error('Thiết bị không hỗ trợ Sinh trắc học');
+      if (!available.isAvailable) throw new Error(i18n.t('auth.biometric_not_supported'));
 
       // Quét mặt 1 lần để xác nhận chủ máy trước khi bật khóa
       await NativeBiometric.verifyIdentity({

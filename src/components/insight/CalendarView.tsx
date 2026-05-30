@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Info, Check } from 'lucide-react';
 import { glassCard } from '../../styles/glass';
@@ -62,14 +63,14 @@ const CalendarCell = React.memo(function CalendarCell({
 
   if (!cell.isFuture) {
     if (isCompleted) {
-      cellStyle = 'bg-gradient-to-br from-cyan-400 to-cyan-600 border-cyan-300/50 shadow-[0_0_15px_rgba(34,211,238,0.25)]';
+      cellStyle = 'bg-gradient-to-br from-cyan-500 to-cyan-600 border-cyan-500/50 shadow-[0_0_15px_var(--theme-glow-color,rgba(34,211,238,0.25))]';
       textStyle = 'text-white';
     } else if (isHalf) {
-      cellStyle = 'bg-cyan-900/60 border-cyan-500/30';
+      cellStyle = 'bg-cyan-500/30 border-cyan-500/30';
       textStyle = 'text-cyan-100';
     } else if (isPartial) {
-      cellStyle = 'bg-cyan-950/40 border-cyan-900/30';
-      textStyle = 'text-cyan-400/80';
+      cellStyle = 'bg-cyan-500/10 border-cyan-500/20';
+      textStyle = 'text-cyan-400';
     }
   } else {
     cellStyle = 'bg-white/[0.02] border-transparent opacity-30';
@@ -90,11 +91,11 @@ const CalendarCell = React.memo(function CalendarCell({
         }
       }}
       className={`
-        relative aspect-square rounded-[14px] flex flex-col items-center justify-center
+        relative aspect-square rounded-[var(--theme-border-radius-inner,12px)] flex flex-col items-center justify-center
         transition-all duration-300 border
         ${cellStyle}
         ${isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-950 z-20 scale-105' : ''}
-        ${cell.isToday && !isSelected && !isCompleted ? 'ring-1 ring-cyan-400 ring-offset-1 ring-offset-slate-950' : ''}
+        ${cell.isToday && !isSelected && !isCompleted ? 'ring-1 ring-[var(--neon-cyan,#22d3ee)] ring-offset-1 ring-offset-slate-950' : ''}
       `}
     >
       {/* Visual Feedback for Completion */}
@@ -124,7 +125,7 @@ export default function CalendarView({
   onSelectCell,
   onDayClick,
 }: CalendarViewProps) {
-
+  const { t } = useTranslation();
   const completedDays = useMemo(() => {
     return calendarCells.filter(
       (c) => !c.isFuture && !c.isEmptySlot && c.ml >= waterGoal
@@ -171,11 +172,11 @@ export default function CalendarView({
             <div className="mt-6 pt-5 border-t border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-sm bg-gradient-to-br from-cyan-400 to-cyan-600" />
+                        <div className="w-2.5 h-2.5 rounded-sm bg-gradient-to-br from-cyan-500 to-cyan-600" />
                         <span className="text-[9px] font-black text-slate-400 uppercase">Đạt</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-sm bg-cyan-900/60" />
+                        <div className="w-2.5 h-2.5 rounded-sm bg-cyan-500/30" />
                         <span className="text-[9px] font-black text-slate-400 uppercase">{'>'}50%</span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -202,7 +203,7 @@ export default function CalendarView({
               <div className="flex items-center justify-between relative z-10">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                        <div className="w-2 h-2 rounded-full bg-cyan-500" />
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày {selectedCell.dayNum}</span>
                     </div>
                     <p className="text-2xl font-black text-white">{selectedCell.ml.toLocaleString('vi-VN')} <span className="text-sm text-slate-500 font-bold">ml</span></p>
@@ -212,7 +213,7 @@ export default function CalendarView({
                       <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           selectedCell.ml >= waterGoal ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
                       }`}>
-                          {selectedCell.ml >= waterGoal ? 'Hoàn thành' : 'Chưa đạt'}
+                          {selectedCell.ml >= waterGoal ? t('insight.completed_label') : t('insight.not_reached')}
                       </div>
                       <p className="mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-tight">
                           Tiến độ: {Math.round((selectedCell.ml / waterGoal) * 100)}%
@@ -226,7 +227,7 @@ export default function CalendarView({
         {/* Summary Card */}
         <div className={`${glassCard} p-4 flex items-center justify-between`}>
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-[var(--theme-border-radius-inner,12px)] bg-cyan-500/10 flex items-center justify-center">
                     <TrendingUp size={20} className="text-cyan-400" />
                 </div>
                 <div>
@@ -234,7 +235,7 @@ export default function CalendarView({
                     <p className="text-lg font-black text-white">{consistency}%</p>
                 </div>
             </div>
-            <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/5">
+            <div className="px-4 py-2 rounded-[var(--theme-border-radius-inner,12px)] bg-white/5 border border-white/5">
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest text-center">Đã đạt</p>
                 <p className="text-lg font-black text-cyan-400 text-center">{completedDays} <span className="text-xs text-slate-500">ngày</span></p>
             </div>

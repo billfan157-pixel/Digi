@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Flame, Trophy, Calendar, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { glassCard } from '../../styles/glass';
@@ -14,6 +15,7 @@ export const StreakAnalyticsCard = memo(function StreakAnalyticsCard({
   waterGoal,
   currentStreak,
 }: StreakAnalyticsCardProps) {
+  const { t } = useTranslation();
   const analysis = useMemo(() => {
     if (weeklyData.length < 3) return null;
 
@@ -46,9 +48,9 @@ export const StreakAnalyticsCard = memo(function StreakAnalyticsCard({
   if (!analysis) return null;
 
   const momentumConfig = {
-    strong: { label: 'Mạnh', color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-    moderate: { label: 'Ổn định', color: 'text-amber-400', bg: 'bg-amber-500/15' },
-    weak: { label: 'Cần cải thiện', color: 'text-rose-400', bg: 'bg-rose-500/15' },
+    strong: { label: 'Strong', color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    moderate: { label: 'Stable', color: 'text-amber-400', bg: 'bg-amber-500/15' },
+    weak: { label: t('insight.needs_improvement'), color: 'text-orange-400', bg: 'bg-orange-500/15' },
   };
   const mc = momentumConfig[analysis.momentum];
 
@@ -74,29 +76,29 @@ export const StreakAnalyticsCard = memo(function StreakAnalyticsCard({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-slate-800/50 rounded-xl p-3 flex items-center gap-3">
+        <div className="bg-slate-800/50 rounded-[var(--theme-border-radius-inner,12px)] p-3 flex items-center gap-3">
           <Flame size={18} className="text-orange-400 shrink-0" />
           <div>
             <p className="text-lg font-black text-white">{currentStreak}</p>
             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Streak hiện tại</p>
           </div>
         </div>
-        <div className="bg-slate-800/50 rounded-xl p-3 flex items-center gap-3">
+        <div className="bg-slate-800/50 rounded-[var(--theme-border-radius-inner,12px)] p-3 flex items-center gap-3">
           <Trophy size={18} className="text-amber-400 shrink-0" />
           <div>
             <p className="text-lg font-black text-white">{analysis.longestStreak}</p>
             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Kỷ lục streak</p>
           </div>
         </div>
-        <div className="bg-slate-800/50 rounded-xl p-3 flex items-center gap-3">
-          <Calendar size={18} className="text-cyan-400 shrink-0" />
+        <div className="bg-slate-800/50 rounded-[var(--theme-border-radius-inner,12px)] p-3 flex items-center gap-3">
+          <Calendar size={18} className="text-[var(--neon-cyan,#22d3ee)] shrink-0" />
           <div>
             <p className="text-lg font-black text-white">{analysis.completionRate}%</p>
             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Tỷ lệ đạt</p>
           </div>
         </div>
-        <div className="bg-slate-800/50 rounded-xl p-3 flex items-center gap-3">
-          <TrendingUp size={18} className="text-violet-400 shrink-0" />
+        <div className="bg-slate-800/50 rounded-[var(--theme-border-radius-inner,12px)] p-3 flex items-center gap-3">
+          <TrendingUp size={18} className="text-[var(--neon-cyan,#22d3ee)] shrink-0" />
           <div>
             <p className="text-lg font-black text-white">{analysis.avgStreak}</p>
             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">TB streak</p>

@@ -22,9 +22,9 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
   const fileRef = useRef<HTMLInputElement>(null);
   const progressPercent = Math.min(100, Math.round((waterIntake / Math.max(waterGoal, 1)) * 100));
   const presets = [
-    `Đã đạt ${progressPercent}% mục tiêu hôm nay.`,
-    'Cần thêm một nhịp nhắc nước.',
-    'Vừa bù nước sau vận động.',
+    `Reached ${progressPercent}% of today's goal.`,
+    'Need another water reminder.',
+    'Just rehydrated after exercise.',
   ];
 
   const handleImagePick = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +44,7 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
     setIsPublishing(true);
     try {
       await onPublish({
-        content: text.trim() || `Pulse ${waterIntake}/${waterGoal}ml hôm nay`,
+        content: text.trim() || t('feed.pulse_update', { intake: waterIntake, goal: waterGoal }),
         imageUrl: imagePreview || undefined,
         postKind: 'pulse',
         visibility,
@@ -65,7 +65,7 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
             </div>
             <div className="min-w-0">
               <p className="text-[10px] font-black uppercase tracking-widest text-cyan-300">Pulse</p>
-              <h3 className="truncate text-lg font-black text-white">Cập nhật tiến độ</h3>
+              <h3 className="truncate text-lg font-black text-white">Update Progress</h3>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 active:scale-95 transition-all"><X size={18} /></button>
@@ -79,13 +79,13 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
             </div>
             <div className="flex items-center gap-2 text-xs font-bold text-orange-300">
               <Flame size={15} />
-              {streak} ngày
+              {streak} days
             </div>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-slate-800">
             <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${progressPercent}%` }} />
           </div>
-          <p className="mt-3 text-xs font-semibold text-slate-400">Pulse nằm trên feed để bạn bè theo dõi tiến độ và động viên.</p>
+          <p className="mt-3 text-xs font-semibold text-slate-400">Pulse appears on the feed so friends can track progress and encourage.</p>
         </div>
 
         <textarea
@@ -93,7 +93,7 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
           value={text}
           onChange={e => setText(e.target.value)}
           maxLength={140}
-          placeholder="Viết một cập nhật ngắn về tiến độ uống nước..."
+          placeholder={t('common.post_placeholder')}
           className="w-full h-28 bg-slate-800/50 border border-white/5 rounded-2xl p-4 text-sm text-white placeholder:text-slate-500 resize-none outline-none focus:border-cyan-500/30"
           autoFocus
         />
@@ -115,7 +115,7 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
 
         {imagePreview && (
           <div className="relative mt-3 rounded-xl overflow-hidden">
-            <img src={imagePreview} alt="Xem trước ảnh" loading="lazy" decoding="async" className="w-full max-h-[300px] object-cover" />
+            <img src={imagePreview} alt="Photo preview" loading="lazy" decoding="async" className="w-full max-h-[300px] object-cover" />
             <button onClick={() => { if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview); setImagePreview(''); }} className="absolute top-2 right-2 w-8 h-8 bg-slate-950/70 rounded-full flex items-center justify-center text-white"><X size={14} /></button>
           </div>
         )}
@@ -123,14 +123,14 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-2">
             <button onClick={() => fileRef.current?.click()} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/30 active:scale-95 transition-all">
-              <Camera size={16} /><span className="text-xs font-bold">Thêm ảnh</span>
+              <Camera size={16} /><span className="text-xs font-bold">Add Photo</span>
             </button>
             <div className="flex rounded-xl border border-white/10 bg-slate-900 p-1">
               <button
                 type="button"
                 onClick={() => setVisibility('followers')}
                 className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${visibility === 'followers' ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-500'}`}
-                aria-label="Chỉ bạn bè"
+                aria-label="Friends only"
               >
                 <Users size={14} />
               </button>
@@ -138,7 +138,7 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
                 type="button"
                 onClick={() => setVisibility('public')}
                 className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${visibility === 'public' ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-500'}`}
-                aria-label="Công khai"
+                aria-label="Public"
               >
                 <Globe2 size={14} />
               </button>
@@ -147,7 +147,7 @@ export const QuickStatusComposer = ({ waterIntake, waterGoal, streak, onPublish,
           <input ref={fileRef} type="file" accept="image/*" onChange={handleImagePick} className="hidden" />
           <button onClick={handleSubmit} disabled={isPublishing} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-bold active:scale-95 disabled:opacity-50 transition-all">
             {isPublishing ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <Send size={16} />}
-            {isPublishing ? 'Đang đăng...' : 'Đăng'}
+            {isPublishing ? 'Posting...' : 'Post'}
           </button>
         </div>
       </motion.div>

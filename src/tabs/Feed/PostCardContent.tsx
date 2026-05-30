@@ -1,5 +1,6 @@
 import { memo } from 'react';
-import { Droplets, Flame, Swords, Trophy, Sparkles, Zap, Lightbulb, BarChart3 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Clock, Coins, Droplets, Flame, Swords, Target, Trophy, Sparkles, Zap, Lightbulb, BarChart3 } from 'lucide-react';
 import type { SocialFeedPost } from '../../models';
 import { sanitizeHtml } from '@/lib/sanitize';
 
@@ -15,6 +16,51 @@ interface PostCardContentProps {
   handleJoinChallenge: () => void;
 }
 
+export function parseDuelContent(content: string, post?: SocialFeedPost, t?: (key: string) => string) {
+  const _t = t || ((s: string) => s);
+  const lines = content.split(/\n+/).map(line => line.trim()).filter(Boolean);
+  const prefixes = [_t('feed.duel_goal'), _t('feed.duel_deadline'), _t('feed.duel_type'), _t('feed.duel_bet')];
+  const getValue = (prefix: string) => lines.find(line => line.startsWith(prefix))?.replace(prefix, '').trim();
+  const main = lines.filter(line => !prefixes.some(prefix => line.startsWith(prefix))).join(' ');
+
+  const stakeFromCoins = post?.stake_coins ? `${post.stake_coins} xu` : null;
+  const targetFromMl = post?.hydration_ml ? `${post.hydration_ml}ml` : null;
+
+  return {
+    main: main || content,
+    target: targetFromMl || getValue(_t('feed.duel_goal')),
+    deadline: getValue(_t('feed.duel_deadline')) || _t('feed.duel_today'),
+    mode: getValue(_t('feed.duel_type')) || _t('feed.duel_challenge_friends'),
+    stake: stakeFromCoins || getValue(_t('feed.duel_bet')) || _t('feed.duel_no_bet'),
+  };
+}
+
+export function parseDuelTargetToMl(target: string | undefined): number {
+  if (!target) return 2000;
+  const match = target.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 2000;
+}
+
+export function parseDuelDeadlineToISO(deadline: string | undefined, t?: (key: string) => string): string | null {
+  const _t = t || ((s: string) => s);
+  if (!deadline || deadline === _t('feed.duel_today')) return null;
+  const now = new Date();
+  const timeMatch = deadline.match(/(\d{1,2}):(\d{2})/);
+  const isTomorrow = deadline.includes('ngày mai');
+  const isMinutes = deadline.includes('phút');
+  const d = new Date(now);
+  if (isTomorrow) d.setDate(d.getDate() + 1);
+  if (isMinutes) {
+    const minMatch = deadline.match(/(\d+)\s*phút/);
+    if (minMatch) d.setMinutes(d.getMinutes() + parseInt(minMatch[1], 10));
+  } else if (deadline.includes(_t('feed.end_of_day'))) {
+    d.setHours(23, 59, 0, 0);
+  } else if (timeMatch) {
+    d.setHours(parseInt(timeMatch[1], 10), parseInt(timeMatch[2], 10), 0, 0);
+  }
+  return d.toISOString();
+}
+
 export const PostCardContent = memo(({
   post,
   postContent,
@@ -26,6 +72,7 @@ export const PostCardContent = memo(({
   isDrop,
   handleJoinChallenge,
 }: PostCardContentProps) => {
+  const { t } = useTranslation();
   const safeContent = sanitizeHtml(postContent);
   if (isAchievement) {
     return (
@@ -35,11 +82,11 @@ export const PostCardContent = memo(({
           <Trophy size={40} className="text-white drop-shadow-lg" />
         </div>
         <p className="text-amber-400 text-[10px] font-black uppercase tracking-[0.3em] mb-2 z-10 flex items-center gap-2">
-           <Sparkles size={12} className="animate-pulse" /> Kỷ Lục Mới
-        </p>
-         <h4 className="text-white text-3xl font-black mb-3 z-10 tracking-tight leading-none truncate max-w-full">{post.content}</h4>
+           <Sparkles size={12} className="animate-pulse" /> {t('common.new_record')}
+         </p>
+          <h4 className="text-white text-3xl font-black mb-3 z-10 tracking-tight leading-none truncate max-w-full">{post.content}</h4>
         <div className="h-[1px] w-12 bg-amber-500/30 mx-auto mb-3" />
-        <p className="text-slate-400 text-xs font-medium z-10 max-w-[200px] leading-relaxed">Một cột mốc đáng tự hào trong hành trình DigiWell của bạn.</p>
+        <p className="text-slate-400 text-xs font-medium z-10 max-w-[200px] leading-relaxed">{t('feed.milestone_proud')}</p>
       </div>
     );
   }
@@ -59,32 +106,66 @@ export const PostCardContent = memo(({
           </div>
         </div>
         <p className="text-center text-white font-bold text-lg leading-snug mb-2 z-10">
-          Cả bạn và <span className="text-emerald-400">{post.compare_name || 'Đồng đội'}</span> đều đạt <span className="text-amber-400">{post.value || 100}%</span> mục tiêu!
+          {t('feed.both_hit_goal', { name: post.compare_name || t('feed.teammate'), pct: post.value || 100 })}
         </p>
-        <p className="text-center text-slate-400 text-xs z-10">Cùng nhau giữ vững phong độ nhé.</p>
+        <p className="text-center text-slate-400 text-xs z-10">{t('feed.keep_it_up')}</p>
         <button className="mt-4 px-6 py-2 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition-all">
-          Gửi lời chúc mừng
+          {t('feed.send_congrats')}
         </button>
       </div>
     );
   }
 
   if (isChallenge) {
+    const duel = parseDuelContent(safeContent, post, t);
+    const detailCards = [
+      { label: t('feed.duel_goal').replace(':', '').trim(), value: duel.target || t('feed.duel_freestyle'), icon: Target, tone: 'text-cyan-300 border-cyan-500/20 bg-cyan-500/10' },
+      { label: t('feed.duel_deadline').replace(':', '').trim(), value: duel.deadline || t('feed.duel_today'), icon: Clock, tone: 'text-purple-300 border-purple-500/20 bg-purple-500/10' },
+      { label: t('feed.duel_bet').replace(':', '').trim(), value: duel.stake || t('feed.duel_no_bet'), icon: Coins, tone: 'text-amber-300 border-amber-500/20 bg-amber-500/10' },
+    ];
+
     return (
-      <div className="bg-purple-900/20 border border-purple-500/20 rounded-[2rem] p-6">
-        <div className="flex items-center gap-3 mb-4">
-           <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-              <Swords size={20} className="text-purple-400" />
-           </div>
-           <p className="text-purple-400 text-[10px] font-black uppercase tracking-widest">Thử thách chung</p>
+      <div className="overflow-hidden rounded-[2rem] border border-purple-500/20 bg-gradient-to-br from-purple-500/15 via-slate-900/50 to-slate-950">
+        <div className="relative p-6">
+          <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-fuchsia-500/10 blur-2xl" />
+          <div className="relative mb-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-500/25 bg-purple-500/15 shadow-[0_0_24px_rgba(168,85,247,0.15)]">
+                <Swords size={22} className="text-purple-300" />
+              </div>
+              <div>
+                <p className="text-purple-300 text-[10px] font-black uppercase tracking-widest">{t('common.duel_water')}</p>
+                <p className="mt-0.5 text-xs font-bold text-slate-500">{duel.mode}</p>
+              </div>
+            </div>
+            {Number(post.streak_snapshot || 0) > 0 && (
+              <div className="rounded-xl border border-orange-500/20 bg-orange-500/10 px-2.5 py-1.5 text-right">
+                <p className="text-[9px] font-black uppercase tracking-widest text-orange-300">{t('common.streak')}</p>
+                <p className="text-xs font-black text-white">{post.streak_snapshot} {t('common.days')}</p>
+              </div>
+            )}
+          </div>
+
+          <p className="relative mb-5 text-xl font-black leading-tight text-white break-words">{duel.main}</p>
+
+          <div className="relative mb-5 grid grid-cols-3 gap-2">
+            {detailCards.map(({ label, value, icon: Icon, tone }) => (
+              <div key={label} className={`rounded-2xl border p-3 ${tone}`}>
+                <Icon size={14} />
+                <p className="mt-2 text-[9px] font-black uppercase tracking-widest opacity-70">{label}</p>
+                <p className="mt-0.5 line-clamp-2 text-[11px] font-black text-white">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={handleJoinChallenge}
+            className="relative flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 font-black text-purple-950 shadow-xl shadow-purple-500/10 transition-all hover:bg-slate-100 active:scale-[0.98]"
+          >
+            <Swords size={17} />
+            {t('feed.accept_challenge')}
+          </button>
         </div>
-        <p className="text-white text-xl font-black leading-tight mb-6 break-words">{safeContent}</p>
-        <button
-          onClick={handleJoinChallenge}
-          className="w-full bg-white text-purple-950 font-black py-3.5 rounded-2xl hover:bg-slate-100 active:scale-[0.98] transition-all shadow-xl shadow-purple-500/10"
-        >
-          Nhận lời thách đấu
-        </button>
       </div>
     );
   }
@@ -95,8 +176,8 @@ export const PostCardContent = memo(({
         <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(249,115,22,0.4)]">
           <Flame size={40} className="text-white" />
         </div>
-        <p className="text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Peak Mới</p>
-        <h4 className="text-white text-3xl font-black mb-2 tracking-tight truncate max-w-full">Chuỗi {post.value || post.streak_snapshot || 0} ngày</h4>
+        <p className="text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{t('feed.new_peak')}</p>
+        <h4 className="text-white text-3xl font-black mb-2 tracking-tight truncate max-w-full">{t('feed.streak_days', { days: post.value || post.streak_snapshot || 0 })}</h4>
          {safeContent && <p className="text-slate-400 text-sm font-medium break-words">{safeContent}</p>}
       </div>
     );
@@ -121,12 +202,12 @@ export const PostCardContent = memo(({
                         <Droplets size={20} className="text-cyan-400" />
                      </div>
                      <div>
-                        <p className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Lượng nạp</p>
+                        <p className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">{t('feed.intake_label')}</p>
                         <h4 className="text-xl font-black text-white">{amount} <span className="text-xs font-bold text-slate-400">ML</span></h4>
                      </div>
-                  </div>
-                  <div className="text-right">
-                     <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Tiến độ</p>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{t('feed.progress')}</p>
                      <h4 className="text-xl font-black text-white">{progress}%</h4>
                   </div>
                </div>
@@ -160,7 +241,7 @@ export const PostCardContent = memo(({
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
                   <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${progress}%` }} />
                 </div>
-                <p className="mt-3 text-sm text-slate-400 font-medium">{safeContent || 'Đã nạp thêm nước cho cơ thể.'}</p>
+                <p className="mt-3 text-sm text-slate-400 font-medium">{safeContent || t('feed.hydrated_body')}</p>
               </div>
             </div>
           </div>
@@ -171,7 +252,7 @@ export const PostCardContent = memo(({
 
   if (post.type === 'tip') {
     const tipCategory = post.tip_category || '';
-    const categoryLabel = tipCategory === 'science' ? 'Khoa học' : tipCategory === 'recipe' ? 'Công thức nước' : 'Mẹo vặt';
+    const categoryLabel = tipCategory === 'science' ? t('feed.category_science') : tipCategory === 'recipe' ? t('feed.category_recipe') : t('feed.category_tips');
     const categoryColor = tipCategory === 'science' ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' : tipCategory === 'recipe' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
     return (
       <div className="border border-emerald-500/20 bg-emerald-500/5 rounded-2xl p-5">
@@ -180,14 +261,14 @@ export const PostCardContent = memo(({
             <Lightbulb size={20} className="text-emerald-400" />
           </div>
           <div>
-            <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">Mẹo hydration</p>
+            <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">{t('feed.hydration_tip')}</p>
             <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-lg text-[9px] font-bold ${categoryColor}`}>{categoryLabel}</span>
           </div>
         </div>
         {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap break-words">{safeContent}</p>}
         {post.image_url && (
           <div className="rounded-2xl overflow-hidden bg-slate-950 mt-3 border border-white/5">
-            <img src={post.image_url} alt={post.content || 'Ảnh bài viết'} loading="lazy" className="w-full max-h-[400px] object-cover" />
+            <img src={post.image_url} alt={post.content || t('feed.post_image')} loading="lazy" className="w-full max-h-[400px] object-cover" />
           </div>
         )}
       </div>
@@ -205,7 +286,7 @@ export const PostCardContent = memo(({
             <BarChart3 size={20} className="text-amber-400" />
           </div>
           <div>
-            <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest">Khảo sát</p>
+            <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest">{t('feed.poll_label')}</p>
             <p className="text-white font-bold text-lg mt-0.5">{safeContent}</p>
           </div>
         </div>
@@ -243,7 +324,7 @@ export const PostCardContent = memo(({
           })}
         </div>
 {hasVoted && (
-           <p className="text-center text-[10px] text-slate-500 mt-3">{totalVotes} phiếu bầu</p>
+           <p className="text-center text-[10px] text-slate-500 mt-3">{t('feed.votes_count', { count: totalVotes })}</p>
          )}
        </div>
      );
@@ -254,9 +335,9 @@ export const PostCardContent = memo(({
      return (
        <div className="space-y-3">
          <div className="flex items-center gap-2 mb-1">
-           <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
-             Drop
-           </span>
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+              {t('feed.drop_badge')}
+            </span>
          </div>
          {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap break-words">{safeContent}</p>}
          {post.image_url && (
@@ -274,7 +355,7 @@ export const PostCardContent = memo(({
        {safeContent && <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap break-words mb-3">{safeContent}</p>}
        {post.image_url && (
          <div className="rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border border-white/5">
-           <img src={post.image_url} alt="Ảnh bài viết" loading="lazy" className="w-full max-h-[500px] object-cover"
+            <img src={post.image_url} alt={t('feed.post_image')} loading="lazy" className="w-full max-h-[500px] object-cover"
              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
          </div>
        )}

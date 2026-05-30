@@ -47,6 +47,7 @@ describe('subscriptionToRow', () => {
       endpoint: 'https://push.example/sub-1',
       p256dh: 'p-key',
       auth: 'auth-key',
+      platform: 'web',
       device_name: 'Chrome',
     });
   });

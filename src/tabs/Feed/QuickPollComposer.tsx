@@ -12,9 +12,9 @@ interface QuickPollComposerProps {
 }
 
 const DURATIONS = [
-  { value: '1h', label: '1 giờ' },
-  { value: '6h', label: '6 giờ' },
-  { value: '24h', label: '24 giờ' },
+  { value: '1h', label: '1 hour' },
+  { value: '6h', label: '6 hours' },
+  { value: '24h', label: '24 hours' },
 ];
 
 export const QuickPollComposer = ({ onPublish, onClose }: QuickPollComposerProps) => {
@@ -74,7 +74,7 @@ export const QuickPollComposer = ({ onPublish, onClose }: QuickPollComposerProps
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-bold text-lg flex items-center gap-2">
             <BarChart3 size={18} className="text-amber-400" />
-            Khảo sát
+            Poll
           </h3>
           <button onClick={onClose} className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400"><X size={18} /></button>
         </div>
@@ -82,7 +82,7 @@ export const QuickPollComposer = ({ onPublish, onClose }: QuickPollComposerProps
         <input
           value={question}
           onChange={e => setQuestion(e.target.value)}
-          placeholder="Câu hỏi của bạn là gì?"
+          placeholder={t('common.poll_question_placeholder')}
           className="w-full bg-slate-800/50 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-amber-500/30 mb-4"
           autoFocus
         />
@@ -94,7 +94,7 @@ export const QuickPollComposer = ({ onPublish, onClose }: QuickPollComposerProps
               <input
                 value={opt}
                 onChange={e => updateOption(idx, e.target.value)}
-                placeholder={`Lựa chọn ${idx + 1}`}
+                placeholder={`Option ${idx + 1}`}
                 className="flex-1 bg-slate-800/50 border border-white/5 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-amber-500/30"
               />
               {options.length > 2 && (
@@ -106,7 +106,7 @@ export const QuickPollComposer = ({ onPublish, onClose }: QuickPollComposerProps
 
         {options.length < 4 && (
           <button onClick={addOption} className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-amber-400 transition-colors mb-4">
-            <Plus size={14} /> Thêm lựa chọn
+            <Plus size={14} /> Add Option
           </button>
         )}
 
@@ -125,7 +125,7 @@ export const QuickPollComposer = ({ onPublish, onClose }: QuickPollComposerProps
         <div className="flex items-center justify-end">
           <button onClick={handleSubmit} disabled={isPublishing} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 text-sm font-bold active:scale-95 disabled:opacity-50 transition-all">
             {isPublishing ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950/30 border-t-slate-950" /> : <Send size={16} />}
-            {isPublishing ? 'Đang đăng...' : 'Đăng khảo sát'}
+            {isPublishing ? 'Posting...' : 'Post Poll'}
           </button>
         </div>
       </motion.div>

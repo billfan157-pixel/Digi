@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { HydrationSchedule } from '../lib/HydrationEngine';
 
 interface HydrationTimelineProps {
@@ -7,6 +8,7 @@ interface HydrationTimelineProps {
 }
 
 export default function HydrationTimeline({ schedule, className = '' }: HydrationTimelineProps) {
+  const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState('');
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function HydrationTimeline({ schedule, className = '' }: Hydratio
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
             <h3 className="text-[13px] font-semibold text-slate-300 tracking-wide uppercase">
-              Lịch trình
+              Schedule
             </h3>
           </div>
           <span className="text-[11px] text-slate-500 tabular-nums">
@@ -119,7 +121,7 @@ export default function HydrationTimeline({ schedule, className = '' }: Hydratio
                       : 'text-slate-400'
                 }`}
               >
-                {item.note || 'Uống nước'}
+                {item.note || t('common.drink_water_activity')}
               </span>
 
               {/* Amount */}

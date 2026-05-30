@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Timer, Flame, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -6,13 +7,14 @@ import { useUIStore } from '../../store/useUIStore';
 import { useAppStore } from '../../store/useAppStore';
 
 const PLANS = [
-  { hours: 16, label: '16:8', desc: 'Phổ biến nhất. Nhịn 16h, ăn 8h.' },
-  { hours: 18, label: '18:6', desc: 'Đốt mỡ nhanh. Nhịn 18h, ăn 6h.' },
-  { hours: 20, label: '20:4', desc: 'Chiến binh (Warrior Diet).' },
-  { hours: 23, label: 'OMAD', desc: 'Một bữa một ngày (23:1).' },
+  { hours: 16, label: '16:8', desc: 'Most popular. Fast 16h, eat 8h.' },
+  { hours: 18, label: '18:6', desc: 'Burn fat fast. Fast 18h, eat 6h.' },
+  { hours: 20, label: '20:4', desc: 'Warrior Diet.' },
+  { hours: 23, label: 'OMAD', desc: 'One meal a day (23:1).' },
 ];
 
 export default function FastingModal() {
+  const { t } = useTranslation();
   const isOpen = useUIStore(s => s.showFastingModal);
   const onClose = () => useUIStore.getState().setShowFastingModal(false);
   
@@ -71,7 +73,7 @@ export default function FastingModal() {
               <Flame size={12} /> Advanced Tracker
             </p>
             <h3 className="text-2xl font-black text-white mt-1">
-              Nhịn Ăn Gián Đoạn
+              {t('fasting.title')}
             </h3>
           </div>
           <button onClick={onClose} className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors">
@@ -82,7 +84,7 @@ export default function FastingModal() {
         <div className="overflow-y-auto scrollbar-hide pb-6 flex-1">
           {!isFastingMode ? (
             <div className="space-y-4">
-              <p className="text-sm text-slate-400 mb-2">Chọn chế độ phù hợp với cơ thể bạn:</p>
+              <p className="text-sm text-slate-400 mb-2">{t('fasting.choose_plan')}</p>
               {PLANS.map(plan => (
                 <button
                   key={plan.hours}
@@ -110,7 +112,7 @@ export default function FastingModal() {
               <div className="mt-6 p-4 rounded-2xl bg-cyan-950/30 border border-cyan-900/50 flex gap-3">
                 <Info size={20} className="text-cyan-500 shrink-0" />
                 <p className="text-xs text-cyan-200/70 leading-relaxed">
-                  Trong khi Fasting, AI sẽ đẩy thông báo nhắc bạn uống nước lọc, trà xanh hoặc cà phê đen để giảm cảm giác đói và duy trì Ketosis.
+                  {t('fasting.ai_info')}
                 </p>
               </div>
 
@@ -118,7 +120,7 @@ export default function FastingModal() {
                 onClick={() => startFasting(selectedPlan)}
                 className="w-full mt-4 py-4 rounded-2xl bg-orange-500 text-slate-950 font-black text-lg active:scale-95 transition-all shadow-[0_0_20px_rgba(249,115,22,0.4)]"
               >
-                Bắt đầu Fasting
+                {t('fasting.start')}
               </button>
             </div>
           ) : (
@@ -134,17 +136,17 @@ export default function FastingModal() {
                     {String(h).padStart(2, '0')}:{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
                   </p>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                    {isCompleted ? 'Đã hoàn thành' : 'Còn lại'}
+                    {isCompleted ? 'Completed' : 'Remaining'}
                   </p>
                 </div>
               </div>
 
               <div className="w-full grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4 text-center"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Đã trôi qua</p><p className="text-xl font-bold text-white">{elapsedH}h {elapsedM}m</p></div>
-                <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4 text-center"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Mục tiêu</p><p className="text-xl font-bold text-white">{fastingPlanHours}h</p></div>
+                <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4 text-center"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">{t('fasting.elapsed')}</p><p className="text-xl font-bold text-white">{elapsedH}h {elapsedM}m</p></div>
+                <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4 text-center"><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">{t('fasting.goal')}</p><p className="text-xl font-bold text-white">{fastingPlanHours}h</p></div>
               </div>
 
-              <button onClick={stopFasting} className="w-full py-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 font-black text-sm active:scale-95 transition-all hover:bg-rose-500/20">Kết thúc Fasting</button>
+              <button onClick={stopFasting} className="w-full py-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 font-black text-sm active:scale-95 transition-all hover:bg-rose-500/20">{t('fasting.stop')}</button>
             </div>
           )}
         </div>

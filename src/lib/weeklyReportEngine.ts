@@ -3,6 +3,7 @@
  * Weekly Report Engine — tạo báo cáo tổng kết tuần
  * Template-based fallback + AI-powered insights
  */
+import i18n from '@/i18n';
 import type { WaterLog } from '../models';
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -128,27 +129,26 @@ function generateTemplateInsight(
   const ratio = totalDays > 0 ? goalHitDays / totalDays : 0;
 
   if (ratio >= 0.85) {
-    insight = `Tuyệt vời! Bạn đã đạt mục tiêu ${goalHitDays}/${totalDays} ngày trong tuần này.`;
-    tip = 'Hãy duy trì thói quen tốt này. Thử thách bản thân với mục tiêu cao hơn vào tuần sau!';
+    insight = i18n.t('common.weekly_insight_great', { goalHitDays, totalDays });
+    tip = i18n.t('common.weekly_tip_maintain');
   } else if (ratio >= 0.5) {
-    insight = `Khá tốt! Bạn đạt ${goalHitDays}/${totalDays} ngày. Trung bình ${Math.round(avgDaily)}ml/ngày.`;
+    insight = i18n.t('common.weekly_insight_good', { goalHitDays, totalDays, avgDaily: Math.round(avgDaily) });
     if (trend === 'improving') {
-      tip = 'Đang cải thiện dần! Tuần sau cố gắng uống thêm 200ml mỗi ngày nhé.';
+      tip = i18n.t('common.weekly_tip_improving');
     } else if (trend === 'declining') {
-      tip = 'Có dấu hiệu giảm nhẹ. Hãy tập trung hơn vào các khung giờ dễ quên.';
+      tip = i18n.t('common.weekly_tip_slight_drop');
     } else {
-      tip = 'Giữ vững phong độ! Thêm một ly nước mỗi bữa ăn để cải thiện.';
+      tip = i18n.t('common.weekly_tip_keep_momentum');
     }
   } else {
-    insight = `Cần cố gắng hơn! Bạn mới đạt ${goalHitDays}/${totalDays} ngày. Trung bình ${Math.round(avgDaily)}ml/ngày.`;
-    tip = 'Hãy đặt nhắc nhở mỗi 2 tiếng. Bắt đầu với mục tiêu nhỏ: uống 1 ly mỗi giờ.';
+    insight = i18n.t('common.weekly_insight_low', { goalHitDays, totalDays, avgDaily: Math.round(avgDaily) });
+    tip = i18n.t('common.weekly_tip_set_reminders');
   }
 
-  // Thêm so sánh với tuần trước
   if (comparison > 0) {
-    insight += ` So với tuần trước, bạn đã uống nhiều hơn ${Math.round(comparison)}%. Tiến bộ rõ rệt!`;
+    insight += ' ' + i18n.t('common.weekly_comparison_up', { percent: Math.round(comparison) });
   } else if (comparison < 0) {
-    insight += ` Tuần này uống ít hơn ${Math.round(Math.abs(comparison))}% so với tuần trước.`;
+    insight += ' ' + i18n.t('common.weekly_comparison_down', { percent: Math.round(Math.abs(comparison)) });
   }
 
   return { insight, tip };
@@ -250,11 +250,11 @@ export function getCachedReport(weekStart?: string): WeeklyReport | null {
  */
 export function formatReportForSharing(report: WeeklyReport): string {
   const lines = [
-    '📊 *Báo cáo uống nước tuần này*',
+    i18n.t('common.weekly_share_title'),
     '',
     `📅 ${report.weekStart} → ${report.weekEnd}`,
-    `🥤 Tổng: ${report.totalIntake}ml (TB ${report.avgDaily}ml/ngày)`,
-    `🎯 Đạt mục tiêu: ${report.goalHitDays}/${report.totalDays} ngày`,
+    i18n.t('weekly.share_total', { total: report.totalIntake, avg: report.avgDaily }),
+    i18n.t('weekly.share_goal_hits', { hits: report.goalHitDays, days: report.totalDays }),
     '',
     report.insight,
     '',

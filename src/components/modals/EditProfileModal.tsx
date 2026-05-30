@@ -44,8 +44,8 @@ export default function EditProfileModal({
             </select>
           </div>
 
-          <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1 block">Mục tiêu chính</label><select value={editProfileData.goal} onChange={e => setEditProfileData({...editProfileData, goal: e.target.value})} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm outline-none focus:border-cyan-500"><option value="Giảm mỡ & Tăng cơ">Giảm mỡ & Tăng cơ</option><option value="Sức khỏe tổng quát">Sức khỏe tổng quát</option><option value="Bảo vệ da">Bảo vệ da</option></select></div>
-          <button type="submit" disabled={isUpdatingProfile} className="w-full py-4 mt-2 rounded-xl font-bold text-slate-900 text-sm disabled:opacity-50 active:scale-95 transition-all" style={{ background: 'linear-gradient(135deg, #06b6d4, #0ea5e9)' }}>{isUpdatingProfile ? "Đang lưu..." : "Lưu thay đổi"}</button>
+          <div><label className="text-[10px] text-slate-400 font-semibold uppercase mb-1 block">Mục tiêu chính</label><select value={editProfileData.goal} onChange={e => setEditProfileData({...editProfileData, goal: e.target.value})} className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm outline-none focus:border-cyan-500"><option value="Fat Loss & Muscle Gain">Fat Loss & Muscle Gain</option><option value="Overall Health">Overall Health</option><option value="Skin Protection">Skin Protection</option></select></div>
+          <button type="submit" disabled={isUpdatingProfile} className="w-full py-4 mt-2 rounded-xl font-bold text-slate-900 text-sm disabled:opacity-50 active:scale-95 transition-all" style={{ background: 'linear-gradient(135deg, #06b6d4, #0ea5e9)' }}>{isUpdatingProfile ? "Saving..." : "Save Changes"}</button>
         </form>
       </div>
     </div>

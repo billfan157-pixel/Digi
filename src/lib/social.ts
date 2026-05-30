@@ -1,9 +1,22 @@
+import i18n from '@/i18n';
+
 export type SocialComposerState = {
   content: string;
   imageUrl: string;
   // `progress` is kept as a legacy alias and is persisted as `status` until the DB taxonomy migrates.
   postKind: 'status' | 'progress' | 'story' | 'challenge';
   visibility: 'public' | 'followers';
+  eventType?: string;
+  referenceId?: string;
+};
+
+
+
+export const DEFAULT_SOCIAL_COMPOSER: SocialComposerState = {
+  content: '',
+  imageUrl: '',
+  postKind: 'status',
+  visibility: 'followers',
 };
 
 export type SocialProfileSummary = {
@@ -37,15 +50,6 @@ export type CloseCircleMember = SocialProfileSummary & {
   latest_at?: string | null;
 };
 
-
-
-export const DEFAULT_SOCIAL_COMPOSER: SocialComposerState = {
-  content: '',
-  imageUrl: '',
-  postKind: 'status',
-  visibility: 'followers',
-};
-
 export const DEFAULT_SOCIAL_PROFILE_STATS: SocialProfileStats = {
   followers: 0,
   following: 0,
@@ -53,7 +57,7 @@ export const DEFAULT_SOCIAL_PROFILE_STATS: SocialProfileStats = {
 };
 
 export const getRelativeTimeLabel = (value: string | null | undefined): string => {
-  if (!value) return 'Vừa xong';
+  if (!value) return i18n.t('common.just_now');
 
   const date = new Date(value);
   const now = new Date();
@@ -61,22 +65,22 @@ export const getRelativeTimeLabel = (value: string | null | undefined): string =
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
-    return 'Vừa xong';
+    return i18n.t('common.just_now');
   }
 
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
-    return `${diffInMinutes} phút trước`;
+    return i18n.t('common.minutes_ago', { minutes: diffInMinutes });
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return `${diffInHours} giờ trước`;
+    return i18n.t('common.hours_ago', { hours: diffInHours });
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) {
-    return `${diffInDays} ngày trước`;
+    return i18n.t('common.days_ago', { days: diffInDays });
   }
 
   return new Intl.DateTimeFormat('vi-VN', {
@@ -84,6 +88,22 @@ export const getRelativeTimeLabel = (value: string | null | undefined): string =
     month: '2-digit',
     year: 'numeric',
   }).format(date);
+};
+
+export const buildPurchaseShareText = (params: {
+  nickname?: string;
+  itemName: string;
+  itemCategory: string;
+}) => {
+  const name = params.nickname || 'Mình';
+  const categoryLabel: Record<string, string> = {
+    theme: i18n.t('common.category_theme_shop'),
+    frame: i18n.t('common.category_frame_shop'),
+    bottle: i18n.t('common.category_bottle_shop'),
+    sound: i18n.t('common.category_sound_shop'),
+  };
+  const label = categoryLabel[params.itemCategory] || i18n.t('common.category_item_shop');
+  return `${name} vừa mở khóa ${label} "${params.itemName}" trong cửa hàng DigiWell!`;
 };
 
 export const buildProgressShareText = (params: {

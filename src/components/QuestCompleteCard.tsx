@@ -39,7 +39,7 @@ export function QuestCompleteCard({ authorName, authorAvatar, questTitle, reward
             <div className="flex items-center gap-2">
               <span className="text-white font-bold text-[15px]">{authorName}</span>
               <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest flex items-center gap-1">
-                <Trophy size={10} /> Nhiệm vụ
+                <Trophy size={10} /> Quest
               </span>
             </div>
             <span className="text-slate-400 text-xs font-medium mt-0.5">{time}</span>
@@ -52,7 +52,7 @@ export function QuestCompleteCard({ authorName, authorAvatar, questTitle, reward
         <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-400 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
           <Trophy size={32} className="text-white drop-shadow-md" />
         </div>
-        <p className="text-cyan-400 text-[10px] font-black uppercase tracking-widest mb-1">Mục tiêu hoàn thành</p>
+        <p className="text-cyan-400 text-[10px] font-black uppercase tracking-widest mb-1">Quest Completed</p>
         <h4 className="text-white text-xl font-black mb-3 text-center leading-tight">{questTitle}</h4>
         
         <div className="flex items-center gap-2 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700">
@@ -67,7 +67,7 @@ export function QuestCompleteCard({ authorName, authorAvatar, questTitle, reward
           onClick={onCheers}
           className="w-full py-3.5 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-black text-sm active:scale-95 transition-all hover:bg-cyan-500/25 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
         >
-          <Droplets size={18} /> Cụng ly chúc mừng
+          <Droplets size={18} /> Cheers & Celebrate
         </button>
       </div>
     </motion.div>

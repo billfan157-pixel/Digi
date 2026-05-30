@@ -85,6 +85,7 @@ export function useAppTabProps({
     handleExportJSON,
     isAiLoading: Boolean((geminiProps as Record<string, unknown>).isAiLoading),
     aiAdvice: String((geminiProps as Record<string, unknown>).aiAdvice || ''),
+    aiAdviceObj: (geminiProps as Record<string, unknown>).aiAdviceObj as any,
     fetchAIAdvice: ((geminiProps as Record<string, unknown>).fetchAIAdvice as (() => void) | undefined) || (() => {}),
     calendarEvents,
     syncCalendar,

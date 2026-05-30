@@ -28,14 +28,49 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { lat, lon, city } = await req.json();
+    let { lat, lon, city } = await req.json();
 
-    // Validate inputs
+    // If no location parameters are sent, try to get coordinates via IP-based Geolocation
     if (!lat && !lon && !city) {
-      return new Response(JSON.stringify({ error: 'Missing location input' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      const forwardedFor = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+      const realIp = req.headers.get('x-real-ip')?.trim();
+      const cfIp = req.headers.get('cf-connecting-ip')?.trim();
+      const clientIp = cfIp || realIp || forwardedFor;
+
+      if (clientIp && clientIp !== '127.0.0.1' && clientIp !== 'localhost') {
+        try {
+          const geoRes = await fetch(`https://ipapi.co/${clientIp}/json/`);
+          if (geoRes.ok) {
+            const geoData = await geoRes.json();
+            if (typeof geoData.latitude === 'number' && typeof geoData.longitude === 'number') {
+              lat = geoData.latitude;
+              lon = geoData.longitude;
+            }
+          }
+        } catch (e) {
+          console.warn('[Weather Proxy] Geolocation via ipapi.co failed:', e);
+        }
+
+        if (!lat && !lon) {
+          try {
+            const geoRes = await fetch(`https://freeipapi.com/api/json/${clientIp}`);
+            if (geoRes.ok) {
+              const geoData = await geoRes.json();
+              if (typeof geoData.latitude === 'number' && typeof geoData.longitude === 'number') {
+                lat = geoData.latitude;
+                lon = geoData.longitude;
+              }
+            }
+          } catch (e) {
+            console.warn('[Weather Proxy] Geolocation via freeipapi.com failed:', e);
+          }
+        }
+      }
+
+      // If IP-based geolocation failed to find coordinates, fallback to Hanoi
+      if (!lat && !lon) {
+        city = 'Hanoi';
+      }
     }
 
     const apiKey = Deno.env.get('OPENWEATHER_API_KEY');

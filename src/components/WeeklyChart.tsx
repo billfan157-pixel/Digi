@@ -44,10 +44,10 @@ export default function WeeklyChart({
         <div className="flex items-center justify-between mb-8">
            <div className="flex items-center gap-2">
              <div className="w-1.5 h-6 bg-cyan-400 rounded-full" />
-             <h3 className="text-sm font-black text-white uppercase tracking-widest">Hiệu suất tuần</h3>
+             <h3 className="text-sm font-black text-white uppercase tracking-widest">Week Performance</h3>
            </div>
            <div className="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20">
-              <span className="text-[10px] font-black text-cyan-400 uppercase tracking-tight">Mục tiêu: {waterGoal}ml</span>
+              <span className="text-[10px] font-black text-cyan-400 uppercase tracking-tight">Goal: {waterGoal}ml</span>
            </div>
         </div>
 
@@ -60,7 +60,7 @@ export default function WeeklyChart({
           >
             <div className="w-full border-t border-dashed border-cyan-500/30"></div>
             <span className="text-[8px] font-black tracking-widest text-cyan-400">
-              MỤC TIÊU
+              GOAL
             </span>
           </div>
 

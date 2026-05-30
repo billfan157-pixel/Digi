@@ -29,6 +29,7 @@ function makePost(overrides: Partial<SocialFeedPost> = {}): SocialFeedPost {
     event_type: null,
     reference_id: null,
     is_squad_highlight: false,
+    stake_coins: null,
     ...overrides,
   };
 }

@@ -1,10 +1,12 @@
+import i18n from '@/i18n';
 import { isSupabaseConfigured, supabase } from './supabase';
 
 type AiGatewayAction =
   | 'advice'
   | 'chat'
   | 'report-analysis'
-  | 'agentic';
+  | 'agentic'
+  | 'nudge';
 
 type AiGatewayError = {
   error?: string;
@@ -19,11 +21,11 @@ export type AiGatewayStreamEvent =
 function parseAiGatewayError(error: unknown): Error {
   const context = (error as { context?: Response }).context;
   if (context && typeof context.json === 'function') {
-    return new Error('AI gateway trả về lỗi.');
+    return new Error(i18n.t('ai.gateway_error'));
   }
   return error instanceof Error
     ? error
-    : new Error('Không thể kết nối AI gateway.');
+    : new Error(i18n.t('ai.gateway_connection_error'));
 }
 
 export async function invokeAiGateway<T>(
@@ -31,7 +33,7 @@ export async function invokeAiGateway<T>(
   payload: Record<string, unknown>,
 ): Promise<T> {
   if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Cloud AI chưa được cấu hình.');
+    throw new Error(i18n.t('ai.cloud_not_configured'));
   }
 
   const { data, error } = await supabase.functions.invoke('ai-gateway', {
@@ -54,7 +56,7 @@ export async function invokeAiGateway<T>(
       }
     }
     if (import.meta.env.DEV) console.error('[AI Gateway] Invoke error:', error.message);
-    throw new Error(error.message || 'Không thể kết nối AI gateway.');
+    throw new Error(error.message || i18n.t('ai.gateway_connection_error'));
   }
 
   const response = data as AiGatewayError | null;
@@ -91,7 +93,7 @@ function dispatchSseBlock(block: string, onEvent: (event: AiGatewayStreamEvent) 
   } else if (eventType === 'done') {
     onEvent({ type: 'done' });
   } else if (eventType === 'error') {
-    onEvent({ type: 'error', error: String(payload.error ?? 'AI streaming bị lỗi.') });
+    onEvent({ type: 'error', error: String(payload.error ?? i18n.t('ai.streaming_error')) });
   }
 }
 
@@ -102,7 +104,7 @@ export async function invokeAiGatewayStream(
   signal?: AbortSignal,
 ): Promise<void> {
   if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Cloud AI chưa được cấu hình.');
+    throw new Error(i18n.t('ai.cloud_not_configured'));
   }
 
   const { data, error } = await supabase.functions.invoke<Response>('ai-gateway', {
@@ -126,7 +128,7 @@ export async function invokeAiGatewayStream(
   }
 
   if (!(data instanceof Response) || !data.body) {
-    throw new Error('AI gateway không trả về stream hợp lệ.');
+    throw new Error(i18n.t('ai.invalid_stream'));
   }
 
   const reader = data.body.getReader();

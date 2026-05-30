@@ -1,4 +1,5 @@
 // src/hooks/useAppSystem.ts
+import i18n from '@/i18n';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Capacitor } from '@capacitor/core';
@@ -24,7 +25,7 @@ import {
 } from '@/lib/sessionSecurity';
 
 export function useAppSystem() {
-  const [view, setView] = useState<'welcome' | 'login' | 'register' | 'app' | 'locked'>('welcome');
+  const [view, setView] = useState<'welcome' | 'login' | 'register' | 'app' | 'locked' | 'sea-landing'>('welcome');
   const [profile, setProfile] = useState<AppProfile | null>(null);
   const [loginPrefill, setLoginPrefill] = useState('');
   const profileIdRef = useRef<string | undefined>(undefined);
@@ -145,7 +146,7 @@ export function useAppSystem() {
 
   const handleLogout = useCallback(async () => {
     const { confirmDialog } = await import('@/store/useConfirmDialog');
-    const ok = await confirmDialog({ title: 'Đăng xuất', message: 'Xác nhận đăng xuất an toàn?', confirmLabel: 'Đăng xuất', variant: 'danger' });
+    const ok = await confirmDialog({ title: i18n.t('common.logout_confirm_title'), message: i18n.t('common.logout_confirm_message'), confirmLabel: i18n.t('common.logout'), variant: 'danger' });
     if (ok) {
       const { clearSessionActivity, clearUserSessionArtifacts } = await import('@/lib/sessionSecurity');
       clearSessionActivity();

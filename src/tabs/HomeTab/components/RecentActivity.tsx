@@ -1,6 +1,7 @@
 import { Droplet, Coffee, Wine, History, X, Bluetooth } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import type { WaterLog } from '@/models';
 
 interface RecentActivityProps {
@@ -14,7 +15,7 @@ const formatWaterEntryTime = (entry: Pick<WaterLog, 'created_at'>) => {
   if (!rawTime) return '--:--';
   const parsed = new Date(rawTime);
   if (Number.isNaN(parsed.getTime())) return '--:--';
-  return parsed.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  return parsed.toLocaleTimeString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' });
 };
 
 const presetStyles: Record<string, { bg: string; border: string; text: string }> = {

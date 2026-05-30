@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AppStorage } from '@/lib/storage';
 
 interface WelcomeScreenProps {
-  onNavigate: (view: 'login' | 'register') => void;
+  onNavigate: (view: 'login' | 'register' | 'sea-landing') => void;
 }
 
 export default function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
@@ -48,6 +48,10 @@ export default function WelcomeScreen({ onNavigate }: WelcomeScreenProps) {
             {t('welcome.register')}
           </button>
         </div>
+
+        <button onClick={() => onNavigate('sea-landing')} className="mt-6 text-xs text-slate-500 font-bold uppercase tracking-wider hover:text-cyan-400 transition-colors text-center w-full">
+          {t('sea.title')} →
+        </button>
       </div>
       <p className="text-center text-slate-600 text-xs pb-8 z-10">Digital Citizen · VLU 2026</p>
     </div>

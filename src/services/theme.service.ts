@@ -3,7 +3,7 @@ import { AppStorage } from '@/lib/storage';
 import { APP_THEMES, type ThemeConfig } from '@/config/themes';
 
 const THEME_CACHE_KEY = 'cached_themes';
-const THEME_CACHE_VERSION = 'v1';
+const THEME_CACHE_VERSION = 'v3';
 
 interface CachedThemes {
   version: string;
@@ -74,7 +74,8 @@ export async function loadThemesFromServer(): Promise<Record<string, ThemeConfig
               name: themeConfig.name || themeConfig.id,
               blurLevel: themeConfig.blurLevel || '20px',
               effect: themeConfig.effect || 'none',
-              borderRadius: themeConfig.borderRadius || '16px',
+              overlayEffect: themeConfig.overlayEffect || 'none',
+              borderRadius: '16px',
               borderWidth: themeConfig.borderWidth || '1px',
               glassOpacity: themeConfig.glassOpacity || '0.04',
               glassPattern: themeConfig.glassPattern || 'none',
@@ -83,6 +84,7 @@ export async function loadThemesFromServer(): Promise<Record<string, ThemeConfig
               glassGradient: themeConfig.glassGradient,
               glassHoverEffect: themeConfig.glassHoverEffect || 'opacity',
               colors: themeConfig.colors,
+              rarity: themeConfig.rarity || 'common',
             };
             themes[themeConfig.id] = cleanConfig;
           }

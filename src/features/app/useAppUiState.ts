@@ -17,8 +17,7 @@ export function useAppUiState() {
     setShowAddFriend: state.setShowAddFriend,
     showShopModal: state.showShopModal,
     setShowShopModal: state.setShowShopModal,
-    showBattleArena: state.showBattleArena,
-    setShowBattleArena: state.setShowBattleArena,
+
     showQuestModal: state.showQuestModal,
     setShowQuestModal: state.setShowQuestModal,
     showClubCoopModal: state.showClubCoopModal,

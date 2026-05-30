@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 import { useAppStore } from '../store/useAppStore';
 import { providerTokenStore } from '../lib/providerTokenStore';
+import { anonymizeTitle } from './insight/insightHelpers';
 
 export const CALENDAR_OAUTH_PENDING_KEY = 'digiwell_pending_calendar_oauth';
 export const CALENDAR_TOKEN_UPDATED_EVENT = 'digiwell:google-provider-token-updated';
@@ -117,7 +118,7 @@ function mapGoogleEvent(event: GoogleCalendarEvent): CalendarEventItem | null {
   
   return {
     id: event.id,
-    title: event.summary?.trim() || 'Sự kiện không tên',
+    title: event.summary?.trim() || i18n.t('schedule.unnamed_event'),
     start: getDisplayTime(event.start),
     end: getDisplayTime(event.end, true),
     startRaw,
@@ -142,7 +143,7 @@ function writeCalendarOAuthMode(mode: CalendarOAuthMode | null) {
 async function beginGoogleCalendarOAuth(options: { forceSignIn?: boolean } = {}) {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError) throw userError;
-  if (!user) throw new Error('Vui lòng đăng nhập trước khi kết nối Google Calendar.');
+  if (!user) throw new Error(i18n.t('schedule.login_required_calendar'));
   writeCalendarOAuthPendingFlag(true);
   const credentials: CalendarOAuthOptions = {
     provider: 'google' as const,
@@ -215,7 +216,7 @@ async function fetchCalendarEventsViaProxy(): Promise<CalendarProxyResponse> {
     new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Calendar proxy timeout')), 15000)),
   ]);
   const { data, error } = result;
-  if (error) throw new Error(error.message || 'Không thể kết nối calendar proxy.');
+  if (error) throw new Error(error.message || i18n.t('schedule.cannot_connect_calendar'));
   const response = data as CalendarProxyResponse | null;
   if (response?.error) {
     if (response.error.includes('unauthorized') || response.error.includes('invalid_grant')) {
@@ -253,12 +254,12 @@ export function useCalendarSync() {
   }, []);
 
   const syncCalendar = useCallback(async (
-    options: { silent?: boolean; startOAuthIfNeeded?: boolean } = {},
+    options: { silent?: boolean; startOAuthIfNeeded?: boolean; forceRefresh?: boolean } = {},
   ): Promise<number | false> => {
-    const { silent = false, startOAuthIfNeeded = true } = options;
+    const { silent = false, startOAuthIfNeeded = true, forceRefresh = false } = options;
     const now = Date.now();
     
-    if (lastSyncTimeRef.current > 0 && now - lastSyncTimeRef.current < SYNC_COOLDOWN_MS) {
+    if (!forceRefresh && lastSyncTimeRef.current > 0 && now - lastSyncTimeRef.current < SYNC_COOLDOWN_MS) {
       return calendarEvents.length;
     }
 
@@ -286,9 +287,14 @@ export function useCalendarSync() {
         return false;
       }
 
+      const privacyLevel = profile?.calendar_privacy_level || 'standard';
       const events = (proxyResponse.events || [])
         .map(mapGoogleEvent)
-        .filter((event): event is CalendarEventItem => !!event);
+        .filter((event): event is CalendarEventItem => !!event)
+        .map(ev => ({
+          ...ev,
+          title: anonymizeTitle(ev.title, privacyLevel),
+        }));
 
       const store = useAppStore.getState();
       const newEventsStr = JSON.stringify(events);
@@ -393,6 +399,20 @@ export function useCalendarSync() {
       clearRetry();
     };
   }, [profile?.id, clearRetry, scheduleRetry, syncCalendar]);
+
+  const prevPrivacyLevelRef = useRef<string | undefined>();
+  const syncCalendarRef = useRef(syncCalendar);
+  syncCalendarRef.current = syncCalendar;
+
+  useEffect(() => {
+    const currentLevel = profile?.calendar_privacy_level || 'standard';
+    const prevLevel = prevPrivacyLevelRef.current;
+    prevPrivacyLevelRef.current = currentLevel;
+
+    if (prevLevel !== undefined && prevLevel !== currentLevel) {
+      void syncCalendarRef.current({ silent: true, forceRefresh: true });
+    }
+  }, [profile?.calendar_privacy_level]);
 
   return { isCalendarSynced, setIsCalendarSynced, calendarEvents, syncCalendar, isSyncing };
 }

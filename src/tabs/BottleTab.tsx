@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Activity, FlaskConical, Trophy, ArrowLeft, Box, Sparkles, Cpu, ChevronRight } from 'lucide-react';
 import { DeviceHero, ControlDeck, ArenaPaywall } from '../components/DeviceComponents';
 import { useUIStore } from '../store/useUIStore';
@@ -45,6 +46,8 @@ export default function BottleTab({
   smartBottle: SmartBottleProps;
   onBack?: () => void;
 }) {
+  const { t } = useTranslation();
+  const { setShowMainMenu } = useUIStore();
   const [activeTab, setActiveTab] = useState<'lab' | 'arena'>('lab');
   const [labTab, setLabTab] = useState<'control' | 'diagnostics' | 'aura' | 'logic'>('control');
   
@@ -95,18 +98,21 @@ export default function BottleTab({
             )}
             <div>
               <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-400 font-black">DigiBottle OS</p>
-              <h1 className="text-xl font-black text-white tracking-tight mt-0.5">Trung tâm điều khiển</h1>
+              <h1 className="text-xl font-black text-white tracking-tight mt-0.5">{t('bottle.control_center') || 'Control Center'}</h1>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
             <div className="text-right hidden sm:block">
-              <p className="text-[9px] uppercase tracking-widest text-slate-500 font-black">Danh tính</p>
+              <p className="text-[9px] uppercase tracking-widest text-slate-500 font-black">{t('bottle.identity')}</p>
               <p className="text-xs font-black text-white">{String(profile?.nickname || 'Cyber User')}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl border-2 border-cyan-400/30 overflow-hidden bg-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+            <button 
+              onClick={() => setShowMainMenu(true)}
+              className="w-10 h-10 rounded-xl border-2 border-cyan-400/30 overflow-hidden bg-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.2)] active:scale-90 transition-transform"
+            >
               <img src={String(profile?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Cyber')} className="w-full h-full object-cover" alt="User" />
-            </div>
+            </button>
           </div>
         </div>
 
@@ -117,14 +123,14 @@ export default function BottleTab({
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all font-black text-xs uppercase tracking-widest ${activeTab === 'lab' ? 'bg-cyan-500 text-slate-950 shadow-lg' : 'text-slate-500 hover:text-white'}`}
           >
             <FlaskConical size={16} />
-            <span>Phòng Lab</span>
+            <span>{t('bottle.lab')}</span>
           </button>
           <button 
             onClick={() => setActiveTab('arena')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all font-black text-xs uppercase tracking-widest ${activeTab === 'arena' ? 'bg-purple-500 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
           >
             <Trophy size={16} />
-            <span>Đấu trường</span>
+            <span>{t('bottle.arena')}</span>
           </button>
         </div>
       </div>
@@ -153,6 +159,9 @@ export default function BottleTab({
                 healthScore={healthScore}
                 onConnect={smartBottle?.connectDevice || (() => {})}
                 onDisconnect={smartBottle?.disconnectDevice || (() => {})}
+                pairedDeviceId={smartBottle?.pairedDeviceId as string | null | undefined}
+                onUnpair={(smartBottle?.unpairDevice as (() => void) | undefined) ?? undefined}
+                bottleAuthKey={smartBottle?.bottleAuthKey as string | null | undefined}
               />
 
               {!isConnected && (
@@ -169,13 +178,13 @@ export default function BottleTab({
                     </div>
                     <div>
                       <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-500/10 px-2 py-0.5 rounded-full">
-                        Độc quyền DigiWell
+                        {t('bottle.exclusive_digiwell')}
                       </span>
                       <h3 className="text-base font-black text-white mt-1.5 leading-tight">
-                        Đặt trước Bình nước Thông minh DigiBottle
+                        Pre-order DigiBottle Smart Water Bottle
                       </h3>
                       <p className="text-slate-400 text-xs mt-1 leading-relaxed font-medium">
-                        Tích hợp cảm biến lượng nước tự động, đồng bộ trực tiếp với AI Hydration Coach, chống va đập, sạc nhanh không dây. Đăng ký nhận ưu đãi 20% khi ra mắt.
+                        {t('bottle.preorder_desc')}
                       </p>
                     </div>
                   </div>
@@ -184,7 +193,7 @@ export default function BottleTab({
                     onClick={() => useUIStore.getState().setShowHardwareWaitlist(true)}
                     className="w-full py-3.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 active:scale-95 text-slate-950 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/10 transition-all"
                   >
-                    <span>Tham gia Danh sách chờ</span>
+                    <span>{t('bottle.join_waitlist')}</span>
                     <ChevronRight size={14} />
                   </button>
                 </motion.div>
@@ -193,10 +202,10 @@ export default function BottleTab({
               {/* Lab Sub-navigation (Glass Bubbles) */}
               <div className="flex gap-3 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
                 {[
-                  { id: 'control', label: 'Hệ thống', icon: Box },
-                  { id: 'diagnostics', label: 'Cảm biến', icon: Activity },
-                  { id: 'aura', label: 'Ánh sáng', icon: Sparkles },
-                  { id: 'logic', label: 'Tự động', icon: Cpu }
+                  { id: 'control', label: 'System', icon: Box },
+                  { id: 'diagnostics', label: 'Sensors', icon: Activity },
+                  { id: 'aura', label: 'Aura', icon: Sparkles },
+                  { id: 'logic', label: 'Auto', icon: Cpu }
                 ].map(item => (
                   <button
                     key={item.id}
@@ -237,6 +246,9 @@ export default function BottleTab({
                       healthScore={healthScore}
                       isOpen={true}
                       onToggle={() => {}}
+                      isDemoMode={smartBottle?.isDemoMode as boolean | undefined}
+                      simulateAttackType={smartBottle?.simulateAttackType as any}
+                      setSimulateAttackType={smartBottle?.setSimulateAttackType as any}
                     />
                   </motion.div>
                 )}

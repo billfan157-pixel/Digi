@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { user_id, event_type, payload } = body;
+  const { user_id, event_type, payload, use_queue } = body;
   if (!user_id || !event_type || !payload) {
     return new Response(JSON.stringify({ error: 'Thiếu thông tin user_id, event_type hoặc payload.' }), {
       status: 400,
@@ -161,6 +161,46 @@ Deno.serve(async (req) => {
 
   if (!subscriptions || subscriptions.length === 0) {
     return new Response(JSON.stringify({ message: 'Không có đăng ký webhook nào hoạt động cho người dùng này.' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Queue-based dispatch path (async, non-blocking)
+  if (use_queue === true) {
+    const enqueued: string[] = [];
+    for (const sub of subscriptions) {
+      const isMatched = sub.events.includes(event_type) || sub.events.includes('*');
+      if (!isMatched) continue;
+
+      const { error: queueError } = await supabase.rpc('pgmq_send', {
+        queue_name: 'webhook_dispatch_queue',
+        msg: JSON.stringify({
+          type: 'webhook_dispatch',
+          payload: {
+            id: crypto.randomUUID(),
+            event: event_type,
+            timestamp: new Date().toISOString(),
+            data: payload,
+          },
+          subscription_id: sub.id,
+          user_id,
+          event_type,
+          retry_count: 0,
+        }),
+      });
+
+      if (queueError) {
+        console.error(`Failed to enqueue webhook for subscription ${sub.id}:`, queueError);
+      } else {
+        enqueued.push(sub.id);
+      }
+    }
+
+    return new Response(JSON.stringify({
+      message: `Đã xếp hàng ${enqueued.length} webhook(s) vào queue.`,
+      enqueued,
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

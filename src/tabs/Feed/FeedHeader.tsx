@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Award, Search, Swords, Users, Sparkles, TrendingUp, Flame, Image, Droplets } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Profile } from '../../models';
@@ -22,13 +23,13 @@ interface FeedHeaderProps {
 
 const modeOptions: { key: FeedMode; label: string; icon: typeof TrendingUp }[] = [
   { key: 'smart', label: 'Smart', icon: Sparkles },
-  { key: 'latest', label: 'Mới nhất', icon: TrendingUp },
+  { key: 'latest', label: 'Latest', icon: TrendingUp },
    { key: 'hot', label: 'Hot', icon: Flame as unknown as typeof TrendingUp },
   { key: 'following', label: 'Follow', icon: Users },
 ];
 
 const filterOptions: { key: FeedFilter; label: string; icon: typeof Award }[] = [
-  { key: 'all', label: 'Tất cả', icon: Sparkles },
+  { key: 'all', label: 'All', icon: Sparkles },
   { key: 'checkins', label: 'Pulse', icon: Droplets },
   { key: 'drops', label: 'Drop', icon: Droplets },
   { key: 'milestones', label: 'Peak', icon: Award },
@@ -45,6 +46,7 @@ export const FeedHeader = ({
   onFilterChange,
   onSearchChange,
 }: FeedHeaderProps) => {
+  const { t } = useTranslation();
   const [showSearch, setShowSearch] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState(feedSearch);
 
@@ -99,7 +101,7 @@ export const FeedHeader = ({
                 <input
                   value={debouncedSearch}
                   onChange={(event) => setDebouncedSearch(event.target.value)}
-                  placeholder="Tìm bạn bè, bài viết..."
+                  placeholder={t('feed.search_feed_placeholder')}
                   className="w-full bg-transparent text-sm text-white placeholder:text-slate-500 outline-none"
                   autoFocus
                 />
@@ -111,7 +113,7 @@ export const FeedHeader = ({
                   }}
                   className="text-slate-500 hover:text-white transition-colors text-xs font-black uppercase tracking-widest px-2"
                 >
-                  Hủy
+                  {t('common.cancel')}
                 </button>
               </div>
             </motion.div>

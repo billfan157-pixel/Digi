@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run typecheck)",
+      "Bash(grep -E \"error -20)",
+      "Bash(ls -la supabase/migrations/*.sql)",
+      "Bash(npm run analyze)",
+      "Bash(npm run build)",
+      "Bash(npm test -- --run --reporter=dot)",
+      "Bash(npm run check:dependencies)",
+      "Bash(npx playwright test --project=chromium e2e/comprehensive.spec.ts --reporter=list --timeout=30000)",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"var en=require\\(''./src/en.json''\\);var vi=require\\(''./src/vi.json''\\);var f=function\\(o,p\\){var r={};for\\(var k of Object.keys\\(o\\)\\){var n=p?p+''.''+k:k;if\\(typeof o[k]===''object''&&o[k]!==null\\){Object.assign\\(r,f\\(o[k],n\\)\\)}else{r[n]=true}}return r};var ek=Object.keys\\(f\\(en\\)\\).sort\\(\\);var vk=Object.keys\\(f\\(vi\\)\\).sort\\(\\);console.log\\(''EN:'',ek.length,''VI:'',vk.length\\);var me=vk.filter\\(function\\(k\\){return !ek.includes\\(k\\)}\\);var mv=ek.filter\\(function\\(k\\){return !vk.includes\\(k\\)}\\);console.log\\(''Missing in EN:'',me.length\\);console.log\\(''Missing in VI:'',mv.length\\);if\\(me.length\\)me.slice\\(0,20\\).forEach\\(function\\(k\\){console.log\\('' VI:'',k\\)}\\);if\\(mv.length\\)mv.slice\\(0,20\\).forEach\\(function\\(k\\){console.log\\('' EN:'',k\\)}\\);if\\(!me.length&&!mv.length\\)console.log\\(''ALL KEYS MATCH''\\)\")",
+      "Bash(node scratch/check-i18n-keys.js)",
+      "Bash(mv scratch/check-i18n-keys.js scratch/check-i18n-keys.cjs)",
+      "Bash(node scratch/check-i18n-keys.cjs)",
+      "Bash(node -p \"require.resolve\\(''./src/en.json''\\)\")"
+    ]
+  }
+}

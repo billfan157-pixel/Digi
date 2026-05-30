@@ -88,7 +88,14 @@
 
   /* ── Theme Specific Card Styles ── */
   /* Neon Glow for Cyber */
-  [style*="--dw-radius-card: 0px"], [style*="--dw-radius-card: 2px"], [style*="--dw-radius-card: 4px"] {
+  .theme-group-cyber .glass-card,
+  .theme-group-cyber .glass-card-strong,
+  .theme-group-cyber .btn-primary,
+  .theme-group-cyber .btn-ghost,
+  .theme-group-cyber .btn-danger,
+  .theme-group-cyber .tab-item,
+  .theme-group-cyber .input-field,
+  .theme-group-cyber .glass-control {
     --dw-shadow-glass: 0 0 15px var(--dw-accent), 0 0 5px var(--dw-accent);
     --dw-border-glass: var(--dw-accent);
     text-transform: uppercase;
@@ -99,13 +106,6 @@
   [style*="--dw-blur-level: 40px"] {
     --dw-shadow-glass: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
     --dw-border-glass: rgba(255, 255, 255, 0.1);
-  }
-
-  /* Organic Softness for Forest/Sakura */
-  [style*="--dw-radius-card: 2.5rem"], [style*="--dw-radius-card: 3rem"] {
-    --dw-shadow-glass: 0 10px 25px -5px var(--dw-glow-color);
-    border-style: dashed; /* Thử nghiệm viền đứt đoạn cho phong cách mộc mạc */
-    border-width: 2px;
   }
 
 
@@ -193,6 +193,41 @@
   0%, 100% { opacity: 0.3; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.1) brightness(1.5); }
 }
+@keyframes frame-lightning {
+  0%, 100% { opacity: 0; }
+  10%, 30% { opacity: 1; }
+  20%, 40% { opacity: 0.3; }
+}
+@keyframes frame-orbit {
+  from { transform: rotate(0deg) translateX(44px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(44px) rotate(-360deg); }
+}
+@keyframes frame-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes frame-glow-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+@keyframes frame-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+@keyframes frame-meteor {
+  0% { transform: translate(-60px, -60px); opacity: 1; }
+  100% { transform: translate(60px, 60px); opacity: 0; }
+}
+@keyframes frame-scale-ring {
+  0% { transform: scale(0.85); opacity: 0.6; }
+  100% { transform: scale(1.1); opacity: 0; }
+}
+@keyframes frame-fire-flicker {
+  0%, 100% { opacity: 0.5; transform: scaleY(1); }
+  25% { opacity: 0.8; transform: scaleY(1.2); }
+  50% { opacity: 0.6; transform: scaleY(0.9); }
+  75% { opacity: 0.9; transform: scaleY(1.1); }
+}
 /* ── Theme Effect Animations ── */
 @keyframes cyber-grid-move {
   from { background-position: 0 0; }
@@ -225,6 +260,53 @@
 @keyframes ripple-out {
   0% { transform: scale(0); opacity: 1; }
   100% { transform: scale(3); opacity: 0; }
+}
+/* ── Premium Theme Effect Animations ── */
+@keyframes shimmer-diagonal {
+  0% { transform: translate(-100%, -100%) rotate(25deg); opacity: 0; }
+  25% { opacity: 0.12; }
+  50% { transform: translate(100%, 100%) rotate(25deg); opacity: 0.08; }
+  75% { opacity: 0.12; }
+  100% { transform: translate(200%, 200%) rotate(25deg); opacity: 0; }
+}
+@keyframes silk-sweep {
+  0% { transform: translateX(-150%) skewX(-15deg); opacity: 0; }
+  30% { opacity: 0.08; }
+  70% { opacity: 0.08; }
+  100% { transform: translateX(150%) skewX(-15deg); opacity: 0; }
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); filter: blur(0px); }
+  50% { transform: scale(1.015); filter: blur(1px); }
+}
+
+/* ── Animation Classes for Overlays ── */
+.animate-aurora-slow {
+  animation: aurora-slow 20s linear infinite;
+}
+.animate-twinkle {
+  animation: twinkle 4s ease-in-out infinite;
+}
+.animate-float-up {
+  animation: float-up 6s ease-in-out infinite;
+}
+.animate-ray-sweep {
+  animation: ray-sweep 8s linear infinite;
+}
+.animate-float-around {
+  animation: float-around 15s ease-in-out infinite;
+}
+.animate-ripple-out {
+  animation: ripple-out 4s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+}
+.animate-shimmer-diagonal {
+  animation: shimmer-diagonal 8s ease-in-out infinite;
+}
+.animate-silk-sweep {
+  animation: silk-sweep 6s ease-in-out infinite;
+}
+.animate-breathe {
+  animation: breathe 8s ease-in-out infinite;
 }
 
 

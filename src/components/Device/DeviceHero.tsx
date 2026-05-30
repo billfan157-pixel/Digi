@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Bluetooth, RefreshCw, Battery, Thermometer, Wifi } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { BottleVisualizer } from './BottleVisualizer';
 import { MetricMini } from './MetricMini';
 import { CAPACITY } from '../constants';
@@ -9,6 +10,7 @@ export function DeviceHero({
 }: {
   isConnected: boolean; isSyncing: boolean; fillPercentage: number; currentVolume: number; batteryLevel: number; signalStrength: number; latencyMs: number; temperature: number; onConnect: () => void; onDisconnect: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       {/* Connectivity Status Orb */}
@@ -69,9 +71,9 @@ export function DeviceHero({
         <BottleVisualizer isConnected={isConnected} currentVolume={currentVolume} capacity={CAPACITY} fillPercentage={fillPercentage} />
 
         <div className="grid grid-cols-3 gap-3 mt-4">
-          <MetricMini label="Sạc" value={`${batteryLevel}%`} icon={Battery} />
-          <MetricMini label="Nhiệt" value={`${temperature}°C`} icon={Thermometer} />
-          <MetricMini label="Tín hiệu" value={isConnected ? 'Tốt' : '---'} icon={Wifi} />
+          <MetricMini label={t('device.battery_label')} value={`${batteryLevel}%`} icon={Battery} />
+          <MetricMini label={t('device.temp_label')} value={`${temperature}°C`} icon={Thermometer} />
+          <MetricMini label={t('device.signal_label')} value={isConnected ? t('device.signal_good') : '---'} icon={Wifi} />
         </div>
       </div>
     </div>

@@ -15,6 +15,9 @@ import {
   authenticateDevice,
   readRssi,
   DEFAULT_SHARED_SECRET,
+  parseSecureHydrationPacket,
+  computeHmacSha256,
+  safeCompare,
 } from '../lib/ble';
 
 // ── State machine ──────────────────────────────────────────
@@ -55,6 +58,8 @@ interface ProfileBottleState {
   equipped_bottle_id: string | null;
   last_bottle_volume: number | null;
   bottle_auth_key?: string | null;
+  paired_device_id?: string | null;
+  last_event_id?: number | null;
 }
 
 interface HydrationRpcResponse {
@@ -80,8 +85,10 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  const [equippedBottle, setEquippedBottle] = useState<EquippedBottleSkin | null>(null);
   const [bottleAuthKey, setBottleAuthKey] = useState<string | null>(null);
+  const [pairedDeviceId, setPairedDeviceId] = useState<string | null>(null);
+  const [lastEventId, setLastEventId] = useState<number>(0);
+  const [simulateAttackType, setSimulateAttackType] = useState<'none' | 'replay' | 'tampering'>('none');
   const [metrics, setMetrics] = useState<BottleMetrics>({
     currentVolume: capacity,
     batteryLevel: 100,
@@ -91,6 +98,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
     healthScore: 100,
   });
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
+  const [equippedBottle, setEquippedBottle] = useState<EquippedBottleSkin | null>(null);
   const metricsRef = useRef(metrics);
   const mountedRef = useRef(true);
 
@@ -105,7 +113,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consecutiveLowHealthRef = useRef(0);
   const lastHydrationTimeRef = useRef<number>(0);
-  const handleDrinkEventRef = useRef<(amount: number) => Promise<void>>(async () => {});
+  const handleDrinkEventRef = useRef<(amount: number, eventId?: number, timestamp?: number) => Promise<void>>(async () => {});
   const handleBleDisconnectRef = useRef<(() => void) | null>(null);
   const scheduleReconnectRef = useRef<(() => void) | null>(null);
 
@@ -186,7 +194,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
         const timeSinceLastDrink = Date.now() - lastHydrationTimeRef.current;
         if (timeSinceLastDrink > 5000) {
           console.warn(`[MOCK BLE Connection Health] MOCK Health under 30% for 3 consecutive intervals. Triggering mock reconnect.`);
-          toast.warning('Tín hiệu mô phỏng yếu. Đang tự động kết nối lại...');
+          toast.warning(i18n.t('device.mock_signal_weak'));
           consecutiveLowHealthRef.current = 0;
           handleBleDisconnectRef.current?.();
           scheduleReconnectRef.current?.();
@@ -283,7 +291,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
             const timeSinceLastDrink = Date.now() - lastHydrationTimeRef.current;
             if (timeSinceLastDrink > 5000) {
               console.warn(`[BLE Connection Health] Health under 30% for 3 consecutive intervals. Triggering proactive reconnect.`);
-              toast.warning('Tín hiệu kết nối yếu. Đang tự động kết nối lại...');
+              toast.warning(i18n.t('device.signal_weak'));
               consecutiveLowHealthRef.current = 0;
               void (async () => {
                 try {
@@ -324,7 +332,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
             const timeSinceLastDrink = Date.now() - lastHydrationTimeRef.current;
             if (timeSinceLastDrink > 5000) {
               console.warn(`[BLE Connection Health] Health under 30% on consecutive errors. Triggering proactive reconnect.`);
-              toast.warning('Mất kết nối tín hiệu. Đang tự động kết nối lại...');
+              toast.warning(i18n.t('device.signal_lost'));
               consecutiveLowHealthRef.current = 0;
               void (async () => {
                 try {
@@ -383,7 +391,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
 
     if (attempt > RECONNECT_MAX_ATTEMPTS) {
       setConnectionState('error');
-      setLastError(`Không thể kết nối lại sau ${RECONNECT_MAX_ATTEMPTS} lần thử.`);
+      setLastError(i18n.t('device.reconnect_failed', { count: RECONNECT_MAX_ATTEMPTS }));
       setIsSyncing(false);
       return;
     }
@@ -413,12 +421,12 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
           const sharedSecret = bottleAuthKey || DEFAULT_SHARED_SECRET;
           const isAuthSuccess = await authenticateDevice(lastDeviceId, sharedSecret);
           if (!isAuthSuccess) {
-            toast.error('Xác thực thiết bị thất bại khi kết nối lại!');
+            toast.error(i18n.t('device.auth_failed_reconnect'));
             await bleDisconnectDevice(lastDeviceId).catch(() => {});
             handleBleDisconnect();
             if (mountedRef.current) {
               setConnectionState('error');
-              setLastError('Xác thực thiết bị thất bại khi kết nối lại.');
+              setLastError(i18n.t('device.auth_failed_reconnect'));
             }
             setIsSyncing(false);
             return;
@@ -429,10 +437,48 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
           setLastError(null);
           cancelReconnect();
           
-          await subscribeToHydration(lastDeviceId, (packet) => {
-            if (packet.checksumValid) {
-              void handleDrinkEventRef.current(packet.amountMl);
+          await subscribeToHydration(lastDeviceId, async (packet) => {
+            // SECURITY CHECK
+            if (packet.isSecure) {
+              const sharedSecret = bottleAuthKey || DEFAULT_SHARED_SECRET;
+              const headerBuffer = new ArrayBuffer(12);
+              const headerView = new DataView(headerBuffer);
+              headerView.setUint32(0, packet.amountMl, true);
+              headerView.setUint32(4, packet.eventId || 0, true);
+              headerView.setUint32(8, packet.timestamp, true);
+              const headerBytes = new Uint8Array(headerBuffer);
+
+              const expectedBytes = await computeHmacSha256(headerBytes, sharedSecret);
+              const isSignatureValid = safeCompare(packet.signature || new Uint8Array(), expectedBytes);
+
+              if (!isSignatureValid) {
+                console.error('Lỗi xác thực chữ ký gói tin BLE! Ngắt kết nối thiết bị.');
+                toast.error(i18n.t('device.packet_tampered'));
+                void bleDisconnectDevice(lastDeviceId).catch(() => {});
+                handleBleDisconnect();
+                return;
+              }
+            } else {
+              // Gói 9-byte: cấm ở production cho non-developer
+              const isMock = lastDeviceId.startsWith('MOCK-');
+              const { data: devCheck } = await supabase.from('profiles').select('is_developer').eq('id', userId).single();
+              const isDeveloper = devCheck?.is_developer ?? false;
+
+              if (!isMock && !isDeveloper && Capacitor.isNativePlatform()) {
+                console.warn('Giao thức 9-byte không an toàn bị cấm ở production. Ngắt kết nối.');
+                toast.error(i18n.t('device.unsafe_protocol'));
+                void bleDisconnectDevice(lastDeviceId).catch(() => {});
+                handleBleDisconnect();
+                return;
+              }
+
+              if (!packet.checksumValid) {
+                console.warn('Gói tin hydration nhận được từ BLE có checksum không hợp lệ');
+                return;
+              }
             }
+
+            void handleDrinkEventRef.current(packet.amountMl, packet.eventId, packet.timestamp);
           });
           startTelemetryPolling(lastDeviceId);
           startHealthPolling(lastDeviceId);
@@ -447,8 +493,8 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
           const isAuthSuccess = await authenticateDevice(mockId, sharedSecret);
           if (!isAuthSuccess) {
             setConnectionState('error');
-            setLastError('Xác thực thiết bị mô phỏng thất bại khi kết nối lại.');
-            toast.error('Xác thực thiết bị mô phỏng thất bại!');
+            setLastError(i18n.t('device.mock_auth_failed'));
+            toast.error(i18n.t('device.mock_auth_failed'));
             setIsSyncing(false);
             return;
           }
@@ -506,7 +552,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
       try {
         const { data, error: profileError } = await supabase
           .from('profiles')
-          .select('equipped_bottle_id, last_bottle_volume, bottle_auth_key')
+          .select('equipped_bottle_id, last_bottle_volume, bottle_auth_key, paired_device_id, last_event_id')
           .eq('id', userId)
           .single();
 
@@ -521,6 +567,8 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
 
         setMetrics(prev => ({ ...prev, currentVolume: nextVolume }));
         setBottleAuthKey(profileData?.bottle_auth_key ?? null);
+        setPairedDeviceId(profileData?.paired_device_id ?? null);
+        setLastEventId(Number(profileData?.last_event_id ?? 0));
         await fetchEquippedBottle(profileData?.equipped_bottle_id);
       } catch (err) {
         console.error('Lỗi lấy dữ liệu khởi tạo bình:', err);
@@ -545,7 +593,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
 
   // ── Core Operations ────────────────────────────────
 
-  const handleDrinkEvent = useCallback(async (amount: number) => {
+  const handleDrinkEvent = useCallback(async (amount: number, eventId?: number, timestamp?: number) => {
     if (connectionStateRef.current !== 'connected' || !userId) {
       toast.error(i18n.t('device.not_connected'));
       return;
@@ -554,9 +602,10 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
     lastHydrationTimeRef.current = Date.now();
     setIsSyncing(true);
 
-    const clientEventId = `bottle-${userId}-${Date.now()}`;
+    const clientEventId = eventId ? `ble-${userId}-${eventId}` : `bottle-${userId}-${Date.now()}`;
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const eventTimeIso = timestamp ? new Date(timestamp * 1000).toISOString() : new Date().toISOString();
 
     try {
       const { data, error } = await supabase.rpc('record_hydration_event', {
@@ -565,9 +614,18 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
         p_client_event_id: clientEventId,
         p_name: 'DigiBottle',
         p_day: todayStr,
+        p_event_id: eventId ? BigInt(eventId) : null,
+        p_event_timestamp: eventTimeIso,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('Duplicate or replayed') || error.message.includes('Future-dated')) {
+          console.warn(`[BLE Replay/Security Blocked]: ${error.message}`);
+          toast.warning(i18n.t('device.event_blocked', { message: error.message }));
+          return;
+        }
+        throw error;
+      }
 
       const rpcData = (data ?? {}) as HydrationRpcResponse;
       const nextVolume = clampVolume(metricsRef.current.currentVolume - amount, capacity);
@@ -584,8 +642,12 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
         toast.warning(i18n.t('device.sync_warning'));
       }
 
+      if (eventId) {
+        setLastEventId(eventId);
+      }
+
       setSyncLogs(prev => [
-        { id: Date.now().toString(), timestamp: new Date(), action: 'drink', amountChange: amount },
+        { id: Date.now().toString(), timestamp: new Date(eventTimeIso), action: 'drink', amountChange: amount },
         ...prev,
       ]);
 
@@ -599,7 +661,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
           new_coins: rpcData.coins_gained ?? 0,
           refresh_profile: true,
           refresh_water: true,
-          occurred_at: new Date().toISOString(),
+          occurred_at: eventTimeIso,
           log_id: rpcData.log_id || clientEventId,
         },
       }));
@@ -620,6 +682,86 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
     handleDrinkEventRef.current = handleDrinkEvent;
   }, [handleDrinkEvent]);
 
+  const disconnectDevice = useCallback(async () => {
+    cancelReconnect();
+    const deviceId = connectedDeviceIdRef.current;
+    if (deviceId && Capacitor.isNativePlatform()) {
+      setIsSyncing(true);
+      try {
+        await bleDisconnectDevice(deviceId);
+      } catch (err) {
+        console.error('Lỗi ngắt kết nối BLE:', err);
+      }
+    }
+    handleBleDisconnect();
+    setIsSyncing(false);
+  }, [cancelReconnect, handleBleDisconnect]);
+
+  // ── Simulator BLE notification dispatcher ──
+  const simulateMockBleNotification = useCallback(async (amount: number) => {
+    if (connectionStateRef.current !== 'connected') {
+      toast.error(i18n.t('device.mock_not_connected'));
+      return;
+    }
+
+    let eventId = lastEventId + 1;
+    if (simulateAttackType === 'replay') {
+      eventId = lastEventId; // Replay same event ID
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    // Build 44-byte buffer
+    const buffer = new ArrayBuffer(44);
+    const view = new DataView(buffer);
+    view.setUint32(0, amount, true);
+    view.setUint32(4, eventId, true);
+    view.setUint32(8, timestamp, true);
+
+    const sharedSecret = bottleAuthKey || DEFAULT_SHARED_SECRET;
+    const headerBytes = new Uint8Array(buffer, 0, 12);
+    let signatureBytes = await computeHmacSha256(headerBytes, sharedSecret);
+
+    if (simulateAttackType === 'tampering') {
+      signatureBytes = new Uint8Array(32); // Send zeros (invalid signature)
+    }
+
+    const signatureDest = new Uint8Array(buffer, 12, 32);
+    signatureDest.set(signatureBytes);
+
+    console.log(`[MOCK BLE Dispatch] secure packet: amount=${amount}ml, eventId=${eventId}, timestamp=${timestamp}, attack=${simulateAttackType}`);
+
+    const packet = parseSecureHydrationPacket(view);
+
+    // Verify signature in simulation
+    if (packet.isSecure) {
+      const expectedBytes = await computeHmacSha256(headerBytes, sharedSecret);
+      const computedValid = safeCompare(packet.signature || new Uint8Array(), expectedBytes);
+
+      if (!computedValid) {
+        console.error('[MOCK BLE Security] Lỗi xác thực chữ ký gói tin mô phỏng! Ngắt kết nối.');
+        toast.error('Gói tin mô phỏng bị giả mạo! Ngắt kết nối thiết bị.');
+        void disconnectDevice();
+        return;
+      }
+    }
+
+    void handleDrinkEvent(packet.amountMl, packet.eventId, packet.timestamp);
+  }, [lastEventId, simulateAttackType, bottleAuthKey, disconnectDevice, handleDrinkEvent]);
+
+  const handleDrinkClick = useCallback(async (amount: number) => {
+    if (!Capacitor.isNativePlatform() && connectionStateRef.current === 'connected') {
+      await simulateMockBleNotification(amount);
+    } else {
+      await handleDrinkEvent(amount);
+    }
+  }, [simulateMockBleNotification, handleDrinkEvent]);
+
+  // Update refs
+  useEffect(() => {
+    handleDrinkEventRef.current = handleDrinkEvent;
+  }, [handleDrinkEvent]);
+
   const connectDevice = useCallback(async () => {
     if (connectionStateRef.current === 'connected') return;
 
@@ -633,16 +775,21 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
       try {
         await new Promise(resolve => setTimeout(resolve, 800));
         if (mountedRef.current) {
+          const deviceIdToConnect = pairedDeviceId || _deviceId;
           const sharedSecret = bottleAuthKey || DEFAULT_SHARED_SECRET;
-          const isAuthSuccess = await authenticateDevice(_deviceId, sharedSecret);
+          const isAuthSuccess = await authenticateDevice(deviceIdToConnect, sharedSecret);
           if (!isAuthSuccess) {
             setConnectionState('error');
-            setLastError('Xác thực thiết bị mô phỏng thất bại.');
-            toast.error('Xác thực thiết bị mô phỏng thất bại!');
+            setLastError(i18n.t('device.mock_auth_failed'));
+              toast.error(i18n.t('device.mock_auth_failed'));
             setIsSyncing(false);
             return;
           }
           setConnectionState('connected');
+          if (!pairedDeviceId && userId) {
+            setPairedDeviceId(deviceIdToConnect);
+            await supabase.from('profiles').update({ paired_device_id: deviceIdToConnect }).eq('id', userId);
+          }
           setMetrics(prev => ({
             ...prev,
             batteryLevel: 85,
@@ -656,7 +803,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
       } catch {
         if (mountedRef.current) {
           setConnectionState('error');
-          setLastError('Kết nối thất bại. Vui lòng thử lại.');
+          setLastError(i18n.t('device.connect_failed_generic'));
         }
       } finally {
         if (mountedRef.current) {
@@ -668,13 +815,81 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
 
     // Real Native BLE connection
     try {
-      // 1. Permission checks
       const hasPermission = await requestBlePermissions();
       if (!hasPermission) {
-        throw new Error('Quyền sử dụng Bluetooth bị từ chối');
+        throw new Error(i18n.t('device.bluetooth_permission_denied'));
       }
 
-      // 2. Scan & Auto-connect
+      // Auto-connect to paired device
+      if (pairedDeviceId) {
+        toast.info(i18n.t('device.auto_connecting'));
+        try {
+          await bleConnectDevice(pairedDeviceId, () => {
+            handleBleDisconnect();
+          });
+
+          const sharedSecret = bottleAuthKey || DEFAULT_SHARED_SECRET;
+          toast.info(i18n.t('device.authenticating'));
+          const isAuthSuccess = await authenticateDevice(pairedDeviceId, sharedSecret);
+
+          if (isAuthSuccess) {
+            connectedDeviceIdRef.current = pairedDeviceId;
+            setConnectionState('connected');
+            setLastError(null);
+            toast.success(i18n.t('device.auto_connect_success'));
+
+            await subscribeToHydration(pairedDeviceId, async (packet) => {
+              if (packet.isSecure) {
+                const headerBuffer = new ArrayBuffer(12);
+                const headerView = new DataView(headerBuffer);
+                headerView.setUint32(0, packet.amountMl, true);
+                headerView.setUint32(4, packet.eventId || 0, true);
+                headerView.setUint32(8, packet.timestamp, true);
+                const headerBytes = new Uint8Array(headerBuffer);
+
+                const expectedBytes = await computeHmacSha256(headerBytes, sharedSecret);
+                const isSignatureValid = safeCompare(packet.signature || new Uint8Array(), expectedBytes);
+
+                if (!isSignatureValid) {
+                  console.error('Lỗi xác thực chữ ký gói tin BLE! Ngắt kết nối thiết bị.');
+                    toast.error(i18n.t('device.packet_tampered'));
+                    void disconnectDevice();
+                    return;
+                  }
+                } else {
+                  const isMock = device.id.startsWith('MOCK-');
+                  const { data: devCheck } = await supabase.from('profiles').select('is_developer').eq('id', userId).single();
+                  const isDeveloper = devCheck?.is_developer ?? false;
+
+                  if (!isMock && !isDeveloper && Capacitor.isNativePlatform()) {
+                    console.warn('Giao thức 9-byte không an toàn bị cấm ở production. Ngắt kết nối.');
+                    toast.error(i18n.t('device.unsafe_protocol'));
+                  void disconnectDevice();
+                  return;
+                }
+
+                if (!packet.checksumValid) {
+                  console.warn('Gói tin hydration nhận được từ BLE có checksum không hợp lệ');
+                  return;
+                }
+              }
+
+              void handleDrinkEventRef.current(packet.amountMl, packet.eventId, packet.timestamp);
+            });
+
+            startTelemetryPolling(pairedDeviceId);
+            startHealthPolling(pairedDeviceId);
+            setIsSyncing(false);
+            return;
+          } else {
+            console.warn('Xác thực thiết bị đã pair thất bại, chuyển sang quét thiết bị.');
+            await bleDisconnectDevice(pairedDeviceId).catch(() => {});
+          }
+        } catch (err) {
+          console.warn('Lỗi kết nối tự động bình đã pair:', err);
+        }
+      }
+
       let foundDevice = false;
       toast.info(i18n.t('device.scanning'));
 
@@ -691,36 +906,70 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
               handleBleDisconnect();
             });
 
-            // Authenticate device
             const sharedSecret = bottleAuthKey || DEFAULT_SHARED_SECRET;
-            toast.info('Đang xác thực thiết bị...');
+            toast.info(i18n.t('device.authenticating'));
             const isAuthSuccess = await authenticateDevice(device.id, sharedSecret);
 
             if (!isAuthSuccess) {
-              toast.error('Xác thực thiết bị thất bại! Ngắt kết nối.');
+              toast.error(i18n.t('device.auth_failed'));
               await bleDisconnectDevice(device.id).catch(() => {});
               handleBleDisconnect();
               if (mountedRef.current) {
                 setConnectionState('error');
-                setLastError('Xác thực thiết bị thất bại.');
+                setLastError(i18n.t('device.auth_failed'));
               }
               setIsSyncing(false);
               return;
             }
 
             connectedDeviceIdRef.current = device.id;
+            setPairedDeviceId(device.id);
+            if (userId) {
+              await supabase.from('profiles').update({ paired_device_id: device.id }).eq('id', userId);
+            }
 
             if (mountedRef.current) {
               setConnectionState('connected');
               setLastError(null);
               toast.success(i18n.t('device.connected', { name: device.name || 'DigiBottle' }));
 
-              await subscribeToHydration(device.id, (packet) => {
-                if (packet.checksumValid) {
-                  void handleDrinkEventRef.current(packet.amountMl);
+              await subscribeToHydration(device.id, async (packet) => {
+                if (packet.isSecure) {
+                  const headerBuffer = new ArrayBuffer(12);
+                  const headerView = new DataView(headerBuffer);
+                  headerView.setUint32(0, packet.amountMl, true);
+                  headerView.setUint32(4, packet.eventId || 0, true);
+                  headerView.setUint32(8, packet.timestamp, true);
+                  const headerBytes = new Uint8Array(headerBuffer);
+
+                  const expectedBytes = await computeHmacSha256(headerBytes, sharedSecret);
+                  const isSignatureValid = safeCompare(packet.signature || new Uint8Array(), expectedBytes);
+
+                  if (!isSignatureValid) {
+                    console.error('Lỗi xác thực chữ ký gói tin BLE! Ngắt kết nối thiết bị.');
+                    toast.error(i18n.t('device.packet_tampered'));
+                    void disconnectDevice();
+                    return;
+                  }
                 } else {
-                  console.warn('Gói tin hydration nhận được từ BLE có checksum không hợp lệ');
+                  const isMock = device.id.startsWith('MOCK-');
+                  const { data: devCheck } = await supabase.from('profiles').select('is_developer').eq('id', userId).single();
+                  const isDeveloper = devCheck?.is_developer ?? false;
+
+                  if (!isMock && !isDeveloper && Capacitor.isNativePlatform()) {
+                    console.warn('Giao thức 9-byte không an toàn bị cấm ở production. Ngắt kết nối.');
+                    toast.error(i18n.t('device.unsafe_protocol'));
+                    void disconnectDevice();
+                    return;
+                  }
+
+                  if (!packet.checksumValid) {
+                    console.warn('Gói tin hydration nhận được từ BLE có checksum không hợp lệ');
+                    return;
+                  }
                 }
+
+                void handleDrinkEventRef.current(packet.amountMl, packet.eventId, packet.timestamp);
               });
 
               startTelemetryPolling(device.id);
@@ -730,7 +979,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
             console.error('Lỗi kết nối BLE native:', err);
             if (mountedRef.current) {
               setConnectionState('error');
-              setLastError('Không thể kết nối với thiết bị.');
+              setLastError(i18n.t('device.cannot_connect'));
             }
           } finally {
             if (mountedRef.current) {
@@ -740,13 +989,12 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
         })();
       });
 
-      // Scan timeout 10 seconds
       setTimeout(() => {
         if (!foundDevice) {
           stopScanning().catch(() => {});
           if (mountedRef.current && connectionStateRef.current === 'connecting') {
             setConnectionState('error');
-            setLastError('Không tìm thấy thiết bị DigiBottle xung quanh.');
+            setLastError(i18n.t('device.device_not_found_scan'));
             setIsSyncing(false);
             toast.error(i18n.t('device.not_found'));
           }
@@ -757,26 +1005,11 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
       console.error('Lỗi thiết lập BLE native:', err);
       if (mountedRef.current) {
         setConnectionState('error');
-        setLastError(err instanceof Error ? err.message : 'Lỗi thiết lập kết nối.');
+        setLastError(err instanceof Error ? err.message : i18n.t('device.connection_setup_error'));
         setIsSyncing(false);
       }
     }
-  }, [cancelReconnect, handleBleDisconnect, startTelemetryPolling, bottleAuthKey, startHealthPolling, _deviceId]);
-
-  const disconnectDevice = useCallback(async () => {
-    cancelReconnect();
-    const deviceId = connectedDeviceIdRef.current;
-    if (deviceId && Capacitor.isNativePlatform()) {
-      setIsSyncing(true);
-      try {
-        await bleDisconnectDevice(deviceId);
-      } catch (err) {
-        console.error('Lỗi ngắt kết nối BLE:', err);
-      }
-    }
-    handleBleDisconnect();
-    setIsSyncing(false);
-  }, [cancelReconnect, handleBleDisconnect]);
+  }, [cancelReconnect, handleBleDisconnect, startTelemetryPolling, bottleAuthKey, startHealthPolling, _deviceId, pairedDeviceId, userId, disconnectDevice]);
 
   const retryConnection = useCallback(() => {
     setConnectionState('idle');
@@ -833,6 +1066,29 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
     setIsSyncing(false);
   }, []);
 
+  const unpairDevice = useCallback(async () => {
+    if (!userId) return;
+    setIsSyncing(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ paired_device_id: null, last_event_id: 0 })
+        .eq('id', userId);
+      if (error) throw error;
+      setPairedDeviceId(null);
+      setLastEventId(0);
+      toast.success(i18n.t('device.unlinked'));
+      if (connectionStateRef.current === 'connected') {
+        await disconnectDevice();
+      }
+    } catch (err) {
+      console.error('Lỗi khi hủy liên kết bình nước:', err);
+      toast.error(i18n.t('device.unlink_failed'));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [userId, disconnectDevice]);
+
   return {
     connectionState,
     isConnected,
@@ -843,10 +1099,16 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
     connectDevice,
     disconnectDevice,
     retryConnection,
-    handleDrinkEvent,
+    handleDrinkEvent: handleDrinkClick,
     refillBottle,
     forceSync,
     equippedBottle,
     isDemoMode: !Capacitor.isNativePlatform(),
+    pairedDeviceId,
+    lastEventId,
+    simulateAttackType,
+    setSimulateAttackType,
+    unpairDevice,
+    bottleAuthKey,
   };
 };

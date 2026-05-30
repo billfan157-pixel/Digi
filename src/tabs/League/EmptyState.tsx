@@ -1,4 +1,5 @@
 import { Radar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { LeagueMode } from './types';
 
 interface EmptyStateProps {
@@ -8,40 +9,44 @@ interface EmptyStateProps {
   onAddFriend?: () => void;
 }
 
-export const EmptyState = ({ searchQuery, leagueMode, onReset, onAddFriend }: EmptyStateProps) => (
-  <div className="relative overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-slate-900/80 to-slate-900/40 p-8 text-center backdrop-blur-xl">
+export const EmptyState = ({ searchQuery, leagueMode, onReset, onAddFriend }: EmptyStateProps) => {
+  const { t } = useTranslation();
+
+  return (
+  <div className="relative overflow-hidden rounded-[var(--theme-border-radius,24px)] border border-[var(--theme-border-glass,rgba(255,255,255,0.08))] bg-[var(--theme-surface-glass,rgba(34,211,238,0.04))] p-8 text-center backdrop-blur-[var(--theme-blur,40px)]">
     {/* Decoration glow */}
-    <div className="absolute -top-8 -left-8 w-24 h-24 bg-slate-500/10 blur-[50px] rounded-full pointer-events-none" />
+    <div className="absolute -top-8 -left-8 w-24 h-24 bg-[var(--theme-glow-color,rgba(34,211,238,0.15))] blur-[50px] rounded-full pointer-events-none" />
     
-    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-white/[0.06] bg-slate-800/50">
+    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--theme-border-glass,rgba(255,255,255,0.08))] bg-[var(--theme-surface-glass,rgba(255,255,255,0.04))]">
       <Radar size={26} className="text-slate-500" />
     </div>
     
-    <p className="text-lg font-black text-white">Chưa có dữ liệu phù hợp</p>
+    <p className="text-lg font-black text-white">{t('league.no_data_matching')}</p>
     
     <p className="mt-2 text-sm text-slate-400 max-w-xs mx-auto">
       {searchQuery
-        ? 'Thử đổi từ khóa hoặc quay về chế độ xem đầy đủ.'
+        ? t('league.no_data_search')
         : leagueMode === 'friends'
-          ? 'Hãy thêm bạn bè để bảng xếp hạng riêng bắt đầu có nhiệt.'
-          : 'Chưa có đủ dữ liệu để dựng bảng xếp hạng lúc này.'}
+          ? t('league.no_data_friends')
+          : t('league.no_data_full')}
     </p>
     
     <div className="mt-6 flex items-center justify-center gap-3">
       <button
         onClick={onReset}
-        className="rounded-2xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition-all hover:bg-white/10 active:scale-[0.97]"
+        className="rounded-[var(--theme-border-radius-inner,12px)] border border-[var(--theme-border-glass,rgba(255,255,255,0.1))] bg-[var(--theme-surface-glass,rgba(255,255,255,0.05))] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-white/5 active:scale-[0.97]"
       >
-        Reset bộ lọc
+        {t('league.reset_filter')}
       </button>
       {leagueMode === 'friends' && onAddFriend && (
         <button
           onClick={onAddFriend}
-          className="rounded-2xl border border-emerald-500/20 bg-emerald-500/15 px-6 py-3 text-sm font-bold text-emerald-300 transition-all hover:bg-emerald-500/25 active:scale-[0.97]"
+          className="rounded-[var(--theme-border-radius-inner,12px)] border border-emerald-500/20 bg-emerald-500/15 px-6 py-3 text-sm font-bold text-emerald-300 transition-all hover:bg-emerald-500/25 active:scale-[0.97]"
         >
-          Thêm bạn bè
+          {t('league.challenge_friends')}
         </button>
       )}
     </div>
   </div>
-);
+  );
+};

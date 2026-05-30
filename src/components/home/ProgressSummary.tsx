@@ -1,21 +1,23 @@
 import { motion } from 'framer-motion';
 import { Zap, Flame } from 'lucide-react';
 import { glassCard } from '../../styles/glass';
+import { totalExpForLevel, expRequiredForLevel } from '../../config/questConfig';
 
 interface ProgressSummaryProps {
   level: number;
   exp: number;
   streak: number;
-  waterIntake: number;
-  waterGoal: number;
   onLevelClick: () => void;
-  onQuickDrink: (amount: number) => void;
 }
 
 export default function ProgressSummary({
-  level, streak, waterIntake, waterGoal, onLevelClick,
-}: Omit<ProgressSummaryProps, 'exp' | 'onQuickDrink'>) {
-  const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
+  level, exp, streak, onLevelClick,
+}: ProgressSummaryProps) {
+  const safeLevel = Math.max(level, 1);
+  const expForCurrentLevelStart = totalExpForLevel(safeLevel);
+  const progressInLevel = Math.max(0, exp - expForCurrentLevelStart);
+  const requiredExpForLevel = expRequiredForLevel(safeLevel);
+  const progress = requiredExpForLevel > 0 ? Math.min(100, (progressInLevel / requiredExpForLevel) * 100) : 0;
 
   return (
     <div className={`${glassCard} mx-6 bg-gradient-to-br from-slate-900/80 to-slate-800/40 p-5`}>
@@ -44,29 +46,30 @@ export default function ProgressSummary({
               <div className="flex items-center gap-1 justify-end">
                 <Flame size={14} className={streak >= 7 ? 'text-orange-400' : 'text-slate-500'} />
                 <span className="text-sm font-black text-white">{streak}</span>
-                <span className="text-[9px] text-slate-500 font-bold">ngày</span>
+                <span className="text-[9px] text-slate-500 font-bold">days</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Progress bar */}
+        {/* EXP Progress bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
-            <span className="text-slate-400">Hôm nay</span>
-            <span className="text-white font-black">{waterIntake} / {waterGoal} ml</span>
+            <span className="text-slate-400">Tiến độ thăng cấp</span>
+            <span className="text-white font-black">{Math.round(progress)}%</span>
           </div>
           <div className="w-full h-2.5 bg-slate-800/60 rounded-full overflow-hidden border border-white/5">
             <motion.div
-              initial={{ width: 0 }}
+              initial={false}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
-              className={`h-full rounded-full ${
-                progress >= 100
-                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.4)]'
-                  : 'bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
-              }`}
+              className="h-full rounded-full bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+              style={{ width: `${progress}%` }}
             />
+          </div>
+          <div className="flex justify-between text-[9px] text-slate-500 font-medium">
+            <span>LV.{safeLevel} → {safeLevel + 1}</span>
+            <span>{progressInLevel.toLocaleString()} / {requiredExpForLevel.toLocaleString()} PTS</span>
           </div>
         </div>
       </div>

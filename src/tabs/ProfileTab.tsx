@@ -48,13 +48,14 @@ const ProfileTab = memo(function ProfileTab({
     weeklyHistory: state.weeklyHistory,
     actions: state.actions,
   })));
-  const { setShowPremiumModal, setShowAddFriend, setShowProfileSettings, setActiveTab, setActiveCommentPost, setShowChallengeModal } = useUIStore(useShallow((state) => ({
+  const { setShowPremiumModal, setShowAddFriend, setShowProfileSettings, setActiveTab, setActiveCommentPost, setShowChallengeModal, setShowMainMenu } = useUIStore(useShallow((state) => ({
     setShowPremiumModal: state.setShowPremiumModal,
     setShowAddFriend: state.setShowAddFriend,
     setShowProfileSettings: state.setShowProfileSettings,
     setActiveTab: state.setActiveTab,
     setActiveCommentPost: state.setActiveCommentPost,
     setShowChallengeModal: state.setShowChallengeModal,
+    setShowMainMenu: state.setShowMainMenu,
   })));
   const wp = profile?.wp || 0;
   const currentRank = getRankInfo(wp);
@@ -73,10 +74,10 @@ const ProfileTab = memo(function ProfileTab({
 
   return <div className="animate-in slide-in-from-right duration-300 space-y-5 pb-6">
     <TabHeader
-      label="THÔNG TIN CÁ NHÂN"
+      label={t('profile.personal_info')}
       title={
         <span className="flex items-center gap-3">
-          Hồ sơ
+          {t('profile.title')}
           {isPremium && (
             <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-lg flex items-center gap-1">
               <Sparkles size={10} /> PRO
@@ -86,6 +87,7 @@ const ProfileTab = memo(function ProfileTab({
       }
       profile={profile}
       actionIcon={<Crown size={18} />}
+      onAvatarClick={() => setShowMainMenu(true)}
     />
 
     <div className={`${cardGlow} overflow-hidden`}>
@@ -99,15 +101,15 @@ const ProfileTab = memo(function ProfileTab({
           <div className="flex-1 min-w-0">
             <div className="min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <h3 className="text-2xl font-black text-white truncate">{profile?.nickname || 'Khách'}</h3>
+                <h3 className="text-2xl font-black text-white truncate">{profile?.nickname || t('profile.guest')}</h3>
                 <div className={`w-7 h-7 rounded-xl border flex items-center justify-center flex-shrink-0 ${currentRank.bg} ${currentRank.border}`} title={currentRank.name}>
                   <Trophy size={12} className={currentRank.color} />
                 </div>
-                <div className="px-2 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center gap-1" title={`Streak: ${streak} ngày`}>
+                <div className="px-2 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center gap-1" title={t('profile.streak_tooltip', { days: streak })}>
                   <Zap size={10} className="fill-orange-400 text-orange-400" />
                   <span className="text-orange-400 text-[10px] font-bold">{streak}</span>
                 </div>
-                {isPremium && streakFreezes !== undefined && <div className={`px-2 py-1 rounded-lg border flex items-center gap-1 cursor-pointer transition-all ${needsFreeze ? 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30 animate-pulse' : 'bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20'}`} title={needsFreeze ? 'Dùng Streak Freeze để bảo vệ chuỗi!' : `Streak Freeze: ${streakFreezes} lần/tháng`} onClick={needsFreeze ? () => onUseStreakFreeze?.().then((success: boolean) => {
+                {isPremium && streakFreezes !== undefined && <div className={`px-2 py-1 rounded-lg border flex items-center gap-1 cursor-pointer transition-all ${needsFreeze ? 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30 animate-pulse' : 'bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20'}`} title={needsFreeze ? t('profile.streak_freeze_protect') : t('profile.streak_freeze_available', { count: streakFreezes })} onClick={needsFreeze ? () => onUseStreakFreeze?.().then((success: boolean) => {
                       if (success) toast.success(t('premium.streak_freeze_used'));
                     }) : undefined}>
                     <Shield size={10} className={needsFreeze ? 'text-red-400' : 'text-blue-400'} />
@@ -119,8 +121,8 @@ const ProfileTab = memo(function ProfileTab({
             </div>
             <div className="flex gap-4 mt-4">
               <div className="text-center"><p className="text-white font-black text-sm">{socialProfileStats.followers}</p><p className="text-slate-500 text-[9px] uppercase font-bold tracking-widest mt-0.5">Follower</p></div>
-              <div className="text-center"><p className="text-white font-black text-sm">{socialProfileStats.following}</p><p className="text-slate-500 text-[9px] uppercase font-bold tracking-widest mt-0.5">Đang follow</p></div>
-              <div className="text-center"><p className="text-white font-black text-sm">{wp}</p><p className="text-slate-500 text-[9px] uppercase font-bold tracking-widest mt-0.5">Điểm WP</p></div>
+              <div className="text-center"><p className="text-white font-black text-sm">{socialProfileStats.following}</p><p className="text-slate-500 text-[9px] uppercase font-bold tracking-widest mt-0.5">{t('common.friends')}</p></div>
+              <div className="text-center"><p className="text-white font-black text-sm">{wp}</p><p className="text-slate-500 text-[9px] uppercase font-bold tracking-widest mt-0.5">{t('common.coins')}</p></div>
             </div>
 
             <div className="mt-5">
@@ -135,13 +137,13 @@ const ProfileTab = memo(function ProfileTab({
 
                 return <>
                     <div className="flex justify-between items-end mb-1.5">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tiến độ cấp độ</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('profile.level_progress')}</span>
                       <span className="text-xs font-black text-cyan-400">
                         LV.{currentLevel} <span className="text-slate-500 text-[10px] font-mono">({progressExp}/{requiredExp})</span>
                       </span>
                     </div>
-                    <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
-                      <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-1000 relative" style={{ width: `${progressPercent}%` }}>
+                    <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700/50" key={`exp-${totalExp}`}>
+                      <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full relative" style={{ width: `${progressPercent}%` }}>
                         <div className="absolute inset-0 bg-white/20 animate-[shimmer_1.5s_infinite] -skew-x-12" />
                       </div>
                     </div>
@@ -151,20 +153,20 @@ const ProfileTab = memo(function ProfileTab({
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2.5 mt-5 relative z-10">
-          <button onClick={() => setShowAddFriend(true)} className="flex-1 py-2.5 rounded-full border border-white/20 text-white/80 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all duration-200 ease-out hover:bg-white/10"><UserPlus size={14} /> Thêm bạn</button>
-          <button onClick={() => setShowChallengeModal(true)} className="flex-1 py-2.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all duration-200 ease-out hover:bg-cyan-500/20"><Target size={14} /> Thử thách</button>
-          <button onClick={() => setShowProfileSettings(true)} className="flex-1 py-2.5 rounded-full border border-white/20 text-white/80 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all duration-200 ease-out hover:bg-white/10"><Settings size={14} /> Cài đặt</button>
+          <button onClick={() => setShowAddFriend(true)} className="flex-1 py-2.5 rounded-full border border-white/20 text-white/80 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all duration-200 ease-out hover:bg-white/10"><UserPlus size={14} /> {t('profile.add_friend')}</button>
+          <button onClick={() => setShowChallengeModal(true)} className="flex-1 py-2.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all duration-200 ease-out hover:bg-cyan-500/20"><Target size={14} /> {t('profile.challenge')}</button>
+          <button onClick={() => setShowProfileSettings(true)} className="flex-1 py-2.5 rounded-full border border-white/20 text-white/80 text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all duration-200 ease-out hover:bg-white/10"><Settings size={14} /> {t('profile.settings')}</button>
         </div>
       </div>
     </div>
 
     <div className="flex border-b border-white/10 mb-4 px-2">
       <button onClick={() => setActiveView('stats')} className={`flex-1 pb-3 text-sm font-bold flex items-center justify-center gap-2 transition-all relative ${activeView === 'stats' ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-400'}`}>
-        <BarChart2 size={16} /> Thống kê
+        <BarChart2 size={16} /> {t('profile.stats')}
         {activeView === 'stats' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-cyan-400 rounded-t-full" />}
       </button>
       <button onClick={() => setActiveView('posts')} className={`flex-1 pb-3 text-sm font-bold flex items-center justify-center gap-2 transition-all relative ${activeView === 'posts' ? 'text-white' : 'text-slate-500 hover:text-slate-400'}`}>
-        <Grid size={16} /> Bài đăng
+        <Grid size={16} /> {t('profile.posts')}
         {activeView === 'posts' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-white rounded-t-full" />}
       </button>
     </div>
@@ -172,7 +174,7 @@ const ProfileTab = memo(function ProfileTab({
     {activeView === 'stats' && <>
         <div className={`${card} p-5`}>
           <div className="flex items-center justify-between mb-5">
-            <h3 className="text-white text-lg font-black">Tiến độ tuần này</h3>
+            <h3 className="text-white text-lg font-black">{t('profile.this_week_progress')}</h3>
             <div className="flex gap-2">
               <button
                 onClick={() => {
@@ -187,9 +189,9 @@ const ProfileTab = memo(function ProfileTab({
                 }}
                 className="px-3 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all hover:bg-white/10 flex items-center gap-1"
               >
-                <Share2 size={12} /> Chia sẻ
+                <Share2 size={12} /> {t('profile.share')}
               </button>
-              <button onClick={() => setActiveTab('insight')} className="px-4 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all hover:bg-white/10">Chi tiết</button>
+              <button onClick={() => setActiveTab('insight')} className="px-4 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all hover:bg-white/10">{t('profile.details')}</button>
             </div>
           </div>
           <div className="flex items-end justify-between gap-1.5 h-24">
@@ -204,15 +206,15 @@ const ProfileTab = memo(function ProfileTab({
             })}
           </div>
           <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-bold">
-            <span className="text-slate-400">Trung bình: <span className="text-cyan-400">{avgWeek} ml</span></span>
-            <span className="text-slate-400">Tổng: <span className="text-cyan-400">{totalWeek} ml</span></span>
+            <span className="text-slate-400">{t('profile.average')}: <span className="text-cyan-400">{avgWeek} ml</span></span>
+            <span className="text-slate-400">{t('profile.total')}: <span className="text-cyan-400">{totalWeek} ml</span></span>
           </div>
         </div>
 
         <div className={`${card} p-5`}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white text-lg font-black">Hôm nay</h3>
-            <button onClick={() => setActiveTab('feed')} className="px-4 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all hover:hover:bg-white/10">Xem Feed</button>
+            <h3 className="text-white text-lg font-black">{t('profile.today')}</h3>
+            <button onClick={() => setActiveTab('feed')} className="px-4 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all hover:hover:bg-white/10">{t('profile.view_feed')}</button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-2xl border border-slate-700/60 bg-slate-900/60 p-3 flex items-center gap-3">
@@ -220,7 +222,7 @@ const ProfileTab = memo(function ProfileTab({
                 <Droplets size={18} className="text-cyan-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold truncate">Đã uống</p>
+                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold truncate">{t('common.consumed')}</p>
                 <p className="text-base font-black text-cyan-300 truncate">{waterIntake} ml</p>
               </div>
             </div>
@@ -230,7 +232,7 @@ const ProfileTab = memo(function ProfileTab({
                 <Flame size={18} className="text-emerald-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold truncate">Hoàn thành</p>
+                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold truncate">{t('profile.completed')}</p>
                 <p className="text-base font-black text-emerald-300 truncate">{completionPercent}%</p>
               </div>
             </div>
@@ -240,7 +242,7 @@ const ProfileTab = memo(function ProfileTab({
                 <Target size={18} className="text-orange-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold truncate">Còn thiếu</p>
+                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold truncate">{t('profile.remaining')}</p>
                 <p className="text-base font-black text-orange-300 truncate">{remainingWater} ml</p>
               </div>
             </div>
@@ -250,7 +252,7 @@ const ProfileTab = memo(function ProfileTab({
                 <Award size={18} className={currentRank.color} />
               </div>
               <div className="min-w-0">
-                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold truncate">Hạng</p>
+                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold truncate">{t('profile.rank')}</p>
                 <p className={`text-base font-black truncate ${currentRank.color}`}>{currentRank.name}</p>
               </div>
             </div>
@@ -265,7 +267,7 @@ const ProfileTab = memo(function ProfileTab({
               </div>
               <div className="text-left">
                 <p className="text-sm font-bold text-white">Apple Health / Google Fit</p>
-                <p className="text-[10px] text-slate-500">Mở Cài đặt để đồng bộ</p>
+                <p className="text-[10px] text-slate-500">{t('profile.sync_settings')}</p>
               </div>
             </div>
           </button>
@@ -282,10 +284,10 @@ const ProfileTab = memo(function ProfileTab({
                   <Sparkles size={16} className="text-amber-400" />
                   <h3 className="text-white text-lg font-black tracking-tight">DigiWell <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">PRO</span></h3>
                 </div>
-                <p className="text-slate-400 text-xs">Mở khóa AI Coach & Không giới hạn</p>
+                <p className="text-slate-400 text-xs">{t('profile.unlock_ai_coach')}</p>
               </div>
               <button className="px-4 py-2.5 bg-white text-slate-900 rounded-xl font-black text-xs shadow-[0_4px_15px_rgba(255,255,255,0.2)] group-hover:scale-105 transition-all">
-                Nâng cấp
+                {t('profile.upgrade')}
               </button>
             </div>
           </div>
@@ -295,7 +297,7 @@ const ProfileTab = memo(function ProfileTab({
 
           <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 mt-2">
             <button onClick={handleLogout} className="w-full py-4 rounded-full border border-red-500/30 text-red-400 text-sm font-bold bg-red-500/10 active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-red-500/20">
-              <Lock size={18} /> Đăng xuất tài khoản
+              <Lock size={18} /> {t('profile.logout_account')}
             </button>
           </div>
       </>}
@@ -303,7 +305,7 @@ const ProfileTab = memo(function ProfileTab({
     {activeView === 'posts' && <div className="mt-4 space-y-4">
         {myPosts.length > 0 ? myPosts.map((post, index: number) => <PostCard key={post.id || `mypost-${index}`} post={post} currentUserId={profile?.id} handleToggleLikePost={handleToggleLikePost || (() => {})} onOpenComments={setActiveCommentPost} />) : <div className="text-center py-10 bg-slate-900/50 rounded-3xl border border-white/5">
             <Grid size={40} className="text-slate-700 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm font-medium">Bạn chưa có bài đăng nào</p>
+            <p className="text-slate-500 text-sm font-medium">{t('profile.no_posts')}</p>
           </div>}
       </div>}
   </div>;

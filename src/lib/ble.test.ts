@@ -8,6 +8,7 @@ import {
   safeCompare,
   authenticateDevice,
   readRssi,
+  parseSecureHydrationPacket,
 } from '@/lib/ble';
 
 describe('BLE Parser Utilities', () => {
@@ -87,6 +88,47 @@ describe('BLE Parser Utilities', () => {
       
       expect(() => parseHydrationPacket(view)).toThrowError(
         'Hydration packet must be at least 9 bytes long'
+      );
+    });
+  });
+
+  describe('parseSecureHydrationPacket', () => {
+    it('successfully parses a valid 44-byte secure packet', () => {
+      const buffer = new ArrayBuffer(44);
+      const view = new DataView(buffer);
+      
+      const amount = 500;
+      const eventId = 42;
+      const timestamp = 1716382000;
+      const signatureBytes = new Uint8Array(32);
+      for (let i = 0; i < 32; i++) {
+        signatureBytes[i] = i + 1;
+      }
+      
+      view.setUint32(0, amount, true);
+      view.setUint32(4, eventId, true);
+      view.setUint32(8, timestamp, true);
+      
+      const signatureTarget = new Uint8Array(buffer, 12, 32);
+      signatureTarget.set(signatureBytes);
+      
+      const result = parseSecureHydrationPacket(view);
+      
+      expect(result.amountMl).toBe(amount);
+      expect(result.eventId).toBe(eventId);
+      expect(result.timestamp).toBe(timestamp);
+      expect(result.isSecure).toBe(true);
+      expect(result.checksumValid).toBe(true);
+      expect(result.signature).toBeDefined();
+      expect(Array.from(result.signature!)).toEqual(Array.from(signatureBytes));
+    });
+
+    it('throws an error if secure packet is less than 44 bytes', () => {
+      const buffer = new ArrayBuffer(43);
+      const view = new DataView(buffer);
+      
+      expect(() => parseSecureHydrationPacket(view)).toThrowError(
+        'Secure hydration packet must be at least 44 bytes long'
       );
     });
   });

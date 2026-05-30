@@ -74,7 +74,7 @@ export default function SelectedDateModal({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="w-full max-w-md rounded-t-[2rem] p-6 pb-12 glass-card-strong border-t border-white/10 flex flex-col max-h-[85vh]"
+            className="w-full max-w-md rounded-t-[var(--theme-border-radius,32px)] p-6 pb-12 glass-card-strong border-t border-white/10 flex flex-col max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6 shrink-0" />
@@ -82,7 +82,7 @@ export default function SelectedDateModal({
             <div className="flex items-center justify-between mb-6 shrink-0">
               <div>
                 <p className="text-cyan-400 text-[10px] font-black uppercase tracking-[0.2em]">
-                  Nhật ký ngày
+                  Daily Log
                 </p>
                 <h3 id="modal-title" className="text-2xl font-black text-white">
                   {(() => {
@@ -98,8 +98,8 @@ export default function SelectedDateModal({
               <button 
                 ref={closeButtonRef}
                 onClick={onClose} 
-                aria-label="Đóng nhật ký" 
-                title="Đóng" 
+                aria-label="Close log"
+                title="Close" 
                 className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors"
               >
                 <X size={20} />
@@ -121,7 +121,7 @@ export default function SelectedDateModal({
                 return (
                   <div className="flex flex-col items-center justify-center py-16 flex-1" role="status" aria-live="polite">
                     <Loader2 size={32} className="text-cyan-400 animate-spin mb-3" />
-                    <p className="text-slate-400 text-sm font-medium">Đang tải lịch sử...</p>
+                    <p className="text-slate-400 text-sm font-medium">Loading history...</p>
                   </div>
                 );
               }
@@ -132,10 +132,10 @@ export default function SelectedDateModal({
                     <div className="w-16 h-16 bg-slate-800/80 border border-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                       <Droplets size={30} className="text-slate-600" />
                     </div>
-                    <p className="text-slate-300 font-bold mb-1">Chưa có dữ liệu</p>
-                    <p className="text-meta text-sm mb-6">Bạn chưa ghi nhận lần uống nước nào cho ngày này.</p>
-                    <button onClick={onClose} className="px-6 py-3 rounded-xl bg-cyan-500/10 text-cyan-300 font-bold text-sm active:scale-95 transition-transform border border-cyan-500/20 hover:bg-cyan-500/20">
-                      Đóng
+                    <p className="text-slate-300 font-bold mb-1">No Data Yet</p>
+                    <p className="text-meta text-sm mb-6">You haven't recorded any water intake for this day.</p>
+                    <button onClick={onClose} className="px-6 py-3 rounded-[var(--theme-border-radius-inner,12px)] bg-cyan-500/10 text-cyan-400 font-bold text-sm active:scale-95 transition-transform border border-cyan-500/20 hover:bg-cyan-500/20">
+                      Close
                     </button>
                   </div>
                 );
@@ -149,7 +149,7 @@ export default function SelectedDateModal({
                       const amount = entry.amount || 0;
 
                       return (
-                        <div key={entry.id || index} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                        <div key={entry.id || index} className="flex items-center gap-4 p-4 rounded-[var(--theme-border-radius-inner,12px)] bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
                           {/* Removed the decorative Droplets container here to clean up the UI */}
                           
                           <div className="flex-1">
@@ -160,11 +160,11 @@ export default function SelectedDateModal({
                               <Clock size={10} />
                               {timeStr} •
                               {entry.name === 'DigiBottle' ? (
-                                <span className="text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded flex items-center gap-1 border border-cyan-500/20">
-                                  <Bluetooth size={10} /> Từ DigiBottle
+                                <span className="text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded-[var(--theme-border-radius-inner,4px)] flex items-center gap-1 border border-cyan-500/20">
+                                  <Bluetooth size={10} /> From DigiBottle
                                 </span>
                               ) : (
-                                <span>{entry.name || 'Nước lọc'}</span>
+                                <span>{entry.name || 'Water'}</span>
                               )}
                             </div>
                           </div>
@@ -175,14 +175,14 @@ export default function SelectedDateModal({
 
                   <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-end shrink-0">
                     <div>
-                      <p className="text-[10px] text-meta font-black uppercase tracking-widest">Tổng nạp</p>
+                      <p className="text-[10px] text-meta font-black uppercase tracking-widest">Total Intake</p>
                       <p className="text-3xl font-black text-white">
                         {displayTotalMl}
-                        <span className="text-sm text-cyan-500 ml-1">ml</span>
+                        <span className="text-sm text-cyan-400 ml-1">ml</span>
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] text-meta font-black uppercase tracking-widest">{displayLogs.length} lần uống</p>
+                      <p className="text-[10px] text-meta font-black uppercase tracking-widest">{displayLogs.length} drinks</p>
                     </div>
                   </div>
                 </>

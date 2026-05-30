@@ -1,18 +1,36 @@
-// --- SENTRY ERROR TRACKING ---
-import { initSentry, Sentry } from './lib/sentry';
-initSentry();
+// --- SENTRY ERROR TRACKING (LAZY LOADED) ---
+// Sentry is lazy loaded to reduce initial bundle size (~86KB gzipped)
+// Only initialize in production builds with valid DSN
 import { initWebVitals } from './lib/webVitals';
-// --- HẾT SENTRY ---
+
+// Lazy initialize Sentry after app bootstrap
+let Sentry: typeof import('./lib/sentry').Sentry | null = null;
+
+async function loadSentry() {
+  if (Sentry || import.meta.env.DEV) return;
+  try {
+    const sentryModule = await import('./lib/sentry');
+    Sentry = sentryModule.Sentry;
+    sentryModule.initSentry();
+  } catch (e) {
+    console.warn('Failed to load Sentry:', e);
+  }
+}
 
 // --- CODE BẮT LỖI MÀN HÌNH TRẮNG (DEV MODE) ---
 // DEV: overlay trực quan + forward to Sentry
 // PROD: chỉ forward to Sentry (không làm hỏng UI)
 if (typeof window !== 'undefined') {
   initWebVitals();
+  // Load Sentry in background for production error tracking
+  if (!import.meta.env.DEV) {
+    loadSentry();
+  }
+
   window.onerror = function (msg, _url, line, _col, error) {
     console.error(`LỖI: ${msg} (dòng ${line})`);
-    if (error) Sentry.captureException(error);
-    else Sentry.captureMessage(String(msg), 'error');
+    Sentry?.captureException(error ?? new Error(String(msg)));
+    if (!error && Sentry) Sentry.captureMessage(String(msg), 'error');
 
     if (import.meta.env.DEV) {
       const d = document.createElement('div');
@@ -26,8 +44,10 @@ if (typeof window !== 'undefined') {
   window.onunhandledrejection = function (event) {
     const reason = event.reason;
     console.error(`LỖI PROMISE:`, reason);
-    if (reason instanceof Error) Sentry.captureException(reason);
-    else Sentry.captureMessage(String(reason), 'error');
+    if (Sentry) {
+      if (reason instanceof Error) Sentry.captureException(reason);
+      else Sentry.captureMessage(String(reason), 'error');
+    }
 
     if (import.meta.env.DEV) {
       const d = document.createElement('div');

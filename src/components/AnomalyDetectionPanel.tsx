@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, TrendingDown, Target, Lightbulb, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -20,6 +21,7 @@ export default function AnomalyDetectionPanel({
   waterGoal,
   streak
 }: AnomalyDetectionPanelProps) {
+  const { t } = useTranslation();
 
   const anomalyAnalysis = useMemo(() => {
     if (weeklyChartData.length < 3) {
@@ -58,8 +60,8 @@ export default function AnomalyDetectionPanel({
       anomalies.push({
         type: 'drop',
         severity: lastDay < waterGoal * 0.3 ? 'high' : 'medium',
-        message: `Giảm đột ngột ${Math.round((secondLastDay - lastDay) / secondLastDay * 100)}% so với hôm qua`,
-        suggestion: 'Hãy uống ngay 500ml nước để phục hồi',
+        message: t('insight.sudden_drop_msg', { pct: Math.round((secondLastDay - lastDay) / secondLastDay * 100) }),
+        suggestion: t('insight.sudden_drop_suggestion'),
         icon: TrendingDown,
         color: 'text-red-400'
       });
@@ -196,10 +198,10 @@ export default function AnomalyDetectionPanel({
   }, [weeklyChartData, waterGoal, streak]);
 
   const habitStrengthConfig: Record<string, { color: string; bgColor: string; label: string }> = {
-    excellent: { color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', label: 'Xuất sắc' },
-    strong: { color: 'text-cyan-400', bgColor: 'bg-cyan-500/10', label: 'Mạnh' },
-    developing: { color: 'text-amber-400', bgColor: 'bg-amber-500/10', label: 'Đang phát triển' },
-    weak: { color: 'text-red-400', bgColor: 'bg-red-500/10', label: 'Yếu' },
+    excellent: { color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', label: 'Excellent' },
+    strong: { color: 'text-cyan-400', bgColor: 'bg-cyan-500/10', label: 'Strong' },
+    developing: { color: 'text-amber-400', bgColor: 'bg-amber-500/10', label: 'Developing' },
+    weak: { color: 'text-red-400', bgColor: 'bg-red-500/10', label: 'Weak' },
     unknown: { color: 'text-slate-400', bgColor: 'bg-slate-500/10', label: 'Chưa xác định' }
   };
 

@@ -1,11 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface LiquidProgressProps {
   percentage: number; // 0 đến 100
 }
 
 export const LiquidProgress: React.FC<LiquidProgressProps> = ({ percentage }) => {
+  const { t } = useTranslation();
   // Giới hạn an toàn từ 0 - 100%
   const clamped = Math.min(Math.max(percentage, 0), 100);
 
@@ -13,7 +15,7 @@ export const LiquidProgress: React.FC<LiquidProgressProps> = ({ percentage }) =>
     <div
       className="glass-card-strong relative w-56 h-56 rounded-full overflow-hidden mx-auto transition-all"
       role="progressbar"
-      aria-label="Tiến độ nước"
+      aria-label={t('common.liquid_progress_aria')}
       aria-valuenow={clamped}
       aria-valuemin={0}
       aria-valuemax={100}

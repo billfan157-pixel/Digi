@@ -1,6 +1,7 @@
 import React, { memo, useMemo, useState, useEffect } from 'react';
-import { Trophy, UserPlus, Zap, Users, Search, Target } from 'lucide-react';
+import { Trophy, UserPlus, Zap, Users, Search, Target, Swords } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import TabHeader from '../components/layout/TabHeader';
 import ClubsView from '../components/ClubsView';
 import type { Profile } from '../models';
@@ -12,6 +13,7 @@ import { EmptyState } from './League/EmptyState';
 import { LeagueTierBadge } from './League/LeagueTierBadge';
 import { getTierByWP } from './League/types';
 import type { LeagueEntry, LeagueMode, LeagueView } from './League/types';
+import ArenaTab from './ArenaTab';
 
 interface LeagueTabProps {
   leagueMode: LeagueMode;
@@ -21,12 +23,6 @@ interface LeagueTabProps {
   profile?: Profile | null;
 }
 
-const MODE_META: Record<LeagueMode, { label: string; accent: string; icon: React.ComponentType<{ size?: number }> }> = {
-  public: { label: 'Cộng đồng', accent: 'text-cyan-300', icon: Trophy },
-  friends: { label: 'Bạn bè', accent: 'text-emerald-300', icon: Users },
-  clubs: { label: 'Câu lạc bộ', accent: 'text-purple-300', icon: Users },
-};
-
 const LeagueTab = memo(function LeagueTab({
   leagueMode,
   setLeagueMode,
@@ -34,9 +30,18 @@ const LeagueTab = memo(function LeagueTab({
   getLeagueData,
   profile,
 }: LeagueTabProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [leagueView, setLeagueView] = useState<LeagueView>('all');
+  const competeView = useUIStore(s => s.leagueCompeteView);
+  const setCompeteView = (view: 'ranking' | 'arena') => useUIStore.getState().setLeagueCompeteView(view);
   const isPremium = useIsPremium();
+
+  const MODE_META: Record<LeagueMode, { label: string; accent: string; icon: React.ComponentType<{ size?: number }> }> = useMemo(() => ({
+    public: { label: t('league.mode_public'), accent: 'text-cyan-300', icon: Trophy },
+    friends: { label: t('league.mode_friends'), accent: 'text-emerald-300', icon: Users },
+    clubs: { label: t('league.mode_clubs'), accent: 'text-purple-300', icon: Users },
+  }), [t]);
 
   useEffect(() => { const t = window.setTimeout(() => { setSearchQuery(''); setLeagueView('all'); }, 0); return () => window.clearTimeout(t); }, [leagueMode]);
 
@@ -86,31 +91,70 @@ const LeagueTab = memo(function LeagueTab({
 
       <div className="mb-4">
         <TabHeader
-          label="Đấu trường"
-          title={<span className="flex items-center gap-2">Xếp hạng <Trophy size={22} className="text-yellow-400" /></span>}
+          label={competeView === 'ranking' ? t('league.ranking') : 'Võ Đài'}
+          title={
+            <span className="flex items-center gap-2">
+              {competeView === 'ranking' ? t('league.ranking') : 'Võ Đài'}
+              {competeView === 'ranking' ? <Trophy size={22} className="text-yellow-400" /> : <Swords size={22} className="text-rose-500" />}
+            </span>
+          }
           profile={profile}
-          actionIcon={<Target size={18} />}
-          onActionClick={() => useUIStore.getState().setShowChallengeModal(true)}
+          actionIcon={competeView === 'ranking' ? <Target size={18} /> : undefined}
+          onActionClick={competeView === 'ranking' ? () => useUIStore.getState().setShowChallengeModal(true) : undefined}
+          onAvatarClick={() => useUIStore.getState().setShowMainMenu(true)}
         />
       </div>
 
+      {/* ── Compete view toggle ── */}
+      <div className="px-6 mb-4">
+        <div className="relative flex p-1 shadow-sm border-[var(--theme-border-width,1px)] border-[var(--theme-border-glass,rgba(255,255,255,0.08))] bg-slate-950/20 rounded-[var(--theme-border-radius-inner,12px)] backdrop-blur-[var(--theme-blur,40px)]">
+          {(['ranking', 'arena'] as const).map((view) => (
+            <button
+              key={view}
+              onClick={() => setCompeteView(view)}
+              className={`flex-1 py-2.5 text-xs font-black rounded-[calc(var(--theme-border-radius-inner,12px)-4px)] transition-all relative ${
+                competeView === view ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              {competeView === view && (
+                <motion.div
+                  layoutId="competePill"
+                  className="absolute inset-0 rounded-[calc(var(--theme-border-radius-inner,12px)-4px)] bg-slate-800/60 border border-[var(--theme-border-glass,rgba(255,255,255,0.1))] shadow-[0_0_12px_var(--theme-glow-color,rgba(34,211,238,0.15))]"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center justify-center gap-2 uppercase tracking-widest text-[9px]">
+                {view === 'ranking' ? <Trophy size={12} /> : <Swords size={12} />}
+                {view === 'ranking' ? 'Xếp hạng' : 'Võ đài'}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {competeView === 'arena' && (
+        <ArenaTab profile={profile ?? null} />
+      )}
+
+      {competeView === 'ranking' && (
+        <>
       {/* ── Mode pills ── */}
       <div className="px-6 mb-6">
-        <div className="flex p-1 bg-slate-800/30 backdrop-blur-2xl rounded-2xl border border-white/5">
+        <div className="relative flex p-1 shadow-sm border-[var(--theme-border-width,1px)] border-[var(--theme-border-glass,rgba(255,255,255,0.08))] bg-slate-950/20 rounded-[var(--theme-border-radius-inner,12px)] backdrop-blur-[var(--theme-blur,40px)]">
           {(['public', 'friends', 'clubs'] as LeagueMode[]).map((mode) => {
             const meta = MODE_META[mode];
             return (
               <button
                 key={mode}
                 onClick={() => setLeagueMode(mode)}
-                className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all relative ${
+                className={`flex-1 py-2.5 text-xs font-black rounded-[calc(var(--theme-border-radius-inner,12px)-4px)] transition-all relative ${
                   leagueMode === mode ? 'text-white' : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
                 {leagueMode === mode && (
                   <motion.div
                     layoutId="leaguePill"
-                    className="absolute inset-0 rounded-xl bg-slate-700/60 border border-white/10"
+                    className="absolute inset-0 rounded-[calc(var(--theme-border-radius-inner,12px)-4px)] bg-slate-800/60 border border-[var(--theme-border-glass,rgba(255,255,255,0.1))] shadow-[0_0_12px_var(--theme-glow-color,rgba(34,211,238,0.15))]"
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -129,9 +173,9 @@ const LeagueTab = memo(function LeagueTab({
           currentUser?.id ? (
             <ClubsView userId={currentUser.id} />
           ) : (
-             <div className="h-40 flex flex-col items-center justify-center text-slate-500 gap-3 border border-dashed border-white/10 rounded-3xl">
+             <div className="h-40 flex flex-col items-center justify-center text-slate-500 gap-3 border border-dashed border-[var(--theme-border-glass,rgba(255,255,255,0.1))] rounded-[var(--theme-border-radius,24px)]">
                 <Users size={32} className="opacity-20" />
-                <p className="text-xs font-bold">Tham gia CLB để so tài</p>
+                <p className="text-xs font-bold">{t('league.join_club_to_compete')}</p>
              </div>
           )
         ) : (
@@ -141,16 +185,16 @@ const LeagueTab = memo(function LeagueTab({
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 flex items-center justify-between gap-4 backdrop-blur-xl"
+                className="bg-yellow-500/10 border border-yellow-500/20 rounded-[var(--theme-border-radius,16px)] p-4 flex items-center justify-between gap-4 backdrop-blur-[var(--theme-blur,40px)]"
               >
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-yellow-400">Thứ hạng của bạn đang bị ẩn</p>
-                  <p className="text-[10px] text-slate-400 mt-1">Bạn đã tắt chia sẻ xếp hạng. Bật chia sẻ xếp hạng để so tài cùng mọi người.</p>
+                  <p className="text-xs font-bold text-yellow-400">{t('league.ranking_hidden')}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{t('league.ranking_hidden_desc')}</p>
                 </div>
                 <button
                   onClick={async () => {
                     const { toast } = await import('sonner');
-                    const toastId = toast.loading('Đang bật chia sẻ xếp hạng...');
+                    const toastId = toast.loading(t('league.enabling_ranking'));
                     try {
                       const { supabase } = await import('@/lib/supabase');
                       const { error } = await supabase
@@ -167,16 +211,16 @@ const LeagueTab = memo(function LeagueTab({
                         });
                       }
                       
-                      toast.success('Đã bật chia sẻ xếp hạng!', { id: toastId });
+                      toast.success(t('league.ranking_enabled'), { id: toastId });
                       // Dispatch event to reload league data
                       window.dispatchEvent(new CustomEvent('hydrationEvent', { detail: { refresh_profile: true } }));
                     } catch {
-                      toast.error('Không thể cập nhật cấu hình xếp hạng', { id: toastId });
+                      toast.error(t('league.ranking_error'), { id: toastId });
                     }
                   }}
-                  className="px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-xl text-[10px] font-black uppercase tracking-wider border border-yellow-500/30 whitespace-nowrap active:scale-95 transition-all"
+                  className="px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-[var(--theme-border-radius-inner,12px)] text-[10px] font-black uppercase tracking-wider border border-yellow-500/30 whitespace-nowrap active:scale-95 transition-all"
                 >
-                  Hiện tài khoản
+                  {t('league.show_account')}
                 </button>
               </motion.div>
             )}
@@ -186,7 +230,7 @@ const LeagueTab = memo(function LeagueTab({
                <motion.div 
                  initial={{ opacity: 0, y: 20 }}
                  animate={{ opacity: 1, y: 0 }}
-                 className={`relative overflow-hidden rounded-[2rem] border-2 ${myTier?.border} bg-slate-900/40 p-6 backdrop-blur-3xl shadow-2xl`}
+                 className={`relative overflow-hidden rounded-[var(--theme-border-radius,24px)] border-2 ${myTier?.border || 'border-[var(--theme-border-glass)]'} bg-slate-900/50 backdrop-blur-[var(--theme-blur,40px)] p-6 shadow-2xl shadow-[var(--theme-glow-color,rgba(0,0,0,0))]`}
                >
                   {/* Aura animation */}
                   <div className={`absolute -top-12 -right-12 w-40 h-40 ${myTier?.bg} blur-[60px] rounded-full animate-pulse`} />
@@ -195,7 +239,7 @@ const LeagueTab = memo(function LeagueTab({
                      <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                            <LeagueTierBadge wp={currentUser.wp} size="md" />
-                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Hạng của bạn</span>
+                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('league.your_rank')}</span>
                         </div>
                         
                         <div className="flex items-baseline gap-2">
@@ -203,7 +247,7 @@ const LeagueTab = memo(function LeagueTab({
                            {nextTarget && (
                               <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                                  <Target size={10} />
-                                 <span>Đuổi kịp {nextTarget.name}</span>
+                                 <span>{t('league.chase_target', { name: nextTarget.name })}</span>
                               </div>
                            )}
                         </div>
@@ -211,7 +255,7 @@ const LeagueTab = memo(function LeagueTab({
                         {nextTarget && (
                            <div className="mt-4 space-y-2">
                               <div className="flex justify-between items-end">
-                                 <p className="text-[10px] font-bold text-slate-400">Tiến độ vượt cấp</p>
+                                 <p className="text-[10px] font-bold text-slate-400">{t('league.overcome_progress')}</p>
                                  <p className="text-[10px] font-black text-emerald-400">+{wpNeeded.toLocaleString()} WP</p>
                               </div>
                               <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
@@ -226,7 +270,7 @@ const LeagueTab = memo(function LeagueTab({
                      </div>
                      
                      <div className="text-right">
-                        <div className="p-3 bg-white/5 rounded-2xl border border-white/5 mb-2 inline-block">
+                        <div className="p-3 bg-white/5 rounded-[var(--theme-border-radius-inner,12px)] border border-white/5 mb-2 inline-block">
                            <Zap size={24} className="text-amber-400" />
                         </div>
                         <p className="text-2xl font-black text-white">{currentUser.wp.toLocaleString()}</p>
@@ -239,29 +283,29 @@ const LeagueTab = memo(function LeagueTab({
             {/* ── Search + Quick Filters ── */}
             <div className="flex items-center gap-3">
               <div className="relative flex-1 group">
-                <div className="flex items-center gap-3 bg-slate-800/40 rounded-2xl px-4 py-3 border border-white/5 focus-within:border-cyan-500/30 transition-all">
+                <div className="flex items-center gap-3 bg-slate-900/30 rounded-[var(--theme-border-radius-inner,12px)] px-4 py-3 border border-[var(--theme-border-glass,rgba(255,255,255,0.05))] focus-within:border-cyan-500/50 transition-all">
                   <Search size={16} className="text-slate-500" />
                   <input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Tìm kiếm đối thủ..."
+                    placeholder={t('league.search_placeholder')}
                     className="bg-transparent text-xs text-white placeholder:text-slate-600 outline-none w-full font-bold"
                   />
                 </div>
               </div>
 
-              <div className="flex p-1 bg-slate-800/40 rounded-2xl border border-white/5 overflow-x-auto scrollbar-hide">
+              <div className="relative flex p-1 shadow-sm border-[var(--theme-border-width,1px)] border-[var(--theme-border-glass,rgba(255,255,255,0.08))] bg-slate-950/20 rounded-[var(--theme-border-radius-inner,12px)] overflow-x-auto scrollbar-hide">
                 {(['all', 'top10', 'around'] as LeagueView[]).map((view) => (
                   <button
                     key={view}
                     onClick={() => setLeagueView(view)}
-                    className={`rounded-xl px-3 py-2 text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                    className={`rounded-[calc(var(--theme-border-radius-inner,12px)-4px)] px-3 py-2 text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                       leagueView === view
-                        ? 'bg-white/10 text-white shadow-lg'
-                        : 'text-slate-600 hover:text-slate-400'
+                        ? 'bg-slate-800/60 text-white border border-[var(--theme-border-glass,rgba(255,255,255,0.1))] shadow-lg shadow-[var(--theme-glow-color,rgba(0,0,0,0))]'
+                        : 'text-slate-500 hover:text-slate-300'
                     }`}
                   >
-                    {view === 'all' ? 'Tất cả' : view === 'top10' ? 'Top 10' : 'Gần bạn'}
+                    {view === 'all' ? t('league.view_all') : view === 'top10' ? t('league.view_top10') : t('league.view_nearby')}
                   </button>
                 ))}
               </div>
@@ -311,13 +355,15 @@ const LeagueTab = memo(function LeagueTab({
         {leagueMode === 'friends' && (
            <button 
              onClick={() => setShowAddFriend(true)}
-             className="w-full py-4 rounded-3xl border border-dashed border-emerald-500/30 bg-emerald-500/5 text-emerald-400 text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-95 transition-all"
+             className="w-full py-4 rounded-[var(--theme-border-radius,24px)] border border-dashed border-emerald-500/30 bg-emerald-500/5 text-emerald-400 text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-95 transition-all hover:bg-emerald-500/10 hover:border-emerald-500/50"
            >
               <UserPlus size={18} />
-              Thách đấu thêm bạn bè
+              {t('league.challenge_friends')}
            </button>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 });

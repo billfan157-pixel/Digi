@@ -47,7 +47,7 @@ export function QuickActions({
             <span className="text-lg text-cyan-400 ml-1">ml</span>
           </div>
           <div className="text-sm font-semibold text-slate-400">
-            {primaryDrinkPreset?.name || 'Nước lọc'}
+            {primaryDrinkPreset?.name || 'Water'}
           </div>
           {primaryDrinkPreset?.factor !== 1 && (
             <div className="text-xs text-amber-400 mt-2 font-bold">
@@ -88,7 +88,7 @@ export function QuickActions({
             <Plus size={16} />
           </div>
           <div className="text-sm font-bold text-slate-400">
-            Tùy chỉnh
+            Custom
           </div>
         </motion.button>
       </div>
@@ -105,10 +105,10 @@ export function QuickActions({
           </div>
           <div className="text-left">
             <div className="text-sm font-bold text-slate-100">
-              Cài đặt
+              Settings
             </div>
             <div className="text-xs text-slate-400">
-              Quản lý presets
+              Manage presets
             </div>
           </div>
         </motion.button>

@@ -1,4 +1,5 @@
 import { useMemo, useCallback } from 'react';
+import i18n from '@/i18n';
 
 export interface BehaviorPattern {
   pattern: string;
@@ -49,7 +50,7 @@ export function useBehaviorAnalysis({ weeklyData, waterGoal }: UseBehaviorAnalys
         result.push({
           pattern: 'Cuối tuần giảm',
           confidence: 0.7,
-          recommendation: 'Cuối tuần bạn hay uống ít hơn. Hãy đặt nhắc nhở để giữ nhịp.'
+          recommendation: i18n.t('insight.recommend_weekend_drop')
         });
       }
     }
@@ -62,13 +63,13 @@ export function useBehaviorAnalysis({ weeklyData, waterGoal }: UseBehaviorAnalys
       result.push({
         pattern: 'Ít đều đặn',
         confidence: 0.9,
-        recommendation: 'Tạo nhắc uống mỗi 2 tiếng để tăng độ đều.'
+        recommendation: i18n.t('insight.recommend_inconsistent')
       });
     } else if (consistency > 0.8) {
       result.push({
         pattern: 'Rất đều đặn',
         confidence: 0.95,
-        recommendation: 'Thói quen tốt! Hãy duy trì và chia sẻ với bạn bè.'
+        recommendation: i18n.t('insight.recommend_consistent')
       });
     }
     
@@ -81,11 +82,11 @@ export function useBehaviorAnalysis({ weeklyData, waterGoal }: UseBehaviorAnalys
     
     for (const pattern of patterns) {
       if (pattern.pattern === 'Ít đều đặn') {
-        return `Uống ${Math.min(150, Math.max(50, gap / 4))}ml ngay để bắt kịp.`;
+        return i18n.t('insight.adaptive_catch_up', { amount: Math.min(150, Math.max(50, gap / 4)) });
       }
     }
     
-    return `Uống ${Math.min(250, gap)}ml để duy trì tiến độ.`;
+    return i18n.t('insight.adaptive_maintain', { amount: Math.min(250, gap) });
   }, [patterns, waterGoal]);
   
   return { patterns, getAdaptiveRecommendation };

@@ -67,7 +67,7 @@ export function useSocialComposer({
   }, [socialImagePreview]);
 
   const uploadSocialImage = async (file: File) => {
-    if (!profile?.id) throw new Error('Vui lòng đăng nhập lại.');
+    if (!profile?.id) throw new Error(i18n.t('social.please_login_again'));
 
     const extension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'jpg';
     const safeExtension = extension || 'jpg';
@@ -182,7 +182,7 @@ export function useSocialComposer({
         expires_at: expiresAt,
       }).select('id').single();
       if (error) throw error;
-      if (!data?.id) throw new Error('Không nhận được Drop vừa tạo.');
+      if (!data?.id) throw new Error(i18n.t('social.drop_not_received'));
 
       toast.success(i18n.t('social.drop_published'), { id: toastId });
       setShowQuickDropCamera(false);
@@ -226,7 +226,7 @@ export function useSocialComposer({
         : null;
 
       const persistedPostKind = socialComposer.postKind === 'progress' ? 'status' : socialComposer.postKind;
-      const { data, error } = await supabase!.from('social_posts').insert({
+      const insertPayload: Record<string, unknown> = {
         author_id: profile.id,
         content: socialComposer.postKind === 'story' ? '' : trimmedContent,
         image_url: imageUrl,
@@ -235,9 +235,10 @@ export function useSocialComposer({
         hydration_ml: waterIntake,
         streak_snapshot: streak,
         expires_at: expiresAt,
-      }).select('id').single();
+      };
+      const { data, error } = await supabase!.from('social_posts').insert(insertPayload).select('id').single();
       if (error) throw error;
-      if (!data?.id) throw new Error('Không nhận được bài viết vừa tạo.');
+      if (!data?.id) throw new Error(i18n.t('social.post_not_received'));
 
       const successMessage = socialComposer.postKind === 'story'
         ? i18n.t('social.story_published')

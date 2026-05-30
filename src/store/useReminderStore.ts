@@ -95,7 +95,7 @@ export const useReminderStore = create<ReminderState>((set, get) => ({
       let granted = await checkHydrationReminderPermission();
       if (!granted && reminderSettings.enabled) granted = await requestHydrationReminderPermission();
       set({ isReminderPermissionGranted: granted });
-      if (reminderSettings.enabled && !granted) throw new Error('Bạn cần cấp quyền thông báo để DigiWell nhắc uống nước.');
+      if (reminderSettings.enabled && !granted) throw new Error(i18n.t('common.notification_permission_required'));
 
       const result = await scheduleHydrationReminders(reminderSettings, { dailyGoal: waterGoal, nickname: nickname });
       toast.success(result.scheduled ? i18n.t('schedule.schedule_updated', { count: result.count }) : i18n.t('schedule.schedule_disabled'));

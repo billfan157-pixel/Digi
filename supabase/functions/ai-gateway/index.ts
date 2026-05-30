@@ -42,44 +42,26 @@ function getCorsHeaders(origin: string | null) {
 }
 
 import { getModelForAction, getMaxTokensForAction } from '../_shared/modelRouter.ts';
+import {
+  sanitizeAndCapContext,
+  parseAdviceResponse,
+  parseNudgeResponse,
+  parseChatResponse,
+  logStructuredEvent,
+  type DigiwellAiContext,
+  type WaterAction,
+  type AiGatewayLog
+} from '../_shared/aiValidation.ts';
 
 const groqApiKey = Deno.env.get('GROQ_API_KEY') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
-type AiGatewayAction = 'advice' | 'chat' | 'report-analysis' | 'agentic';
+type AiGatewayAction = 'advice' | 'chat' | 'report-analysis' | 'agentic' | 'nudge';
 
 type AiUsageResult = {
   allowed?: boolean;
   limit?: number;
   remaining?: number;
-};
-
-type DigiwellAiContext = {
-  nowIso: string;
-  waterIntake: number;
-  waterGoal: number;
-  hydrationHistory?: Array<{ date: string; ml: number }>;
-  weather?: { temp: number; status: string; location: string };
-  watch?: { heartRate: number; steps: number };
-  calendar?: { synced: boolean; nextEventTitle?: string };
-  profile?: { nickname?: string; goal?: string; activity?: string; climate?: string };
-  chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
-  behaviorPatterns?: Array<{
-    pattern: string;
-    confidence: number;
-    recommendation: string;
-  }>;
-  calendarEvents?: Array<{
-    title: string;
-    startRaw: string;
-    endRaw: string;
-  }>;
-};
-
-type WaterAction = {
-  amount: number;
-  factor: number;
-  name: string;
 };
 
 type AiMemoryMessage = {
@@ -234,13 +216,13 @@ function buildContextSummary(context: DigiwellAiContext): string {
     ...(context.hydrationHistory?.length
       ? [
           `- Lịch sử uống nước gần đây: ${context.hydrationHistory
-            .slice(-14)
+            .slice(-5)
             .map(day => `${day.date}: ${day.ml}ml`)
             .join('; ')}`,
         ]
       : []),
     context.weather
-      ? `- Thời tiết: ${context.weather.temp}°C, ${sanitizeForPrompt(context.weather.status, 60)}, tại ${sanitizeForPrompt(context.weather.location, 60)}`
+      ? `- Thời tiết: ${context.weather.temp}°C, ${sanitizeForPrompt(context.weather.status, 60)}${context.weather.location ? `, tại ${sanitizeForPrompt(context.weather.location, 60)}` : ''}`
       : '- Thời tiết: chưa đồng bộ',
     context.watch
       ? `- Đồng hồ sức khỏe: ${context.watch.heartRate} BPM, ${context.watch.steps} bước`
@@ -256,8 +238,8 @@ function buildContextSummary(context: DigiwellAiContext): string {
     context.profile?.goal ? `- Mục tiêu sức khỏe: ${sanitizeForPrompt(context.profile.goal, 80)}` : null,
     context.profile?.activity ? `- Mức vận động: ${sanitizeForPrompt(context.profile.activity, 50)}` : null,
     context.profile?.climate ? `- Môi trường/khí hậu: ${sanitizeForPrompt(context.profile.climate, 50)}` : null,
-    ...(context.behaviorPatterns?.map(p => `- Thói quen uống: ${sanitizeForPrompt(p.pattern, 80)} (${Math.round(p.confidence * 100)}% tin cậy) — ${sanitizeForPrompt(p.recommendation, 100)}`) ?? []),
-    ...(context.calendarEvents?.length ? context.calendarEvents.map(ev => `- Lịch: "${sanitizeForPrompt(ev.title, 80)}" (${ev.startRaw} → ${ev.endRaw})`) : []),
+    ...(context.behaviorPatterns?.slice(0, 5).map(p => `- Thói quen uống: ${sanitizeForPrompt(p.pattern, 80)} (${Math.round(p.confidence * 100)}% tin cậy) — ${sanitizeForPrompt(p.recommendation, 100)}`) ?? []),
+    ...(context.calendarEvents?.length ? context.calendarEvents.slice(0, 5).map(ev => `- Lịch: "${sanitizeForPrompt(ev.title, 80)}" (${ev.startRaw} → ${ev.endRaw})`) : []),
   ]
     .filter(Boolean)
     .join('\n');
@@ -346,27 +328,40 @@ async function enforceRateLimit(
   supabase: SupabaseGatewayClient,
   action: AiGatewayAction,
   origin: string | null,
-) {
-  const dbAction = action === 'agentic' ? 'advice' : action;
+): Promise<{
+  response: Response | null;
+  quotaResult?: { allowed: boolean; limit: number; remaining: number };
+}> {
+  const dbAction = (action === 'agentic' || action === 'nudge') ? 'advice' : action;
   const { data, error } = await supabase.rpc('consume_ai_usage', {
     p_action: dbAction,
   });
 
   if (error) {
     console.error('[ai-gateway] RPC consume_ai_usage failed:', error.message, JSON.stringify(error));
-    return json({ error: `Không thể kiểm tra giới hạn AI: ${error.message}` }, 500, origin);
+    return {
+      response: json({ error: `Không thể kiểm tra giới hạn AI: ${error.message}` }, 500, origin),
+    };
   }
 
   const usage = data as AiUsageResult | null;
-  if (!usage?.allowed) {
-    return json({
-      error: 'Bạn đã dùng hết lượt AI hôm nay.',
-      limit: usage?.limit ?? 0,
-      remaining: 0,
-    }, 429, origin);
+  const allowed = !!usage?.allowed;
+  const limit = usage?.limit ?? 0;
+  const remaining = usage?.remaining ?? 0;
+  const quotaResult = { allowed, limit, remaining };
+
+  if (!allowed) {
+    return {
+      response: json({
+        error: 'Bạn đã dùng hết lượt AI hôm nay.',
+        limit,
+        remaining,
+      }, 429, origin),
+      quotaResult,
+    };
   }
 
-  return null;
+  return { response: null, quotaResult };
 }
 
 async function getRecentAiMessages(
@@ -402,7 +397,7 @@ function buildMemoryMessages(
   const clientHistory = (context.chatHistory ?? [])
     .filter((message) => message.content?.trim())
     .map((message) => ({
-      role: message.role,
+      role: message.role === 'user' ? 'user' as const : 'assistant' as const,
       content: message.content.slice(0, 700),
     }));
 
@@ -516,23 +511,20 @@ async function streamChatResponse(
   input: string,
   context: DigiwellAiContext,
   memoryMessages: ChatCompletionMessage[],
+  quotaResult?: { allowed: boolean; limit: number; remaining: number },
 ) {
+  const streamStart = performance.now();
+  const model = getModelForAction('chat');
+
   return sseResponse(origin, async (controller) => {
     const encoder = new TextEncoder();
-    const body = await groqChatStream({
-      model: getModelForAction('chat'),
-      max_tokens: getMaxTokensForAction('chat'),
-      tools: [recordWaterIntakeTool],
-      tool_choice: 'auto',
-      messages: buildChatMessages(context, input, memoryMessages),
-    });
-
-    const reader = body.getReader();
-    const decoder = new TextDecoder();
-    const toolCalls: Record<number, { name?: string; arguments: string }> = {};
-    let buffer = '';
     let fullReply = '';
     let waterAction: WaterAction | undefined;
+    let fallbackUsed = false;
+    let fallbackReason: string | undefined = undefined;
+
+    const toolCalls: Record<number, { name?: string; arguments: string }> = {};
+    let buffer = '';
 
     const emitDelta = (text: string) => {
       if (!text) return;
@@ -566,42 +558,83 @@ async function streamChatResponse(
       }
     };
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+    try {
+      const body = await groqChatStream({
+        model,
+        max_tokens: getMaxTokensForAction('chat'),
+        tools: [recordWaterIntakeTool],
+        tool_choice: 'auto',
+        messages: buildChatMessages(context, input, memoryMessages),
+      });
 
-      buffer += decoder.decode(value, { stream: true });
-      const blocks = buffer.split('\n\n');
-      buffer = blocks.pop() ?? '';
+      const reader = body.getReader();
+      const decoder = new TextDecoder();
 
-      for (const block of blocks) {
-        if (block.trim()) processBlock(block);
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const blocks = buffer.split('\n\n');
+        buffer = blocks.pop() ?? '';
+
+        for (const block of blocks) {
+          if (block.trim()) processBlock(block);
+        }
       }
+
+      if (buffer.trim()) processBlock(buffer);
+
+      const firstToolCall = toolCalls[0];
+      if (firstToolCall?.name === 'recordWaterIntake') {
+        let parsedArgs: Partial<WaterAction> = {};
+        try {
+          parsedArgs = JSON.parse(firstToolCall.arguments || '{}');
+        } catch {
+          parsedArgs = {};
+        }
+
+        waterAction = clampWaterAction(parsedArgs);
+        if (waterAction) {
+          const actionReply = `Đã ghi nhận bạn uống ${waterAction.amount}ml ${waterAction.name}.`;
+          if (!fullReply.trim()) emitDelta(actionReply);
+          controller.enqueue(encodeSse('waterAction', { waterAction }));
+        }
+      }
+
+      const finalReply = fullReply.trim() || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.';
+      await rememberAiExchange(supabase, userId, input, finalReply, context, waterAction);
+      controller.enqueue(encodeSse('done', {}));
+      controller.close();
+
+      const latencyMs = Math.round(performance.now() - streamStart);
+      logStructuredEvent({
+        timestamp: new Date().toISOString(),
+        action: 'chat',
+        model,
+        userId,
+        latencyMs,
+        quotaResult,
+        fallbackUsed,
+        fallbackReason,
+        success: true,
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      const latencyMs = Math.round(performance.now() - streamStart);
+      logStructuredEvent({
+        timestamp: new Date().toISOString(),
+        action: 'chat',
+        model,
+        userId,
+        latencyMs,
+        quotaResult,
+        fallbackUsed: false,
+        success: false,
+        errorMessage: msg,
+      });
+      throw error;
     }
-
-    if (buffer.trim()) processBlock(buffer);
-
-    const firstToolCall = toolCalls[0];
-    if (firstToolCall?.name === 'recordWaterIntake') {
-      let parsedArgs: Partial<WaterAction> = {};
-      try {
-        parsedArgs = JSON.parse(firstToolCall.arguments || '{}');
-      } catch {
-        parsedArgs = {};
-      }
-
-      waterAction = clampWaterAction(parsedArgs);
-      if (waterAction) {
-        const actionReply = `Đã ghi nhận bạn uống ${waterAction.amount}ml ${waterAction.name}.`;
-        if (!fullReply.trim()) emitDelta(actionReply);
-        controller.enqueue(encodeSse('waterAction', { waterAction }));
-      }
-    }
-
-    const finalReply = fullReply.trim() || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.';
-    await rememberAiExchange(supabase, userId, input, finalReply, context, waterAction);
-    controller.enqueue(encodeSse('done', {}));
-    controller.close();
   });
 }
 
@@ -639,6 +672,12 @@ Deno.serve(async (request) => {
     return json({ error: 'Unauthorized.' }, 401, origin);
   }
 
+  const startTime = performance.now();
+  let action: AiGatewayAction | undefined = undefined;
+  let model = 'unknown';
+  let quotaResult: any = undefined;
+  const userId = user.id;
+
   try {
     const gatewayLimit = await checkRateLimit(`ai-gateway:${user.id}`, RATE_LIMITS.aiGateway);
     if (!gatewayLimit.allowed) {
@@ -648,30 +687,38 @@ Deno.serve(async (request) => {
     }
 
     const body = (await request.json()) as Record<string, unknown>;
-    const action = body.action as AiGatewayAction;
+    action = body.action as AiGatewayAction;
 
     if (!action) {
       return json({ error: 'Missing action.' }, 400, origin);
     }
 
+    try {
+      model = getModelForAction(action);
+    } catch {
+      // Keep model as 'unknown'
+    }
+
     // Validate and sanitize input based on action type
-    // Validate context for 'advice' action
-    if (action === 'advice') {
-      const context = body.context as Partial<DigiwellAiContext>;
-      if (!context || typeof context !== 'object') {
-        return json({ error: 'Invalid or missing context.' }, 400, origin);
-      }
-      // Validate numeric fields
-      if (context.waterIntake !== undefined && (!Number.isFinite(context.waterIntake) || context.waterIntake < 0)) {
-        return json({ error: 'Invalid waterIntake value.' }, 400, origin);
-      }
-      if (context.waterGoal !== undefined && (!Number.isFinite(context.waterGoal) || context.waterGoal <= 0)) {
-        return json({ error: 'Invalid waterGoal value.' }, 400, origin);
-      }
-      // Validate weather if present
-      if (context.weather) {
-        if (typeof context.weather.temp !== 'number' || context.weather.temp < -50 || context.weather.temp > 60) {
-          return json({ error: 'Invalid weather temperature.' }, 400, origin);
+    // Validate context for 'advice', 'nudge', 'chat', and 'agentic' actions
+    if (action === 'advice' || action === 'nudge' || action === 'chat' || action === 'agentic') {
+      const context = body.context as Partial<DigiwellAiContext> | undefined;
+      if (context) {
+        if (typeof context !== 'object') {
+          return json({ error: 'Invalid context object.' }, 400, origin);
+        }
+        // Validate and clamp/reject numeric fields
+        if (context.waterIntake !== undefined && (!Number.isFinite(context.waterIntake) || context.waterIntake < 0 || context.waterIntake > 50000)) {
+          return json({ error: 'Invalid or out of bounds waterIntake value.' }, 400, origin);
+        }
+        if (context.waterGoal !== undefined && (!Number.isFinite(context.waterGoal) || context.waterGoal <= 0 || context.waterGoal > 50000)) {
+          return json({ error: 'Invalid or out of bounds waterGoal value.' }, 400, origin);
+        }
+        // Validate weather if present
+        if (context.weather) {
+          if (typeof context.weather.temp !== 'number' || context.weather.temp < -50 || context.weather.temp > 60) {
+            return json({ error: 'Invalid weather temperature.' }, 400, origin);
+          }
         }
       }
     }
@@ -700,70 +747,120 @@ Deno.serve(async (request) => {
       }
     }
 
-    const rateLimitResponse = await enforceRateLimit(supabase, action, origin);
-    if (rateLimitResponse) {
-      return rateLimitResponse;
+    const rateLimitCheck = await enforceRateLimit(supabase, action, origin);
+    quotaResult = rateLimitCheck.quotaResult;
+    if (rateLimitCheck.response) {
+      logStructuredEvent({
+        timestamp: new Date().toISOString(),
+        action,
+        model,
+        userId,
+        latencyMs: Math.round(performance.now() - startTime),
+        quotaResult,
+        fallbackUsed: false,
+        success: false,
+        errorMessage: 'Rate limit / quota exceeded',
+      });
+      return rateLimitCheck.response;
     }
 
+    const sanitizedContext = body.context ? sanitizeAndCapContext(body.context as Partial<DigiwellAiContext>) : undefined;
+
     if (action === 'advice') {
-      const context = body.context as DigiwellAiContext;
+      if (!sanitizedContext) {
+        return json({ error: 'Context is required for advice.' }, 400, origin);
+      }
       const persistedMessages = await getRecentAiMessages(supabase, user.id);
-      const memoryMessages = buildMemoryMessages(context, persistedMessages);
+      const memoryMessages = buildMemoryMessages(sanitizedContext, persistedMessages);
       const memoryText = memoryMessages.length
         ? `\n\nLịch sử tư vấn gần đây:\n${memoryMessages
             .map(message => `- ${message.role === 'user' ? 'Người dùng' : 'DigiCoach'}: ${message.content}`)
             .join('\n')}`
         : '';
       const response = await groqChat({
-        model: getModelForAction('advice'),
+        model,
         max_tokens: getMaxTokensForAction('advice'),
+        response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
             content:
-              'Bạn là trợ lý sức khỏe AI của app DigiWell, chuyên huấn luyện uống nước thông minh. ' +
-              'Trả lời bằng tiếng Việt, ngắn gọn tối đa 35 chữ, thân thiện. Không dùng markdown.',
+              'Bạn là DigiCoach — trợ lý sức khỏe cá nhân hóa thông minh của DigiWell. Nhiệm vụ: Trả về một đối tượng JSON phân tích bối cảnh người dùng để cung cấp một lời khuyên sâu sắc và đề xuất hành động tiếp theo tốt nhất (nextBestAction).',
           },
           {
             role: 'user',
             content:
-              `Bối cảnh hiện tại:\n${buildContextSummary(context)}${memoryText}\n\n` +
-              'Đưa ra 1 lời khuyên ngắn gọn về uống nước/nghỉ ngơi. ' +
-              'Nếu có lịch trình, hãy phân tích loại lịch (học, họp, tập gym, đi chơi, ngủ...) ' +
-              'và đưa ra lời khuyên phù hợp với từng loại. ' +
-              'Nếu thiếu nhiều nước thì nhắc uống sớm. Nếu gần đạt mục tiêu thì động viên nhẹ. ' +
-              'Chỉ trả về duy nhất câu khuyên, không chào hỏi.',
+              `Bối cảnh hiện tại:\n${buildContextSummary(sanitizedContext)}${memoryText}\n\n` +
+              'Yêu cầu phản hồi bằng JSON thuần với cấu trúc chính xác sau:\n' +
+              '{\n' +
+              '  "text": "lời khuyên (tối đa 40 chữ, thân thiện, tiếng Việt)",\n' +
+              '  "nextBestAction": {\n' +
+              '    "title": "tiêu đề hành động",\n' +
+              '    "action": "nội dung hành động",\n' +
+              '    "ml": 250,\n' +
+              '    "icon": "sparkles"\n' +
+              '  }\n' +
+              '}\n\n' +
+              'Chi tiết các trường:\n' +
+              '- text: Lời khuyên huấn luyện uống nước/nghỉ ngơi thông minh, cá nhân hóa theo thói quen, lịch trình, thời tiết và lịch sử (tối đa 40 chữ, thân thiện, tiếng Việt).\n' +
+              '- nextBestAction.title: Tiêu đề hành động ngắn gọn (ví dụ: "Cần bù nước gấp", "Bảo vệ chuỗi!", "Đánh thức cơ thể", "Trước khi ngủ", "Chuỗi tuyệt vời!").\n' +
+              '- nextBestAction.action: Nội dung hành động cụ thể, thiết thực cho người dùng (ví dụ: "Uống 250ml nước ấm để khởi động cơ thể sau giấc ngủ dài.").\n' +
+              '- nextBestAction.ml: Số nguyên (ml) khuyến nghị uống để thực hiện hành động này, hoặc 0 nếu không cần uống nước.\n' +
+              '- nextBestAction.icon: Bắt buộc chỉ chọn 1 trong: "droplets" | "zap" | "alert" | "sparkles" | "clock" | "target" | "crown" | "award" | "weather" | "flame".',
           },
         ],
       });
 
-      const text = String(response.choices?.[0]?.message?.content ?? '').replace(/\*/g, '').trim();
-      return json({ text }, 200, origin);
+      const rawContent = String(response.choices?.[0]?.message?.content ?? '');
+      const parsedResult = parseAdviceResponse(rawContent);
+
+      const promptTokens = response.usage?.prompt_tokens;
+      const completionTokens = response.usage?.completion_tokens;
+
+      logStructuredEvent({
+        timestamp: new Date().toISOString(),
+        action,
+        model,
+        userId,
+        latencyMs: Math.round(performance.now() - startTime),
+        quotaResult,
+        fallbackUsed: parsedResult.fallbackUsed,
+        fallbackReason: parsedResult.fallbackReason,
+        success: true,
+        promptTokens,
+        completionTokens,
+      });
+
+      return json(parsedResult.data, 200, origin);
     }
 
     if (action === 'chat') {
+      if (!sanitizedContext) {
+        return json({ error: 'Context is required for chat.' }, 400, origin);
+      }
       const input = String(body.input ?? '');
       if (input.length > 2000) {
         return json({ error: 'Tin nhắn quá dài (tối đa 2000 ký tự).' }, 400, origin);
       }
-      const context = body.context as DigiwellAiContext;
       const persistedMessages = await getRecentAiMessages(supabase, user.id);
-      const memoryMessages = buildMemoryMessages(context, persistedMessages);
+      const memoryMessages = buildMemoryMessages(sanitizedContext, persistedMessages);
 
       if (body.stream === true) {
-        return streamChatResponse(supabase, user.id, origin, input, context, memoryMessages);
+        return streamChatResponse(supabase, user.id, origin, input, sanitizedContext, memoryMessages, quotaResult);
       }
 
       const response = await groqChat({
-        model: getModelForAction('chat'),
+        model,
         max_tokens: getMaxTokensForAction('chat'),
         tools: [recordWaterIntakeTool],
         tool_choice: 'auto',
-        messages: buildChatMessages(context, input, memoryMessages),
+        messages: buildChatMessages(sanitizedContext, input, memoryMessages),
       });
 
       const choice = response.choices?.[0];
       const toolCalls = choice?.message?.tool_calls;
+      const promptTokens = response.usage?.prompt_tokens;
+      const completionTokens = response.usage?.completion_tokens;
 
       if (Array.isArray(toolCalls) && toolCalls.length > 0) {
         const call = toolCalls[0];
@@ -778,7 +875,21 @@ Deno.serve(async (request) => {
           const waterAction = clampWaterAction(parsedArgs);
           if (waterAction) {
             const reply = `Đã ghi nhận bạn uống ${waterAction.amount}ml ${waterAction.name}.`;
-            await rememberAiExchange(supabase, user.id, input, reply, context, waterAction);
+            await rememberAiExchange(supabase, user.id, input, reply, sanitizedContext, waterAction);
+            
+            logStructuredEvent({
+              timestamp: new Date().toISOString(),
+              action,
+              model,
+              userId,
+              latencyMs: Math.round(performance.now() - startTime),
+              quotaResult,
+              fallbackUsed: false,
+              success: true,
+              promptTokens,
+              completionTokens,
+            });
+
             return json({
               reply,
               waterAction,
@@ -787,9 +898,39 @@ Deno.serve(async (request) => {
         }
       }
 
-      const reply = String(choice?.message?.content ?? '').replace(/\*/g, '').trim();
-      await rememberAiExchange(supabase, user.id, input, reply || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.', context);
-      return json({ reply: reply || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.' }, 200, origin);
+      const rawContent = String(choice?.message?.content ?? '').trim();
+      let reply = '';
+      let waterAction: WaterAction | undefined = undefined;
+      let fallbackUsed = false;
+      let fallbackReason: string | undefined = undefined;
+
+      if (rawContent.startsWith('{') && rawContent.endsWith('}')) {
+        const parsedResult = parseChatResponse(rawContent);
+        reply = parsedResult.data.reply;
+        waterAction = parsedResult.data.waterAction;
+        fallbackUsed = parsedResult.fallbackUsed;
+        fallbackReason = parsedResult.fallbackReason;
+      } else {
+        reply = rawContent.replace(/\*/g, '').trim() || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.';
+      }
+
+      await rememberAiExchange(supabase, user.id, input, reply, sanitizedContext, waterAction);
+
+      logStructuredEvent({
+        timestamp: new Date().toISOString(),
+        action,
+        model,
+        userId,
+        latencyMs: Math.round(performance.now() - startTime),
+        quotaResult,
+        fallbackUsed,
+        fallbackReason,
+        success: true,
+        promptTokens,
+        completionTokens,
+      });
+
+      return json({ reply, waterAction }, 200, origin);
     }
 
     if (action === 'report-analysis') {
@@ -833,22 +974,55 @@ Trả về JSON thuần:
 }`;
 
       const response = await groqChat({
-        model: getModelForAction('report-analysis'),
+        model,
         max_tokens: getMaxTokensForAction('report-analysis'),
         response_format: { type: 'json_object' },
         messages: [{ role: 'user', content: prompt }],
       });
 
-      const parsed = JSON.parse(String(response.choices?.[0]?.message?.content ?? '{}'));
-      return json({
-        analysis: parsed.analysis || '',
-        recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
-      }, 200, origin);
+      const rawContent = String(response.choices?.[0]?.message?.content ?? '');
+      let analysis = '';
+      let recommendations: string[] = [];
+      let fallbackUsed = false;
+      let fallbackReason: string | undefined = undefined;
+
+      try {
+        const parsed = JSON.parse(rawContent);
+        analysis = typeof parsed.analysis === 'string' ? parsed.analysis : '';
+        recommendations = Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
+        if (!analysis && recommendations.length === 0) {
+          fallbackUsed = true;
+          fallbackReason = 'Parsed JSON fields are empty/missing';
+          analysis = 'Không có phân tích nào.';
+        }
+      } catch (err) {
+        fallbackUsed = true;
+        fallbackReason = err instanceof Error ? err.message : String(err);
+        analysis = 'Không thể phân tích báo cáo lúc này.';
+      }
+
+      const promptTokens = response.usage?.prompt_tokens;
+      const completionTokens = response.usage?.completion_tokens;
+
+      logStructuredEvent({
+        timestamp: new Date().toISOString(),
+        action,
+        model,
+        userId,
+        latencyMs: Math.round(performance.now() - startTime),
+        quotaResult,
+        fallbackUsed,
+        fallbackReason,
+        success: true,
+        promptTokens,
+        completionTokens,
+      });
+
+      return json({ analysis, recommendations }, 200, origin);
     }
 
     if (action === 'agentic') {
-      const context = body.context as DigiwellAiContext;
-      if (!context || typeof context !== 'object') {
+      if (!sanitizedContext) {
         return json({ error: 'Context is required for agentic workflow.' }, 400, origin);
       }
 
@@ -856,7 +1030,7 @@ Trả về JSON thuần:
 Nhiệm vụ của bạn là phân tích bối cảnh người dùng để đề xuất các hành động cải thiện thói quen uống nước và lên lịch thông minh.
 
 Bối cảnh người dùng hiện tại:
-${buildContextSummary(context)}
+${buildContextSummary(sanitizedContext)}
 
 Dựa trên dữ liệu trên, hãy đề xuất một danh sách các hành động thích hợp (có thể trống nếu mọi thứ hoàn hảo). Bạn có thể gợi ý 3 loại hành động:
 1. "adjustGoal": Nếu thời tiết nắng nóng (ví dụ >33 độ C) hoặc người dùng vận động nhiều, đề xuất tăng mục tiêu uống nước hôm nay.
@@ -868,35 +1042,127 @@ Hãy trả về phản hồi định dạng JSON chính xác:
   "actions": [
     {
       "type": "adjustGoal",
-      "reason": "Giải thích ngắn gọn lý do tăng mục tiêu bằng tiếng Việt (ví dụ: Nắng nóng 36°C)",
-      "suggestedGoal": 2500, // lượng nước mục tiêu đề xuất mới (ml)
-      "delta": 300 // lượng nước tăng thêm so với mục tiêu hiện tại (ml)
+      "reason": "lý do tăng mục tiêu",
+      "suggestedGoal": 2500,
+      "delta": 300
     },
     {
       "type": "createReminder",
-      "reason": "Giải thích lý do nhắc nhở (ví dụ: Bạn có lịch họp dài từ 14:00 đến 16:00)",
-      "time": "13:50", // định dạng HH:MM
-      "message": "Uống 250ml nước trước khi bắt đầu buổi họp dài đệ nhé!" // Lời nhắn thân thiện tiếng Việt, xưng hô đệ/DigiCoach hoặc bạn/tôi
+      "reason": "lý do nhắc nhở",
+      "time": "13:50",
+      "message": "lời nhắn nhắc nhở"
     },
     {
       "type": "suggestSchedule",
-      "reason": "Giải thích lý do đề xuất lịch trình này",
-      "intervals": ["07:30", "10:00", "14:30", "17:00", "20:00"] // danh sách các mốc thời gian đề xuất
+      "reason": "lý do đề xuất lịch trình",
+      "intervals": ["07:30", "10:00", "14:30", "17:00", "20:00"]
     }
   ]
-}`;
+}
+
+Chi tiết các trường:
+- actions: Mảng các hành động đề xuất.
+- Đối với hành động type = "adjustGoal":
+  + reason: Giải thích ngắn gọn lý do tăng mục tiêu bằng tiếng Việt (ví dụ: Nắng nóng 36°C)
+  + suggestedGoal: lượng nước mục tiêu đề xuất mới (ml) dưới dạng số nguyên
+  + delta: lượng nước tăng thêm so với mục tiêu hiện tại (ml) dưới dạng số nguyên
+- Đối với hành động type = "createReminder":
+  + reason: Giải thích lý do nhắc nhở (ví dụ: Bạn có lịch họp dài từ 14:00 đến 16:00)
+  + time: định dạng HH:MM (khung giờ uống nước trước/trong sự kiện)
+  + message: Lời nhắn thân thiện tiếng Việt, xưng hô đệ/DigiCoach hoặc bạn/tôi (ví dụ: "Uống 250ml nước trước khi bắt đầu buổi họp dài đệ nhé!")
+- Đối với hành động type = "suggestSchedule":
+  + reason: Giải thích lý do đề xuất lịch trình này
+  + intervals: danh sách các mốc thời gian đề xuất (mảng các chuỗi định dạng HH:MM)`;
 
       const response = await groqChat({
-        model: getModelForAction('agentic'),
+        model,
         max_tokens: getMaxTokensForAction('agentic'),
         response_format: { type: 'json_object' },
         messages: [{ role: 'user', content: prompt }],
       });
 
-      const parsed = JSON.parse(String(response.choices?.[0]?.message?.content ?? '{}'));
-      return json({
-        actions: Array.isArray(parsed.actions) ? parsed.actions : [],
-      }, 200, origin);
+      const rawContent = String(response.choices?.[0]?.message?.content ?? '');
+      let actions: any[] = [];
+      let fallbackUsed = false;
+      let fallbackReason: string | undefined = undefined;
+
+      try {
+        const parsed = JSON.parse(rawContent);
+        actions = Array.isArray(parsed.actions) ? parsed.actions : [];
+      } catch (err) {
+        fallbackUsed = true;
+        fallbackReason = err instanceof Error ? err.message : String(err);
+      }
+
+      const promptTokens = response.usage?.prompt_tokens;
+      const completionTokens = response.usage?.completion_tokens;
+
+      logStructuredEvent({
+        timestamp: new Date().toISOString(),
+        action,
+        model,
+        userId,
+        latencyMs: Math.round(performance.now() - startTime),
+        quotaResult,
+        fallbackUsed,
+        fallbackReason,
+        success: true,
+        promptTokens,
+        completionTokens,
+      });
+
+      return json({ actions }, 200, origin);
+    }
+
+    if (action === 'nudge') {
+      if (!sanitizedContext) {
+        return json({ error: 'Invalid or missing context.' }, 400, origin);
+      }
+
+      const prompt = `Bạn là DigiCoach — trợ lý sức khỏe cá nhân hóa của DigiWell. Nhiệm vụ: tạo 1 nudge (lời nhắc nhở ngắn gọn) bằng tiếng Việt.
+
+Bối cảnh hiện tại:
+${buildContextSummary(sanitizedContext)}
+
+Yêu cầu:
+- Cá nhân hóa dựa trên thời tiết, lịch sử uống nước, lịch trình và thói quen.
+- Ngắn gọn, thân thiện, tối đa 20 chữ. Không dùng markdown.
+- Trả về JSON thuần với 2 trường: message (string) và suggestedAmount (number, ml đề xuất, 0 nếu không đề xuất).
+
+Ví dụ:
+{
+  "message": "Trời nóng 35°C, đừng quên uống 300ml nước lọc trước buổi họp nhé!",
+  "suggestedAmount": 300
+}`;
+
+      const response = await groqChat({
+        model,
+        max_tokens: getMaxTokensForAction('nudge'),
+        response_format: { type: 'json_object' },
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const rawContent = String(response.choices?.[0]?.message?.content ?? '');
+      const parsedResult = parseNudgeResponse(rawContent);
+
+      const promptTokens = response.usage?.prompt_tokens;
+      const completionTokens = response.usage?.completion_tokens;
+
+      logStructuredEvent({
+        timestamp: new Date().toISOString(),
+        action,
+        model,
+        userId,
+        latencyMs: Math.round(performance.now() - startTime),
+        quotaResult,
+        fallbackUsed: parsedResult.fallbackUsed,
+        fallbackReason: parsedResult.fallbackReason,
+        success: true,
+        promptTokens,
+        completionTokens,
+      });
+
+      return json(parsedResult.data, 200, origin);
     }
 
     return json({ error: `Unsupported action "${action}".` }, 400, origin);
@@ -909,6 +1175,19 @@ Hãy trả về phản hồi định dạng JSON chính xác:
       `[ai-gateway] ${status} ${name}: ${msg}` +
         (stack ? `\n  Stack: ${stack}` : ''),
     );
+
+    logStructuredEvent({
+      timestamp: new Date().toISOString(),
+      action: String(action || 'unknown'),
+      model: String(model || 'unknown'),
+      userId: userId || undefined,
+      latencyMs: Math.round(performance.now() - startTime),
+      quotaResult: quotaResult ?? undefined,
+      fallbackUsed: false,
+      success: false,
+      errorMessage: msg,
+    });
+
     return json({ error: getErrorMessage(error) }, status, origin);
   }
 });

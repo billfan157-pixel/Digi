@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Bluetooth, RefreshCw, Droplet, GlassWater, Zap, Lock, ChevronRight, Activity, Battery, Thermometer, Wifi } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Bluetooth, RefreshCw, Droplet, GlassWater, Zap, Lock, ChevronRight, Activity, Battery, Thermometer, Wifi, ShieldAlert, Unlock } from 'lucide-react';
 import { CAPACITY } from './constants';
 
 // ============================================================================
@@ -298,6 +299,7 @@ export function BottleVisualizer({
 }: {
   isConnected: boolean; currentVolume: number; capacity: number; fillPercentage: number;
 }) {
+  const { t } = useTranslation();
   const displayVolume = isConnected ? currentVolume : 0;
   const pct = isConnected ? Math.round(fillPercentage) : 0;
 
@@ -345,7 +347,7 @@ export function BottleVisualizer({
         {/* Fill percentage badge */}
         {isConnected && (
           <div className="mt-2 px-3 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/15">
-            <span className="text-[9px] font-black text-cyan-400/80 tracking-widest uppercase tabular-nums">{pct}% đầy</span>
+            <span className="text-[9px] font-black text-cyan-400/80 tracking-widest uppercase tabular-nums">{t('device.fill_percent', { pct })}</span>
           </div>
         )}
       </motion.div>
@@ -357,11 +359,13 @@ export function BottleVisualizer({
 // DEVICE HERO (CYBER UPGRADE)
 // ============================================================================
 export function DeviceHero({
-  isConnected, isSyncing, fillPercentage, currentVolume, batteryLevel, signalStrength, latencyMs, temperature, healthScore = 100, onConnect, onDisconnect
+  isConnected, isSyncing, fillPercentage, currentVolume, batteryLevel, signalStrength, latencyMs, temperature, healthScore = 100, onConnect, onDisconnect, pairedDeviceId, onUnpair, bottleAuthKey
 }: {
-  isConnected: boolean; isSyncing: boolean; fillPercentage: number; currentVolume: number; batteryLevel: number; signalStrength: number; latencyMs: number; temperature: number; healthScore?: number; onConnect: () => void; onDisconnect: () => void;
+  isConnected: boolean; isSyncing: boolean; fillPercentage: number; currentVolume: number; batteryLevel: number; signalStrength: number; latencyMs: number; temperature: number; healthScore?: number; onConnect: () => void; onDisconnect: () => void; pairedDeviceId?: string | null; onUnpair?: (() => void) | undefined; bottleAuthKey?: string | null;
 }) {
+  const { t } = useTranslation();
   // Determine health-based styling
+  const isDefaultKey = bottleAuthKey === '00000000-0000-0000-0000-000000000000' || !bottleAuthKey;
   const healthBadgeColor =
     healthScore >= 70
       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
@@ -371,10 +375,10 @@ export function DeviceHero({
 
   const healthBadgeText =
     healthScore >= 70
-      ? 'KẾT NỐI AN TOÀN'
+      ? t('device.secure_connection')
       : healthScore >= 30
-      ? 'KẾT NỐI KHÔNG ỔN ĐỊNH'
-      : 'TÍN HIỆU RẤT YẾU';
+      ? t('device.unstable_connection')
+      : t('device.very_weak_signal');
 
   return (
     <div className="space-y-4">
@@ -382,45 +386,87 @@ export function DeviceHero({
       <div className="group relative rounded-[2rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl p-5 overflow-hidden transition-all hover:bg-slate-900/60 hover:border-cyan-500/20">
         <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-cyan-500/5 blur-[80px] pointer-events-none group-hover:bg-cyan-500/10 transition-colors" />
   
-        <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-4">
-            <div className={`relative w-14 h-14 rounded-2xl border flex items-center justify-center transition-all duration-500 ${isConnected ? 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300 shadow-[0_0_30px_rgba(34,211,238,0.15)]' : 'bg-slate-900/80 border-white/5 text-slate-500'}`}>
-              <Bluetooth size={24} className={isSyncing ? 'animate-pulse' : ''} />
-              {isConnected && (
-                <motion.div
-                  className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-950"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              )}
-            </div>
-            <div>
-              <h2 className="text-base font-black text-white tracking-tight">
-                {isConnected ? 'DigiBottle Pro' : 'Device Offline'}
-              </h2>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isConnected ? healthBadgeColor : 'bg-slate-800 text-slate-500'}`}>
-                  {isConnected ? healthBadgeText : 'READY TO PAIR'}
-                </span>
+        <div className="space-y-4 relative z-10">
+          {/* Header Row: Info + Status */}
+          <div className="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`relative w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 transition-all duration-500 ${isConnected ? 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300 shadow-[0_0_30px_rgba(34,211,238,0.15)]' : 'bg-slate-900/80 border-white/5 text-slate-500'}`}>
+                <Bluetooth size={20} className={isSyncing ? 'animate-pulse' : ''} />
                 {isConnected && (
-                  <span className="text-[10px] text-slate-500 font-bold tracking-widest">
-                    {signalStrength}% RSSI | Sức khỏe: {healthScore}%
-                  </span>
+                  <motion.div
+                    className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-slate-950"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                )}
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-sm font-black text-white tracking-tight truncate">
+                  {isConnected ? t('device.digibottle_pro') : t('device.offline_bottle')}
+                </h2>
+                {isConnected && (
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                    {t('device.rssi_health', { signal: signalStrength, health: healthScore })}
+                  </p>
                 )}
               </div>
             </div>
+            
+            <span className={`text-[9px] font-black px-2.5 py-1 rounded-full shrink-0 tracking-wider text-center ${isConnected ? healthBadgeColor : 'bg-slate-800 text-slate-500'}`}>
+              {isConnected ? healthBadgeText : t('device.ready_to_connect')}
+            </span>
           </div>
   
-          <button
-            onClick={isConnected ? onDisconnect : onConnect}
-            className={`h-11 px-6 rounded-2xl font-black text-xs tracking-widest uppercase transition-all active:scale-95 ${isConnected
-              ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20'
-              : 'bg-cyan-400 text-slate-950 shadow-[0_0_25px_rgba(34,211,238,0.3)] hover:shadow-[0_0_35px_rgba(34,211,238,0.4)]'
-              }`}
-          >
-            {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : isConnected ? 'Eject' : 'Link'}
-          </button>
+          {/* Buttons Row */}
+          <div className="flex gap-2 pt-1 border-t border-white/5">
+            {pairedDeviceId && onUnpair && (
+              <button
+                onClick={onUnpair}
+                className="flex-1 h-10 px-3 rounded-xl font-black text-[10px] tracking-wider uppercase bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <Unlock size={12} />
+                <span>{t('device.unpair')}</span>
+              </button>
+            )}
+            <button
+              onClick={isConnected ? onDisconnect : onConnect}
+              className={`flex-1 h-10 px-3 rounded-xl font-black text-[10px] tracking-wider uppercase transition-all active:scale-95 flex items-center justify-center gap-1.5 ${isConnected
+                ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20'
+                : 'bg-cyan-400 text-slate-950 shadow-[0_0_25px_rgba(34,211,238,0.3)] hover:shadow-[0_0_35px_rgba(34,211,238,0.4)]'
+                }`}
+            >
+              {isSyncing ? (
+                <>
+                  <RefreshCw size={12} className="animate-spin" />
+                  <span>{t('common.syncing')}</span>
+                </>
+              ) : isConnected ? (
+                <>
+                  <RefreshCw size={12} />
+                  <span>{t('device.disconnect_btn')}</span>
+                </>
+              ) : (
+                <>
+                  <Bluetooth size={12} />
+                  <span>{t('device.link_btn')}</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
+  
+        {/* Security Warning Badge/Alert */}
+        {isDefaultKey && (
+          <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2.5 relative z-10 animate-pulse">
+            <ShieldAlert className="text-amber-400 mt-0.5 flex-shrink-0" size={16} />
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-black text-amber-300 uppercase tracking-wider">{t('device.security_warning')}</p>
+              <p className="text-[10px] text-slate-400 font-medium leading-normal">
+                {t('device.default_key_warning')}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
   
       {/* Main Visualizer Deck */}
@@ -432,7 +478,7 @@ export function DeviceHero({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,1)]" />
-            <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black">Live Telemetry</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black">{t('device.live_telemetry')}</span>
           </div>
           <span className="text-[10px] font-black text-white/30 tracking-widest">{latencyMs > 0 ? `${latencyMs}ms PING` : '----'}</span>
         </div>
@@ -440,9 +486,9 @@ export function DeviceHero({
         <BottleVisualizer isConnected={isConnected} currentVolume={currentVolume} capacity={CAPACITY} fillPercentage={fillPercentage} />
   
         <div className="grid grid-cols-3 gap-3 mt-4">
-          <MetricMini label="Sạc" value={`${batteryLevel}%`} icon={Battery} />
-          <MetricMini label="Nhiệt" value={`${temperature}°C`} icon={Thermometer} />
-          <MetricMini label="Tín hiệu" value={isConnected ? 'Tốt' : '---'} icon={Wifi} />
+          <MetricMini label={t('device.battery_label')} value={`${batteryLevel}%`} icon={Battery} />
+          <MetricMini label={t('device.temp_label')} value={`${temperature}°C`} icon={Thermometer} />
+          <MetricMini label={t('device.signal_label')} value={isConnected ? t('device.signal_good') : '---'} icon={Wifi} />
         </div>
       </div>
     </div>
@@ -457,19 +503,20 @@ export function ControlDeck({
 }: {
   isConnected: boolean; isSyncing: boolean; onDrink: (amount: number) => void; onRefill: () => void; onForceSync: () => void;
 }) {
+  const { t } = useTranslation();
   const controls = [
-    { id: 'sip-50', label: 'SIP', sub: '+50ml', icon: <Droplet size={22} />, color: '#22d3ee', onClick: () => onDrink(50) },
-    { id: 'sip-250', label: 'GULP', sub: '+250ml', icon: <GlassWater size={22} />, color: '#3b82f6', onClick: () => onDrink(250) },
-    { id: 'refill', label: 'REFILL', sub: 'Fill Tank', icon: <RefreshCw size={22} />, color: '#10b981', onClick: onRefill },
-    { id: 'sync', label: 'BOOST', sub: 'Overclock', icon: <Zap size={22} />, color: '#d946ef', onClick: onForceSync },
+    { id: 'sip-50', label: t('home.drink_little'), sub: '+50ml', icon: <Droplet size={22} />, color: '#22d3ee', onClick: () => onDrink(50) },
+    { id: 'sip-250', label: t('home.drink_lots'), sub: '+250ml', icon: <GlassWater size={22} />, color: '#3b82f6', onClick: () => onDrink(250) },
+    { id: 'refill', label: 'FILL UP', sub: t('home.refill_bottle'), icon: <RefreshCw size={22} />, color: '#10b981', onClick: onRefill },
+    { id: 'sync', label: 'BOOST', sub: t('home.quick_sync'), icon: <Zap size={22} />, color: '#d946ef', onClick: onForceSync },
   ];
 
   return (
     <div className="rounded-[2.5rem] border border-white/5 bg-slate-900/40 backdrop-blur-3xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-black">Manual Overrides</p>
-          <h3 className="text-xl font-black text-white mt-1">Hệ thống nạp</h3>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-black">{t('home.manual_control')}</p>
+          <h3 className="text-xl font-black text-white mt-1">{t('home.fill_system')}</h3>
         </div>
         <Activity size={18} className="text-white/10" />
       </div>
@@ -511,21 +558,24 @@ export function ControlDeck({
 // ============================================================================
 // ARENA PAYWALL
 // ============================================================================
-export const ArenaPaywall = () => (
-  <div className="relative h-[60vh] rounded-[2.5rem] overflow-hidden border border-white/5 mx-4 flex items-center justify-center mt-6">
-    <div className="absolute inset-0 p-6 space-y-4 blur-[8px] opacity-30 pointer-events-none select-none flex flex-col">
-      {[1, 2, 3, 4].map((index) => (<div key={index} className="h-28 bg-slate-800 rounded-3xl border border-slate-700" />))}
-    </div>
-    <div className="relative z-10 flex flex-col items-center text-center p-10 bg-slate-900/80 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 shadow-2xl mx-6 w-full max-w-[340px]">
-      <div className="relative w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center mb-6 border border-indigo-500/20 group">
-        <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full" />
-        <Lock size={40} className="text-indigo-400 relative z-10" />
+export const ArenaPaywall = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="relative h-[60vh] rounded-[2.5rem] overflow-hidden border border-white/5 mx-4 flex items-center justify-center mt-6">
+      <div className="absolute inset-0 p-6 space-y-4 blur-[8px] opacity-30 pointer-events-none select-none flex flex-col">
+        {[1, 2, 3, 4].map((index) => (<div key={index} className="h-28 bg-slate-800 rounded-3xl border border-slate-700" />))}
       </div>
-      <h3 className="text-2xl font-black text-white mb-3 tracking-tight">Khu vực hạn chế</h3>
-      <p className="text-slate-400 text-sm mb-6 leading-relaxed">Đấu trường DigiBottle yêu cầu phụ kiện kết nối vật lý và xác thực phần cứng Pro-Link.</p>
-      <div className="w-full py-4 rounded-2xl font-black text-[10px] text-indigo-300 bg-indigo-500/5 border border-indigo-500/20 uppercase tracking-[0.2em]">
-        CHƯA PHÁT HÀNH CÔNG KHAI
+      <div className="relative z-10 flex flex-col items-center text-center p-10 bg-slate-900/80 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 shadow-2xl mx-6 w-full max-w-[340px]">
+        <div className="relative w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center mb-6 border border-indigo-500/20 group">
+          <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full" />
+          <Lock size={40} className="text-indigo-400 relative z-10" />
+        </div>
+        <h3 className="text-2xl font-black text-white mb-3 tracking-tight">{t('home.restricted_area')}</h3>
+        <p className="text-slate-400 text-sm mb-6 leading-relaxed">{t('home.arena_desc')}</p>
+        <div className="w-full py-4 rounded-2xl font-black text-[10px] text-indigo-300 bg-indigo-500/5 border border-indigo-500/20 uppercase tracking-[0.2em]">
+          {t('home.not_released')}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};

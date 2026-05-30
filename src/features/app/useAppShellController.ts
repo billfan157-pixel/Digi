@@ -162,6 +162,31 @@ export function useAppShellController(): AppShellProps {
     calendarEvents,
   ]);
 
+  // ── Sync shop-driven profile changes (Zustand → useAppSystem) ──
+  const zustandEquippedThemeId = useAppStore(s => s.profile?.equipped_theme_id);
+  const zustandEquippedFrameId = useAppStore(s => s.profile?.equipped_frame_id);
+  const zustandEquippedBottleId = useAppStore(s => s.profile?.equipped_bottle_id);
+  const zustandEquippedSound = useAppStore(s => s.profile?.equipped_notification_sound);
+  const zustandCoins = useAppStore(s => s.profile?.coins);
+
+  useEffect(() => {
+    if (!profile) return;
+    if (zustandEquippedThemeId !== profile.equipped_theme_id ||
+        zustandEquippedFrameId !== profile.equipped_frame_id ||
+        zustandEquippedBottleId !== profile.equipped_bottle_id ||
+        zustandEquippedSound !== profile.equipped_notification_sound ||
+        zustandCoins !== profile.coins) {
+      setProfile({
+        ...profile,
+        equipped_theme_id: zustandEquippedThemeId ?? null,
+        equipped_frame_id: zustandEquippedFrameId ?? null,
+        equipped_bottle_id: zustandEquippedBottleId ?? null,
+        equipped_notification_sound: zustandEquippedSound ?? null,
+        coins: zustandCoins ?? profile.coins,
+      });
+    }
+  }, [zustandEquippedThemeId, zustandEquippedFrameId, zustandEquippedBottleId, zustandEquippedSound, zustandCoins]);
+
   useEffect(() => {
     if (!profile?.id || weatherSyncAttemptedRef.current) return;
     if (!weatherData) {

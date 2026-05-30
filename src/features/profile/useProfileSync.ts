@@ -19,11 +19,11 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
 
     const profileId = profile.id as string;
     try {
-      const nextProfile = await queryClient.fetchQuery({
-        queryKey: appQueryKeys.profile(profileId),
-        queryFn: () => fetchProfileById(profileId),
-      });
-      setProfile(nextProfile);
+      const nextProfile = await fetchProfileById(profileId);
+      if (nextProfile) {
+        queryClient.setQueryData(appQueryKeys.profile(profileId), nextProfile);
+        setProfile(nextProfile);
+      }
     } catch (error) {
       console.error('Error refetching profile:', error);
       const cachedProfile = queryClient.getQueryData<Record<string, unknown>>(appQueryKeys.profile(profileId));
@@ -42,7 +42,7 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
     toast.success(i18n.t('premium.sync_success'), { id: toastId });
   }, [refetchProfile]);
 
-  const handleWaterSync = useCallback(async (optimisticAmount?: number) => {
+  const handleWaterSync = useCallback(async (optimisticAmount?: number, optimisticExp?: number) => {
     if (optimisticAmount === undefined) {
       await refetchProfile();
       return;
@@ -55,11 +55,15 @@ export function useProfileSync({ profile, setProfile, isEnabled }: UseProfileSyn
     // Chỉ cập nhật local UI cache tạm thời, sau đó refetch server truth.
     const newWaterToday = Math.max(0, (profile.water_today || 0) + optimisticAmount);
     const newTotalWater = Math.max(0, (profile.total_water || 0) + optimisticAmount);
+    const newTotalExp = Math.max(0, (profile.total_exp || 0) + (optimisticExp || 0));
+    const newLevel = levelFromExp(newTotalExp);
 
     const updatedProfile = {
       ...profile,
       water_today: newWaterToday,
       total_water: newTotalWater,
+      total_exp: newTotalExp,
+      level: newLevel,
     };
 
     setProfile(updatedProfile);

@@ -1,12 +1,12 @@
-import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { BarChart2, Flame, TrendingUp } from 'lucide-react';
 import type { UserHydrationPattern } from '../../lib/patternEngine';
 import type { WeeklyReport } from '../../lib/weeklyReportEngine';
 import AnalyticsTabs from '../../components/insight/AnalyticsTabs';
 import EmptyAnalyticsState from '../../components/insight/EmptyAnalyticsState';
 import PremiumGate from '../../components/ui/PremiumGate';
-import { glassMetric } from '../../styles/glass';
 import { useBehaviorAnalysis } from '@/hooks/useBehaviorAnalysis';
+import { useFeature } from '@/hooks/useFeature';
 
 interface AnalyticsSectionProps {
   isPremium: boolean;
@@ -59,6 +59,8 @@ export default function AnalyticsSection({
   generateWeeklyReport,
   hydrationPattern,
 }: AnalyticsSectionProps) {
+  const { t } = useTranslation();
+  const canViewAdvanced = useFeature('advancedInsights');
   const daysInWeek = weeklyChartData.length || 7;
   const { patterns } = useBehaviorAnalysis({ weeklyData: weeklyChartData, waterGoal });
   const hasData = weeklyChartData.some(d => d.ml > 0);
@@ -67,17 +69,17 @@ export default function AnalyticsSection({
       {/* Header & Range Picker */}
       <div className="px-6 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shrink-0">
+          <div className="w-8 h-8 rounded-[var(--theme-border-radius-inner,12px)] bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shrink-0">
             <BarChart2 size={16} className="text-cyan-400" />
           </div>
           <div>
-            <h3 className="text-sm font-black text-white tracking-tight leading-none">Phân tích</h3>
+            <h3 className="text-sm font-black text-white tracking-tight leading-none">Thống kê</h3>
             {/* Quick Stats inline subtext */}
             <div className="flex items-center gap-2.5 mt-1">
               <span className="text-[10px] font-bold text-orange-400 flex items-center gap-0.5">
                 <Flame size={10} /> {streak} ngày
               </span>
-              <span className="text-[10px] font-bold text-violet-400 flex items-center gap-0.5">
+              <span className="text-[10px] font-bold text-cyan-400 flex items-center gap-0.5">
                 <TrendingUp size={10} /> {completionRate}% đạt
               </span>
             </div>
@@ -96,10 +98,10 @@ export default function AnalyticsSection({
       {/* Premium-gated analytics content */}
       <section className="px-6">
         <PremiumGate
-          isPremium={isPremium}
+          isPremium={canViewAdvanced}
           onUpgrade={() => setShowPremiumModal(true)}
-          title="Phân tích chuyên sâu"
-          description="Khám phá thói quen, xu hướng và biểu đồ chi tiết về sức khỏe của bạn."
+          title={t('insight.deep_stats_title')}
+          description={t('insight.deep_stats_desc')}
         >
           <AnalyticsTabs
             isPremium={isPremium}

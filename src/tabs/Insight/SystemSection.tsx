@@ -72,13 +72,13 @@ function getEventSortTime(event: CalendarEventItem, dateKey: string) {
   return Number.MAX_SAFE_INTEGER;
 }
 
-function getEventTimeLabel(event: CalendarEventItem, dateKey: string) {
-  if (event.isAllDay) return 'Cả ngày';
+function getEventTimeLabel(event: CalendarEventItem, dateKey: string, t: (key: string) => string) {
+  if (event.isAllDay) return t('all_day');
 
   const startKey = getEventDateKey(event.startRaw);
   const endKey = getEventDateKey(event.endRaw);
   const start = startKey && startKey < dateKey ? '00:00' : event.start;
-  const end = endKey && endKey > dateKey ? 'đến mai' : event.end;
+  const end = endKey && endKey > dateKey ? t('until_tomorrow') : event.end;
 
   return `${start} - ${end}`;
 }
@@ -186,15 +186,19 @@ export default function SystemSection({
   const triggerScheduleRefresh = () => setScheduleUpdateTrigger(prev => prev + 1);
 
   const handleCalendarSync = async () => {
+    if (!isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
     await syncCalendar({ startOAuthIfNeeded: true });
   };
 
   const handleDisconnectCalendar = async () => {
     const { confirmDialog } = await import('../../store/useConfirmDialog');
     const ok = await confirmDialog({
-      title: 'Ngắt kết nối lịch',
-      message: 'Bạn có chắc chắn muốn ngắt kết nối Google Calendar và xoá lịch trình đã đồng bộ?',
-      confirmLabel: 'Ngắt kết nối',
+      title: t('calendar_disconnect_title'),
+      message: t('calendar_disconnect_confirm'),
+      confirmLabel: t('disconnect'),
       variant: 'danger',
     });
     if (!ok) return;
@@ -258,8 +262,8 @@ export default function SystemSection({
                 <Calendar size={16} className="text-violet-400" />
               </div>
               <div className="text-left">
-                <p className="text-xs font-bold">Kết nối Google Calendar</p>
-                <p className="text-[9px] text-slate-400">Tự động điều chỉnh lịch uống nước theo cuộc họp</p>
+                <p className="text-xs font-bold">{t('connect_calendar')}</p>
+                <p className="text-[9px] text-slate-400">{t('auto_adjust_schedule')}</p>
               </div>
             </div>
             <ChevronRight size={16} className="text-violet-400" />
@@ -278,7 +282,7 @@ export default function SystemSection({
                 <div className="flex items-center gap-2">
                   <Calendar size={12} className="text-cyan-400" />
                   <h3 className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
-                    Lịch hôm nay
+                    {t('today_schedule')}
                   </h3>
                 </div>
                 <div className="flex items-center gap-2.5">
@@ -287,14 +291,14 @@ export default function SystemSection({
                     className="flex items-center gap-0.5 text-[9px] font-semibold text-slate-400 hover:text-cyan-400 transition-colors"
                   >
                     <RefreshCw size={9} />
-                    Đồng bộ
+                    {t('sync')}
                   </button>
                   <span className="text-[9px] text-slate-700">|</span>
                   <button
                     onClick={handleDisconnectCalendar}
                     className="flex items-center gap-0.5 text-[9px] font-semibold text-rose-400 hover:text-rose-300 transition-colors"
                   >
-                    Ngắt
+                    {t('disconnect')}
                   </button>
                 </div>
               </div>
@@ -306,13 +310,13 @@ export default function SystemSection({
                       <div className="w-[3px] h-[3px] rounded-full bg-violet-400 shrink-0" />
                       <span className="flex-1 text-xs text-slate-300 truncate">{event.title}</span>
                       <span className="text-[10px] text-slate-500 tabular-nums shrink-0">
-                        {getEventTimeLabel(event, todayKey)}
+                        {getEventTimeLabel(event, todayKey, t)}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-[10px] text-slate-500 px-1">Không có sự kiện nào hôm nay.</p>
+                <p className="text-[10px] text-slate-500 px-1">{t('no_events_today')}</p>
               )}
             </div>
 
@@ -326,7 +330,7 @@ export default function SystemSection({
                   <div className="flex items-center gap-2">
                     <Calendar size={12} className="text-purple-400" />
                     <h3 className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
-                      Lịch ngày mai
+                      {t('tomorrow_schedule')}
                     </h3>
                   </div>
                   {isTomorrowExpanded ? <ChevronUp size={12} className="text-slate-500" /> : <ChevronDown size={12} className="text-slate-500" />}
@@ -346,7 +350,7 @@ export default function SystemSection({
                             <div className="w-[3px] h-[3px] rounded-full bg-purple-400 shrink-0" />
                             <span className="flex-1 text-xs text-slate-400 truncate">{event.title}</span>
                             <span className="text-[10px] text-slate-500 tabular-nums shrink-0">
-                              {getEventTimeLabel(event, tomorrowKey)}
+                              {getEventTimeLabel(event, tomorrowKey, t)}
                             </span>
                           </div>
                         ))}
@@ -364,8 +368,8 @@ export default function SystemSection({
                   <Shield size={10} />
                 </div>
                 <div className="text-left">
-                  <p className="text-[10px] font-bold text-slate-200">Riêng tư lịch trình</p>
-                  <p className="text-[8px] text-slate-500">Bảo vệ thông tin cá nhân của bạn</p>
+                  <p className="text-[10px] font-bold text-slate-200">{t('privacy_schedule')}</p>
+                  <p className="text-[8px] text-slate-500">{t('protect_personal_info')}</p>
                 </div>
               </div>
               <select
@@ -385,9 +389,9 @@ export default function SystemSection({
                 }}
                 className="bg-slate-950 border border-white/10 rounded-md px-1.5 py-0.5 text-[10px] text-white outline-none focus:border-violet-500/50 transition-all cursor-pointer font-semibold"
               >
-                <option value="off">Tắt (Công khai)</option>
-                <option value="standard">Tiêu chuẩn</option>
-                <option value="strict">Nghiêm ngặt</option>
+                <option value="off">{t('privacy_off')}</option>
+                <option value="standard">{t('privacy_standard')}</option>
+                <option value="strict">{t('privacy_strict')}</option>
               </select>
             </div>
           </div>
@@ -403,7 +407,7 @@ export default function SystemSection({
 
       {/* Reporting & Exports */}
       <div className="px-6 space-y-3 pb-6">
-        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Báo cáo & Dữ liệu</h3>
+        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">{t('reports_data')}</h3>
         <div className="grid grid-cols-3 gap-2">
           <button 
             onClick={() => handleExportClick('PDF')}

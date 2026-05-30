@@ -12,8 +12,8 @@ export default function Header({ totalIntake }: HeaderProps) {
           <Grid size={20} className="text-cyan-400" aria-hidden="true" />
         </div>
         <div>
-          <h3 className="text-lg font-black text-white">Phân bổ theo giờ</h3>
-          <p className="text-xs text-slate-400 font-medium">7 ngày qua • Heatmap</p>
+          <h3 className="text-lg font-black text-white">Hourly Distribution</h3>
+          <p className="text-xs text-slate-400 font-medium">Last 7 days • Heatmap</p>
         </div>
       </div>
       <div className="text-right">
@@ -21,7 +21,7 @@ export default function Header({ totalIntake }: HeaderProps) {
           {totalIntake.toLocaleString('vi-VN')}
         </p>
         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
-          ml tổng
+          ml total
         </p>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { useMemo } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import type { SleepData, ActivityData, WellnessCorrelation } from '@/utils/wellnessMath';
@@ -139,15 +140,15 @@ export function useWellnessData({ profile: externalProfile }: UseWellnessDataPro
       {
         type: 'hydration_sleep' as const,
         strength: calculateCorrelation(hydrationValues, sleepValues),
-        insight: 'Chưa đủ lịch sử giấc ngủ theo ngày để xác định tương quan thật.',
-        recommendation: 'Cập nhật ngủ mỗi ngày để DigiWell tính Pearson hydration ↔ giấc ngủ chính xác hơn.',
+        insight: i18n.t('insight.not_enough_sleep_history'),
+        recommendation: i18n.t('insight.record_sleep_daily'),
         examples: [],
       },
       {
         type: 'hydration_mood' as const,
         strength: calculateCorrelation(hydrationValues, moodValues),
-        insight: 'Chưa đủ lịch sử tâm trạng theo ngày để xác định tương quan thật.',
-        recommendation: 'Bật theo dõi tâm trạng và ghi nhận đều để DigiCoach cá nhân hoá tốt hơn.',
+        insight: i18n.t('insight.not_enough_mood_history'),
+        recommendation: i18n.t('insight.record_mood_daily'),
         examples: [],
       },
     ];

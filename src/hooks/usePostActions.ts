@@ -98,7 +98,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
 
   const deletePost = useCallback(async (postId: string) => {
     const { confirmDialog } = await import('@/store/useConfirmDialog');
-    const ok = await confirmDialog({ title: 'Xóa bài viết', message: 'Bạn có chắc chắn muốn xóa bài viết này?', confirmLabel: 'Xóa', variant: 'danger' });
+    const ok = await confirmDialog({ title: i18n.t('feed.delete_post_title'), message: i18n.t('feed.delete_post_message'), confirmLabel: i18n.t('common.delete'), variant: 'danger' });
     if (!ok) return false;
 
     const tid = toast.loading(i18n.t('feed.post_deleting'));
@@ -120,14 +120,14 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
  
   const reportPost = useCallback(async (postId: string) => {
     const reasons = [
-      '1. Spam / Quảng cáo',
-      '2. Nội dung không phù hợp',
-      '3. Quấy rối / Bắt nạt',
-      '4. Thông tin sai lệch',
-      '5. Bạo lực / Nội dung nhạy cảm',
-      '6. Lý do khác',
+      i18n.t('feed.report_reason_1'),
+      i18n.t('feed.report_reason_2'),
+      i18n.t('feed.report_reason_3'),
+      i18n.t('feed.report_reason_4'),
+      i18n.t('feed.report_reason_5'),
+      i18n.t('feed.report_reason_6'),
     ];
-    const choice = window.prompt(`Báo cáo bài viết - Chọn lý do (1-6):\n\n${reasons.join('\n')}`, '1');
+    const choice = window.prompt(`${i18n.t('feed.report_prompt')}\n\n${reasons.join('\n')}`, '1');
     if (!choice) return false;
     const idx = parseInt(choice, 10);
     if (idx < 1 || idx > 6) return false;
@@ -148,7 +148,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
   }, [currentUserId]);
 
   const editPost = useCallback(async (postId: string, currentContent: string) => {
-    const newContent = window.prompt('Chỉnh sửa bài viết:', currentContent);
+    const newContent = window.prompt(i18n.t('feed.edit_post_title'), currentContent);
     if (newContent !== null && newContent.trim() !== currentContent) {
       const tid = toast.loading(i18n.t('feed.post_updating'));
       try {
@@ -168,7 +168,7 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
     return null;
   }, [currentUserId]);
  
-  const joinChallenge = useCallback(async (opponentId: string) => {
+  const joinChallenge = useCallback(async (opponentId: string, extra?: { stake_coins?: number; target_ml?: number; deadline?: string; mode?: string }) => {
     if (!currentUserId || !opponentId) {
       toast.error(i18n.t('feed.challenge_need_login'));
       return false;
@@ -181,7 +181,15 @@ export function usePostActions({ currentUserId }: UsePostActionsProps) {
 
     const tid = toast.loading(i18n.t('feed.challenge_sending'));
     try {
-      const { error } = await supabase.from('hydration_battles').insert({ challenger_id: currentUserId, opponent_id: opponentId, stake_coins: 0, status: 'pending' });
+      const { error } = await supabase.from('hydration_battles').insert({
+        challenger_id: currentUserId,
+        opponent_id: opponentId,
+        stake_coins: extra?.stake_coins ?? 0,
+        target_ml: extra?.target_ml ?? 2000,
+        deadline: extra?.deadline ?? null,
+        mode: extra?.mode ?? i18n.t('battle.race_goal'),
+        status: 'pending',
+      });
       if (error) throw error;
       toast.success(i18n.t('feed.challenge_letter_sent'), { id: tid });
       return true;

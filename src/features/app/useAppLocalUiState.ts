@@ -7,8 +7,7 @@ export function useAppLocalUiState() {
     setOnboardingStep: state.setOnboardingStep,
     showShopModal: state.showShopModal,
     setShowShopModal: state.setShowShopModal,
-    showBattleArena: state.showBattleArena,
-    setShowBattleArena: state.setShowBattleArena,
+
     showQuestModal: state.showQuestModal,
     setShowQuestModal: state.setShowQuestModal,
     showClubCoopModal: state.showClubCoopModal,

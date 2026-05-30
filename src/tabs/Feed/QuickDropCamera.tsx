@@ -66,11 +66,11 @@ function CameraSettings({
       className="absolute inset-x-5 bottom-32 glass-card p-5 space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-black text-white">Cài đặt Camera</h3>
+        <h3 className="text-sm font-black text-white">Camera Settings</h3>
         <button
           onClick={onClose}
           className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-          aria-label="Đóng cài đặt"
+          aria-label="Close settings"
         >
           <X size={18} className="text-slate-400" />
         </button>
@@ -88,8 +88,8 @@ function CameraSettings({
             <GridIcon size={18} className={gridEnabled ? 'text-cyan-400' : 'text-slate-400'} />
           </div>
           <div className="text-left">
-            <p className="text-sm font-bold text-white">Lưới hướng dẫn</p>
-            <p className="text-[10px] text-slate-400">Giúp căn chỉnh khung hình</p>
+            <p className="text-sm font-bold text-white">Guide Grid</p>
+            <p className="text-[10px] text-slate-400">Helps align the frame</p>
           </div>
         </div>
         {gridEnabled && <Check size={18} className="text-cyan-400" />}
@@ -111,8 +111,8 @@ function CameraSettings({
             )}
           </div>
           <div className="text-left">
-            <p className="text-sm font-bold text-white">Flash tự động</p>
-            <p className="text-[10px] text-slate-400">Bật trong môi trường tối</p>
+            <p className="text-sm font-bold text-white">Auto Flash</p>
+            <p className="text-[10px] text-slate-400">Turn on in dark environments</p>
           </div>
         </div>
         {flashEnabled && <Check size={18} className="text-amber-400" />}
@@ -204,7 +204,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
     let isMounted = true;
     const startCamera = async () => {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setCameraError('Thiết bị này chưa hỗ trợ camera trực tiếp.');
+        setCameraError('This device does not support live camera.');
         return;
       }
 
@@ -235,7 +235,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
       } catch (error) {
         console.error('[QuickDropCamera] Camera error:', error);
         if (isMounted) {
-          setCameraError('Không mở được camera. Kiểm tra quyền camera rồi thử lại.');
+          setCameraError('Cannot open camera. Check camera permissions and try again.');
         }
       } finally {
         if (isMounted) setIsCameraLoading(false);
@@ -387,7 +387,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="glass-control flex h-11 w-11 items-center justify-center rounded-full text-white active:scale-95 disabled:opacity-50"
-            aria-label="Đóng Drop"
+            aria-label="Close Drop"
           >
             <X size={20} />
           </motion.button>
@@ -406,7 +406,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="glass-control flex h-11 w-11 items-center justify-center rounded-full text-white active:scale-95 disabled:opacity-50"
-            aria-label="Đổi camera"
+            aria-label="Switch camera"
           >
             <Repeat2 size={19} />
           </motion.button>
@@ -425,8 +425,8 @@ const handleCaptureRef = useRef<() => void>(()=>{});
                 {isCameraLoading ? (
                   <>
                     <Loader2 size={32} className="mx-auto mb-3 animate-spin text-cyan-400" />
-                    <p className="text-sm font-bold text-white">Đang mở camera...</p>
-                    <p className="text-xs text-slate-400 mt-1">Vui lòng chờ trong giây lát</p>
+                    <p className="text-sm font-bold text-white">Opening camera...</p>
+                    <p className="text-xs text-slate-400 mt-1">Please wait a moment</p>
                   </>
                 ) : (
                   <>
@@ -435,7 +435,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
                     </div>
                     <p className="text-sm font-bold text-white mb-1">{cameraError}</p>
                     <p className="text-xs text-slate-400 mb-4">
-                      Kiểm tra quyền truy cập camera trong cài đặt
+                      Check camera access permissions in settings
                     </p>
                     <button
                       type="button"
@@ -443,7 +443,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
                       className="inline-flex items-center gap-2 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-2.5 text-sm font-bold text-cyan-400 transition-all duration-200 hover:bg-cyan-500/20 active:scale-95"
                     >
                       <RefreshCw size={16} />
-                      Thử camera khác
+                      Try other camera
                     </button>
                   </>
                 )}
@@ -476,7 +476,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="glass-control flex h-12 w-12 items-center justify-center rounded-full disabled:opacity-50"
-              aria-label="Đặt hẹn giờ 3 giây"
+              aria-label="Set 3 second timer"
             >
               <Timer size={20} className="text-white" />
             </motion.button>
@@ -489,7 +489,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex h-20 w-20 items-center justify-center rounded-full border-[6px] border-white bg-white/20 shadow-2xl backdrop-blur-md disabled:opacity-50"
-              aria-label="Chụp Drop"
+              aria-label="Capture Drop"
             >
               {isPublishing ? (
                 <Loader2 size={28} className="animate-spin text-white" />
@@ -508,7 +508,7 @@ const handleCaptureRef = useRef<() => void>(()=>{});
               className={`glass-control flex h-12 w-12 items-center justify-center rounded-full disabled:opacity-50 ${
                 showSettings ? 'bg-cyan-500/20 border-cyan-500/30' : ''
               }`}
-              aria-label="Cài đặt camera"
+              aria-label="Camera settings"
             >
               <Settings size={20} className={showSettings ? 'text-cyan-400' : 'text-white'} />
             </motion.button>

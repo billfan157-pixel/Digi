@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Heart, MessageCircle, Share2, MoreHorizontal } from 'lucide-react';
 
 export interface PostData {
@@ -54,6 +55,7 @@ interface FeedPostProps {
 }
 
 export const FeedPost = ({ post, onLike, onComment, onShare }: FeedPostProps) => {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6 p-4 md:p-5">
       {/* Header */}
@@ -82,7 +84,7 @@ export const FeedPost = ({ post, onLike, onComment, onShare }: FeedPostProps) =>
           <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{post.content}</p>
         )}
         {post.imageUrl && (
-          <img src={post.imageUrl} alt="Post attachment" loading="lazy" decoding="async" className="w-full h-auto max-h-96 object-cover rounded-xl mt-3" />
+          <img src={post.imageUrl} alt={t('feed.post_attachment')} loading="lazy" decoding="async" className="w-full h-auto max-h-96 object-cover rounded-xl mt-3" />
         )}
       </div>
 
@@ -90,15 +92,15 @@ export const FeedPost = ({ post, onLike, onComment, onShare }: FeedPostProps) =>
       <div className="border-t border-gray-100 mt-4 pt-3 flex items-center justify-between px-1">
         <button onClick={onLike} className={`flex items-center gap-2 group transition-colors duration-200 ${post.isLiked ? 'text-rose-500' : 'text-gray-500 hover:text-rose-500'}`}>
           <Heart size={20} className={`transition-transform duration-200 group-active:scale-90 ${post.isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
-          <span className="font-medium text-sm">{post.likes > 0 ? post.likes : 'Thích'}</span>
+          <span className="font-medium text-sm">{post.likes > 0 ? post.likes : 'Like'}</span>
         </button>
         <button onClick={onComment} className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors group">
           <MessageCircle size={20} className="transition-transform group-active:scale-90" />
-          <span className="font-medium text-sm">{post.comments > 0 ? post.comments : 'Bình luận'}</span>
+          <span className="font-medium text-sm">{post.comments > 0 ? post.comments : 'Comment'}</span>
         </button>
         <button onClick={onShare} className="flex items-center gap-2 text-gray-500 hover:text-emerald-500 transition-colors group">
           <Share2 size={20} className="transition-transform group-active:scale-90" />
-          <span className="font-medium text-sm">Chia sẻ</span>
+          <span className="font-medium text-sm">Share</span>
         </button>
       </div>
     </div>

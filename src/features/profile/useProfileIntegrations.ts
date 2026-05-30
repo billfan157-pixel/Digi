@@ -43,13 +43,13 @@ export function useProfileIntegrations({
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [editProfileData, setEditProfileData] = useState<EditProfileData>({
     nickname: '',
-    gender: 'Nam',
+    gender: i18n.t('common.default_gender_male'),
     age: 20,
     height: 172,
     weight: 82,
     activity: 'high',
     climate: 'tropical',
-    goal: 'Giảm mỡ & Tăng cơ',
+    goal: i18n.t('common.default_goal_fat_muscle'),
   });
 
   const openEditProfile = useCallback(() => {
@@ -57,13 +57,13 @@ export function useProfileIntegrations({
 
     setEditProfileData({
       nickname: profile.nickname || '',
-      gender: profile.gender || 'Nam',
+      gender: profile.gender || i18n.t('common.default_gender_male'),
       age: profile.age || 20,
       height: profile.height || 170,
       weight: profile.weight || 60,
       activity: profile.activity || 'sedentary',
       climate: profile.climate || 'temperate',
-      goal: profile.goal || 'Sức khỏe tổng quát',
+      goal: profile.goal || i18n.t('common.default_goal_health'),
     });
     setShowEditProfile(true);
   }, [profile, setShowEditProfile]);
@@ -118,8 +118,8 @@ export function useProfileIntegrations({
   const connectedSystems = useMemo(() => [
     {
       icon: CloudSun,
-      label: 'Trạm thời tiết',
-      sub: 'Đồng bộ theo vị trí hiện tại',
+      label: i18n.t('common.weather_station_label'),
+      sub: i18n.t('common.weather_station_sub'),
       active: isWeatherSynced,
       action: () => syncWeather({ force: true }),
       activeColor: '#f97316',
@@ -128,8 +128,8 @@ export function useProfileIntegrations({
     },
     {
       icon: Calendar,
-      label: 'Lịch trình thông minh',
-      sub: 'Nhắc nhở theo agenda và giờ học',
+      label: i18n.t('common.smart_schedule_label'),
+      sub: i18n.t('common.smart_schedule_sub'),
       active: isCalendarSynced,
       action: syncCalendar,
       activeColor: '#818cf8',
@@ -138,8 +138,8 @@ export function useProfileIntegrations({
     },
     {
       icon: Watch,
-      label: 'Watch / HealthKit',
-      sub: 'Dữ liệu sức khỏe từ thiết bị đã hỗ trợ',
+      label: i18n.t('common.health_kit_label'),
+      sub: i18n.t('common.health_kit_sub'),
       active: isWatchConnected,
       action: toggleHealthConnection,
       activeColor: '#22d3ee',
@@ -148,8 +148,8 @@ export function useProfileIntegrations({
     },
     {
       icon: Activity,
-      label: 'Strava / Garmin',
-      sub: 'Chưa khả dụng trong build public',
+      label: i18n.t('common.strava_label'),
+      sub: i18n.t('common.strava_sub'),
       active: false,
       action: handleConnectStrava,
       activeColor: '#fc5200',
@@ -168,12 +168,12 @@ export function useProfileIntegrations({
 
   const activityLabel = useMemo(() => {
     const activityLabelMap: Record<string, string> = {
-      sedentary: 'Ít vận động',
-      light: 'Vận động nhẹ',
-      moderate: 'Vận động vừa',
-      active: 'Năng động',
-      hard: 'Cường độ cao',
-      athlete: 'Vận động viên',
+      sedentary: i18n.t('common.activity_sedentary'),
+      light: i18n.t('common.activity_light'),
+      moderate: i18n.t('common.activity_moderate'),
+      active: i18n.t('common.activity_active'),
+      hard: i18n.t('common.activity_hard'),
+      athlete: i18n.t('common.activity_athlete'),
     };
 
     return activityLabelMap[String(profile?.activity || '')] || String(profile?.activity || '--');

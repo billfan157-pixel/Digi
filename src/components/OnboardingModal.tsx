@@ -77,9 +77,9 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
                 <User size={32} className="text-cyan-400" />
               </div>
               
-              <h2 className="text-2xl font-black text-white text-center mb-2 tracking-tight">Xin chào! Bạn tên là gì?</h2>
+              <h2 className="text-2xl font-black text-white text-center mb-2 tracking-tight">{t('onboarding.welcome_name_title')}</h2>
               <p className="text-sm text-slate-400 text-center mb-8 leading-relaxed">
-                Hãy cho hệ thống biết cách xưng hô với bạn nhé.
+                {t('onboarding.welcome_name_desc')}
               </p>
 
               <form onSubmit={handleNextStep} className="space-y-6">
@@ -89,7 +89,7 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
                       type="text" 
                       value={name}
                       onChange={e => setName(e.target.value)}
-                      placeholder="Tên của bạn..."
+                      placeholder={t('onboarding.name_placeholder')}
                       className="w-full bg-slate-800/50 border-2 border-slate-700 rounded-xl py-4 px-4 text-center text-lg font-bold text-white focus:border-cyan-500 focus:ring-0 outline-none transition-all"
                       autoFocus
                     />
@@ -101,7 +101,7 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
                   disabled={!name.trim()}
                   className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold text-lg flex items-center justify-center gap-2 active:scale-95 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] disabled:opacity-50 disabled:shadow-none hover:shadow-[0_0_30px_rgba(6,182,212,0.6)]"
                 >
-                  Tiếp tục <ArrowRight size={20} />
+                  {t('onboarding.continue')} <ArrowRight size={20} />
                 </button>
               </form>
             </div>
@@ -110,16 +110,16 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
           {step === 2 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <button onClick={() => setStep(1)} className="absolute -top-4 -left-4 flex items-center gap-1 text-slate-400 hover:text-white transition-colors text-sm font-medium p-2">
-                <ArrowLeft size={16} /> Quay lại
+                <ArrowLeft size={16} /> {t('common.back')}
               </button>
 
               <div className="w-16 h-16 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-inner mt-6">
                 <Activity size={32} className="text-cyan-400" />
               </div>
               
-              <h2 className="text-2xl font-black text-white text-center mb-2 tracking-tight">Chào {name}! Bạn nặng bao nhiêu kg?</h2>
+              <h2 className="text-2xl font-black text-white text-center mb-2 tracking-tight">{t('onboarding.weight_title', { name })}</h2>
               <p className="text-sm text-slate-400 text-center mb-8 leading-relaxed">
-                Hãy cho hệ thống biết cân nặng của bạn để AI tính toán lượng nước lý tưởng mỗi ngày nhé.
+                {t('onboarding.weight_desc')}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -141,8 +141,8 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
                 <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-2xl p-4 flex items-center justify-center gap-3">
                   <Droplets className="text-cyan-400" size={24} />
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Mục tiêu của bạn</p>
-                    <p className="text-xl font-black text-cyan-300">{waterGoal} <span className="text-sm text-cyan-500/70">ml/ngày</span></p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">{t('onboarding.your_goal')}</p>
+                    <p className="text-xl font-black text-cyan-300">{waterGoal} <span className="text-sm text-cyan-500/70">{t('onboarding.ml_per_day')}</span></p>
                   </div>
                 </div>
 
@@ -151,7 +151,7 @@ export default function OnboardingModal({ profile, onComplete }: OnboardingModal
                   disabled={isSubmitting || !weight}
                   className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold text-lg flex items-center justify-center gap-2 active:scale-95 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] disabled:opacity-50 disabled:shadow-none hover:shadow-[0_0_30px_rgba(6,182,212,0.6)]"
                 >
-                  {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <>Bắt đầu hành trình <ArrowRight size={20} /></>}
+                  {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <>{t('onboarding.start_journey')} <ArrowRight size={20} /></>}
                 </button>
               </form>
             </div>

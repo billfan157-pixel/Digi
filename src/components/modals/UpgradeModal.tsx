@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, X, Loader2, Check, ShieldAlert } from 'lucide-react';
+import { Sparkles, X, Loader2, Check, ShieldAlert, RotateCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Capacitor } from '@capacitor/core';
 
 import { useUIStore } from '../../store/useUIStore';
+import { useAppStore } from '../../store/useAppStore';
 import { redirectToCheckout } from '../../lib/stripe';
 import { PRICING } from '../../config/premium';
+import { useRevenueCat } from '../../hooks/useRevenueCat';
 import { track } from '@/lib/analytics';
 
 export default function UpgradeModal() {
+  const { t } = useTranslation();
   const open = useUIStore(s => s.showPremiumModal);
+  const profile = useAppStore(s => s.profile);
+  const isNative = Capacitor.isNativePlatform();
+  const revenuecat = useRevenueCat();
+
   const onClose = () => { 
     track('premium_upsell_dismissed'); 
     useUIStore.getState().setShowPremiumModal(false); 
@@ -25,8 +34,28 @@ export default function UpgradeModal() {
   const handleCheckout = async (tier: 'plus' | 'pro', plan: 'monthly' | 'yearly') => {
     setLoading({ tier, plan });
     track('premium_clicked', { tier, plan });
-    await redirectToCheckout(plan, tier);
+
+    if (isNative && revenuecat.isReady) {
+      const result = await revenuecat.purchase(tier, plan);
+      if (result.success) {
+        onClose();
+        const { toast } = await import('sonner');
+        toast.success(t('common.upgrade_success', { tier: tier === 'pro' ? 'Pro' : 'Plus' }));
+      }
+    } else {
+      await redirectToCheckout(plan, tier);
+    }
+
     setLoading(null);
+  };
+
+  const handleRestore = async () => {
+    const result = await revenuecat.restore();
+    if (result.success) {
+      const { toast } = await import('sonner');
+      toast.success(t('common.restore_success'));
+      onClose();
+    }
   };
 
   const plusPricing = PRICING.plus[billingCycle];
@@ -34,25 +63,25 @@ export default function UpgradeModal() {
 
   // Highlights arrays
   const plusFeatures = [
-    'Không quảng cáo 100%',
-    'Khung viền profile Bạc',
-    'AI Chat: 15 tin nhắn/ngày',
-    'AI Advice: 5 lời khuyên/ngày',
-    '1 ngày Streak Freeze/tháng',
-    'Lịch sử uống nước: 30 ngày',
-    'Hệ số nước uống Cơ bản',
-    'Xem biểu đồ tuần nâng cao'
+    t('premium_features.plus_1'),
+    t('premium_features.plus_2'),
+    t('premium_features.plus_3'),
+    t('premium_features.plus_4'),
+    t('premium_features.plus_5'),
+    t('premium_features.plus_6'),
+    t('premium_features.plus_7'),
+    t('premium_features.plus_8')
   ];
 
   const proFeatures = [
-    'Tất cả quyền lợi của gói Plus',
-    'Không giới hạn AI Chat & Advice',
-    'AI Hydration Coach thông minh',
-    '3 ngày Streak Freeze/tháng',
-    'Khung viền profile Vàng động',
-    'Premium Health Score chi tiết',
-    'Đồng bộ Smartwatch & Lịch trình',
-    'VIP Club Tools tạo bang hội'
+    t('premium_features.pro_1'),
+    t('premium_features.pro_2'),
+    t('premium_features.pro_3'),
+    t('premium_features.pro_4'),
+    t('premium_features.pro_5'),
+    t('premium_features.pro_6'),
+    t('premium_features.pro_7'),
+    t('premium_features.pro_8')
   ];
 
   return (
@@ -73,10 +102,10 @@ export default function UpgradeModal() {
         <div className="p-6 bg-slate-950/40 border-b border-slate-800 text-center relative shrink-0">
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-48 h-48 bg-cyan-500/10 rounded-full blur-[60px] pointer-events-none" />
           <h2 className="text-2xl font-black text-white tracking-wide mt-2 relative z-10 flex items-center justify-center gap-2">
-            NÂNG CẤP <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-amber-400">DIGIWELL</span>
+            {t('premium_features.upgrade_title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-amber-400">DIGIWELL</span>
           </h2>
           <p className="text-slate-400 text-xs mt-1 max-w-md mx-auto relative z-10 font-medium">
-            Chọn gói nâng cấp phù hợp để đồng hành cùng AI Coach và tối ưu hóa sức khỏe của bạn mỗi ngày.
+            {t('premium_features.upgrade_subtitle')}
           </p>
 
           {/* Billing Cycle Switcher */}
@@ -89,7 +118,7 @@ export default function UpgradeModal() {
                   : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              Thanh toán tháng
+                {t('premium_features.billing_monthly')}
             </button>
             <button
               onClick={() => setBillingCycle('yearly')}
@@ -99,9 +128,9 @@ export default function UpgradeModal() {
                   : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              Thanh toán năm
+              {t('premium_features.billing_yearly')}
               <span className="text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-md border border-amber-500/20 font-black">
-                -33%
+                {t('premium_features.yearly_discount')}
               </span>
             </button>
           </div>
@@ -116,7 +145,7 @@ export default function UpgradeModal() {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <span className="text-[9px] font-black text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full border border-cyan-500/20 uppercase tracking-widest">
-                    Plus Gói Basic
+                    {t('premium_features.plus_badge')}
                   </span>
                   <h3 className="text-xl font-black text-white mt-2">DigiWell Plus</h3>
                 </div>
@@ -155,10 +184,10 @@ export default function UpgradeModal() {
                 )}
                 <span>
                   {loading?.tier === 'plus' && loading?.plan === billingCycle
-                    ? 'Đang kết nối...'
+                    ? t('premium_features.connecting')
                     : billingCycle === 'monthly'
-                    ? 'Đăng ký Plus Tháng'
-                    : 'Đăng ký Plus Năm'}
+                    ? t('premium_features.plus_subscribe_monthly')
+                    : t('premium_features.plus_subscribe_yearly')}
                 </span>
               </button>
             </div>
@@ -168,14 +197,14 @@ export default function UpgradeModal() {
           <div className="relative rounded-[2rem] border-2 border-amber-500/30 bg-gradient-to-b from-slate-950/60 to-slate-950/40 p-5 flex flex-col justify-between hover:border-amber-400/50 transition-all group shadow-2xl">
             {/* Best Value Badge */}
             <div className="absolute -top-3 right-6 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-amber-400 shadow-md">
-              Khuyên dùng
+              {t('premium_features.pro_best_value')}
             </div>
 
             <div>
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 uppercase tracking-widest">
-                    Pro Trải Nghiệm AI
+                    {t('premium_features.pro_badge')}
                   </span>
                   <h3 className="text-xl font-black text-white mt-2">DigiWell Pro</h3>
                 </div>
@@ -214,10 +243,10 @@ export default function UpgradeModal() {
                 )}
                 <span>
                   {loading?.tier === 'pro' && loading?.plan === billingCycle
-                    ? 'Đang kết nối...'
+                    ? t('premium_features.connecting')
                     : billingCycle === 'monthly'
-                    ? 'Đăng ký Pro Tháng'
-                    : 'Đăng ký Pro Năm'}
+                    ? t('premium_features.pro_subscribe_monthly')
+                    : t('premium_features.pro_subscribe_yearly')}
                 </span>
               </button>
             </div>
@@ -225,10 +254,76 @@ export default function UpgradeModal() {
 
         </div>
 
+        {/* Feature Comparison Table */}
+        <div className="px-6 pb-2 -mt-2">
+          <div className="bg-slate-950/30 rounded-2xl border border-white/5 overflow-hidden">
+            <div className="px-4 py-3 border-b border-white/5">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">
+                {t('premium_features.comparison_title')}
+              </h4>
+            </div>
+            <div className="divide-y divide-white/[0.03]">
+              {[
+                { label: t('premium_features.comparison_ai_chat'), free: t('premium_features.messages_5'), plus: t('premium_features.messages_15'), pro: t('premium_features.unlimited') },
+                { label: t('premium_features.comparison_ai_advice'), free: t('premium_features.advice_3'), plus: t('premium_features.advice_5'), pro: t('premium_features.unlimited') },
+                { label: t('premium_features.comparison_ai_coach'), free: t('premium_features.dash'), plus: t('premium_features.dash'), pro: t('premium_features.value_yes') },
+                { label: t('premium_features.comparison_reminders'), free: t('premium_features.fixed'), plus: t('premium_features.fixed'), pro: t('premium_features.ai_smart') },
+                { label: t('premium_features.comparison_weekly_report'), free: t('premium_features.dash'), plus: t('premium_features.value_yes'), pro: t('premium_features.value_yes') },
+                { label: t('premium_features.comparison_advanced'), free: t('premium_features.dash'), plus: t('premium_features.dash'), pro: t('premium_features.value_yes') },
+                { label: t('premium_features.comparison_streak_freeze'), free: t('premium_features.dash'), plus: t('premium_features.freeze_1day'), pro: t('premium_features.freeze_3day') },
+                { label: t('premium_features.comparison_calendar'), free: t('premium_features.dash'), plus: t('premium_features.dash'), pro: t('premium_features.value_yes') },
+                { label: t('premium_features.comparison_smartwatch'), free: t('premium_features.dash'), plus: t('premium_features.dash'), pro: t('premium_features.value_yes') },
+                { label: t('premium_features.comparison_ads'), free: t('premium_features.value_yes'), plus: t('premium_features.ad_free'), pro: t('premium_features.ad_free') },
+              ].map((row, i) => (
+                <div key={i} className="grid grid-cols-4 gap-2 px-4 py-2.5 text-[10px]">
+                  <span className="font-bold text-white col-span-1">{row.label}</span>
+                  <span className={`text-center font-medium ${row.free === t('premium_features.value_yes') || row.free === t('premium_features.ad_free') ? 'text-emerald-400' : row.free === t('premium_features.dash') ? 'text-slate-600' : 'text-slate-400'}`}>{row.free}</span>
+                  <span className={`text-center font-medium ${row.plus === t('premium_features.value_yes') || row.plus === t('premium_features.ad_free') ? 'text-emerald-400' : row.plus === t('premium_features.dash') ? 'text-slate-600' : 'text-cyan-300'}`}>{row.plus}</span>
+                  <span className={`text-center font-medium ${row.pro === t('premium_features.value_yes') || row.pro === t('premium_features.ad_free') ? 'text-emerald-400' : row.pro === t('premium_features.dash') ? 'text-slate-600' : 'text-amber-300'}`}>{row.pro}</span>
+                </div>
+              ))}
+              <div className="grid grid-cols-4 gap-2 px-4 py-2 text-[8px] font-bold uppercase tracking-widest text-slate-600 border-t border-white/5">
+                <span className="col-span-1" />
+                <span className="text-center">{t('premium_features.free_tier')}</span>
+                <span className="text-center text-cyan-500">Plus</span>
+                <span className="text-center text-amber-500">Pro</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Current Plan Indicator */}
+        {profile?.subscription_tier && profile.subscription_tier !== 'free' && (
+          <div className="px-6 pb-2">
+            <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <Check size={14} className="text-emerald-400 shrink-0" />
+              <span className="text-[10px] font-bold text-emerald-300">
+                {t('premium_features.current_plan', { plan: profile.subscription_tier === 'pro' ? 'Pro' : 'Plus', endDate: profile.subscription_end ? new Date(profile.subscription_end).toLocaleDateString('vi-VN') : '' })}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
-        <div className="p-4 bg-slate-950/60 border-t border-slate-800 text-center shrink-0 flex items-center justify-center gap-2 text-[10px] text-slate-500 font-bold">
-          <ShieldAlert size={12} />
-          <span>Giao dịch an toàn và bảo mật qua cổng thanh toán Stripe.</span>
+        <div className="p-4 bg-slate-950/60 border-t border-slate-800 text-center shrink-0 flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 font-bold">
+            <ShieldAlert size={12} />
+            <span>
+              {isNative && revenuecat.isReady
+                ? t('premium_features.payment_native')
+                : t('premium_features.payment_stripe')}
+            </span>
+          </div>
+          {isNative && revenuecat.isReady && (
+            <button
+              onClick={handleRestore}
+              disabled={revenuecat.isLoading}
+              className="flex items-center gap-1 text-[9px] font-bold text-slate-500 hover:text-cyan-400 transition-colors"
+            >
+              <RotateCcw size={10} />
+              {t('premium_features.restore_purchases')}
+            </button>
+          )}
         </div>
 
       </div>

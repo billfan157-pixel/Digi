@@ -35,9 +35,9 @@ export function WaterProgress({ waterIntake, waterGoal, progress, completionPerc
           transition={{ duration: 1.2, ease: "circOut" }}
         />
       </svg>
-      <div className="absolute text-center">
-        <p className="text-6xl font-black text-white tracking-tighter">{completionPercent}<span className="text-3xl text-slate-400">%</span></p>
-        <p className="text-sm font-bold text-slate-400 mt-1">{waterIntake.toLocaleString()} / {waterGoal.toLocaleString()} ml</p>
+      <div className="absolute text-center z-10">
+        <p className="text-6xl font-black text-white tracking-tighter">{completionPercent}<span className="text-3xl text-slate-300">%</span></p>
+        <p className="text-sm font-bold text-slate-300 mt-1 drop-shadow-sm">{waterIntake.toLocaleString()} / {waterGoal.toLocaleString()} ml</p>
       </div>
     </div>
   );

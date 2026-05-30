@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
-import { Droplets, Zap, AlertTriangle } from 'lucide-react';
+import { Droplets, Zap, AlertTriangle, Sparkles, MessageSquare } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getTimeBasedNudge, getNextRecommendedDrink, TINT_STYLES } from '../lib/habitEngine';
 import type { UserHydrationPattern } from '../lib/patternEngine';
+import { useUIStore } from '../store/useUIStore';
 
 interface HabitNudgeBarProps {
   hour: number;
@@ -11,6 +13,13 @@ interface HabitNudgeBarProps {
   isFirstOpen: boolean;
   pattern?: UserHydrationPattern | null;
   onQuickDrink?: (amount: number) => void;
+  aiNudge?: {
+    title: string;
+    message: string;
+    actionLabel?: string;
+    emoji: string;
+    isLoading?: boolean;
+  } | null;
 }
 
 export default function HabitNudgeBar({
@@ -21,8 +30,12 @@ export default function HabitNudgeBar({
   isFirstOpen,
   pattern,
   onQuickDrink,
+  aiNudge,
 }: HabitNudgeBarProps) {
-  const nudge = getTimeBasedNudge({ hour, waterIntake, waterGoal, streak, isFirstOpen });
+  const { t } = useTranslation();
+  const nudge = aiNudge
+    ? { ...getTimeBasedNudge({ hour, waterIntake, waterGoal, streak, isFirstOpen }), ...aiNudge }
+    : getTimeBasedNudge({ hour, waterIntake, waterGoal, streak, isFirstOpen });
   const nextDrink = getNextRecommendedDrink({ waterIntake, waterGoal, hour });
   const styles = TINT_STYLES[nudge.tint];
 
@@ -34,6 +47,8 @@ export default function HabitNudgeBar({
       return slotHour >= currentHourSlot && slotHour < currentHourSlot + 3;
     }
   );
+
+  const setShowAiChat = useUIStore(s => s.setShowAiChat);
 
   return (
     <motion.div
@@ -47,8 +62,13 @@ export default function HabitNudgeBar({
 
       <div className="relative z-10 flex items-start gap-3">
         {/* Emoji avatar */}
-        <div className={`w-10 h-10 rounded-full ${styles.iconBg} border ${styles.border} flex items-center justify-center text-lg shrink-0`}>
+        <div className={`w-10 h-10 rounded-full ${styles.iconBg} border ${styles.border} flex items-center justify-center text-lg shrink-0 relative`}>
           {nudge.emoji}
+          {aiNudge && (
+            <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
+              <Sparkles size={8} className="text-white" />
+            </div>
+          )}
         </div>
 
         <div className="flex-1 min-w-0">
@@ -69,7 +89,10 @@ export default function HabitNudgeBar({
             <div className="mt-2 flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
               <AlertTriangle size={12} className="text-amber-400 shrink-0" />
               <p className="text-[10px] text-amber-300 font-medium">
-                Bạn thường quên uống nước trong khoảng {upcomingBlindSpot.slot.replace('-', 'h - ')}h. Còn {upcomingBlindSpot.completionRate < 30 ? 'rất ít' : 'ít'} hôm nay!
+                {t('ai.nudge.blind_spot', {
+                  slot: upcomingBlindSpot.slot.replace('-', 'h - '),
+                  rate: upcomingBlindSpot.completionRate < 30 ? t('ai.nudge.very_few') : t('ai.nudge.few')
+                })}
               </p>
             </div>
           )}
@@ -92,10 +115,19 @@ export default function HabitNudgeBar({
               </motion.button>
             )}
 
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAiChat(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 shadow-lg"
+            >
+              <MessageSquare size={12} className="text-cyan-400" />
+              {t('ai.ask_coach')}
+            </motion.button>
+
             {nextDrink && nextDrink.urgency === 'high' && (
               <span className="inline-flex items-center gap-1 text-[9px] text-rose-400 font-bold uppercase tracking-widest">
                 <Zap size={10} className="animate-pulse" />
-                Gấp!
+                {t('ai.urgent')}
               </span>
             )}
           </div>

@@ -1,12 +1,16 @@
+import { Capacitor } from '@capacitor/core';
 import { supabase } from './supabase';
+
+export type PushPlatform = 'web' | 'native';
 
 export interface PushSubscriptionRow {
   id?: string;
   user_id: string;
   endpoint: string;
-  p256dh: string;
-  auth: string;
+  p256dh?: string;
+  auth?: string;
   device_name?: string;
+  platform?: PushPlatform;
   created_at?: string;
 }
 
@@ -78,7 +82,17 @@ export function subscriptionToRow(userId: string, sub: PushSubscription, deviceN
     endpoint: sub.endpoint,
     p256dh: key.keys.p256dh,
     auth: key.keys.auth,
+    platform: 'web',
     device_name: deviceName ?? navigator.userAgent.slice(0, 100),
+  };
+}
+
+export function nativeTokenToRow(userId: string, token: string): PushSubscriptionRow {
+  return {
+    user_id: userId,
+    endpoint: token,
+    platform: 'native',
+    device_name: Capacitor.isNativePlatform() ? 'Capacitor' : navigator.userAgent.slice(0, 100),
   };
 }
 

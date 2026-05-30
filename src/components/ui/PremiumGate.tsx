@@ -13,8 +13,8 @@ export default function PremiumGate({
   isPremium,
   onUpgrade,
   children,
-  title = 'Phân tích chuyên sâu',
-  description = 'Khám phá thói quen, xu hướng và biểu đồ chi tiết về sức khỏe của bạn.',
+  title = 'Deep Analytics',
+  description = 'Explore detailed health habits, trends, and charts.',
 }: PremiumGateProps) {
   if (isPremium) return <>{children}</>;
 
@@ -57,7 +57,7 @@ export default function PremiumGate({
           <div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 opacity-70 group-hover:opacity-100 transition-opacity" />
           <div className="relative flex h-12 items-center justify-center gap-2 rounded-[15px] bg-black/40 backdrop-blur-md border border-white/10 transition-colors group-hover:bg-black/20">
             <span className="bg-gradient-to-r from-amber-200 to-orange-400 bg-clip-text text-xs font-black uppercase tracking-wider text-transparent drop-shadow-sm">
-              Nâng cấp mở khóa
+              Upgrade to Unlock
             </span>
             <Sparkles size={16} className="text-orange-400" />
           </div>

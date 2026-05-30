@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import i18n from '@/i18n';
 import {
   registerServiceWorker,
   getExistingSubscription,
@@ -84,21 +85,21 @@ export function usePushNotifications(userId: string | undefined) {
   }, [isSupported]);
 
   const sendTestNotification = useCallback(async () => {
-    if (!userId || !isSupported) return { ok: false, message: 'Trình duyệt không hỗ trợ thông báo đẩy.' };
+    if (!userId || !isSupported) return { ok: false, message: i18n.t('notification.push_not_supported') };
     setIsSendingTest(true);
 
     try {
       const ready = isSubscribed || await subscribe();
-      if (!ready) return { ok: false, message: 'Chưa bật được thông báo đẩy.' };
+      if (!ready) return { ok: false, message: i18n.t('notification.push_not_enabled') };
 
       const result = await sendPushNotification({
         title: 'DigiWell',
-        body: 'Thông báo đẩy đã hoạt động. Đến giờ uống nước rồi!',
+        body: i18n.t('notification.push_test_body'),
         data: { url: '/', type: 'hydration_test', sentAt: new Date().toISOString() },
       });
 
-      if (result.sent > 0) return { ok: true, message: 'Đã gửi thông báo thử.' };
-      return { ok: false, message: result.message ?? 'Không tìm thấy thiết bị nhận thông báo.' };
+      if (result.sent > 0) return { ok: true, message: i18n.t('notification.push_test_sent') };
+      return { ok: false, message: result.message ?? i18n.t('notification.push_no_device') };
     } finally {
       setIsSendingTest(false);
     }

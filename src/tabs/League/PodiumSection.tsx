@@ -42,7 +42,7 @@ export const PodiumSection = ({ top3 }: PodiumSectionProps) => {
   return (
     <div className="flex items-end justify-center gap-4 pt-12 pb-6 relative overflow-visible">
       {/* Global Background Glow for the winner */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-yellow-400/10 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-[var(--theme-glow-color,rgba(250,204,21,0.15))] blur-[100px] rounded-full pointer-events-none animate-pulse" />
 
       {layouts.map((podiumIndex) => {
         const item = top3[podiumIndex];
@@ -69,7 +69,7 @@ export const PodiumSection = ({ top3 }: PodiumSectionProps) => {
                      animate={{ y: 0, opacity: 1, scale: 1 }}
                      className="absolute -top-10 left-1/2 -translate-x-1/2"
                    >
-                     <Crown size={32} className="text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)] animate-bounce" />
+                     <Crown size={32} className="text-yellow-400 drop-shadow-[0_0_15px_var(--theme-glow-color,rgba(250,204,21,0.8))] animate-bounce" />
                    </motion.div>
                  )}
                </AnimatePresence>
@@ -77,7 +77,7 @@ export const PodiumSection = ({ top3 }: PodiumSectionProps) => {
                {/* Avatar Ring with Aura */}
                <div className="relative">
                   <div className={`absolute inset-[-12px] bg-gradient-to-b ${metal.aura} rounded-full blur-xl opacity-60`} />
-                  <div className={`w-14 h-14 rounded-[1.25rem] bg-slate-900 border-2 ${metal.border} flex items-center justify-center relative overflow-hidden shadow-2xl`}>
+                  <div className={`w-14 h-14 rounded-[var(--theme-border-radius-inner,16px)] bg-slate-900 border-2 ${metal.border} flex items-center justify-center relative overflow-hidden shadow-2xl`}>
                     <span className={`text-xl font-black ${metal.color}`}>
                       {item.name.charAt(0).toUpperCase()}
                     </span>
@@ -93,7 +93,7 @@ export const PodiumSection = ({ top3 }: PodiumSectionProps) => {
 
             {/* Pedestal - Premium Glass */}
             <div
-              className={`w-full rounded-t-[2.5rem] border-t-2 border-x-2 ${metal.border} bg-gradient-to-t ${metal.bg} backdrop-blur-3xl relative flex flex-col items-center pt-6 px-2 text-center overflow-hidden shadow-2xl`}
+              className={`w-full rounded-t-[var(--theme-border-radius,2.5rem)] border-t-2 border-x-2 ${metal.border} bg-gradient-to-t ${metal.bg} backdrop-blur-[var(--theme-blur,40px)] relative flex flex-col items-center pt-6 px-2 text-center overflow-hidden shadow-2xl`}
               style={{ height: `${podiumHeights[podiumIndex]}px` }}
             >
               {/* Internal Shimmer */}

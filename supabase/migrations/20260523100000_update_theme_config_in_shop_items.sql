@@ -3,7 +3,7 @@
 
 -- Update existing theme_default - merge with existing meta_value to preserve required_level
 UPDATE shop_items 
-SET meta_value = meta_value || jsonb_build_object(
+SET meta_value = (meta_value::jsonb || jsonb_build_object(
   'id', 'theme_default',
   'name', 'Mặc định',
   'blurLevel', '20px',
@@ -26,7 +26,7 @@ SET meta_value = meta_value || jsonb_build_object(
     'bgGradient', 'radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 100%)',
     'glowColor', 'rgba(34,211,238,0.15)'
   )
-)
+)::text
 WHERE id = 'theme_default';
 
 -- Insert remaining themes that don't exist in shop_items
@@ -485,7 +485,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Update existing themes in shop_items with full config - preserve existing fields like required_level
 UPDATE shop_items
-SET meta_value = meta_value || CASE
+SET meta_value = (meta_value::jsonb || CASE
   WHEN id = 'theme_cyber' THEN jsonb_build_object(
     'id', 'theme_cyber',
     'name', 'Cyber Neon',
@@ -610,5 +610,5 @@ SET meta_value = meta_value || CASE
     )
   )
   ELSE '{}'::jsonb
-END
+END)::text
 WHERE category = 'theme';

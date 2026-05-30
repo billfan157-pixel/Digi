@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { supabase } from './supabase';
 
 interface AdminMetrics {
@@ -13,7 +14,7 @@ interface AdminMetrics {
 
 export async function fetchAdminMetrics(): Promise<AdminMetrics> {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  if (!user) throw new Error(i18n.t('common.not_authenticated'));
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -21,7 +22,7 @@ export async function fetchAdminMetrics(): Promise<AdminMetrics> {
     .eq('id', user.id)
     .single();
 
-  if (profile?.role !== 'admin') throw new Error('Access denied');
+  if (profile?.role !== 'admin') throw new Error(i18n.t('common.access_denied'));
 
   const now = new Date();
   const daysAgo = (n: number) => new Date(now.getTime() - n * 86400000).toISOString();

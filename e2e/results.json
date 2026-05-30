@@ -10,16 +10,84 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {},
+    "metadata": {
+      "actualWorkers": 1
+    },
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "C:/DigiWell/test-results",
         "repeatEach": 1,
         "retries": 1,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "chromium",
         "name": "chromium",
+        "testDir": "C:/DigiWell/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/DigiWell/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/DigiWell/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/DigiWell/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/DigiWell/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/DigiWell/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome-mobile",
+        "name": "chrome-mobile",
+        "testDir": "C:/DigiWell/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/DigiWell/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "safari-mobile",
+        "name": "safari-mobile",
         "testDir": "C:/DigiWell/e2e",
         "testIgnore": [],
         "testMatch": [
@@ -55,56 +123,1303 @@
   },
   "suites": [
     {
-      "title": "smoke.spec.ts",
-      "file": "smoke.spec.ts",
+      "title": "arena.spec.ts",
+      "file": "arena.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "App smoke tests",
-          "file": "smoke.spec.ts",
-          "line": 3,
+          "title": "Arena V2 Ranked Duel Flow",
+          "file": "arena.spec.ts",
+          "line": 221,
           "column": 6,
           "specs": [
             {
-              "title": "home page renders and shows DigiWell branding",
+              "title": "arena tab renders ranked stats and leaderboard",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 45000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4602,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "PAGE LOG: [vite] connecting...\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [vite] connected.\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AppStorage] Initialized with 0 keys\n"
+                        },
+                        {
+                          "text": "PAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ✅ Supabase Config OK: https://plbwqjdrivyffrhpbmvm.supabase.co\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/signup\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/signup\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?on_conflict=id&columns=%22id%22%2C%22nickname%22%2C%22gender%22%2C%22age%22%2C%22height%22%2C%22weight%22%2C%22activity%22%2C%22climate%22%2C%22goal%22%2C%22wake_up%22%2C%22bed_time%22%2C%22water_goal%22%2C%22onboarding_completed%22%2C%22created_at%22%2C%22updated_at%22\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m201\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?on_conflict=id&columns=%22id%22%2C%22nickname%22%2C%22gender%22%2C%22age%22%2C%22height%22%2C%22weight%22%2C%22activity%22%2C%22climate%22%2C%22goal%22%2C%22wake_up%22%2C%22bed_time%22%2C%22water_goal%22%2C%22onboarding_completed%22%2C%22created_at%22%2C%22updated_at%22\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/token?grant_type=password\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/token?grant_type=password\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=google_refresh_token\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=google_refresh_token\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/calendar-proxy\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/calendar-proxy\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Profile changed, fetching water data\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [App] Force refetching profile to sync EXP display\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] fetchAllWater called, profile.id: e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Not real user, skipping\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=equipped_bottle_id%2Clast_bottle_volume%2Cbottle_auth_key%2Cpaired_device_id%2Clast_event_id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=equipped_bottle_id%2Clast_bottle_volume%2Cbottle_auth_key%2Cpaired_device_id%2Clast_event_id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=id%2Cday%2Camount&user_id=eq.e2e-user-id&day=gte.2026-05-23&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=day%2Camount&user_id=eq.e2e-user-id&day=gte.2026-04-29&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id%2Ccreated_at&follower_id=eq.e2e-user-id&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id&follower_id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_profile_stats\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=id%2Cauthor_id%2Ccontent%2Cimage_url%2Cpost_kind%2Cvisibility%2Chydration_ml%2Cstreak_snapshot%2Clike_count%2Ccreated_at%2Cexpires_at&author_id=in.%28e2e-user-id%29&order=created_at.desc&offset=0&limit=20\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=*%2Cauthor%3Aprofiles%21social_posts_author_id_fkey%28id%2Cnickname%2Cavatar_url%2Clevel%2Cwater_today%2Cwater_goal%29%2Csocial_post_likes%28user_id%29&order=created_at.desc&offset=0&limit=10\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=id%2Cday%2Camount&user_id=eq.e2e-user-id&day=gte.2026-05-23&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=day%2Camount&user_id=eq.e2e-user-id&day=gte.2026-04-29&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_profile_stats\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id%2Ccreated_at&follower_id=eq.e2e-user-id&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id&follower_id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=id%2Cauthor_id%2Ccontent%2Cimage_url%2Cpost_kind%2Cvisibility%2Chydration_ml%2Cstreak_snapshot%2Clike_count%2Ccreated_at%2Cexpires_at&author_id=in.%28e2e-user-id%29&order=created_at.desc&offset=0&limit=20\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=*%2Cauthor%3Aprofiles%21social_posts_author_id_fkey%28id%2Cnickname%2Cavatar_url%2Clevel%2Cwater_today%2Cwater_goal%29%2Csocial_post_likes%28user_id%29&order=created_at.desc&offset=0&limit=10\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ⚠️ Slow query detected: POST /functions/v1/ai-gateway took 240.90ms\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AI Gateway] Invoke error: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [invokeAgenticWorkflow] Failed: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Profile changed, fetching water data\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Profile changed, fetching water data\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] fetchAllWater called, profile.id: e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Not real user, skipping\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] fetchAllWater called, profile.id: e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Not real user, skipping\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AI Gateway] Invoke error: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AI Gateway] Invoke error: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=amount%2Cday&user_id=eq.e2e-user-id&day=in.%282026-05-22%2C2026-05-23%2C2026-05-24%2C2026-05-25%2C2026-05-26%2C2026-05-27%2C2026-05-28%29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/weekly_reports?select=*&user_id=eq.e2e-user-id&week_start=eq.2026-05-25\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=amount%2Cday&user_id=eq.e2e-user-id&day=in.%282026-05-22%2C2026-05-23%2C2026-05-24%2C2026-05-25%2C2026-05-26%2C2026-05-27%2C2026-05-28%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/weekly_reports?select=*&user_id=eq.e2e-user-id&week_start=eq.2026-05-25\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cstatus%2Cprogress%2Ccompleted_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%29&user_id=eq.e2e-user-id&status=in.%28active%2Ccompleted%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cstatus%2Cprogress%2Ccompleted_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%29&user_id=eq.e2e-user-id&status=in.%28active%2Ccompleted%29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Creset_date%2Ccompleted_at%2Cclaimed_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Cdescription%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&or=%28reset_date.is.null%2Creset_date.eq.2026-05-29%2Creset_date.eq.2026-05-25%29&order=status.asc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Creset_date%2Ccompleted_at%2Cclaimed_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Cdescription%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&or=%28reset_date.is.null%2Creset_date.eq.2026-05-29%2Creset_date.eq.2026-05-25%29&order=status.asc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cnickname%2Cwp%2Cleaderboard_opt_in&leaderboard_opt_in=eq.true&order=wp.desc&limit=50\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cnickname%2Cwp%2Cleaderboard_opt_in&leaderboard_opt_in=eq.true&order=wp.desc&limit=50\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-29T15:54:20.568Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
-              "id": "4219922fea2e2bd3c691-5e5fd57eba08e075f358",
-              "file": "smoke.spec.ts",
-              "line": 4,
+              "id": "807b057befe601acf025-3f7e1d5845ea84b10075",
+              "file": "arena.spec.ts",
+              "line": 227,
               "column": 3
             },
             {
-              "title": "app has valid title",
+              "title": "battle modes allow stake selection and queue entry",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 30000,
+                  "timeout": 45000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6898,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "PAGE LOG: [vite] connecting...\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [vite] connected.\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AppStorage] Initialized with 0 keys\n"
+                        },
+                        {
+                          "text": "PAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ✅ Supabase Config OK: https://plbwqjdrivyffrhpbmvm.supabase.co\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/signup\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/signup\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?on_conflict=id&columns=%22id%22%2C%22nickname%22%2C%22gender%22%2C%22age%22%2C%22height%22%2C%22weight%22%2C%22activity%22%2C%22climate%22%2C%22goal%22%2C%22wake_up%22%2C%22bed_time%22%2C%22water_goal%22%2C%22onboarding_completed%22%2C%22created_at%22%2C%22updated_at%22\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m201\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?on_conflict=id&columns=%22id%22%2C%22nickname%22%2C%22gender%22%2C%22age%22%2C%22height%22%2C%22weight%22%2C%22activity%22%2C%22climate%22%2C%22goal%22%2C%22wake_up%22%2C%22bed_time%22%2C%22water_goal%22%2C%22onboarding_completed%22%2C%22created_at%22%2C%22updated_at%22\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/token?grant_type=password\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/token?grant_type=password\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=google_refresh_token\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=google_refresh_token\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/calendar-proxy\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/calendar-proxy\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Profile changed, fetching water data\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [App] Force refetching profile to sync EXP display\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] fetchAllWater called, profile.id: e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Not real user, skipping\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=equipped_bottle_id%2Clast_bottle_volume%2Cbottle_auth_key%2Cpaired_device_id%2Clast_event_id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=id%2Cday%2Camount&user_id=eq.e2e-user-id&day=gte.2026-05-23&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_profile_stats\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=day%2Camount&user_id=eq.e2e-user-id&day=gte.2026-04-29&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id%2Ccreated_at&follower_id=eq.e2e-user-id&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id&follower_id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=id%2Cauthor_id%2Ccontent%2Cimage_url%2Cpost_kind%2Cvisibility%2Chydration_ml%2Cstreak_snapshot%2Clike_count%2Ccreated_at%2Cexpires_at&author_id=in.%28e2e-user-id%29&order=created_at.desc&offset=0&limit=20\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=*%2Cauthor%3Aprofiles%21social_posts_author_id_fkey%28id%2Cnickname%2Cavatar_url%2Clevel%2Cwater_today%2Cwater_goal%29%2Csocial_post_likes%28user_id%29&order=created_at.desc&offset=0&limit=10\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=equipped_bottle_id%2Clast_bottle_volume%2Cbottle_auth_key%2Cpaired_device_id%2Clast_event_id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=id%2Cday%2Camount&user_id=eq.e2e-user-id&day=gte.2026-05-23&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_profile_stats\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=day%2Camount&user_id=eq.e2e-user-id&day=gte.2026-04-29&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id%2Ccreated_at&follower_id=eq.e2e-user-id&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id&follower_id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=id%2Cauthor_id%2Ccontent%2Cimage_url%2Cpost_kind%2Cvisibility%2Chydration_ml%2Cstreak_snapshot%2Clike_count%2Ccreated_at%2Cexpires_at&author_id=in.%28e2e-user-id%29&order=created_at.desc&offset=0&limit=20\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=*%2Cauthor%3Aprofiles%21social_posts_author_id_fkey%28id%2Cnickname%2Cavatar_url%2Clevel%2Cwater_today%2Cwater_goal%29%2Csocial_post_likes%28user_id%29&order=created_at.desc&offset=0&limit=10\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Profile changed, fetching water data\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Profile changed, fetching water data\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] fetchAllWater called, profile.id: e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Not real user, skipping\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] fetchAllWater called, profile.id: e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Not real user, skipping\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=amount%2Cday&user_id=eq.e2e-user-id&day=in.%282026-05-22%2C2026-05-23%2C2026-05-24%2C2026-05-25%2C2026-05-26%2C2026-05-27%2C2026-05-28%29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/weekly_reports?select=*&user_id=eq.e2e-user-id&week_start=eq.2026-05-25\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=amount%2Cday&user_id=eq.e2e-user-id&day=in.%282026-05-22%2C2026-05-23%2C2026-05-24%2C2026-05-25%2C2026-05-26%2C2026-05-27%2C2026-05-28%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/weekly_reports?select=*&user_id=eq.e2e-user-id&week_start=eq.2026-05-25\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cstatus%2Cprogress%2Ccompleted_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%29&user_id=eq.e2e-user-id&status=in.%28active%2Ccompleted%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cstatus%2Cprogress%2Ccompleted_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%29&user_id=eq.e2e-user-id&status=in.%28active%2Ccompleted%29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Creset_date%2Ccompleted_at%2Cclaimed_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Cdescription%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&or=%28reset_date.is.null%2Creset_date.eq.2026-05-29%2Creset_date.eq.2026-05-25%29&order=status.asc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Creset_date%2Ccompleted_at%2Cclaimed_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Cdescription%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&or=%28reset_date.is.null%2Creset_date.eq.2026-05-29%2Creset_date.eq.2026-05-25%29&order=status.asc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ⚠️ Slow query detected: POST /functions/v1/ai-gateway took 660.00ms\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ⚠️ Slow query detected: POST /functions/v1/ai-gateway took 783.70ms\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AI Gateway] Invoke error: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AI Gateway] Invoke error: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [invokeAgenticWorkflow] Failed: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cnickname%2Cwp%2Cleaderboard_opt_in&leaderboard_opt_in=eq.true&order=wp.desc&limit=50\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cnickname%2Cwp%2Cleaderboard_opt_in&leaderboard_opt_in=eq.true&order=wp.desc&limit=50\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ⚠️ Slow query detected: POST /functions/v1/ai-gateway took 997.80ms\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AI Gateway] Invoke error: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/weather-proxy\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/weather-proxy\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ⚠️ Slow query detected: POST /functions/v1/weather-proxy took 311.80ms\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Weather proxy error: FunctionsHttpError: Edge Function returned a non-2xx status code\n    at FunctionsClient.<anonymous> (http://localhost:5173/node_modules/.vite/deps/@supabase_supabase-js.js?v=0cad8823:320:29)\n    at Generator.next (<anonymous>)\n    at fulfilled (http://localhost:5173/node_modules/.vite/deps/tslib.es6-Ca6QN9YN.js?v=0cad8823:59:20)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-29T15:54:25.468Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
-              "id": "4219922fea2e2bd3c691-87e4d4555ba4422fc5da",
-              "file": "smoke.spec.ts",
-              "line": 12,
+              "id": "807b057befe601acf025-ea366ab53b1bfec4cbe3",
+              "file": "arena.spec.ts",
+              "line": 239,
+              "column": 3
+            },
+            {
+              "title": "matchmaking status banner appears after queue entry",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7251,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "PAGE LOG: [vite] connecting...\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [vite] connected.\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AppStorage] Initialized with 0 keys\n"
+                        },
+                        {
+                          "text": "PAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ✅ Supabase Config OK: https://plbwqjdrivyffrhpbmvm.supabase.co\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.theme&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/shop_items?select=id%2Cmeta_value&category=eq.frame&is_active=eq.true\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/signup\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/signup\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?on_conflict=id&columns=%22id%22%2C%22nickname%22%2C%22gender%22%2C%22age%22%2C%22height%22%2C%22weight%22%2C%22activity%22%2C%22climate%22%2C%22goal%22%2C%22wake_up%22%2C%22bed_time%22%2C%22water_goal%22%2C%22onboarding_completed%22%2C%22created_at%22%2C%22updated_at%22\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m201\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?on_conflict=id&columns=%22id%22%2C%22nickname%22%2C%22gender%22%2C%22age%22%2C%22height%22%2C%22weight%22%2C%22activity%22%2C%22climate%22%2C%22goal%22%2C%22wake_up%22%2C%22bed_time%22%2C%22water_goal%22%2C%22onboarding_completed%22%2C%22created_at%22%2C%22updated_at%22\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/token?grant_type=password\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/auth/v1/token?grant_type=password\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Profile changed, fetching water data\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [App] Force refetching profile to sync EXP display\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] fetchAllWater called, profile.id: e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Not real user, skipping\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_profile_stats\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=equipped_bottle_id%2Clast_bottle_volume%2Cbottle_auth_key%2Cpaired_device_id%2Clast_event_id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=id%2Cday%2Camount&user_id=eq.e2e-user-id&day=gte.2026-05-23&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=day%2Camount&user_id=eq.e2e-user-id&day=gte.2026-04-29&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id%2Ccreated_at&follower_id=eq.e2e-user-id&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id&follower_id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=id%2Cauthor_id%2Ccontent%2Cimage_url%2Cpost_kind%2Cvisibility%2Chydration_ml%2Cstreak_snapshot%2Clike_count%2Ccreated_at%2Cexpires_at&author_id=in.%28e2e-user-id%29&order=created_at.desc&offset=0&limit=20\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=*%2Cauthor%3Aprofiles%21social_posts_author_id_fkey%28id%2Cnickname%2Cavatar_url%2Clevel%2Cwater_today%2Cwater_goal%29%2Csocial_post_likes%28user_id%29&order=created_at.desc&offset=0&limit=10\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_profile_stats\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=equipped_bottle_id%2Clast_bottle_volume%2Cbottle_auth_key%2Cpaired_device_id%2Clast_event_id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=*&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=id%2Cday%2Camount&user_id=eq.e2e-user-id&day=gte.2026-05-23&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=day%2Camount&user_id=eq.e2e-user-id&day=gte.2026-04-29&day=lte.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id%2Ccreated_at&follower_id=eq.e2e-user-id&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_follows?select=following_id&follower_id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=id%2Cauthor_id%2Ccontent%2Cimage_url%2Cpost_kind%2Cvisibility%2Chydration_ml%2Cstreak_snapshot%2Clike_count%2Ccreated_at%2Cexpires_at&author_id=in.%28e2e-user-id%29&order=created_at.desc&offset=0&limit=20\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/social_posts?select=*%2Cauthor%3Aprofiles%21social_posts_author_id_fkey%28id%2Cnickname%2Cavatar_url%2Clevel%2Cwater_today%2Cwater_goal%29%2Csocial_post_likes%28user_id%29&order=created_at.desc&offset=0&limit=10\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_messages?select=role%2Ccontent%2Ccreated_at&user_id=eq.e2e-user-id&order=created_at.asc&limit=20\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/profiles?select=subscription_tier%2Csubscription_end%2Cgrace_period_end&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/ai_usage?select=message_count%2Cadvice_count&user_id=eq.e2e-user-id&date=eq.2026-05-29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id&id=eq.e2e-user-id\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_challenges?select=id%2Cchallenge_id%2Cstatus%2Ccurrent_value%2Cmilestones_reached%2Cdays_completed%2Cdays_failed%2Cchallenge%3Achallenges%28id%2Ctype%2Cslug%2Ctitle%2Cduration_days%2Ctarget_percent%2Cgrace_days%2Ctarget_value%2Cmilestones%2Creward_exp%2Creward_coins%2Creward_badge_id%29&user_id=eq.e2e-user-id&status=eq.joined\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&status=eq.active\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Profile changed, fetching water data\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Profile changed, fetching water data\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] fetchAllWater called, profile.id: e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Not real user, skipping\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] fetchAllWater called, profile.id: e2e-user-id\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [useWaterData] Not real user, skipping\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ⚠️ Slow query detected: POST /functions/v1/ai-gateway took 229.40ms\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ⚠️ Slow query detected: POST /functions/v1/ai-gateway took 323.20ms\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/ai-gateway\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: ⚠️ Slow query detected: POST /functions/v1/ai-gateway took 230.00ms\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AI Gateway] Invoke error: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AI Gateway] Invoke error: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [invokeAgenticWorkflow] Failed: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "PAGE LOG: [AI Gateway] Invoke error: Edge Function returned a non-2xx status code\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=amount%2Cday&user_id=eq.e2e-user-id&day=in.%282026-05-22%2C2026-05-23%2C2026-05-24%2C2026-05-25%2C2026-05-26%2C2026-05-27%2C2026-05-28%29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/weekly_reports?select=*&user_id=eq.e2e-user-id&week_start=eq.2026-05-25\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/water_logs?select=amount%2Cday&user_id=eq.e2e-user-id&day=in.%282026-05-22%2C2026-05-23%2C2026-05-24%2C2026-05-25%2C2026-05-26%2C2026-05-27%2C2026-05-28%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/weekly_reports?select=*&user_id=eq.e2e-user-id&week_start=eq.2026-05-25\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&status=in.%28active%2Cpending%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/quests?select=id%2Ctype%2Cmin_level&is_active=eq.true&min_level=lte.1\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cstatus%2Cprogress%2Ccompleted_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%29&user_id=eq.e2e-user-id&status=in.%28active%2Ccompleted%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cstatus%2Cprogress%2Ccompleted_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Ccondition_type%2Ccondition_value%29&user_id=eq.e2e-user-id&status=in.%28active%2Ccompleted%29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Creset_date%2Ccompleted_at%2Cclaimed_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Cdescription%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&or=%28reset_date.is.null%2Creset_date.eq.2026-05-29%2Creset_date.eq.2026-05-25%29&order=status.asc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/user_quests?select=id%2Cquest_id%2Cstatus%2Cprogress%2Creset_date%2Ccompleted_at%2Cclaimed_at%2Cquest%3Aquests%28id%2Ctype%2Ctitle%2Cdescription%2Ccondition_type%2Ccondition_value%2Creward_exp%2Creward_coins%2Creward_badge_id%2Cmin_level%29&user_id=eq.e2e-user-id&or=%28reset_date.is.null%2Creset_date.eq.2026-05-29%2Creset_date.eq.2026-05-25%29&order=status.asc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cnickname%2Cwp%2Cleaderboard_opt_in&leaderboard_opt_in=eq.true&order=wp.desc&limit=50\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cnickname%2Cwp%2Cleaderboard_opt_in&leaderboard_opt_in=eq.true&order=wp.desc&limit=50\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/hydration_battles?select=*%2Cchallenger%3Apublic_profiles%21hydration_battles_challenger_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Copponent%3Apublic_profiles%21hydration_battles_opponent_public_profile_fkey%28id%2Cnickname%2Cavatar_url%2Cwater_today%2Cwater_goal%2Clevel%29%2Cduel_match_history%28elo_challenger_before%2Celo_challenger_after%2Celo_opponent_before%2Celo_opponent_after%29&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29&order=created_at.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/public_profiles?select=id%2Cduel_elo&order=duel_elo.desc\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "REQ: GET https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/duel_match_history?select=*&or=%28challenger_id.eq.e2e-user-id%2Copponent_id.eq.e2e-user-id%29\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m200\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/rest/v1/rpc/get_current_season\n"
+                        },
+                        {
+                          "text": "REQ: POST https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/weather-proxy\n"
+                        },
+                        {
+                          "text": "RES: \u001b[33m401\u001b[39m https://plbwqjdrivyffrhpbmvm.supabase.co/functions/v1/weather-proxy\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Failed to load resource: the server responded with a status of 401 ()\n"
+                        },
+                        {
+                          "text": "PAGE LOG: Weather proxy error: FunctionsHttpError: Edge Function returned a non-2xx status code\n    at FunctionsClient.<anonymous> (http://localhost:5173/node_modules/.vite/deps/@supabase_supabase-js.js?v=0cad8823:320:29)\n    at Generator.next (<anonymous>)\n    at fulfilled (http://localhost:5173/node_modules/.vite/deps/tslib.es6-Ca6QN9YN.js?v=0cad8823:59:20)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-29T15:54:32.379Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "807b057befe601acf025-5d5b9f566f964cadbdce",
+              "file": "arena.spec.ts",
+              "line": 258,
               "column": 3
             }
           ]
@@ -114,10 +1429,10 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-05-20T06:51:10.137Z",
-    "duration": 150.75199999999995,
-    "expected": 0,
-    "skipped": 2,
+    "startTime": "2026-05-29T15:54:19.683Z",
+    "duration": 20306.645,
+    "expected": 3,
+    "skipped": 0,
     "unexpected": 0,
     "flaky": 0
   }

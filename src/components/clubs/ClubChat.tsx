@@ -123,20 +123,20 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full gap-3">
             <Loader2 size={28} className="animate-spin text-cyan-400" />
-            <p className="text-slate-400 text-sm font-medium">Đang tải tin nhắn...</p>
+            <p className="text-slate-400 text-sm font-medium">{t('common.loading_messages')}</p>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center">
             <AlertCircle size={32} className="text-rose-400" />
-            <p className="text-rose-400 text-sm font-bold">Không thể tải tin nhắn</p>
+            <p className="text-rose-400 text-sm font-bold">{t('social.load_failed')}</p>
             <p className="text-slate-500 text-xs">{error}</p>
-            <button onClick={fetchMessages} className="text-xs font-bold text-cyan-400 underline underline-offset-2 mt-1">Thử lại</button>
+            <button onClick={fetchMessages} className="text-xs font-bold text-cyan-400 underline underline-offset-2 mt-1">{t('common.retry_load')}</button>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3">
             <MessageSquare size={32} className="text-slate-600" />
-            <p className="text-slate-500 text-sm font-medium">Chưa có tin nhắn nào</p>
-            <p className="text-slate-600 text-xs">Hãy gửi tin nhắn đầu tiên cho bang hội!</p>
+            <p className="text-slate-500 text-sm font-medium">{t('common.no_messages_yet')}</p>
+            <p className="text-slate-600 text-xs">{t('common.be_first_to_message')}</p>
           </div>
         ) : messages.map((msg) => {
           const mine = msg.user_id === userId;
@@ -172,7 +172,7 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
                 {!mine && (
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-[11px] text-cyan-400 font-black">
-                      {msg.profiles?.nickname || "Đồng đạo"}
+                      {msg.profiles?.nickname || t('club.anonymous')}
                     </p>
                     <span className={`text-[9px] font-bold uppercase ${getFrameEffects(msg.profiles?.level || 1).textColor}`}>
                       {getRankTitle(msg.profiles?.level || 1)}
@@ -192,7 +192,7 @@ export default function ClubChat({ clubId, userId }: { clubId: string; userId: s
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Nhắn gì đó cho bang hội..."
+          placeholder={t('common.chat_placeholder')}
           className="flex-1 bg-slate-800 border border-white/5 text-white rounded-xl px-4 py-3 outline-none focus:border-cyan-500/50 transition-colors"
         />
 

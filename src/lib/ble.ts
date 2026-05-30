@@ -18,6 +18,9 @@ export interface HydrationPacket {
   amountMl: number;
   timestamp: number;
   checksumValid: boolean;
+  eventId?: number;
+  isSecure?: boolean;
+  signature?: Uint8Array;
 }
 
 /**
@@ -53,6 +56,39 @@ export function parseHydrationPacket(dataView: DataView): HydrationPacket {
     amountMl,
     timestamp,
     checksumValid: expectedChecksum === actualChecksum,
+  };
+}
+
+/**
+ * Parses a 44-byte secure hydration packet.
+ * Format:
+ * - Bytes 0-3: amountMl (uint32, Little-Endian)
+ * - Bytes 4-7: eventId (uint32, Little-Endian, sequence counter)
+ * - Bytes 8-11: timestamp (uint32, Little-Endian, epoch seconds)
+ * - Bytes 12-43: HMAC-SHA256 signature (32 bytes)
+ */
+export function parseSecureHydrationPacket(dataView: DataView): HydrationPacket {
+  if (dataView.byteLength < 44) {
+    throw new Error('Secure hydration packet must be at least 44 bytes long');
+  }
+
+  const amountMl = dataView.getUint32(0, true);
+  const eventId = dataView.getUint32(4, true);
+  const timestamp = dataView.getUint32(8, true);
+
+  const signature = new Uint8Array(
+    dataView.buffer,
+    dataView.byteOffset + 12,
+    32
+  );
+
+  return {
+    amountMl,
+    timestamp,
+    checksumValid: true, // Verified separately using computeHmacSha256 in hook
+    eventId,
+    isSecure: true,
+    signature,
   };
 }
 
@@ -217,7 +253,9 @@ export async function subscribeToHydration(
       HYDRATION_CHAR_UUID,
       (value) => {
         try {
-          const packet = parseHydrationPacket(value);
+          const packet = value.byteLength >= 44
+            ? parseSecureHydrationPacket(value)
+            : parseHydrationPacket(value);
           onHydrationEvent(packet);
         } catch (err) {
           console.error('Lỗi phân tích gói tin hydration từ notification:', err);

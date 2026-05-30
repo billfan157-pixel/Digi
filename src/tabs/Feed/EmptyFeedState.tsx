@@ -1,4 +1,5 @@
 import { Filter, RotateCcw, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { FeedFilter, FeedMode } from './types';
 import { glassCard } from '../../styles/glass';
 
@@ -13,28 +14,28 @@ interface EmptyFeedStateProps {
 
 const EMPTY_STATE_BY_FILTER: Record<FeedFilter, { title: string; description: string }> = {
   all: {
-    title: 'Chưa có bài viết nào',
-    description: 'Hãy là người đầu tiên thả Pulse hôm nay.',
+    title: 'No posts yet',
+    description: 'Be the first to post a Pulse today.',
   },
   checkins: {
-    title: 'Chưa có Pulse nào',
-    description: 'Đăng tiến độ uống nước để giữ nhịp cùng cộng đồng.',
+    title: 'No Pulses yet',
+    description: 'Share your water progress to stay connected with the community.',
   },
   drops: {
-    title: 'Chưa có Drop nào',
-    description: 'Thả Drop tại đây để chia sẻ vị trí.',
+    title: 'No Drops yet',
+    description: 'Drop here to share your location.',
   },
   milestones: {
-    title: 'Chưa có Peak nào',
-    description: 'Giữ chuỗi streak để xuất hiện trên bảng vàng.',
+    title: 'No Peaks yet',
+    description: 'Keep your streak going to appear on the leaderboard.',
   },
   challenges: {
-    title: 'Chưa có Duel nào',
-    description: 'Tạo Duel để bắt đầu một màn accountability mới.',
+    title: 'No Duels yet',
+    description: 'Create a Duel to start a new accountability challenge.',
   },
   photos: {
-    title: 'Chưa có Proof nào',
-    description: 'Thêm ảnh vào Pulse để bài nổi bật hơn.',
+    title: 'No Proofs yet',
+    description: 'Add photos to your Pulse to make it stand out.',
   },
 };
 
@@ -46,10 +47,11 @@ export const EmptyFeedState = ({
   onModeChange,
   onOpenDiscoverPeople,
 }: EmptyFeedStateProps) => {
+  const { t } = useTranslation();
   const state = !feedSearch && friendCount === 0
-    ? { title: 'Chưa có bạn bè', description: 'Thêm bạn để xem Drop, nhận Duel và giữ nhịp uống nước cùng nhau.' }
+    ? { title: t('feed.no_friends'), description: t('feed.add_friends_feed') }
     : feedSearch
-    ? { title: 'Không tìm thấy bài phù hợp', description: 'Thử đổi từ khóa hoặc chuyển chế độ xem khác.' }
+    ? { title: t('feed.no_matching_posts'), description: t('feed.try_different_keyword') }
     : EMPTY_STATE_BY_FILTER[feedFilter];
 
   return (
@@ -62,11 +64,11 @@ export const EmptyFeedState = ({
     <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row">
       <button onClick={() => { onFilterChange('all'); onModeChange('smart'); }} className="inline-flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-bold active:scale-95 transition-all hover:bg-white/10">
         <RotateCcw size={15} />
-        Đặt lại feed
+        {t('feed.reset_feed')}
       </button>
       <button onClick={onOpenDiscoverPeople} className="inline-flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl bg-cyan-500/15 border border-cyan-500/20 text-cyan-300 text-sm font-bold active:scale-95 transition-all hover:bg-cyan-500/25">
         <Users size={15} />
-        Khám phá người mới
+        {t('feed.discover_people')}
       </button>
       </div>
     </div>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { getModelForAction, getMaxTokensForAction } from "./modelRouter.ts";
 
@@ -17,8 +18,12 @@ Deno.test("modelRouter — agentic uses smart model", () => {
   assertEquals(getModelForAction("agentic"), "llama-3.3-70b-versatile");
 });
 
-Deno.test("modelRouter — max tokens for advice is 120", () => {
-  assertEquals(getMaxTokensForAction("advice"), 120);
+Deno.test("modelRouter — nudge uses fast model", () => {
+  assertEquals(getModelForAction("nudge"), "llama-3.1-8b-instant");
+});
+
+Deno.test("modelRouter — max tokens for advice is 300", () => {
+  assertEquals(getMaxTokensForAction("advice"), 300);
 });
 
 Deno.test("modelRouter — max tokens for chat is 250", () => {
@@ -31,6 +36,10 @@ Deno.test("modelRouter — max tokens for report-analysis is 500", () => {
 
 Deno.test("modelRouter — max tokens for agentic is 350", () => {
   assertEquals(getMaxTokensForAction("agentic"), 350);
+});
+
+Deno.test("modelRouter — max tokens for nudge is 100", () => {
+  assertEquals(getMaxTokensForAction("nudge"), 100);
 });
 
 Deno.test("modelRouter — unknown action falls back to fast model", () => {

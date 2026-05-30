@@ -1,3 +1,5 @@
+import i18n from '@/i18n';
+
 // Feed configuration and constants
 
 export const QUICK_REACTIONS = ['💧', '🔥', '👏', '❤️', '🙌', '✨'];
@@ -8,9 +10,9 @@ export const FEED_MODES = ['smart', 'latest', 'following'] as const;
 export const FEED_FILTERS = ['all', 'checkins', 'milestones', 'challenges', 'photos'] as const;
 
 export const FEED_MODE_LABELS: Record<string, string> = {
-  smart: 'Gợi ý',
-  latest: 'Mới nhất',
-  following: 'Theo dõi',
+  smart: i18n.t('feed_config.mode_smart'),
+  latest: i18n.t('feed_config.mode_latest'),
+  following: i18n.t('feed_config.mode_following'),
 };
 
 export const POST_SIGNAL_COLORS = {

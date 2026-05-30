@@ -27,7 +27,7 @@ export const RequirePremium: React.FC<{
 
   if (fallback) return <>{fallback}</>;
 
-  const buttonText = requiredTier === 'pro' ? 'Mở khóa Pro' : 'Mở khóa Premium';
+  const buttonText = requiredTier === 'pro' ? 'Unlock Pro' : 'Unlock Premium';
 
   return (
     <div className="relative">

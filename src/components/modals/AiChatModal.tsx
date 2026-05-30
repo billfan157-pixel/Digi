@@ -1,4 +1,5 @@
 import { Bot, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useModalStore } from '../../store/useModalStore';
 import TypingIndicator from '../TypingIndicator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,13 +11,14 @@ export interface ChatMessage {
 }
 
 const QUICK_PROMPTS = [
-  "Tôi vừa uống 1 ly cà phê ☕",
-  "Hôm nay trời nóng quá 🥵",
-  "Tôi chuẩn bị đi tập Gym 💪",
-  "Nên uống bao nhiêu nước lúc này? 🤔"
+  'ai_chat.prompt_1',
+  'ai_chat.prompt_2',
+  'ai_chat.prompt_3',
+  'ai_chat.prompt_4',
 ];
 
 export default function AiChatModal() {
+  const { t } = useTranslation();
   const { showAiChat, setShowAiChat } = useModalStore();
   const { geminiProps } = useAiSocial();
   const { chatMessages, isChatLoading, chatInput, setChatInput, handleSendChatMessage } = geminiProps;
@@ -70,17 +72,17 @@ export default function AiChatModal() {
               <button
                 key={idx}
                 type="button"
-                onClick={() => setChatInput(prompt)}
+                onClick={() => setChatInput(t(prompt))}
                 className="whitespace-nowrap px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold hover:bg-cyan-500/20 active:scale-95 transition-all shadow-[0_0_10px_rgba(6,182,212,0.1)]"
               >
-                {prompt}
+                {t(prompt)}
               </button>
             ))}
           </div>
 
           <div className="relative">
-            <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Hỏi AI về sức khỏe của đệ..." className="w-full py-4 pl-6 pr-14 bg-slate-800 rounded-2xl text-white text-sm outline-none focus:ring-2 ring-cyan-500/50 transition-all" />
-            <button type="submit" className="absolute right-2 top-2 bottom-2 px-4 bg-cyan-500 text-slate-950 rounded-xl font-bold hover:bg-cyan-400 transition-colors">Gửi</button>
+            <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={t('common.ask_ai_health')} className="w-full py-4 pl-6 pr-14 bg-slate-800 rounded-2xl text-white text-sm outline-none focus:ring-2 ring-cyan-500/50 transition-all" />
+            <button type="submit" className="absolute right-2 top-2 bottom-2 px-4 bg-cyan-500 text-slate-950 rounded-xl font-bold hover:bg-cyan-400 transition-colors">{t('common.send')}</button>
           </div>
         </form>
         </motion.div>

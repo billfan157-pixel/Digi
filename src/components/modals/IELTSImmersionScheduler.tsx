@@ -7,10 +7,10 @@ interface SchedulerProps {
 }
 
 const DAILY_TASKS = [
-  { id: 't1', icon: Headphones, label: 'Nghe Podcast (BBC/TED)', duration: '60 phút', color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-  { id: 't2', icon: BookOpen, label: 'Đọc báo (Guardian/Economist)', duration: '60 phút', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  { id: 't3', icon: Mic, label: 'Shadowing (Nhại giọng)', duration: '30 phút', color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  { id: 't4', icon: PenTool, label: 'Viết Journal (Tóm tắt lại ngày)', duration: '30 phút', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  { id: 't1', icon: Headphones, label: 'Podcast Listening (BBC/TED)', duration: '60 min', color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
+  { id: 't2', icon: BookOpen, label: 'News Reading (Guardian/Economist)', duration: '60 min', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { id: 't3', icon: Mic, label: 'Shadowing Practice', duration: '30 min', color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  { id: 't4', icon: PenTool, label: 'Journal Writing (Day Summary)', duration: '30 min', color: 'text-purple-400', bg: 'bg-purple-500/10' },
 ];
 
 export default function IELTSImmersionScheduler({ isPremium, onUpgradeClick }: SchedulerProps) {

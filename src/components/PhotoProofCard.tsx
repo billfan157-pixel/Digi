@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Droplets, BellRing, Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -12,6 +13,7 @@ interface PhotoProofCardProps {
 }
 
 export function PhotoProofCard({ authorName, authorAvatar, imageUrl, caption, waterAmount, createdAt, onNudge }: PhotoProofCardProps) {
+  const { t } = useTranslation();
   // Format giờ hiển thị (VD: 14:30)
   const time = new Date(createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
@@ -46,7 +48,7 @@ export function PhotoProofCard({ authorName, authorAvatar, imageUrl, caption, wa
 
       {/* Khu vực hiển thị Ảnh thực tế */}
       <div className="relative w-full bg-slate-950 flex items-center justify-center min-h-[300px] max-h-[500px] overflow-hidden">
-        <img src={imageUrl} alt="Proof" className="w-full h-full object-cover" loading="lazy" />
+        <img src={imageUrl} alt={t('feed.photo_proof')} className="w-full h-full object-cover" loading="lazy" />
         
         {waterAmount && (
           <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md border border-white/10 text-white px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-lg">

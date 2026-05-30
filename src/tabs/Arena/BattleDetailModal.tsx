@@ -5,6 +5,8 @@ import { Swords, Clock, Coins, TrendingUp, X, Check, Loader2 } from 'lucide-reac
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import type { Battle, Profile } from '../../models';
+import { getKFactor } from '../../lib/arenaEngine';
+import { useUIStore } from '@/store/useUIStore';
 
 interface BattleDetailModalProps {
   battle: Battle;
@@ -12,21 +14,39 @@ interface BattleDetailModalProps {
   now: number;
   onClose: () => void;
   onActionComplete: () => void;
+  onBattleResolved?: (battle: Battle, result: { status: string; reward: number; bonus?: number; elo_delta?: number; new_elo?: number; win_streak?: number }) => void;
 }
 
-const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, now, onClose, onActionComplete }) => {
+const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
+  battle,
+  profile,
+  now,
+  onClose,
+  onActionComplete,
+  onBattleResolved,
+}) => {
   const { t } = useTranslation();
   const [isActing, setIsActing] = useState(false);
   const isChallenger = battle.challenger_id === profile?.id;
   const me = isChallenger ? battle.challenger : battle.opponent;
   const opponent = isChallenger ? battle.opponent : battle.challenger;
   
-  const userNickname = me?.nickname ?? 'Bạn';
-  const oppNickname = opponent?.nickname ?? 'Đối thủ';
+  const userNickname = me?.nickname ?? t('common.you');
+  const oppNickname = opponent?.nickname ?? t('common.opponent');
 
   const myProgress = battle.yourProgress ?? me?.water_today ?? 0;
   const oppProgress = battle.opponentProgress ?? opponent?.water_today ?? 0;
   const yourLead = myProgress >= oppProgress;
+
+  const myElo = isChallenger ? (battle.elo_challenger ?? 1200) : (battle.elo_opponent ?? 1200);
+  const oppElo = isChallenger ? (battle.elo_opponent ?? 1200) : (battle.elo_challenger ?? 1200);
+
+  // Estimated ELO preview using real K-factor
+  const expectedScore = 1 / (1 + Math.pow(10, (oppElo - myElo) / 400));
+  const myMatches = profile?.duel_matches_total ?? 0;
+  const myK = getKFactor(myMatches);
+  const estWinDelta = Math.round(myK * (1 - expectedScore));
+  const estLossDelta = Math.round(myK * (0 - expectedScore));
   
   const endsAt = new Date();
   endsAt.setHours(23, 59, 59, 999);
@@ -55,9 +75,9 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
         {/* Header */}
         <div className="flex justify-between items-center mb-8 relative z-10">
           <div>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Chi tiết thách đấu</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">{t('battle.battle_detail')}</p>
             <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              Võ Đài <Swords size={20} className="text-rose-500" />
+              {t('battle.arena')} <Swords size={20} className="text-rose-500" />
             </h2>
           </div>
           <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
@@ -80,8 +100,9 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
                 {userNickname.charAt(0).toUpperCase()}
               </div>
               <p className="text-xs font-black text-slate-300 mb-1 truncate">{userNickname}</p>
+              <p className={`text-[10px] font-black text-amber-400/80 mb-1`}>{myElo} ELO</p>
               <p className={`text-3xl font-black ${yourLead ? 'text-cyan-400' : 'text-white'}`}>{myProgress}</p>
-              <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-1.5 opacity-60">ml uống</p>
+              <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-1.5 opacity-60">{t('battle.water_ml')}</p>
             </div>
 
             {/* Opponent */}
@@ -90,8 +111,9 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
                 {oppNickname.charAt(0).toUpperCase()}
               </div>
               <p className="text-xs font-black text-slate-300 mb-1 truncate">{oppNickname}</p>
+              <p className={`text-[10px] font-black text-amber-400/80 mb-1`}>{oppElo} ELO</p>
               <p className={`text-3xl font-black ${!yourLead ? 'text-rose-400' : 'text-white'}`}>{oppProgress}</p>
-              <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-1.5 opacity-60">ml uống</p>
+              <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-1.5 opacity-60">{t('battle.water_ml')}</p>
             </div>
           </div>
         </div>
@@ -101,7 +123,7 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex flex-col items-center justify-center shadow-lg shadow-amber-500/5">
             <div className="flex items-center gap-2 mb-1.5">
               <Coins size={16} className="text-amber-500" />
-              <span className="text-[9px] text-amber-500/70 uppercase tracking-widest font-black">Tiền cược</span>
+              <span className="text-[9px] text-amber-500/70 uppercase tracking-widest font-black">{t('battle.stake')}</span>
             </div>
             <p className="text-xl font-black text-amber-400">{battle.stake_coins} WP</p>
           </div>
@@ -109,26 +131,73 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
           <div className="rounded-2xl border border-slate-700/50 bg-slate-800/30 p-4 flex flex-col items-center justify-center">
             <div className="flex items-center gap-2 mb-1.5">
               <Clock size={16} className="text-slate-400" />
-              <span className="text-[9px] text-slate-500 uppercase tracking-widest font-black">Thời gian</span>
+              <span className="text-[9px] text-slate-500 uppercase tracking-widest font-black">{t('common.time')}</span>
             </div>
-            <p className="text-xl font-black text-white">{hoursLeft}h còn</p>
+            <p className="text-xl font-black text-white">{t('battle.time_left_hours', { hours: hoursLeft })}</p>
           </div>
         </div>
+
+        {/* ELO Preview */}
+        {battle.status === 'active' && (
+          <div className="mb-6 relative z-10 rounded-2xl border border-white/5 bg-slate-800/30 p-4">
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">{t('battle.current_elo')} {myElo}</p>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-emerald-400">
+                {t('battle.estimated_elo_gain', { delta: estWinDelta })}
+              </span>
+              <span className="text-[10px] font-black text-rose-400">
+                {t('battle.estimated_elo_loss', { delta: Math.abs(estLossDelta) })}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="relative z-10 space-y-3">
           {battle.status === 'active' && (
-            <button
-              onClick={() => {
-                toast.success(t('battle.water_pushed'), {
-                  className: "bg-slate-900 border border-white/10 text-white rounded-2xl"
-                });
-                onClose();
-              }}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-black text-sm shadow-xl shadow-cyan-900/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-            >
-              <TrendingUp size={18} /> Bơm thêm nước ngay!
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  toast.success(t('battle.water_pushed'), {
+                    className: "bg-slate-900 border border-white/10 text-white rounded-2xl"
+                  });
+                  onClose();
+                  // Navigate to home tab to log water
+                  useUIStore.getState().setActiveTab('home');
+                }}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-black text-sm shadow-xl shadow-cyan-900/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <TrendingUp size={18} /> {t('battle.pump_water_now')}
+              </button>
+              <button
+                onClick={async () => {
+                  if (!profile?.id) return;
+                  setIsActing(true);
+                  try {
+                    const { data, error } = await supabase.rpc('resolve_ranked_battle', {
+                      p_battle_id: battle.id,
+                    });
+                    if (error) throw error;
+                    
+                    if (onBattleResolved) {
+                      onBattleResolved(battle, data);
+                    } else {
+                      toast.success(data?.status === 'won' ? t('battle.won', { reward: data?.reward || 0 }) : data?.status === 'draw' ? t('battle.draw') : t('battle.lost'));
+                    }
+                    onActionComplete();
+                    onClose();
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : t('battle.ranking_error'));
+                  } finally {
+                    setIsActing(false);
+                  }
+                }}
+                disabled={isActing}
+                className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-sm hover:bg-white/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isActing ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> {t('battle.end_battle')}</>}
+              </button>
+            </>
           )}
 
           {battle.status === 'pending' && (
@@ -155,7 +224,7 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
                 disabled={isActing}
                 className="flex-1 py-4 rounded-2xl bg-slate-800 border border-white/5 text-slate-400 font-black text-sm active:scale-95 transition-all disabled:opacity-50"
               >
-                {isActing ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Từ chối'}
+                {isActing ? <Loader2 size={16} className="animate-spin mx-auto" /> : t('battle.decline_btn')}
               </button>
               <button
                 onClick={async () => {
@@ -167,6 +236,14 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
                       p_battle_id: battle.id,
                     });
                     if (error) throw error;
+                    await supabase.from('notifications').insert({
+                      recipient_id: battle.challenger_id,
+                      actor_id: profile.id,
+                      type: 'battle',
+                      content: `${profile.nickname || t('feed.someone')} đã nhận lời thách đấu của bạn!`,
+                      reference_id: battle.id,
+                      reference_type: 'hydration_battle',
+                    });
                     toast.success(t('battle.challenge_accepted'));
                     onActionComplete();
                     onClose();
@@ -179,7 +256,7 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({ battle, profile, 
                 disabled={isActing}
                 className="flex-[2] py-4 rounded-2xl bg-white text-slate-900 font-black text-sm shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {isActing ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18} /> Chấp nhận</>}
+                {isActing ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18} /> {t('battle.accept_btn')}</>}
               </button>
             </div>
           )}

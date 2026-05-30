@@ -33,7 +33,7 @@ export default function LevelUpModal() {
             <Award size={50} className="text-white" strokeWidth={2.5} />
           </div>
           <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">LEVEL UP!</h2>
-          <p className="text-amber-500 dark:text-amber-300 font-bold text-lg mt-1">Bạn đã đạt cấp độ mới</p>
+          <p className="text-amber-500 dark:text-amber-300 font-bold text-lg mt-1">You reached a new level!</p>
           
           <div className="flex items-center justify-center gap-4 my-6">
             <span className="text-5xl font-black text-slate-500">{fromLevel}</span>
@@ -41,10 +41,10 @@ export default function LevelUpModal() {
             <span className="text-7xl font-black text-amber-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.7)]">{toLevel}</span>
           </div>
 
-          <p className="text-slate-600 dark:text-slate-400 text-sm mb-8">Phần thưởng và thử thách mới đã được mở khóa. Hãy tiếp tục cố gắng nhé!</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mb-8">New rewards and challenges unlocked. Keep it up!</p>
 
           <button onClick={onClose} className="w-full py-4 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white font-bold active:scale-95 transition-all hover:bg-slate-200 dark:hover:bg-white/20">
-            Tuyệt vời!
+            Awesome!
           </button>
         </div>
       </motion.div>

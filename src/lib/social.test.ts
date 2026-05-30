@@ -139,12 +139,12 @@ describe('getRelativeTimeLabel', () => {
 
 describe('DEFAULT constants', () => {
   it('DEFAULT_SOCIAL_COMPOSER has correct shape', () => {
-    expect(DEFAULT_SOCIAL_COMPOSER).toEqual({
-      content: '',
-      imageUrl: '',
-      postKind: 'status',
-      visibility: 'followers',
-    });
+    expect(DEFAULT_SOCIAL_COMPOSER.content).toBe('');
+    expect(DEFAULT_SOCIAL_COMPOSER.imageUrl).toBe('');
+    expect(DEFAULT_SOCIAL_COMPOSER.postKind).toBe('status');
+    expect(DEFAULT_SOCIAL_COMPOSER.visibility).toBe('followers');
+    expect(DEFAULT_SOCIAL_COMPOSER.eventType).toBeUndefined();
+    expect(DEFAULT_SOCIAL_COMPOSER.referenceId).toBeUndefined();
   });
 
   it('DEFAULT_SOCIAL_PROFILE_STATS starts at 0', () => {

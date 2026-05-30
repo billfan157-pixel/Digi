@@ -29,13 +29,13 @@ interface DrinkPresetState {
 
 export const useDrinkPresetStore = create<DrinkPresetState>((set, get) => ({
   drinkPresets: [
-    { id: '1', name: 'Nước lọc', amount: 250, factor: 1.0, icon: 'Droplet', color: 'cyan' },
-    { id: '2', name: 'Cà phê', amount: 200, factor: 0.8, icon: 'Coffee', color: 'orange' },
-    { id: '3', name: 'Bù khoáng', amount: 300, factor: 1.1, icon: 'Activity', color: 'emerald' },
-    { id: '4', name: 'Bia/Rượu', amount: 330, factor: -0.5, icon: 'Zap', color: 'red' }
+    { id: '1', name: i18n.t('common.preset_water'), amount: 250, factor: 1.0, icon: 'Droplet', color: 'cyan' },
+    { id: '2', name: i18n.t('common.preset_coffee'), amount: 200, factor: 0.8, icon: 'Coffee', color: 'orange' },
+    { id: '3', name: i18n.t('common.preset_electrolyte'), amount: 300, factor: 1.1, icon: 'Activity', color: 'emerald' },
+    { id: '4', name: i18n.t('common.preset_beer_wine'), amount: 330, factor: -0.5, icon: 'Zap', color: 'red' }
   ],
   editingPresets: [],
-  customDrinkForm: { name: 'Trà đào', amount: 300, factor: 1.0 },
+  customDrinkForm: { name: i18n.t('common.preset_peach_tea'), amount: 300, factor: 1.0 },
 
   setDrinkPresets: (presets) => set({ drinkPresets: presets }),
   setEditingPresets: (presets) => set({ editingPresets: presets }),

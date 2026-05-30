@@ -1,5 +1,6 @@
 import { CloudSun, Heart, TrendingUp, TrendingDown, Footprints, Wind, Droplets as WaterDrop, Zap, Activity } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { glassCard } from '../../../styles/glass';
 
 interface TelemetryGridProps {
@@ -82,45 +83,46 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 // Heart rate zone indicator
-function getHeartRateZone(hr: number, restingHR: number = 60): { zone: string; color: string; icon: React.ReactNode } {
+function getHeartRateZone(hr: number, restingHR: number, t: (key: string) => string): { zone: string; color: string; icon: React.ReactNode } {
   const maxHR = 220 - 25;
   const hrr = maxHR - restingHR;
   const intensity = (hr - restingHR) / hrr;
   
-  if (intensity < 0.5) return { zone: 'Nghỉ ngơi', color: 'text-emerald-400', icon: <Heart size={10} className="text-emerald-400" /> };
-  if (intensity < 0.6) return { zone: 'Nhẹ', color: 'text-cyan-400', icon: <Footprints size={10} className="text-cyan-400" /> };
-  if (intensity < 0.7) return { zone: 'Vừa', color: 'text-yellow-400', icon: <Footprints size={10} className="text-yellow-400" /> };
-  if (intensity < 0.8) return { zone: 'Mạnh', color: 'text-orange-400', icon: <Zap size={10} className="text-orange-400" /> };
-  return { zone: 'Tối đa', color: 'text-red-400', icon: <Zap size={10} className="text-red-400" /> };
+  if (intensity < 0.5) return { zone: t('common.resting_zone'), color: 'text-emerald-400', icon: <Heart size={10} className="text-emerald-400" /> };
+  if (intensity < 0.6) return { zone: t('home.light_zone'), color: 'text-cyan-400', icon: <Footprints size={10} className="text-cyan-400" /> };
+  if (intensity < 0.7) return { zone: t('common.moderate_zone'), color: 'text-yellow-400', icon: <Footprints size={10} className="text-yellow-400" /> };
+  if (intensity < 0.8) return { zone: t('home.strong_zone'), color: 'text-orange-400', icon: <Zap size={10} className="text-orange-400" /> };
+  return { zone: t('common.max_zone'), color: 'text-red-400', icon: <Zap size={10} className="text-red-400" /> };
 }
 
 // Weather recommendation
-function getWeatherRecommendation(temp: number, uvIndex?: number): { text: string; icon: React.ReactNode } {
+function getWeatherRecommendation(temp: number, t: (key: string) => string, uvIndex?: number): { text: string; icon: React.ReactNode } {
   if (temp > 30) {
     return {
-      text: 'Nhớ uống nước!',
+      text: t('common.weather_advice_drink'),
       icon: <WaterDrop size={10} className="text-cyan-400" />
     };
   }
   if (uvIndex && uvIndex > 6) {
     return {
-      text: 'UV cao - bảo vệ da',
+      text: t('common.weather_advice_uv'),
       icon: <Zap size={10} className="text-yellow-400" />
     };
   }
   if (temp < 10) {
     return {
-      text: 'Giữ ấm nhé!',
+      text: t('common.weather_advice_cold'),
       icon: <Wind size={10} className="text-blue-400" />
     };
   }
   return {
-    text: 'Thời tiết đẹp',
+    text: t('common.weather_advice_nice'),
     icon: <CloudSun size={10} className="text-emerald-400" />
   };
 }
 
 const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData, weatherLastUpdatedAt }: TelemetryGridProps) {
+  const { t, i18n } = useTranslation();
   const [isHoveringWeather, setIsHoveringWeather] = useState(false);
   const [isHoveringWatch, setIsHoveringWatch] = useState(false);
   
@@ -131,19 +133,19 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
   
   // Heart rate analysis
   const hrZone = watchData?.heartRate 
-    ? getHeartRateZone(watchData.heartRate, watchData.restingHR)
+    ? getHeartRateZone(watchData.heartRate, watchData.restingHR, t)
     : null;
   
   // Weather recommendation
   const weatherRec = weatherData 
-    ? getWeatherRecommendation(weatherData.temp, weatherData.uvIndex)
+    ? getWeatherRecommendation(weatherData.temp, t, weatherData.uvIndex)
     : null;
 
   return (
     <div className="px-5">
       <div className="flex items-center gap-2 mb-3 px-1">
         <Activity size={16} className="text-slate-500" />
-        <h3 className="text-sm font-black text-white tracking-tight">Đo lường sinh học</h3>
+        <h3 className="text-sm font-black text-white tracking-tight">{t('home.biometrics')}</h3>
       </div>
       
       <div className="grid grid-cols-2 gap-3">
@@ -158,7 +160,7 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
               <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${weatherData ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-800/50 border-slate-700/50'}`}>
                 <CloudSun size={14} className={weatherData ? 'text-amber-400' : 'text-slate-500'} />
               </div>
-              <span className="text-[11px] uppercase tracking-widest font-bold text-slate-400">Môi trường</span>
+              <span className="text-[11px] uppercase tracking-widest font-bold text-slate-400">{t('common.environment')}</span>
             </div>
           </div>
           
@@ -177,10 +179,13 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5 truncate">{weatherData.status || 'Thời tiết hiện tại'}</p>
+                <p className="text-xs text-slate-400 mt-0.5 truncate">
+                  {weatherData.status || t('common.current_weather')}
+                  {weatherData.location ? ` • ${weatherData.location}` : ''}
+                </p>
                 {weatherLastUpdatedAt && (
                   <p className="text-[9px] text-slate-600 mt-0.5 font-medium">
-                    Cập nhật {new Date(weatherLastUpdatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                    {t('common.last_updated', { time: new Date(weatherLastUpdatedAt).toLocaleTimeString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) })}
                   </p>
                 )}
                 {/* Additional weather info on hover */}
@@ -188,7 +193,7 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
                   <div className="mt-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
                     {weatherData.humidity !== undefined && (
                       <p className="text-slate-400 text-[9px] font-bold flex items-center gap-1">
-                        <WaterDrop size={8} /> {weatherData.humidity}% độ ẩm
+                        <WaterDrop size={8} /> {t('common.humidity', { value: weatherData.humidity })}
                       </p>
                     )}
                     {weatherRec && (
@@ -202,9 +207,9 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
               </>
             ) : (
               <div className="flex flex-col gap-1">
-                <span className="text-sm font-bold text-slate-500">Chưa đồng bộ</span>
+                <span className="text-sm font-bold text-slate-500">{t('common.not_synced')}</span>
                 <span className="text-[10px] text-slate-600 flex items-center gap-1.5 font-medium uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 animate-pulse" /> Chờ dữ liệu
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 animate-pulse" /> {t('common.waiting_data')}
                 </span>
               </div>
             )}
@@ -222,7 +227,7 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
               <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${watchData?.heartRate ? 'bg-rose-500/10 border-rose-500/20' : 'bg-slate-800/50 border-slate-700/50'}`}>
                 <Heart size={14} className={watchData?.heartRate ? 'text-rose-400 animate-pulse' : 'text-slate-500'} />
               </div>
-              <span className="text-[11px] uppercase tracking-widest font-bold text-slate-400">Sinh hiệu</span>
+              <span className="text-[11px] uppercase tracking-widest font-bold text-slate-400">{t('common.vitals')}</span>
             </div>
           </div>
           
@@ -240,13 +245,13 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">{hrZone ? <>{hrZone.icon} <span className={hrZone.color}>{hrZone.zone}</span></> : 'Nhịp tim'}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{hrZone ? <>{hrZone.icon} <span className={hrZone.color}>{hrZone.zone}</span></> : t('common.heart_rate')}</p>
                 {/* Additional health info on hover */}
                 {isHoveringWatch && (
                   <div className="mt-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
                     {watchData.steps > 0 && (
                       <p className="text-slate-400 text-[9px] font-bold flex items-center gap-1">
-                        <Footprints size={8} /> {animatedSteps.toLocaleString()} bước
+                        <Footprints size={8} /> {animatedSteps.toLocaleString()} {t('common.steps')}
                       </p>
                     )}
                     {watchData.calories && (
@@ -259,9 +264,9 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
               </>
             ) : (
               <div className="flex flex-col gap-1">
-                <span className="text-sm font-bold text-slate-500">Ngoại tuyến</span>
+                <span className="text-sm font-bold text-slate-500">{t('common.offline')}</span>
                 <span className="text-[10px] text-slate-600 flex items-center gap-1.5 font-medium uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 animate-pulse" /> Quét thiết bị
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-600 animate-pulse" /> {t('common.scanning_device')}
                 </span>
               </div>
             )}

@@ -3,6 +3,7 @@ import {
   Droplets, Sparkles, TrendingUp, TrendingDown, 
   Award, Clock, Flame
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface BasicTodayRingProps {
   waterIntake: number;
@@ -139,12 +140,12 @@ function StreakBadge({ streak }: { streak: number }) {
   );
 }
 
-function getMilestone(percent: number) {
-  if (percent >= 100) return { text: 'Hoàn thành xuất sắc!', color: 'text-emerald-400' };
-  if (percent >= 75) return { text: 'Sắp đạt mục tiêu!', color: 'text-cyan-400' };
-  if (percent >= 50) return { text: 'Đang tiến triển tốt', color: 'text-sky-400' };
-  if (percent >= 25) return { text: 'Bắt đầu tốt', color: 'text-blue-400' };
-  return { text: 'Hãy bắt đầu uống nước', color: 'text-slate-400' };
+function getMilestone(percent: number, t: (key: string) => string) {
+  if (percent >= 100) return { text: t('home.milestone_excellent'), color: 'text-emerald-400' };
+  if (percent >= 75) return { text: t('home.milestone_almost'), color: 'text-cyan-400' };
+  if (percent >= 50) return { text: t('home.milestone_good_progress'), color: 'text-sky-400' };
+  if (percent >= 25) return { text: t('home.good_start_milestone'), color: 'text-blue-400' };
+  return { text: t('home.milestone_start'), color: 'text-slate-400' };
 }
 
 export default function BasicTodayRingUltimate({
@@ -153,6 +154,7 @@ export default function BasicTodayRingUltimate({
   streak,
   yesterdayIntake = 0,
 }: BasicTodayRingProps) {
+  const { t } = useTranslation();
   const [showCelebration, setShowCelebration] = useState(false);
   const [mounted, setMounted] = useState(false);
   const prevCompletedRef = useRef(false);
@@ -162,7 +164,7 @@ export default function BasicTodayRingUltimate({
   const isCompleted = dailyPercent >= 100;
 
   const animatedPercent = useAnimatedCounter(dailyPercent, 1000);
-  const milestone = useMemo(() => getMilestone(dailyPercent), [dailyPercent]);
+  const milestone = useMemo(() => getMilestone(dailyPercent, t), [dailyPercent, t]);
   
   // Comparison with yesterday
   const comparison = yesterdayIntake > 0 ? waterIntake - yesterdayIntake : 0;
@@ -320,7 +322,7 @@ export default function BasicTodayRingUltimate({
                 {mounted ? animatedPercent : 0}%
               </p>
               <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                {isCompleted ? 'Hoàn thành' : 'Hôm nay'}
+                {isCompleted ? t('common.completed') : t('common.today')}
               </p>
             </div>
           </div>
@@ -330,8 +332,8 @@ export default function BasicTodayRingUltimate({
         <div className="relative z-10">
           <MetricRow
             icon={Droplets}
-            title="Nạp nước"
-            subtitle="Thể tích"
+            title={t('home.fill_water')}
+            subtitle={t('home.volume')}
             value={
               <>
                 {waterIntake.toLocaleString('vi-VN')}

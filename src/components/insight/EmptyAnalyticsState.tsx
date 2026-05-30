@@ -15,16 +15,16 @@ export default function EmptyAnalyticsState({
   return (
     <div className={`${glassCard} p-8 text-center`}>
       <div className="flex flex-col items-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-white/[0.03] border border-white/[0.08] mb-4">
+        <div className="flex h-16 w-16 items-center justify-center rounded-[var(--theme-border-radius-inner,12px)] bg-white/[0.03] border border-white/[0.08] mb-4">
           <BarChart3 size={28} className="text-white/30" />
         </div>
 
         <h3 className="text-lg font-black text-white/90 mb-2">
-          Chưa đủ dữ liệu phân tích
+          Not enough analytics data
         </h3>
 
         <p className="text-[13px] text-white/50 max-w-[260px] leading-relaxed mb-6">
-          Uống nước đều đặn vài ngày để xem thống kê thói quen, xu hướng và gợi ý cá nhân hóa.
+          Uông nước đều đặn vài ngày để xem thống kê thói quen, xu hướng và gợi ý cá nhân hóa.
         </p>
 
         {/* Progress ring */}
@@ -40,13 +40,13 @@ export default function EmptyAnalyticsState({
             />
             <defs>
               <linearGradient id="emptyProgressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#22d3ee" />
-                <stop offset="100%" stopColor="#2dd4bf" />
+                <stop offset="0%" stopColor="var(--neon-cyan, #22d3ee)" />
+                <stop offset="100%" stopColor="var(--theme-glow-color, #2dd4bf)" />
               </linearGradient>
             </defs>
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <Droplets size={16} className="text-cyan-400/60" />
+            <Droplets size={16} className="text-cyan-400 opacity-60" />
             <span className="text-lg font-black text-white mt-0.5">{dataDays}</span>
           </div>
         </div>

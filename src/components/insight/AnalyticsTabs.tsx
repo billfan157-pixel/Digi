@@ -21,9 +21,9 @@ interface TabConfig {
 }
 
 const tabs: TabConfig[] = [
-  { id: 'overview', label: 'Báo cáo Tuần', icon: BarChart2 },
-  { id: 'history', label: 'Lịch sử Tháng', icon: Calendar },
-  { id: 'advanced', label: 'Chuyên sâu', icon: TrendingUp },
+  { id: 'overview', label: 'Weekly Report', icon: BarChart2 },
+  { id: 'history', label: 'Monthly History', icon: Calendar },
+  { id: 'advanced', label: 'Advanced', icon: TrendingUp },
 ];
 
 interface AnalyticsTabsProps {
@@ -59,7 +59,7 @@ export default function AnalyticsTabs(props: AnalyticsTabsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="glass-control relative flex p-1 shadow-sm border border-white/5 bg-slate-900/40 rounded-xl">
+      <div className="glass-control relative flex p-1 shadow-sm border border-white/5 bg-slate-900/40 rounded-[var(--theme-border-radius-inner,12px)]">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -67,7 +67,7 @@ export default function AnalyticsTabs(props: AnalyticsTabsProps) {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`relative flex-1 flex items-center justify-center gap-2 px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 z-10 ${
-                isActive ? 'text-cyan-200' : 'text-slate-500 hover:text-slate-300'
+                isActive ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               {isActive && (
@@ -215,12 +215,12 @@ function HistoryContent({
 }) {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-slate-900/40 rounded-2xl p-1.5 border border-white/5">
-        <button onClick={handlePrevMonth} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 active:scale-95 transition-all">
+      <div className="flex justify-between items-center bg-slate-900/40 rounded-[var(--theme-border-radius-inner,12px)] p-1.5 border border-white/5">
+        <button onClick={handlePrevMonth} className="w-9 h-9 rounded-[var(--theme-border-radius-inner,8px)] bg-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 active:scale-95 transition-all">
           <ChevronLeft size={18} />
         </button>
         <span className="text-xs font-black text-slate-300 uppercase tracking-widest">{currentMonthName}</span>
-        <button onClick={handleNextMonth} className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 active:scale-95 transition-all">
+        <button onClick={handleNextMonth} className="w-9 h-9 rounded-[var(--theme-border-radius-inner,8px)] bg-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 active:scale-95 transition-all">
           <ChevronRight size={18} />
         </button>
       </div>
@@ -274,7 +274,7 @@ function AdvancedContent({
           <div className="min-h-[300px] flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
               <Loader2 size={32} className="text-cyan-400 animate-spin" />
-              <p className="text-sm text-slate-400">Đang tải heatmap...</p>
+              <p className="text-sm text-slate-400">Loading heatmap...</p>
             </div>
           </div>
         }>

@@ -16,9 +16,10 @@ import { glassCard } from '../../styles/glass';
 interface FeedComposerProps {
   profile: Profile | null;
   onCreateDrop: () => void;
+  onPostPublished?: () => void | Promise<void>;
 }
 
-export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }: FeedComposerProps) {
+export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop, onPostPublished }: FeedComposerProps) {
   const { t } = useTranslation();
   const { waterIntake, waterGoal, streak } = useAppStore(useShallow(s => ({
     waterIntake: s.waterIntake,
@@ -29,7 +30,7 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
 
   const [activeComposer, setActiveComposer] = useState<Extract<SignaturePostKind, 'pulse' | 'duel'> | null>(null);
 
-  const name = profile?.nickname || 'Bạn';
+  const name = profile?.nickname || t('common.you');
   const initial = name[0]?.toUpperCase() || 'U';
 
   const handlePublishPost = async (postData: {
@@ -69,17 +70,17 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
         content: sanitizedContent,
         image_url: finalImageUrl,
         post_kind: persistedPostKind,
-        hydration_ml: waterIntake,
-        streak_snapshot: streak,
         visibility: postData.postKind === 'duel' ? 'followers' : postData.visibility || 'followers',
-        ...postData.extra,
+        hydration_ml: postData.extra?.hydration_ml ?? waterIntake,
+        streak_snapshot: postData.extra?.streak_snapshot ?? streak,
       }).select('id').single();
       
       if (error) throw error;
-      if (!data?.id) throw new Error('Không nhận được bài viết vừa tạo.');
+      if (!data?.id) throw new Error('Could not retrieve the newly created post.');
       
       toast.success(postData.postKind === 'duel' ? t('feed.duel_published') : t('feed.pulse_published'), { id: toastId });
       setActiveComposer(null);
+      await onPostPublished?.();
     } catch {
       toast.error(t('feed.post_error'), { id: toastId });
     }
@@ -99,16 +100,16 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/20 p-[1.5px] border border-white/5">
               <div className="w-full h-full rounded-[14px] bg-slate-950 flex items-center justify-center overflow-hidden">
                 {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Avatar của bạn" className="h-full w-full object-cover" />
+                  <img src={profile.avatar_url} alt={t('common.avatar_alt')} className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-sm font-black text-slate-500">{initial}</span>
                 )}
               </div>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-slate-300">Bạn đang nạp gì thế?</p>
+              <p className="text-sm font-bold text-slate-300">{t('common.what_are_uploading')}</p>
               <p className="text-[10px] font-black uppercase tracking-widest text-cyan-400/60 mt-0.5">
-                {progressPercent}% mục tiêu • Chuỗi {streak} ngày
+                {t('common.percent_goal', { percent: progressPercent })} • {t('feed.streak_days', { days: streak })}
               </p>
             </div>
           </button>
@@ -166,6 +167,9 @@ export const FeedComposer = memo(function FeedComposer({ profile, onCreateDrop }
           <QuickChallengeComposer
             key="challenge-composer"
             profile={profile}
+            waterIntake={waterIntake}
+            waterGoal={waterGoal}
+            streak={streak}
             onPublish={handlePublishPost}
             onClose={() => setActiveComposer(null)}
           />

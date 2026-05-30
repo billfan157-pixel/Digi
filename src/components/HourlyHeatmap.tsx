@@ -15,7 +15,7 @@ interface HourlyHeatmapProps {
 // Design system compliant time blocks with lucide-react icons
 const BLOCKS = [
   { 
-    name: 'Sáng', 
+    name: 'Morning', 
     range: '06:00 - 11:59', 
     Icon: Sun,
     color: 'text-amber-400',
@@ -23,7 +23,7 @@ const BLOCKS = [
     borderColor: 'border-amber-500/20'
   },
   { 
-    name: 'Chiều', 
+    name: 'Afternoon', 
     range: '12:00 - 17:59', 
     Icon: Cloud,
     color: 'text-sky-400',
@@ -31,7 +31,7 @@ const BLOCKS = [
     borderColor: 'border-sky-500/20'
   },
   { 
-    name: 'Tối', 
+    name: 'Evening', 
     range: '18:00 - 23:59', 
     Icon: Moon,
     color: 'text-indigo-400',
@@ -39,7 +39,7 @@ const BLOCKS = [
     borderColor: 'border-indigo-500/20'
   },
   { 
-    name: 'Đêm', 
+    name: 'Night', 
     range: '00:00 - 05:59', 
     Icon: MoonStar,
     color: 'text-slate-400',
@@ -50,7 +50,7 @@ const BLOCKS = [
 
 interface Forecast {
   predicted: number;
-  trend: 'Tăng' | 'Giảm' | 'Ổn định';
+  trend: 'Up' | 'Down' | 'Stable';
   confidence: number;
   change: number;
 }
@@ -59,10 +59,10 @@ interface Forecast {
 function HeatmapSkeleton() {
   return (
     <div className={`${glassCard} p-6 min-h-[420px]`} role="status" aria-live="polite">
-      <span className="sr-only">Đang tải dữ liệu biểu đồ...</span>
+      <span className="sr-only">Loading chart data...</span>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 animate-pulse" />
+          <div className="w-10 h-10 rounded-[var(--theme-border-radius-inner,12px)] bg-cyan-500/10 animate-pulse" />
           <div className="space-y-2">
             <div className="h-5 w-32 bg-white/5 rounded animate-pulse" />
             <div className="h-3 w-24 bg-white/5 rounded animate-pulse" />
@@ -76,7 +76,7 @@ function HeatmapSkeleton() {
             <div className="w-14 h-8 bg-white/5 rounded animate-pulse" />
             <div className="flex-1 grid grid-cols-7 gap-1.5">
               {[...Array(7)].map((_, j) => (
-                <div key={j} className="aspect-square bg-white/5 rounded-2xl animate-pulse" />
+                <div key={j} className="aspect-square bg-white/5 rounded-[var(--theme-border-radius-inner,12px)] animate-pulse" />
               ))}
             </div>
           </div>
@@ -98,9 +98,9 @@ function EmptyState() {
         <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center mb-4 mx-auto">
           <Grid size={32} className="text-cyan-400 opacity-50" />
         </div>
-        <p className="text-lg font-black text-white mb-2">Chưa có dữ liệu</p>
+        <p className="text-lg font-black text-white mb-2">No Data Yet</p>
         <p className="text-sm text-slate-400 max-w-xs">
-          Hãy uống ngụm nước đầu tiên để bắt đầu theo dõi thói quen của bạn!
+          Take your first sip to start tracking your hydration habits!
         </p>
       </motion.div>
     </div>
@@ -122,7 +122,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
       d.setDate(d.getDate() - i);
       days.push({
         dateStr: d.toISOString().split('T')[0],
-        label: i === 0 ? 'Hôm nay' : d.toLocaleDateString('vi-VN', { weekday: 'short' }),
+        label: i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' }),
         fullDate: d,
       });
     }
@@ -151,7 +151,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
         if (mounted) setLogs(data || []);
       } catch (err: unknown) {
         console.error(err);
-        if (mounted) setError('Không thể tải dữ liệu heatmap');
+        if (mounted) setError('Cannot load heatmap data');
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -190,11 +190,11 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
     const maxBlockIndex = daytimeTotals.indexOf(Math.max(...daytimeTotals));
     const minBlockIndex = daytimeTotals.indexOf(Math.min(...daytimeTotals));
 
-    let insightMsg = "Thói quen uống nước của bạn khá đều trong ngày.";
+    let insightMsg = "Your hydration habits are quite consistent throughout the day.";
     if (totalIntake > 0) {
       const maxBlock = BLOCKS[maxBlockIndex];
       const minBlock = BLOCKS[minBlockIndex];
-      insightMsg = `Bạn uống nhiều nhất vào buổi ${maxBlock.name} (${blockTotals[maxBlockIndex].toLocaleString('vi-VN')}ml) và ít nhất vào buổi ${minBlock.name}.`;
+      insightMsg = `You drink the most during ${maxBlock.name} (${blockTotals[maxBlockIndex].toLocaleString()}ml) and least during ${minBlock.name}.`;
     }
 
     return { 
@@ -225,7 +225,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
 
     return {
       predicted: Math.max(0, predicted),
-      trend: diff > 100 ? 'Tăng' : diff < -100 ? 'Giảm' : 'Ổn định',
+      trend: diff > 100 ? 'Rising' : diff < -100 ? 'Declining' : 'Stable',
       confidence: Math.round(confidence),
       change: changePercent
     };
@@ -260,17 +260,17 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
     }
     if (ratio < 0.75) {
       return {
-        bg: 'bg-cyan-500/40',
+        bg: 'bg-cyan-500/30',
         border: 'border-cyan-500/50',
-        shadow: 'shadow-md shadow-cyan-500/20',
+        shadow: 'shadow-md shadow-[var(--theme-glow-color,rgba(34,211,238,0.2))]',
       };
     }
     
     // Max intensity with design system compliant glow
     return {
-      bg: 'bg-cyan-400',
-      border: 'border-cyan-300',
-      shadow: 'shadow-[0_0_16px_rgba(34,211,238,0.5)]',
+      bg: 'bg-cyan-500',
+      border: 'border-cyan-500/50',
+      shadow: 'shadow-[0_0_16px_var(--theme-glow-color,rgba(34,211,238,0.5))]',
     };
   };
 
@@ -278,33 +278,33 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
   if (error) {
     return (
       <div className={`${glassCard} p-6 text-center`} role="alert" aria-live="assertive">
-        <p className="text-rose-400 font-medium">{error}</p>
+        <p className="text-orange-400 font-medium">{error}</p>
       </div>
     );
   }
   if (logs.length === 0) return <EmptyState />;
 
   const TrendIcon = forecast.trend === 'Tăng' ? TrendingUp : 
-                    forecast.trend === 'Giảm' ? TrendingDown : Minus;
+                    forecast.trend === 'Down' ? TrendingDown : Minus;
 
   return (
     <div className={`${glassCard} p-5 relative overflow-hidden group ${className}`}>
       {/* Ambient glow - design system compliant */}
       <div 
         className="absolute -top-20 -right-20 w-64 h-64 blur-[120px] rounded-full pointer-events-none opacity-40 transition-opacity duration-500 group-hover:opacity-60"
-        style={{ background: 'radial-gradient(circle, rgba(34,211,238,0.15) 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, var(--theme-glow-color, rgba(34,211,238,0.15)) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
 
       {/* Header */}
       <div className="flex items-start justify-between mb-6 relative z-10">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-cyan-500/10 rounded-2xl border border-cyan-500/20">
+          <div className="p-2.5 bg-cyan-500/10 rounded-[var(--theme-border-radius-inner,12px)] border border-cyan-500/20">
             <Grid size={20} className="text-cyan-400" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-white">Phân bổ theo giờ</h3>
-            <p className="text-xs text-slate-400 font-medium">7 ngày qua • Heatmap</p>
+            <h3 className="text-lg font-black text-white">Hourly Distribution</h3>
+            <p className="text-xs text-slate-400 font-medium">Last 7 days • Heatmap</p>
           </div>
         </div>
         <div className="text-right">
@@ -312,7 +312,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
             {totalIntake.toLocaleString('vi-VN')}
           </p>
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
-            ml tổng
+            ml total
           </p>
         </div>
       </div>
@@ -388,7 +388,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
                       }}
                     >
                       <div 
-                        className={`w-full h-full rounded-2xl border transition-all duration-200 ${style.bg} ${style.border} ${style.shadow}`}
+                        className={`w-full h-full rounded-[var(--theme-border-radius-inner,12px)] border transition-all duration-200 ${style.bg} ${style.border} ${style.shadow}`}
                       />
                       
                       {/* Value display for larger values */}
@@ -441,7 +441,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           <Trophy size={14} className="text-emerald-400" aria-hidden="true" />
           <div className="text-left">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Tốt nhất
+              Best
             </p>
             <p className="text-sm font-black text-emerald-400">
               {BLOCKS[bestBlock].name}
@@ -458,7 +458,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           <Target size={14} className="text-orange-400" aria-hidden="true" />
           <div className="text-left">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Cải thiện
+              Improve
             </p>
             <p className="text-sm font-black text-orange-400">
               {BLOCKS[worstBlock].name}
@@ -479,7 +479,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           <div className="flex items-center gap-2 mb-2.5">
             <Award size={16} className="text-cyan-400" aria-hidden="true" />
             <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-400">
-              Phát hiện
+              Insight
             </p>
           </div>
           <p className="text-sm text-slate-300 leading-relaxed font-medium">
@@ -497,12 +497,12 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <TrendIcon size={16} className={
-                forecast.trend === 'Tăng' ? 'text-emerald-400' :
-                forecast.trend === 'Giảm' ? 'text-orange-400' :
+                forecast.trend === 'Rising' ? 'text-emerald-400' :
+                forecast.trend === 'Declining' ? 'text-orange-400' :
                 'text-slate-400'
               } aria-hidden="true" />
               <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-400">
-                Dự báo mai
+                Tomorrow's Forecast
               </p>
             </div>
             <span className="text-[10px] font-bold text-emerald-400">
@@ -520,7 +520,7 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           <div className="flex items-center gap-1.5">
             <p className={`text-sm font-bold ${
               forecast.trend === 'Tăng' ? 'text-emerald-400' :
-              forecast.trend === 'Giảm' ? 'text-orange-400' :
+              forecast.trend === 'Down' ? 'text-orange-400' :
               'text-slate-400'
             }`}>
               {forecast.trend}

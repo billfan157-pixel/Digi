@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Target } from 'lucide-react';
 import WaterBreakdown from '../WaterBreakdown';
 import HydrationTimeline from '../HydrationTimeline';
+import { useVolumeFormat } from '@/hooks/useVolumeFormat';
 
 interface HydrationGoalModalProps {
   isOpen: boolean;
@@ -12,6 +13,8 @@ interface HydrationGoalModalProps {
 }
 
 export default function HydrationGoalModal({ isOpen, onClose, waterIntake, hydrationResult }: HydrationGoalModalProps) {
+  const { formatVolume } = useVolumeFormat();
+
   const { goalMl, progress, remaining, breakdownData, scheduleData } = useMemo(() => {
     const hr = hydrationResult as Record<string, unknown> | null;
     const goal = Number(hr?.goalMl) || 0;
@@ -57,7 +60,7 @@ export default function HydrationGoalModal({ isOpen, onClose, waterIntake, hydra
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-white font-black text-xl flex items-center gap-2">
                     <Target size={20} />
-                    {hydrationResult && goalMl > 0 ? `Mục tiêu: ${goalMl.toLocaleString('vi-VN')}ml` : 'Chi tiết Mục tiêu'}
+                    {hydrationResult && goalMl > 0 ? `Mục tiêu: ${formatVolume(goalMl)}` : 'Chi tiết Mục tiêu'}
                   </h2>
                   <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors">
                     <X size={18} />
@@ -73,7 +76,7 @@ export default function HydrationGoalModal({ isOpen, onClose, waterIntake, hydra
                   <div className="space-y-2 mb-6">
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-400 font-medium">Đã uống hôm nay</span>
-                      <span className="text-cyan-400 font-bold">{waterIntake.toLocaleString('vi-VN')} / {goalMl.toLocaleString('vi-VN')} ml</span>
+                      <span className="text-cyan-400 font-bold">{formatVolume(waterIntake)} / {formatVolume(goalMl)}</span>
                     </div>
                     <div className="relative h-3 w-full bg-white/10 rounded-full overflow-hidden">
                       <motion.div
@@ -84,7 +87,7 @@ export default function HydrationGoalModal({ isOpen, onClose, waterIntake, hydra
                       />
                     </div>
                     <p className="text-center text-amber-400 text-[11px] sm:text-xs font-semibold pt-2">
-                      Cần uống thêm {remaining.toLocaleString('vi-VN')} ml để hoàn thành!
+                      Cần uống thêm {formatVolume(remaining)} để hoàn thành!
                     </p>
                   </div>
                 )}

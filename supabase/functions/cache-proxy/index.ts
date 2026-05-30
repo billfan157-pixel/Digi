@@ -61,13 +61,28 @@ export async function handler(request: Request): Promise<Response> {
         const key = `user:${userId}:profile`;
         await redis.del(key);
         await redis.del('leaderboard:daily');
-        invalidatedKeys.push(key, 'leaderboard:daily');
+        await redis.del('leaderboard:weekly');
+        invalidatedKeys.push(key, 'leaderboard:daily', 'leaderboard:weekly');
       } else if (table === 'user_streaks') {
         const key = `user:${userId}:streak`;
         await redis.del(key);
         invalidatedKeys.push(key);
       } else if (table === 'water_logs') {
         const key = `user:${userId}:water_today`;
+        const weekKey = `user:${userId}:water_week`;
+        await redis.del(key);
+        await redis.del(weekKey);
+        invalidatedKeys.push(key, weekKey);
+      } else if (table === 'achievements') {
+        const key = `user:${userId}:achievements`;
+        await redis.del(key);
+        invalidatedKeys.push(key);
+      } else if (table === 'quests') {
+        const key = `user:${userId}:quests`;
+        await redis.del(key);
+        invalidatedKeys.push(key);
+      } else if (table === 'notifications') {
+        const key = `user:${userId}:notifications`;
         await redis.del(key);
         invalidatedKeys.push(key);
       }
@@ -183,6 +198,119 @@ export async function handler(request: Request): Promise<Response> {
 
       await redis.setex(cacheKey, 120, JSON.stringify(data));
       return jsonResponse({ data, source: 'db' }, 200, origin);
+    }
+
+    // 6. GET /water-week - Weekly hydration summary (TTL: 300s)
+    if (path.endsWith('/water-week')) {
+      const cacheKey = `user:${user.id}:water_week`;
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        logMetric('cache_hit_rate', 1, { endpoint: 'water-week', userId: user.id });
+        return jsonResponse({ data: cached, source: 'cache' }, 200, origin);
+      }
+
+      logMetric('cache_hit_rate', 0, { endpoint: 'water-week', userId: user.id });
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const { data, error } = await supabaseAdmin
+        .from('water_logs')
+        .select('day, amount')
+        .eq('user_id', user.id)
+        .gte('day', weekAgo.toISOString().split('T')[0])
+        .order('day', { ascending: true });
+
+      if (error) throw error;
+
+      await redis.setex(cacheKey, 300, JSON.stringify(data));
+      return jsonResponse({ data, source: 'db' }, 200, origin);
+    }
+
+    // 7. GET /achievements - User achievements (TTL: 600s)
+    if (path.endsWith('/achievements')) {
+      const cacheKey = `user:${user.id}:achievements`;
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        logMetric('cache_hit_rate', 1, { endpoint: 'achievements', userId: user.id });
+        return jsonResponse({ data: cached, source: 'cache' }, 200, origin);
+      }
+
+      logMetric('cache_hit_rate', 0, { endpoint: 'achievements', userId: user.id });
+      const { data, error } = await supabaseAdmin
+        .from('user_achievements')
+        .select('*, achievements(*)')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      await redis.setex(cacheKey, 600, JSON.stringify(data));
+      return jsonResponse({ data, source: 'db' }, 200, origin);
+    }
+
+    // 8. GET /quests - User quests (TTL: 300s)
+    if (path.endsWith('/quests')) {
+      const cacheKey = `user:${user.id}:quests`;
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        logMetric('cache_hit_rate', 1, { endpoint: 'quests', userId: user.id });
+        return jsonResponse({ data: cached, source: 'cache' }, 200, origin);
+      }
+
+      logMetric('cache_hit_rate', 0, { endpoint: 'quests', userId: user.id });
+      const { data, error } = await supabaseAdmin
+        .from('user_quests')
+        .select('*, quests(*)')
+        .eq('user_id', user.id)
+        .eq('status', 'active');
+
+      if (error) throw error;
+
+      await redis.setex(cacheKey, 300, JSON.stringify(data));
+      return jsonResponse({ data, source: 'db' }, 200, origin);
+    }
+
+    // 9. GET /leaderboard/weekly - Weekly leaderboard (TTL: 120s)
+    if (path.endsWith('/leaderboard/weekly')) {
+      const cacheKey = `leaderboard:weekly`;
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        logMetric('cache_hit_rate', 1, { endpoint: 'leaderboard-weekly', userId: user.id });
+        return jsonResponse({ data: cached, source: 'cache' }, 200, origin);
+      }
+
+      logMetric('cache_hit_rate', 0, { endpoint: 'leaderboard-weekly', userId: user.id });
+      const { data, error } = await supabaseAdmin
+        .from('profiles')
+        .select('id, nickname, avatar_url, week_exp, level')
+        .order('week_exp', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      await redis.setex(cacheKey, 120, JSON.stringify(data));
+      return jsonResponse({ data, source: 'db' }, 200, origin);
+    }
+
+    // 10. GET /notifications - User notifications count (TTL: 60s)
+    if (path.endsWith('/notifications')) {
+      const cacheKey = `user:${user.id}:notifications`;
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        logMetric('cache_hit_rate', 1, { endpoint: 'notifications', userId: user.id });
+        return jsonResponse({ data: cached, source: 'cache' }, 200, origin);
+      }
+
+      logMetric('cache_hit_rate', 0, { endpoint: 'notifications', userId: user.id });
+      const { data, error } = await supabaseAdmin
+        .from('notifications')
+        .select('id, type, title, body, is_read, created_at', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+
+      if (error) throw error;
+
+      const result = { unread_count: data?.length ?? 0 };
+      await redis.setex(cacheKey, 60, JSON.stringify(result));
+      return jsonResponse({ data: result, source: 'db' }, 200, origin);
     }
 
     statusCode = 404;

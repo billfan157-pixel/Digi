@@ -14,11 +14,11 @@ export const InfiniteScrollFooter = forwardRef<HTMLDivElement, InfiniteScrollFoo
         {!hasPosts ? null : isFetchingMore ? (
           <Loader2 size={24} className="text-slate-500 animate-spin mx-auto" />
         ) : hasMore ? (
-          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Đang tải thêm...</p>
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Loading more...</p>
         ) : (
           <div>
             <div className="w-2 h-2 bg-slate-700 rounded-full mx-auto mb-3" />
-            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Đã xem hết tin</p>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">You have seen all posts</p>
           </div>
         )}
       </div>

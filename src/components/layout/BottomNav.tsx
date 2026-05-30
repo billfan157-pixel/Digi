@@ -1,9 +1,10 @@
 import { Home, BarChart2, Trophy, Rss, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { impact } from '@/lib/haptics';
 
-export type TabType = 'home' | 'insight' | 'league' | 'feed' | 'profile' | 'bottle';
+export type TabType = 'home' | 'insight' | 'league' | 'feed' | 'profile' | 'bottle' | 'arena';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -11,16 +12,17 @@ interface BottomNavProps {
 }
 
 const BottomNav = (props: BottomNavProps) => {
+  const { t } = useTranslation();
   const navItems: { id: TabType; icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; label: string }[] = [
-    { id: 'home', icon: Home, label: 'Nhà' },
+    { id: 'home', icon: Home, label: 'Home' },
     { id: 'insight', icon: BarChart2, label: 'Coach' },
-    { id: 'league', icon: Trophy, label: 'BXH' },
-    { id: 'feed', icon: Rss, label: 'Tin' },
-    { id: 'profile', icon: User, label: 'Hồ sơ' },
+    { id: 'league', icon: Trophy, label: 'Rank' },
+    { id: 'feed', icon: Rss, label: 'Feed' },
+    { id: 'profile', icon: User, label: 'Profile' },
   ];
 
   return (
-    <nav aria-label="Điều hướng chính" className="absolute bottom-0 left-0 right-0 px-4 pt-10 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none pb-[calc(env(safe-area-inset-bottom,1.5rem)+0.5rem)]">
+    <nav aria-label={t('common.main_navigation')} className="absolute bottom-0 left-0 right-0 px-4 pt-10 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none pb-[calc(env(safe-area-inset-bottom,1.5rem)+0.5rem)]">
       <div role="tablist" className="glass-nav flex items-center justify-between rounded-[2rem] px-2 py-2 mx-auto max-w-md pointer-events-auto relative">
         {navItems.map(({ id, icon: Icon, label }) => {
           const isActive = props.activeTab === id;

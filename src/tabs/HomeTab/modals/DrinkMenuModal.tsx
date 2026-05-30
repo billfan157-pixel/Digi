@@ -23,12 +23,23 @@ interface GridDrink {
 }
 
 const DEFAULT_GRID_DRINKS: GridDrink[] = [
-  { id: 'default-1', name: 'Nước lọc', amount: 250, factor: 1, icon: 'Droplet', bg: 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20', color: 'text-cyan-400' },
-  { id: 'default-2', name: 'Cà phê', amount: 250, factor: 0.8, icon: 'Coffee', bg: 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20', color: 'text-orange-400' },
-  { id: 'default-3', name: 'Trà', amount: 250, factor: 0.9, icon: 'Coffee', bg: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20', color: 'text-emerald-400' },
-  { id: 'default-4', name: 'Nước ép', amount: 250, factor: 1, icon: 'Droplet', bg: 'bg-fuchsia-500/10 border-fuchsia-500/20 hover:bg-fuchsia-500/20', color: 'text-fuchsia-400' },
-  { id: 'default-5', name: 'Bia/Rượu', amount: 250, factor: -0.5, icon: 'Wine', bg: 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20', color: 'text-rose-400' },
+  { id: 'default-1', name: 'Pure Water', amount: 250, factor: 1, icon: 'Droplet', bg: 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20', color: 'text-cyan-400' },
+  { id: 'default-2', name: 'Coffee', amount: 250, factor: 0.8, icon: 'Coffee', bg: 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20', color: 'text-orange-400' },
+  { id: 'default-3', name: 'Tea', amount: 250, factor: 0.9, icon: 'Coffee', bg: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20', color: 'text-emerald-400' },
+  { id: 'default-4', name: 'Juice', amount: 250, factor: 1, icon: 'Droplet', bg: 'bg-fuchsia-500/10 border-fuchsia-500/20 hover:bg-fuchsia-500/20', color: 'text-fuchsia-400' },
+  { id: 'default-5', name: 'Beer/Wine', amount: 250, factor: -0.5, icon: 'Wine', bg: 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20', color: 'text-rose-400' },
 ];
+
+const getDefaultDrinkName = (drinkId: string, t: (key: string) => string): string | null => {
+  switch (drinkId) {
+    case 'default-1': return t('home.pure_water');
+    case 'default-2': return t('home.default_coffee');
+    case 'default-3': return t('home.default_tea');
+    case 'default-4': return t('home.default_juice');
+    case 'default-5': return t('home.default_alcohol');
+    default: return null;
+  }
+};
 
 const renderIcon = (iconName: string, props?: Record<string, unknown>) => {
   const icons: Record<string, React.ReactNode> = {
@@ -51,6 +62,8 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
   const [customFactor, setCustomFactor] = useState(1.0);
   const [editingDrinkId, setEditingDrinkId] = useState<string | null>(null);
   const [shouldLogOnSave, setShouldLogOnSave] = useState(true);
+
+  const getDrinkName = (drink: GridDrink): string => getDefaultDrinkName(drink.id, t) || drink.name;
 
   const resetCustom = () => {
     setEditingDrinkId(null);
@@ -198,7 +211,7 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
                       onClick={handleSaveCustom}
                       className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-bold hover:from-cyan-400 hover:to-blue-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]"
                     >
-                      {editingDrinkId ? t('home.save_changes') : (shouldLogOnSave ? t('home.save_and_add') : 'Lưu vào menu')}
+                      {editingDrinkId ? t('home.save_changes') : (shouldLogOnSave ? t('home.save_and_add') : t('home.save_to_menu'))}
                     </button>
                   </div>
                   {!editingDrinkId && (
@@ -207,7 +220,7 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
                       onClick={() => setShouldLogOnSave((v) => !v)}
                       className="mt-1 w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-slate-300 text-xs font-bold active:scale-95 transition-all hover:bg-white/10"
                     >
-                      {shouldLogOnSave ? 'Đang: Lưu & ghi nhận ngay' : 'Đang: Chỉ lưu preset'}
+                      {shouldLogOnSave ? t('home.saving_save_and_log') : t('home.saving_save_only')}
                     </button>
                   )}
                 </motion.div>
@@ -224,7 +237,7 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
                     <div key={drink.id || `fallback-drink-grid-${index}`} className="relative h-full group">
                       <button
                         onClick={() => {
-                          handleAddWater(drink.amount || 250, getDrinkFactor(drink), drink.name);
+                          handleAddWater(drink.amount || 250, getDrinkFactor(drink), getDrinkName(drink));
                           onClose();
                         }}
                         className={`w-full h-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 ease-out active:scale-95 hover:scale-105 ${getDrinkBg(drink)} shadow-[0_2px_8px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.2)]`}
@@ -232,7 +245,7 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
                         <div className="mb-2.5 group-hover:scale-120 transition-transform">
                           {renderIcon(drink.icon, { size: 26, className: drink.color })}
                         </div>
-                        <span className="text-white text-xs font-bold w-full text-center truncate leading-tight">{drink.name}</span>
+                        <span className="text-white text-xs font-bold w-full text-center truncate leading-tight">{getDrinkName(drink)}</span>
                         <span className="text-slate-300 text-[9px] mt-1 font-semibold opacity-75">
                           {(getDrinkFactor(drink) > 0 ? '+' : '') + getDrinkFactor(drink).toFixed(1)}x
                         </span>
@@ -241,7 +254,7 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingDrinkId(drink.id);
-                          setCustomName(drink.name);
+                          setCustomName(getDrinkName(drink));
                           setCustomVolume(drink.amount || 250);
                           setCustomFactor(getDrinkFactor(drink));
                           setIsCustomMode(true);
@@ -256,7 +269,7 @@ export default function DrinkMenuModal({ isOpen, onClose, handleAddWater }: Drin
                           const { confirmDialog } = await import('@/store/useConfirmDialog');
                           const ok = await confirmDialog({
                             title: t('home.delete_drink'),
-                            message: t('home.delete_drink_confirm', { name: drink.name }),
+                            message: t('home.delete_drink_confirm', { name: getDrinkName(drink) }),
                             confirmLabel: t('home.delete'),
                             variant: 'danger',
                           });

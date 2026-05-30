@@ -2,6 +2,7 @@
  * Sprint 13-14: AI Personalization Engine
  * Hook quản lý weekly report
  */
+import i18n from '@/i18n';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import {
@@ -223,11 +224,11 @@ export function useWeeklyReport({
 
     // Dùng Web Share API nếu available
     if (navigator.share) {
-      navigator.share({ title: 'Báo cáo uống nước', text }).catch(() => {});
+      navigator.share({ title: i18n.t('common.weekly_report_title'), text }).catch(() => {});
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(text).then(() => {
-        toast('Đã copy báo cáo vào clipboard');
+        toast(i18n.t('common.copied_to_clipboard'));
       }).catch(() => {});
     }
   }, [report]);

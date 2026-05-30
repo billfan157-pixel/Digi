@@ -1,5 +1,6 @@
 import { Flame, Target, Zap, ChevronUp, ChevronDown, Minus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { LeagueTierBadge } from './LeagueTierBadge';
 import type { LeagueEntry } from './types';
 
@@ -11,6 +12,7 @@ interface LeaderboardRowProps {
 }
 
 export const LeaderboardRow = ({ item, actualRank, gap }: LeaderboardRowProps) => {
+  const { t } = useTranslation();
   const isMe = item.isMe;
   const isHotGap = gap > 0 && gap < 300; // Closer gap for rivalry pulse
   
@@ -22,10 +24,10 @@ export const LeaderboardRow = ({ item, actualRank, gap }: LeaderboardRowProps) =
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: Math.min(actualRank * 0.02, 0.2) }}
-      className={`group relative flex items-center p-4 rounded-[1.5rem] backdrop-blur-xl border transition-all duration-300 overflow-hidden active:scale-[0.98] ${
+      className={`group relative flex items-center p-4 rounded-[var(--theme-border-radius-inner,16px)] backdrop-blur-[var(--theme-blur,40px)] border transition-all duration-300 overflow-hidden active:scale-[0.98] ${
         isMe
-          ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 border-cyan-500/40 shadow-[0_0_25px_rgba(6,182,212,0.2)]'
-          : 'bg-slate-900/40 border-white/5 hover:bg-slate-900/60 hover:border-white/10'
+          ? 'bg-gradient-to-r from-cyan-500/20 to-transparent border-cyan-500/30 shadow-[0_0_20px_var(--theme-glow-color,rgba(34,211,238,0.15))]'
+          : 'bg-slate-900/50 bg-blend-multiply border-[var(--theme-border-glass,rgba(255,255,255,0.03))] hover:bg-slate-900/70 hover:border-[var(--theme-border-glass,rgba(255,255,255,0.08))]'
       }`}
     >
       {/* Rank Section */}
@@ -42,8 +44,8 @@ export const LeaderboardRow = ({ item, actualRank, gap }: LeaderboardRowProps) =
 
       {/* Avatar - High End */}
       <div className="relative shrink-0">
-        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-lg font-black border border-white/10 shadow-2xl relative overflow-hidden ${
-          isMe ? 'bg-gradient-to-br from-cyan-400 to-blue-600 text-white' : 'bg-slate-800 text-slate-300'
+        <div className={`w-11 h-11 rounded-[var(--theme-border-radius-inner,12px)] flex items-center justify-center text-lg font-black border border-[var(--theme-border-glass,rgba(34,211,238,0.1))] shadow-2xl relative overflow-hidden ${
+          isMe ? 'bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--theme-glow-color)] text-white' : 'bg-[var(--theme-surface-glass,rgba(34,211,238,0.05))] text-slate-300'
         }`}>
            {item.name.charAt(0).toUpperCase()}
            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-30 skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -63,7 +65,7 @@ export const LeaderboardRow = ({ item, actualRank, gap }: LeaderboardRowProps) =
           </p>
           {isMe && (
             <span className="px-1.5 py-0.5 rounded-[4px] bg-cyan-400 text-slate-950 text-[8px] font-black uppercase tracking-widest">
-              Bạn
+              {t('league.you')}
             </span>
           )}
         </div>

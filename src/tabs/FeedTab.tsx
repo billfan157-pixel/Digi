@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AnimatePresence } from 'framer-motion';
 import { useFeed } from '../hooks/useFeed';
 import { useNotifications } from '../hooks/useNotifications';
@@ -36,8 +37,9 @@ const FeedTab = memo(function FeedTab({
    setShowDiscoverPeople,
    handleToggleLikePost,
  }: FeedTabProps) {
+  const { t } = useTranslation();
   const { posts, isLoading, isFetchingMore, hasMore, loadMore, newPostsCount, showNewPosts, refetch } = useFeed(profile?.id, closeCircleIds);
-  const { notifications, unreadCount, markAllRead, markAsRead } = useNotifications(profile?.id);
+  const { notifications, unreadCount, markAllRead, markAsRead } = useNotifications(profile?.id, profile?.equipped_notification_sound);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const queryClient = useQueryClient();
@@ -46,7 +48,7 @@ const FeedTab = memo(function FeedTab({
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
   const [feedMode, setFeedMode] = useState<FeedMode>('smart');
   const [feedSearch, setFeedSearch] = useState('');
-  const { setActiveCommentPost } = useUIStore();
+  const { setActiveCommentPost, setShowMainMenu } = useUIStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
   const onlineFriendsCount = useMemo(
@@ -136,7 +138,7 @@ const FeedTab = memo(function FeedTab({
   return (
     <div data-feed-scroll-container className="animate-in slide-in-from-right duration-300 relative">
       <TabHeader 
-        label="HĐ CỘNG ĐỒNG" 
+        label={t('feed.community_activity')} 
         title={<span className="flex items-center gap-2">Feed <TrendingUp size={20} className="text-cyan-400" /></span>}
         profile={profile}
         actionIcon={<Search size={18} />}
@@ -145,7 +147,7 @@ const FeedTab = memo(function FeedTab({
           const el = document.querySelector('[data-feed-search-trigger]') as HTMLButtonElement;
           if (el) el.click();
         }}
-        onAvatarClick={() => setShowSocialProfile(true)}
+        onAvatarClick={() => setShowMainMenu(true)}
       />
       
       <FeedHeader
@@ -177,7 +179,7 @@ const FeedTab = memo(function FeedTab({
           onSelectStory={setActiveStoryIndex}
         />
 
-        <FeedComposer profile={profile} onCreateDrop={openQuickDropCamera} />
+        <FeedComposer profile={profile} onCreateDrop={openQuickDropCamera} onPostPublished={refetch} />
 
         {!socialError && !isLoading && finalRankedFeed.length === 0 && (
           <EmptyFeedState

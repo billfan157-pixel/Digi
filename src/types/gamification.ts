@@ -3,8 +3,10 @@ export interface Challenge {
   title: string;
   description: string;
   category: 'beginner' | 'discipline' | 'hardcore' | 'weekend' | 'social';
-  stake_wp: number;
-  reward_wp: number;
+  stake_wp?: number;
+  reward_wp?: number;
+  reward_exp?: number;
+  reward_coins?: number;
   duration_days: number;
   created_at?: string;
 }

@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { AppStorage } from './storage';
 import { CheckCircle2, Droplets, Flame, Swords, Target } from 'lucide-react';
 import type { SocialFeedPost } from '../models';
@@ -34,7 +35,13 @@ export const getFallbackStoryTemperature = (story: SocialFeedPost) =>
  [32, 28, 35][stableHash(storySeed(story, 'story-temp')) % 3];
 
 export const getFallbackStoryDrink = (story: SocialFeedPost) => {
-  const drinks = ['Trà xanh', 'Cà phê đá', 'Nước lọc', 'Điện giải', 'Nước detox'];
+  const drinks = [
+    i18n.t('feed.drink_green_tea'),
+    i18n.t('feed.drink_iced_coffee'),
+    i18n.t('feed.drink_water'),
+    i18n.t('feed.drink_electrolyte'),
+    i18n.t('feed.drink_detox'),
+  ];
   return drinks[stableHash(storySeed(story, 'story-drink')) % drinks.length];
 };
 
@@ -53,7 +60,7 @@ export const getFallbackPostHeartRate = (post: Record<string, unknown>, index: n
 
 export const getFallbackPostDrinkType = (post: Record<string, unknown>, index: number) => {
   if (post.drink_type) return post.drink_type;
-  return index % 6 === 0 ? 'Trà Đào' : undefined;
+  return index % 6 === 0 ? i18n.t('feed.drink_peach_tea') : undefined;
 };
 
 export const sortPostsByLatest = (posts: SocialFeedPost[]) =>
@@ -98,10 +105,10 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
   if (post.type === 'challenge') {
     return {
       Icon: Swords,
-      eyebrow: 'Thử thách wellness',
-      title: 'Một lời mời cạnh tranh lành mạnh',
-      description: 'Tham gia để biến feed thành hành động, không chỉ xem.',
-      stat: 'Duel',
+      eyebrow: i18n.t('feed.signal_challenge_eyebrow'),
+      title: i18n.t('feed.signal_challenge_title'),
+      description: i18n.t('feed.signal_challenge_desc'),
+      stat: i18n.t('feed.signal_duel_stat'),
       accentText: 'text-purple-300',
       cardClass: 'border-purple-500/30 bg-purple-500/5',
       panelClass: 'border-purple-500/20 bg-purple-500/10',
@@ -112,10 +119,10 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
   if (post.post_kind === 'milestone' || post.type === 'milestone' || (post.streak_snapshot || 0) >= 7) {
     return {
       Icon: Flame,
-      eyebrow: 'Peak streak',
-      title: `Chuỗi ${post.streak_snapshot || post.value || 0} ngày đang sáng`,
-      description: 'Một tín hiệu tốt để tạo áp lực tích cực cho cộng đồng.',
-      stat: `${post.streak_snapshot || post.value || 0} ngày`,
+      eyebrow: i18n.t('feed.signal_streak_eyebrow'),
+      title: i18n.t('feed.signal_streak_title', { n: post.streak_snapshot || post.value || 0 }),
+      description: i18n.t('feed.signal_streak_desc'),
+      stat: i18n.t('feed.n_days', { n: post.streak_snapshot || post.value || 0 }),
       accentText: 'text-orange-300',
       cardClass: 'border-orange-500/30 bg-orange-500/5',
       panelClass: 'border-orange-500/20 bg-orange-500/10',
@@ -126,10 +133,10 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
   if (post.post_kind === 'progress' || post.type === 'daily_goal' || (post.hydration_ml || 0) > 0) {
     return {
       Icon: Droplets,
-      eyebrow: 'Pulse',
-      title: progressPercent >= 100 ? 'Đã hoàn thành mục tiêu hôm nay' : 'Đang tiến gần mục tiêu hôm nay',
-      description: 'Cụng ly để biến tín hiệu này thành một lần nhắc uống nước.',
-      stat: `${post.hydration_ml || post.value || 0}ml`,
+      eyebrow: i18n.t('feed.signal_pulse_eyebrow'),
+      title: progressPercent >= 100 ? i18n.t('feed.signal_pulse_completed') : i18n.t('feed.signal_pulse_progress'),
+      description: i18n.t('feed.signal_pulse_desc'),
+      stat: i18n.t('feed.ml_value', { ml: post.hydration_ml || post.value || 0 }),
       accentText: 'text-cyan-300',
       cardClass: 'border-cyan-500/25 bg-cyan-500/5',
       panelClass: 'border-cyan-500/20 bg-cyan-500/10',
@@ -140,10 +147,10 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
   if (post.image_url) {
     return {
       Icon: CheckCircle2,
-      eyebrow: 'Proof wellness',
-      title: 'Một khoảnh khắc gắn với mục tiêu',
-      description: 'Ảnh trong feed nên là proof sức khỏe, mục tiêu hoặc hoạt động CLB.',
-      stat: 'Proof',
+      eyebrow: i18n.t('feed.signal_proof_eyebrow'),
+      title: i18n.t('feed.signal_proof_title'),
+      description: i18n.t('feed.signal_proof_desc'),
+      stat: i18n.t('feed.signal_proof_stat'),
       accentText: 'text-emerald-300',
       cardClass: 'border-emerald-500/25 bg-emerald-500/5',
       panelClass: 'border-emerald-500/20 bg-emerald-500/10',
@@ -153,10 +160,10 @@ export const getPostSignalMeta = (post: SocialFeedPost) => {
 
   return {
     Icon: Target,
-    eyebrow: 'Pulse mục tiêu',
-    title: 'Một tín hiệu accountability',
-    description: 'Dùng để kêu gọi nhắc nhở, giữ nhịp và quay lại mục tiêu.',
-    stat: 'Pulse',
+    eyebrow: i18n.t('feed.signal_target_eyebrow'),
+    title: i18n.t('feed.signal_target_title'),
+    description: i18n.t('feed.signal_target_desc'),
+    stat: i18n.t('feed.signal_target_stat'),
     accentText: 'text-slate-300',
     cardClass: 'border-white/5 bg-slate-900/50',
     panelClass: 'border-white/10 bg-slate-950/40',

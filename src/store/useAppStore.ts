@@ -3,6 +3,7 @@ import type { WaterLog } from '../models';
 import type { AppProfile } from '@/services/profile.service';
 import type { WaterIntakeResult } from '../lib/HydrationEngine';
 import type { CalendarEventItem } from '../hooks/useCalendarSync';
+import type { ThemeConfig } from '@/config/themes';
 
 export interface AppState {
   // ── Core Data ──
@@ -36,6 +37,9 @@ export interface AppState {
     fastingStartTime: number | null;
   };
 
+  // ── Theme Preview (Phase 3) ──
+  themePreview: Partial<ThemeConfig> | null;
+
   // ── App Actions ──
   actions: {
     handleAddWater: (amount: number, factor: number, name: string) => Promise<void>;
@@ -58,6 +62,8 @@ export const useAppStore = create<AppState>((set) => ({
   isSyncing: false, hasPendingCloudSync: false,
   hydrationResult: null, isPremium: false,
   fastingState: { isFastingMode: false, fastingPlanHours: 16, fastingTotalMs: 16 * 60 * 60 * 1000, fastingStartTime: null },
+
+  themePreview: null,
 
   actions: {
     handleAddWater: async () => { }, handleDeleteEntry: async () => { }, handleEditEntry: async () => { },

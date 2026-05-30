@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Share2, MoreHorizontal } from 'lucide-react';
 import { getRelativeTimeLabel } from '../../lib/social';
 import type { SocialFeedPost } from '../../models';
@@ -20,7 +21,9 @@ export const PostCardHeader = memo(({
   isCompare,
   onShare,
   onOpenMenu,
-}: PostCardHeaderProps) => (
+}: PostCardHeaderProps) => {
+  const { t } = useTranslation();
+  return (
   <div className="flex items-center justify-between mb-4 relative z-20">
     <div className="flex min-w-0 items-center gap-3">
       <AvatarFrame
@@ -34,26 +37,26 @@ export const PostCardHeader = memo(({
       <div className="flex min-w-0 flex-col">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="max-w-[150px] truncate text-white font-bold text-[15px] sm:max-w-[220px]">
-            {post.author?.nickname ?? 'Người dùng'}
+            {post.author?.nickname ?? t('common.user')}
           </span>
           {(post.post_kind === 'progress' || post.post_kind === 'milestone') && (
             <span className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-              Peak
+              {t('feed.peak_badge')}
             </span>
           )}
           {isChallenge && (
             <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-              Duel
+              {t('feed.duel_badge')}
             </span>
           )}
           {isAchievement && (
             <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-              Thành tựu
+              {t('feed.achievement_badge')}
             </span>
           )}
           {isCompare && (
             <span className="bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-              Đồng đội
+              {t('feed.teammate')}
             </span>
           )}
         </div>
@@ -77,4 +80,5 @@ export const PostCardHeader = memo(({
       </button>
     </div>
   </div>
-));
+  );
+});

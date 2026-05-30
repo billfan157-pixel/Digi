@@ -21,11 +21,13 @@ import {
   History,
   Edit2,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Swords
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import ClubChat from "./ClubChat"; // Cực kỳ quan trọng: Nhớ import file Chat vào đây sếp nhé!
+import ClubChat from "./ClubChat";
+import ClubWar from "./ClubWar";
 
 interface Club {
   id: string;
@@ -90,7 +92,7 @@ export default function ClubDashboard({
   const [error, setError] = useState<string | null>(null);
   
   // STATE CHUYỂN TAB
-  const [tab, setTab] = useState<'overview' | 'chat' | 'admin'>('overview');
+  const [tab, setTab] = useState<'overview' | 'chat' | 'war' | 'admin'>('overview');
 
   const [challenge, setChallenge] = useState<ClubChallenge | null>(null);
   const [challengeProgress, setChallengeProgress] = useState<ChallengeProgress | null>(null);
@@ -122,7 +124,7 @@ export default function ClubDashboard({
   };
 
   const handleKickMember = async (userId: string, nickname: string) => {
-    if (!window.confirm(`Bạn có chắc muốn loại ${nickname || 'thành viên'} ra khỏi bang hội?`)) return;
+    if (!window.confirm(`Are you sure you want to remove ${nickname || 'member'} from the guild?`)) return;
     const { error } = await supabase
       .from('club_members')
       .delete()
@@ -160,7 +162,7 @@ export default function ClubDashboard({
 
   const handleDisbandClub = async () => {
     if (!club) return;
-    if (!window.confirm('Bạn có chắc muốn giải tán bang hội? Hành động này không thể hoàn tác.')) return;
+    if (!window.confirm('Are you sure you want to disband the guild? This cannot be undone.')) return;
     setIsDisbanding(true);
     const { error } = await supabase.from('clubs').delete().eq('id', club.id);
     setIsDisbanding(false);
@@ -205,7 +207,7 @@ export default function ClubDashboard({
           console.error("Error fetching club info:", results[0].reason);
         }
         // Throw a user-friendly error if club is not found or access is denied
-        throw new Error("Không thể tải thông tin bang hội. Có thể bang hội không tồn tại hoặc bạn không có quyền truy cập.");
+        throw new Error("Cannot load guild info. The guild may not exist or you don't have access.");
       }
 
       if (results[1].status === 'fulfilled' && results[1].value.data) {
@@ -244,7 +246,7 @@ export default function ClubDashboard({
       }
 
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra khi tải dữ liệu bang hội.");
+      setError(err instanceof Error ? err.message : t('club.load_error'));
     } finally {
       setLoading(false);
     }
@@ -304,7 +306,7 @@ export default function ClubDashboard({
     return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950">
         <Loader2 size={32} className="animate-spin text-cyan-400" />
-        <p className="text-slate-500 mt-3 text-sm">Đang tải dữ liệu bang hội...</p>
+        <p className="text-slate-500 mt-3 text-sm">{t('club.loading_guild_data')}</p>
       </div>
     );
   }
@@ -313,9 +315,9 @@ export default function ClubDashboard({
     return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 p-8 text-center">
         <AlertTriangle size={40} className="text-red-500 mb-4" />
-        <h3 className="text-xl font-bold text-white mb-2">Lỗi Tải Dữ Liệu</h3>
+        <h3 className="text-xl font-bold text-white mb-2">{t('club.load_error_title')}</h3>
         <p className="text-slate-400 text-sm mb-6">{error}</p>
-        <button onClick={onBack} className="px-6 py-2 bg-white/10 text-white rounded-lg font-semibold">Quay lại</button>
+        <button onClick={onBack} className="px-6 py-2 bg-white/10 text-white rounded-lg font-semibold">{t('common.back')}</button>
       </div>
     );
   }
@@ -331,11 +333,11 @@ export default function ClubDashboard({
         </button>
 
         <h2 className="text-white font-bold">
-          {club?.name || "Đang tải..."}
+          {club?.name || t('common.loading_data')}
         </h2>
 
         <div className="ml-3 flex items-center gap-1.5 text-cyan-400 text-xs font-bold bg-cyan-400/10 px-3 py-1.5 rounded-lg border border-cyan-400/20">
-          <Shield size={14} /> Cấp {clubLevel}
+          <Shield size={14} /> {t('club.guild_level', { level: clubLevel })}
         </div>
 
         {userId === club?.owner_id && (
@@ -353,12 +355,12 @@ export default function ClubDashboard({
         <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-5 shadow-lg">
           <h2 className="text-white text-xl font-black">{club?.name}</h2>
           <p className="text-slate-400 text-sm mt-1">
-            {club?.description || "Không có mô tả"}
+            {club?.description || t('club.no_description')}
           </p>
 
           <div className="mt-5">
             <div className="flex justify-between text-xs text-slate-400 mb-2">
-              <span>Tiến độ bang hội</span>
+              <span>{t('club.guild_progress')}</span>
               <span className="font-bold text-cyan-400">
                 {totalMl.toLocaleString()} / {goal.toLocaleString()} ml
               </span>
@@ -376,14 +378,14 @@ export default function ClubDashboard({
             <div className="mt-3 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl">
               <div className="flex items-center gap-2 text-xs text-amber-400 font-bold">
                 <Trophy size={14} />
-                Thử thách: {challenge.title}
+                {t('club.challenge_label', { title: challenge.title })}
                 <span className="text-amber-500/60 font-normal">
                   ({new Date(challenge.start_date).toLocaleDateString('vi-VN')} - {new Date(challenge.end_date).toLocaleDateString('vi-VN')})
                 </span>
               </div>
               {challengeProgress && (
                 <p className="text-[10px] text-slate-400 mt-1">
-                  {challengeProgress.member_count} thành viên tham gia, đạt {Math.round(progress)}%
+                  {t('club.members_joined', { count: challengeProgress.member_count, percent: Math.round(progress) })}
                   ({totalMl.toLocaleString()}/{goal.toLocaleString()} ml)
                 </p>
               )}
@@ -395,7 +397,7 @@ export default function ClubDashboard({
               onClick={() => setShowCreateChallenge(true)}
               className="mt-3 w-full py-2 rounded-xl bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/30 text-amber-400 text-xs font-bold hover:from-amber-600/30 hover:to-orange-600/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              <Trophy size={14} /> Tạo thử thách bang hội
+              <Trophy size={14} /> {t('club.create_guild_challenge')}
             </button>
           )}
         </div>
@@ -408,7 +410,7 @@ export default function ClubDashboard({
               tab === 'overview' ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
             }`}
           >
-            <LayoutDashboard size={18} /> Tổng quan
+            <LayoutDashboard size={18} /> {t('club.tab_overview')}
           </button>
           <button
             onClick={() => setTab('chat')}
@@ -416,7 +418,15 @@ export default function ClubDashboard({
               tab === 'chat' ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
             }`}
           >
-            <MessageSquare size={18} /> Trò chuyện
+            <MessageSquare size={18} /> {t('club.tab_chat')}
+          </button>
+          <button
+            onClick={() => setTab('war')}
+            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all ${
+              tab === 'war' ? 'bg-purple-500/80 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Swords size={18} /> {t('club.tab_war')}
           </button>
           {isAdmin && (
             <button
@@ -425,7 +435,7 @@ export default function ClubDashboard({
                 tab === 'admin' ? 'bg-red-500/80 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <Shield size={18} /> Quản trị
+              <Shield size={18} /> {t('club.admin')}
             </button>
           )}
         </div>
@@ -437,12 +447,12 @@ export default function ClubDashboard({
             <div className="space-y-3">
               <h3 className="text-white font-bold flex items-center gap-2">
                 <Trophy className="text-yellow-400" size={18} />
-                Leaderboard hôm nay
+                {t('club.leaderboard_today')}
               </h3>
 
               {leaders.length === 0 ? (
                 <div className="text-center p-6 rounded-2xl bg-white/5 text-slate-400 text-sm">
-                  Bang hội chưa có hoạt động hôm nay, hãy là người đầu tiên tu nước nào 🔥
+                  {t('club.no_activity')}
                 </div>
               ) : (
                 leaders.map((user, index) => (
@@ -454,12 +464,12 @@ export default function ClubDashboard({
                       {getRankIcon(index)}
                       <div>
                         <p className="text-white font-semibold flex items-center gap-2">
-                          {user.profiles?.nickname || "Ẩn danh"}
+                          {user.profiles?.nickname || t('club.anonymous')}
                           {user.role === 'owner' && <Crown size={14} className="text-yellow-400" />}
                           {user.role === 'deputy' && <Shield size={14} className="text-cyan-400" />}
                         </p>
                         <p className="text-xs text-cyan-400 font-medium">
-                          {user.role === 'owner' ? 'Bang chủ' : user.role === 'deputy' ? 'Phó bang' : 'Thành viên'}
+                          {user.role === 'owner' ? t('club.role_leader') : user.role === 'deputy' ? t('club.role_vice') : t('club.role_member')}
                         </p>
                       </div>
                     </div>
@@ -483,7 +493,7 @@ export default function ClubDashboard({
             <div className="space-y-3 pb-10">
               <h3 className="text-white font-bold flex items-center gap-2">
                 <Droplets className="text-cyan-400" size={18} />
-                Hoạt động gần đây
+                {t('club.recent_activities')}
               </h3>
 
               <div className="space-y-2">
@@ -494,7 +504,7 @@ export default function ClubDashboard({
                   >
                     <p className="text-sm text-white">
                       <span className="font-semibold text-cyan-400">
-                        {item.profiles?.nickname || "Ai đó"}
+                        {item.profiles?.nickname || t('club.someone')}
                       </span>{" "}
                       {item.message}
                     </p>
@@ -512,18 +522,21 @@ export default function ClubDashboard({
           <div className="h-[60vh] animate-in fade-in slide-in-from-bottom-2 duration-300">
             <ClubChat clubId={clubId} userId={userId} />
           </div>
+        ) : tab === 'war' ? (
+          /* TAB CHIẾN TRANH */
+          <ClubWar clubId={clubId} userId={userId} isAdmin={isAdmin} />
         ) : (
           /* TAB QUẢN TRỊ */
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="space-y-3">
               <h3 className="text-white font-bold flex items-center gap-2">
                 <History className="text-slate-400" size={18} />
-                Nhật ký quản trị
+                {t('club.admin_logs')}
               </h3>
               <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700">
                 {adminLogs.map(log => (
                   <div key={log.id} className="p-3 rounded-xl bg-slate-900/40 border border-white/5 text-sm">
-                    <span className="font-bold text-cyan-400">Hệ thống</span>
+                    <span className="font-bold text-cyan-400">{t('club.system')}</span>
                     <span className="text-slate-300"> {log.action}</span>
                     <p className="text-[10px] text-slate-500 mt-1 text-right">{new Date(log.created_at).toLocaleString('vi-VN')}</p>
                   </div>
@@ -535,14 +548,14 @@ export default function ClubDashboard({
             {userId === club?.owner_id && (
               <div className="mt-8 pt-6 border-t border-red-500/20">
                 <h3 className="text-red-400 font-bold text-center mb-3 text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-                  <ShieldAlert size={16} /> Khu vực nguy hiểm
+                  <ShieldAlert size={16} /> {t('club.danger_zone')}
                 </h3>
                 <button
                   onClick={handleDisbandClub}
                   disabled={isDisbanding}
                   className="w-full py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-sm hover:bg-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isDisbanding ? <Loader2 className="animate-spin" /> : 'Giải tán Bang hội'}
+                  {isDisbanding ? <Loader2 className="animate-spin" /> : t('club.disband_guild')}
                 </button>
               </div>
             )}
@@ -562,22 +575,22 @@ export default function ClubDashboard({
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               className="relative z-10 w-full max-w-md bg-slate-900 border-t border-white/10 rounded-t-3xl p-6"
             >
-              <h3 className="text-lg font-bold text-white mb-2">Quản lý thành viên</h3>
-              <p className="text-slate-400 mb-6">Bạn đang quản lý: <span className="font-bold text-cyan-400">{managingMember.profiles?.nickname}</span></p>
+              <h3 className="text-lg font-bold text-white mb-2">{t('club.manage_members')}</h3>
+              <p className="text-slate-400 mb-6">You are managing: <span className="font-bold text-cyan-400">{managingMember.profiles?.nickname}</span></p>
               
               <div className="space-y-3">
                 {managingMember.role !== 'deputy' && (
                   <button onClick={() => handleSetRole(managingMember.user_id, 'deputy')} className="w-full p-4 rounded-xl bg-cyan-500/10 text-cyan-400 font-bold flex items-center gap-3 hover:bg-cyan-500/20 transition-colors">
-                    <Shield size={18} /> Bổ nhiệm làm Phó bang
+                    <Shield size={18} /> {t('club.promote_to_vice')}
                   </button>
                 )}
                 {managingMember.role === 'deputy' && (
                   <button onClick={() => handleSetRole(managingMember.user_id, 'member')} className="w-full p-4 rounded-xl bg-amber-500/10 text-amber-400 font-bold flex items-center gap-3 hover:bg-amber-500/20 transition-colors">
-                    <User size={18} /> Hạ chức về Thành viên
+                    <User size={18} /> {t('club.demote_to_member')}
                   </button>
                 )}
-                <button onClick={() => handleKickMember(managingMember.user_id, managingMember.profiles?.nickname || 'Thành viên này')} className="w-full p-4 rounded-xl bg-red-500/10 text-red-400 font-bold flex items-center gap-3 hover:bg-red-500/20 transition-colors">
-                  <XCircle size={18} /> Mời khỏi bang
+                <button onClick={() => handleKickMember(managingMember.user_id, managingMember.profiles?.nickname || t('club.this_member'))} className="w-full p-4 rounded-xl bg-red-500/10 text-red-400 font-bold flex items-center gap-3 hover:bg-red-500/20 transition-colors">
+                  <XCircle size={18} /> {t('club.kick_member')}
                 </button>
               </div>
             </motion.div>
@@ -603,7 +616,7 @@ export default function ClubDashboard({
               className="relative w-full max-w-sm bg-slate-900 border border-white/10 rounded-[2rem] p-6 shadow-2xl"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-white font-black text-lg">Tạo thử thách</h3>
+                <h3 className="text-white font-black text-lg">{t('club.create_challenge')}</h3>
                 <button onClick={() => setShowCreateChallenge(false)} className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
                   <X size={16} />
                 </button>
@@ -611,17 +624,17 @@ export default function ClubDashboard({
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Tên thử thách</label>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">{t('club.challenge_name_input')}</label>
                   <input
                     value={challengeTitle}
                     onChange={(e) => setChallengeTitle(e.target.value)}
-                    placeholder="Ví dụ: Tuần lễ nước"
+                    placeholder={t('common.challenge_name_placeholder')}
                     className="w-full mt-1 bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-amber-500/50 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Mục tiêu (ml)</label>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">{t('club.goal_ml')}</label>
                   <input
                     type="number"
                     value={challengeTargetMl}
@@ -633,7 +646,7 @@ export default function ClubDashboard({
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Thời gian (ngày)</label>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">{t('club.duration_days')}</label>
                   <div className="flex gap-2 mt-1">
                     {[3, 7, 14].map(d => (
                       <button
@@ -643,7 +656,7 @@ export default function ClubDashboard({
                           challengeDays === d ? 'bg-amber-500 text-slate-950' : 'bg-white/5 text-slate-400 hover:bg-white/10'
                         }`}
                       >
-                        {d} ngày
+                        {d} {t('club.days_unit')}
                       </button>
                     ))}
                   </div>
@@ -678,7 +691,7 @@ export default function ClubDashboard({
                   disabled={isCreatingChallenge}
                   className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold text-sm shadow-xl active:scale-[0.97] transition-all disabled:opacity-50"
                 >
-                  {isCreatingChallenge ? 'Đang tạo...' : 'Tạo thử thách'}
+                  {isCreatingChallenge ? t('club.creating') : t('club.create_challenge')}
                 </button>
               </div>
             </motion.div>
@@ -701,14 +714,14 @@ export default function ClubDashboard({
               className="relative w-full max-w-sm bg-slate-900 border border-white/10 p-7 rounded-[2.5rem] shadow-2xl space-y-5"
             >
               <div className="flex justify-between items-center">
-                <h2 className="text-white font-black text-xl">Chỉnh sửa Bang hội</h2>
+                <h2 className="text-white font-black text-xl">{t('club.edit_guild')}</h2>
                 <button type="button" onClick={() => setShowEditModal(false)} className="text-slate-500 hover:text-white">
                   <X size={20} />
                 </button>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Tên Bang Hội</label>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">{t('club.guild_name_input')}</label>
                   <input
                     value={editingClubName}
                     onChange={(e) => setEditingClubName(e.target.value)}
@@ -717,7 +730,7 @@ export default function ClubDashboard({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Khẩu Hiệu / Mô tả</label>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">{t('club.slogan_desc')}</label>
                   <textarea
                     value={editingClubDesc}
                     onChange={(e) => setEditingClubDesc(e.target.value)}
@@ -727,7 +740,7 @@ export default function ClubDashboard({
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Cấp độ yêu cầu</label>
+                    <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">{t('club.required_level')}</label>
                     <span className="font-bold text-cyan-400">Lv.{editingClubMinLevel}</span>
                   </div>
                   <input
@@ -739,7 +752,7 @@ export default function ClubDashboard({
                 </div>
               </div>
               <button type="submit" disabled={isUpdating} className="w-full py-4 rounded-xl bg-cyan-500 text-black font-black text-sm shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform disabled:opacity-50">
-                {isUpdating ? <Loader2 className="animate-spin mx-auto" /> : "LƯU THAY ĐỔI"}
+                {isUpdating ? <Loader2 className="animate-spin mx-auto" /> : t('club.save_changes_btn')}
               </button>
             </motion.form>
           </div>

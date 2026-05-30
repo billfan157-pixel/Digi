@@ -173,13 +173,13 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
               {userQuest.quest.title}
             </h3>
             {questMeta.type === 'weekly' && (
-              <span className="px-2 py-0.5 rounded text-[8px] font-black bg-purple-500/20 text-purple-400 uppercase tracking-widest border border-purple-500/30">Tuần</span>
+              <span className="px-2 py-0.5 rounded text-[8px] font-black bg-purple-500/20 text-purple-400 uppercase tracking-widest border border-purple-500/30">Week</span>
             )}
             {questMeta.type === 'daily' && (
-              <span className="px-2 py-0.5 rounded text-[8px] font-black bg-cyan-500/20 text-cyan-400 uppercase tracking-widest border border-cyan-500/30">Ngày</span>
+              <span className="px-2 py-0.5 rounded text-[8px] font-black bg-cyan-500/20 text-cyan-400 uppercase tracking-widest border border-cyan-500/30">Day</span>
             )}
             {questMeta.type === 'level' && (
-              <span className="px-2 py-0.5 rounded text-[8px] font-black bg-amber-500/20 text-amber-400 uppercase tracking-widest border border-amber-500/30">Vĩnh viễn</span>
+              <span className="px-2 py-0.5 rounded text-[8px] font-black bg-amber-500/20 text-amber-400 uppercase tracking-widest border border-amber-500/30">Permanent</span>
             )}
           </div>
           <p className="text-slate-400 text-xs mt-1">
@@ -229,7 +229,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
           </div>
           {questMeta.reward_badge_id && (
             <div className={`flex items-center justify-end gap-1 text-[10px] font-bold mt-1 ${isClaimed ? 'text-slate-600' : 'text-fuchsia-400'}`}>
-              <Award size={12} /> +Huy hiệu
+              <Award size={12} /> +Badge
             </div>
           )}
 
@@ -245,28 +245,28 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
               >
                 <div className="flex items-center gap-1.5 border-b border-slate-800 pb-2 mb-2">
                   <Info size={12} className="text-cyan-400" />
-                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Chi tiết lợi nhuận</span>
+                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Profit Details</span>
                 </div>
                 <div className="space-y-1.5 text-[10px] font-mono">
                   <div className="flex justify-between text-slate-400">
-                    <span>EXP Gốc</span>
+                    <span>Base EXP</span>
                     <span>{baseExp}</span>
                   </div>
                   {rarity !== 'common' && (
                     <div className="flex justify-between text-purple-400">
-                      <span>Thưởng Độ Hiếm</span>
+                      <span>Rarity Bonus</span>
                       <span>x{rarity === 'epic' ? '2.5' : rarity === 'legendary' ? '5.0' : '1.5'}</span>
                     </div>
                   )}
                   {streak > 0 && (
                     <div className="flex justify-between text-orange-400">
-                      <span>Buff Chuỗi</span>
+                      <span>Streak Buff</span>
                       <span>+{Math.min(streak * 5, 50)}%</span>
                     </div>
                   )}
                 </div>
                 <div className="mt-2 pt-2 border-t border-slate-800 flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-500">HỆ SỐ TỔNG</span>
+                  <span className="text-[10px] font-bold text-slate-500">TOTAL MULTIPLIER</span>
                   <span className="text-xs font-black text-amber-400">x{numMultiplier}</span>
                 </div>
               </motion.div>
@@ -286,7 +286,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
       {/* PROGRESS */}
       <div className="mt-5 space-y-2 relative z-10">
         <div className="flex justify-between text-[10px] font-mono">
-          <span className="text-slate-500 uppercase font-bold tracking-wider">Tiến độ</span>
+          <span className="text-slate-500 uppercase font-bold tracking-wider">Progress</span>
           <span className={isCompleted ? 'text-amber-400 font-bold' : 'text-slate-300'}>
             {actualProgress.toLocaleString()} / {userQuest.quest.condition_value.toLocaleString()}
           </span>
@@ -342,15 +342,15 @@ export const QuestCard: React.FC<QuestCardProps> = ({ userQuest, onClaim, isClai
             {isClaiming ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                Đang nén khí...
+                Compressing...
               </>
             ) : canClaim ? (
               <>
                 {evoState === 'hyper' ? <Volume2 size={14} className="animate-pulse" /> : <Sparkles size={14} />}
-                {evoState === 'hyper' ? 'NHẬN SIÊU BUFF' : 'Nhận Thưởng'}
+                {evoState === 'hyper' ? 'CLAIM SUPER BUFF' : 'Claim Reward'}
               </>
             ) : (
-              'Chưa Đạt'
+              'Not Met'
             )}
           </motion.button>
         )}

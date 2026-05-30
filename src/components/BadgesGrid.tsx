@@ -100,10 +100,10 @@ export default function BadgesGrid({ userId }: { userId: string }) {
 
   const allBadges = React.useMemo(() => {
     const virtualStreakBadges: VirtualBadge[] = [
-      { id: 'streak_3', name: 'Giọt Nước Kiên Trì', icon: 'flame', rarity: 'common', description: 'Đạt chuỗi 3 ngày uống nước', minStreak: 3 },
-      { id: 'streak_7', name: 'Dòng Chảy Bền Bỉ', icon: 'zap', rarity: 'rare', description: 'Đạt chuỗi 7 ngày uống nước', minStreak: 7 },
-      { id: 'streak_14', name: 'Thủy Thủ Cần Mẫn', icon: 'award', rarity: 'epic', description: 'Đạt chuỗi 14 ngày uống nước', minStreak: 14 },
-      { id: 'streak_30', name: 'Hải Vương Bất Bại', icon: 'trophy', rarity: 'legendary', description: 'Đạt chuỗi 30 ngày uống nước', minStreak: 30 }
+      { id: 'streak_3', name: 'Persistent Water Drop', icon: 'flame', rarity: 'common', description: 'Achieve 3-day water streak', minStreak: 3 },
+      { id: 'streak_7', name: 'Steady Flow', icon: 'zap', rarity: 'rare', description: 'Achieve 7-day water streak', minStreak: 7 },
+      { id: 'streak_14', name: 'Diligent Sailor', icon: 'award', rarity: 'epic', description: 'Achieve 14-day water streak', minStreak: 14 },
+      { id: 'streak_30', name: 'Unstoppable Neptune', icon: 'trophy', rarity: 'legendary', description: 'Achieve 30-day water streak', minStreak: 30 }
     ];
     const dbBadgesFiltered = badges.filter(b => !virtualStreakBadges.some(vb => vb.id === b.id));
     return [...virtualStreakBadges, ...dbBadgesFiltered];
@@ -178,7 +178,7 @@ export default function BadgesGrid({ userId }: { userId: string }) {
             onClick={() => setShowAllBadges(!showAllBadges)}
             className="text-slate-400 hover:text-slate-300 text-xs font-medium opacity-60 hover:opacity-100 transition-all duration-200 active:scale-95"
           >
-            {showAllBadges ? 'Ẩn bớt' : `Tất cả`}
+            {showAllBadges ? t('common.show_less') : t('common.all')}
           </button>
         </div>
       )}

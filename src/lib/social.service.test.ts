@@ -150,8 +150,8 @@ describe('fetchSocialFeed', () => {
 
   it('returns posts and stories', async () => {
     const postRows = [
-      { id: 'p1', author_id: 'me', content: 'Hello', image_url: null, post_kind: 'status', visibility: 'public', hydration_ml: 500, streak_snapshot: 3, like_count: 2, created_at: '2024-06-15T10:00:00Z', expires_at: null, event_type: null, reference_id: null, is_squad_highlight: false },
-      { id: 'p2', author_id: 'friend', content: 'Story', image_url: null, post_kind: 'story', visibility: 'followers', hydration_ml: null, streak_snapshot: null, like_count: 0, created_at: '2024-06-15T11:00:00Z', expires_at: '2099-06-16T11:00:00Z', event_type: null, reference_id: null, is_squad_highlight: false },
+      { id: 'p1', author_id: 'me', content: 'Hello', image_url: null, post_kind: 'status', visibility: 'public', hydration_ml: 500, streak_snapshot: 3, like_count: 2, created_at: '2024-06-15T10:00:00Z', expires_at: null, event_type: null, reference_id: null, stake_coins: null, is_squad_highlight: false },
+      { id: 'p2', author_id: 'friend', content: 'Story', image_url: null, post_kind: 'story', visibility: 'followers', hydration_ml: null, streak_snapshot: null, like_count: 0, created_at: '2024-06-15T11:00:00Z', expires_at: '2099-06-16T11:00:00Z', event_type: null, reference_id: null, stake_coins: null, is_squad_highlight: false },
     ];
     const profiles = [
       { id: 'me', nickname: 'Me', avatar_url: null, level: 1, water_today: 500, water_goal: 2000 },
@@ -187,7 +187,7 @@ describe('fetchSocialFeed', () => {
 
   it('filters expired stories', async () => {
     const postRows = [
-      { id: 'p1', author_id: 'friend', content: 'Expired story', image_url: null, post_kind: 'story', visibility: 'followers', hydration_ml: null, streak_snapshot: null, like_count: 0, created_at: '2024-06-15T10:00:00Z', expires_at: '2020-06-16T10:00:00Z', event_type: null, reference_id: null, is_squad_highlight: false },
+      { id: 'p1', author_id: 'friend', content: 'Expired story', image_url: null, post_kind: 'story', visibility: 'followers', hydration_ml: null, streak_snapshot: null, like_count: 0, created_at: '2024-06-15T10:00:00Z', expires_at: '2020-06-16T10:00:00Z', event_type: null, reference_id: null, stake_coins: null, is_squad_highlight: false },
     ];
 
     mockFrom
@@ -202,7 +202,7 @@ describe('fetchSocialFeed', () => {
 
   it('handles story without expires_at', async () => {
     const postRows = [
-      { id: 'p1', author_id: 'friend', content: 'No expiry', image_url: null, post_kind: 'story', visibility: 'followers', hydration_ml: null, streak_snapshot: null, like_count: 0, created_at: '2024-06-15T10:00:00Z', expires_at: null, event_type: null, reference_id: null, is_squad_highlight: false },
+      { id: 'p1', author_id: 'friend', content: 'No expiry', image_url: null, post_kind: 'story', visibility: 'followers', hydration_ml: null, streak_snapshot: null, like_count: 0, created_at: '2024-06-15T10:00:00Z', expires_at: null, event_type: null, reference_id: null, stake_coins: null, is_squad_highlight: false },
     ];
 
     mockFrom

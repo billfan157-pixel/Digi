@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { supabase } from './supabase';
 import type { Profile, WaterLog, SocialFeedPost, SocialComment } from '@/models';
 import { sanitizeHtml } from './sanitize';
@@ -526,13 +527,13 @@ async function iframePrint(html: string): Promise<void> {
     };
 
     const fallbackTimer = window.setTimeout(() => {
-      finish(new Error('Không thể mở chế độ in PDF lúc này.'));
+      finish(new Error(i18n.t('common.pdf_print_error')));
     }, 15000);
 
     iframe.onload = () => {
       const printWindow = iframe.contentWindow;
       if (!printWindow) {
-        finish(new Error('Không thể tạo cửa sổ in.'));
+        finish(new Error(i18n.t('common.pdf_window_error')));
         return;
       }
 
@@ -545,7 +546,7 @@ async function iframePrint(html: string): Promise<void> {
           printWindow.print();
           window.setTimeout(() => finish(), 1500);
         } catch {
-          finish(new Error('Không thể khởi động trình in.'));
+          finish(new Error(i18n.t('common.pdf_printer_error')));
         }
       }, 300);
     };
@@ -555,7 +556,7 @@ async function iframePrint(html: string): Promise<void> {
     try {
       const doc = iframe.contentDocument;
       if (!doc) {
-        finish(new Error('Không thể tạo tài liệu để in.'));
+        finish(new Error(i18n.t('common.pdf_document_error')));
         return;
       }
 
@@ -563,7 +564,7 @@ async function iframePrint(html: string): Promise<void> {
       doc.write(html);
       doc.close();
     } catch {
-      finish(new Error('Không thể tạo tài liệu để in.'));
+      finish(new Error(i18n.t('common.pdf_document_error')));
     }
   });
 }

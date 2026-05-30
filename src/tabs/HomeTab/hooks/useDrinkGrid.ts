@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppStorage } from '@/lib/storage';
 import type { DrinkPreset } from '@/models';
+import i18n from '@/i18n';
 
 const DEFAULT_GRID_DRINKS: DrinkPreset[] = [
-  { id: 'default-1', name: 'Nước lọc', amount: 250, factor: 1, icon: 'Droplet', color: 'cyan', bg: 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20' },
-  { id: 'default-2', name: 'Cà phê', amount: 250, factor: 0.8, icon: 'Coffee', color: 'orange', bg: 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20' },
-  { id: 'default-3', name: 'Trà', amount: 250, factor: 0.9, icon: 'Coffee', color: 'emerald', bg: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20' },
-  { id: 'default-4', name: 'Nước ép', amount: 250, factor: 1, icon: 'Droplet', color: 'fuchsia', bg: 'bg-fuchsia-500/10 border-fuchsia-500/20 hover:bg-fuchsia-500/20' },
-  { id: 'default-5', name: 'Bia/Rượu', amount: 250, factor: -0.5, icon: 'Zap', color: 'red', bg: 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20' }
+  { id: 'default-1', name: i18n.t('home.pure_water'), amount: 250, factor: 1, icon: 'Droplet', color: 'cyan', bg: 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20' },
+  { id: 'default-2', name: i18n.t('home.default_coffee'), amount: 250, factor: 0.8, icon: 'Coffee', color: 'orange', bg: 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20' },
+  { id: 'default-3', name: i18n.t('home.default_tea'), amount: 250, factor: 0.9, icon: 'Coffee', color: 'emerald', bg: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20' },
+  { id: 'default-4', name: i18n.t('home.default_juice'), amount: 250, factor: 1, icon: 'Droplet', color: 'fuchsia', bg: 'bg-fuchsia-500/10 border-fuchsia-500/20 hover:bg-fuchsia-500/20' },
+  { id: 'default-5', name: i18n.t('home.default_alcohol'), amount: 250, factor: -0.5, icon: 'Zap', color: 'red', bg: 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20' }
 ];
 
 export function useDrinkGrid() {

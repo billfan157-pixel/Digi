@@ -15,6 +15,7 @@ import {
   BarChart3,
   ChevronRight,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { WeeklyReport } from '../../lib/weeklyReportEngine';
 import { glassCard, glassMetric } from '../../styles/glass';
 
@@ -26,21 +27,21 @@ interface WeeklyReportModalProps {
   isLoading?: boolean;
 }
 
-const TREND_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+const TREND_CONFIG: Record<string, { icon: React.ReactNode; color: string; labelKey: string }> = {
   improving: {
     icon: <TrendingUp size={16} />,
     color: 'text-emerald-400',
-    label: 'Đang cải thiện',
+    labelKey: 'weekly.trend_improving',
   },
   declining: {
     icon: <TrendingDown size={16} />,
     color: 'text-rose-400',
-    label: 'Đang giảm',
+    labelKey: 'weekly.trend_declining',
   },
   stable: {
     icon: <BarChart3 size={16} />,
     color: 'text-cyan-400',
-    label: 'Ổn định',
+    labelKey: 'weekly.trend_stable',
   },
 };
 
@@ -51,6 +52,7 @@ export default function WeeklyReportModal({
   onShare,
   isLoading,
 }: WeeklyReportModalProps) {
+  const { t } = useTranslation();
   return (
     <AnimatePresence>
       {isOpen && (
@@ -72,7 +74,7 @@ export default function WeeklyReportModal({
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] z-50 flex flex-col"
           >
-            <div className={`${glassCard} relative overflow-y-auto max-h-full rounded-[24px] backdrop-blur-2xl shadow-2xl`}>
+            <div className={`${glassCard} w-full relative overflow-y-auto max-h-full rounded-[24px] backdrop-blur-2xl shadow-2xl`}>
               {/* Mesh Gradient Background */}
               <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-[80px] pointer-events-none mix-blend-screen transform translate-x-1/2 -translate-y-1/2" />
               <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-indigo-500/10 blur-[80px] pointer-events-none mix-blend-screen transform -translate-x-1/2 translate-y-1/2" />
@@ -87,7 +89,7 @@ export default function WeeklyReportModal({
 
               {isLoading ? (
                 <div className="flex items-center justify-center h-64">
-                  <div className="text-slate-400 text-sm">Đang tạo báo cáo...</div>
+                  <div className="text-slate-400 text-sm">{t('weekly.creating_report')}</div>
                 </div>
               ) : report ? (
                 <div className="p-6 space-y-6">
@@ -96,7 +98,7 @@ export default function WeeklyReportModal({
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-cyan-500/20 border border-cyan-500/30 mb-3">
                       <BarChart3 size={24} className="text-cyan-400" />
                     </div>
-                    <h2 className="text-lg font-black text-white">Báo cáo tuần</h2>
+                    <h2 className="text-lg font-black text-white">{t('weekly.report_title')}</h2>
                     <p className="text-[11px] text-slate-400 mt-1">
                       {formatDate(report.weekStart)} → {formatDate(report.weekEnd)}
                     </p>
@@ -132,11 +134,11 @@ export default function WeeklyReportModal({
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-3xl font-black text-white">{report.goalHitDays}</span>
-                        <span className="text-[10px] text-slate-400">/ 7 ngày</span>
+                        <span className="text-[10px] text-slate-400">{t('weekly.of_7_days')}</span>
                       </div>
                     </div>
                     <p className="text-xs text-slate-400 mt-2">
-                      Đạt mục tiêu
+                      {t('weekly.goal_hit')}
                     </p>
                   </div>
 
@@ -144,26 +146,26 @@ export default function WeeklyReportModal({
                   <div className="grid grid-cols-2 gap-3">
                     <StatCard
                       icon={<Droplets size={14} />}
-                      label="Tổng lượng"
+                      label={t('insight.total_amount')}
                       value={`${(report.totalIntake / 1000).toFixed(1)}L`}
                       color="text-cyan-400"
                     />
                     <StatCard
                       icon={<Target size={14} />}
-                      label="Trung bình"
+                      label={t('insight.average_amount')}
                       value={`${Math.round(report.avgDaily)}ml`}
                       color="text-emerald-400"
                     />
                     <StatCard
                       icon={<Calendar size={14} />}
-                      label="Ngày tốt nhất"
+                      label={t('insight.best_day')}
                       value={report.bestDay.date ? `${report.bestDay.ml}ml` : '—'}
                       sub={report.bestDay.date ? formatDate(report.bestDay.date) : undefined}
                       color="text-violet-400"
                     />
                     <StatCard
                       icon={<TrendingUp size={14} />}
-                      label="Độ đều đặn"
+                      label={t('insight.consistency')}
                       value={`${report.consistencyScore}%`}
                       color="text-amber-400"
                     />
@@ -182,8 +184,8 @@ export default function WeeklyReportModal({
                         <TrendingDown size={16} />
                       )}
                       <span className="text-xs font-bold">
-                        {report.comparisonToPreviousWeek > 0 ? 'Tăng' : 'Giảm'}{' '}
-                        {Math.abs(report.comparisonToPreviousWeek)}% so với tuần trước
+                        {report.comparisonToPreviousWeek > 0 ? t('weekly.increase') : t('weekly.decrease')}{' '}
+                        {Math.abs(report.comparisonToPreviousWeek)}% {t('weekly.vs_last_week')}
                       </span>
                     </div>
                   )}
@@ -192,7 +194,7 @@ export default function WeeklyReportModal({
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/50 border border-slate-700/30">
                     {TREND_CONFIG[report.trend]?.icon || <BarChart3 size={16} className="text-slate-400" />}
                     <span className={`text-xs font-bold ${TREND_CONFIG[report.trend]?.color || 'text-slate-400'}`}>
-                      {TREND_CONFIG[report.trend]?.label || report.trend}
+                      {TREND_CONFIG[report.trend]?.labelKey ? t(TREND_CONFIG[report.trend].labelKey) : report.trend}
                     </span>
                   </div>
 
@@ -200,7 +202,7 @@ export default function WeeklyReportModal({
                   <div className="space-y-2">
                     <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                       <Award size={12} />
-                      Nhận xét
+                      {t('weekly.insight_label')}
                     </h4>
                     <p className="text-sm text-slate-300 leading-relaxed">
                       {report.insight}
@@ -212,7 +214,7 @@ export default function WeeklyReportModal({
                     <div className="space-y-2">
                       <h4 className="text-[11px] font-black uppercase tracking-widest text-cyan-400 flex items-center gap-2">
                         <ChevronRight size={12} />
-                        Gợi ý tuần sau
+                        {t('weekly.tip_label')}
                       </h4>
                       <p className="text-sm text-slate-300 leading-relaxed">
                         {report.tip}
@@ -226,14 +228,14 @@ export default function WeeklyReportModal({
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/30 text-cyan-300 text-sm font-bold hover:from-cyan-500/30 hover:to-emerald-500/30 transition-colors"
                   >
                     <Share2 size={16} />
-                    Chia sẻ báo cáo
+                    {t('weekly.share_report')}
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-center">
                     <BarChart3 size={32} className="mx-auto text-slate-500 mb-2" />
-                    <p className="text-slate-400 text-sm">Chưa có dữ liệu tuần này</p>
+                    <p className="text-slate-400 text-sm">{t('weekly.no_data')}</p>
                   </div>
                 </div>
               )}

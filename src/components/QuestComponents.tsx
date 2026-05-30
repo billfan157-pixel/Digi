@@ -79,7 +79,7 @@ export function QuestCard({ userQuest: uq, onClaim, isClaiming = false }: QuestC
           </span>
           {isCompleted && (
             <span className="ml-2 text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-              <CheckCircle2 size={12} className="inline mr-0.5" /> Hoàn thành
+              <CheckCircle2 size={12} className="inline mr-0.5" /> Completed
             </span>
           )}
         </div>
@@ -149,13 +149,13 @@ export function QuestCard({ userQuest: uq, onClaim, isClaiming = false }: QuestC
           onClick={() => onClaim(uq.id)}
           className={`w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-sm hover:from-green-400 hover:to-green-500 active:scale-95 transition-all duration-200 shadow-lg shadow-green-500/30 hover:shadow-green-500/50 ${isClaiming ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {isClaiming ? '⏳ Đang nhận...' : '🎁 Nhận thưởng ngay'}
+          {isClaiming ? '⏳ Claiming...' : '🎁 Claim Reward'}
         </button>
       )}
 
       {isClaimed && (
         <div className="w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-center">
-          <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">✅ Đã nhận thưởng</span>
+          <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">✅ Reward Claimed</span>
         </div>
       )}
     </div>
@@ -174,8 +174,8 @@ export function ChallengeCard({ challenge: ch, onJoin, userRank }: ChallengeCard
   const locked     = userRank < ch.min_rank;
   const rankName   = RANKS[ch.min_rank as RankTier]?.name ?? '';
   const typeLabel  = ch.type === 'time_limited'
-    ? `${ch.duration_days} ngày`
-    : 'Tích lũy';
+    ? `${ch.duration_days} days`
+    : 'Cumulative';
 
   return (
     <div className={`rounded-xl border p-4 ${locked ? 'opacity-60' : 'bg-white border-gray-200'}`}>
@@ -191,7 +191,7 @@ export function ChallengeCard({ challenge: ch, onJoin, userRank }: ChallengeCard
         </span>
         {locked && (
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-            Mở khóa ở {rankName}
+            Unlock at {rankName}
           </span>
         )}
       </div>
@@ -236,7 +236,7 @@ export function ChallengeCard({ challenge: ch, onJoin, userRank }: ChallengeCard
                      disabled:cursor-not-allowed disabled:opacity-40
                      bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
         >
-          Tham gia
+          Join
         </button>
       </div>
     </div>
@@ -264,7 +264,7 @@ export function ActiveChallengeCard({ userChallenge: uc, onClaim, onAbandon }: A
     progressLabel = `${(uc.current_value / 1000).toFixed(1)}L / ${(ch.target_value / 1000).toFixed(0)}L`;
   } else if (ch.type === 'time_limited' && ch.duration_days) {
     pct = Math.min(100, Math.round((uc.days_completed / ch.duration_days) * 100));
-    progressLabel = `${uc.days_completed} / ${ch.duration_days} ngày`;
+    progressLabel = `${uc.days_completed} / ${ch.duration_days} days`;
   }
 
   // Milestones đã đạt
@@ -280,7 +280,7 @@ export function ActiveChallengeCard({ userChallenge: uc, onClaim, onAbandon }: A
         <p className="text-sm font-medium text-gray-900">{ch.title}</p>
         {isCompleted && (
           <span className="text-[10px] font-medium px-2 py-0.5 bg-green-100 text-green-800 rounded-full">
-            Hoàn thành
+            Completed
           </span>
         )}
       </div>
@@ -323,7 +323,7 @@ export function ActiveChallengeCard({ userChallenge: uc, onClaim, onAbandon }: A
       {/* Grace days indicator for time_limited */}
       {ch.type === 'time_limited' && ch.grace_days != null && ch.grace_days > 0 && (
         <p className="text-[10px] text-gray-400 mt-1">
-          Ngày thất bại: {uc.days_failed}/{ch.grace_days} cho phép
+          Failed days: {uc.days_failed}/{ch.grace_days} allowed
         </p>
       )}
 
@@ -335,7 +335,7 @@ export function ActiveChallengeCard({ userChallenge: uc, onClaim, onAbandon }: A
             className="flex-1 py-1.5 rounded-lg bg-green-500 text-white text-xs font-medium
                        hover:bg-green-600 active:scale-95 transition-all"
           >
-            Nhận thưởng
+            Claim Reward
           </button>
         ) : (
           <button
@@ -343,7 +343,7 @@ export function ActiveChallengeCard({ userChallenge: uc, onClaim, onAbandon }: A
             className="py-1.5 px-3 rounded-lg border border-gray-200 text-gray-500
                        text-xs hover:bg-gray-50 active:scale-95 transition-all"
           >
-            Bỏ cuộc
+            Abandon
           </button>
         )}
       </div>
@@ -410,7 +410,7 @@ export function LevelProgressBar({ totalExp, level, rankTier }: LevelProgressBar
       </div>
 
       <p className="text-[10px] text-gray-400 text-right">
-        Tổng: {totalExp.toLocaleString('vi-VN')} EXP
+        Total: {totalExp.toLocaleString()} EXP
       </p>
     </div>
   );

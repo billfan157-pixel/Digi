@@ -3,6 +3,7 @@
  * Smart Reminder Engine — tạo lịch nhắc uống nước thông minh
  * Dựa trên: pattern cá nhân + calendar events + thời tiết
  */
+import i18n from '@/i18n';
 import type { CalendarEventItem } from '../hooks/useCalendarSync';
 import type { UserHydrationPattern } from './patternEngine';
 import { HOT_TEMP_THRESHOLD } from './patternEngine';
@@ -72,42 +73,42 @@ function generateId(): string {
 
 function getBlindSpotMessage(slot: string): string {
   const slotLabels: Record<string, string> = {
-    '6-9': 'sáng sớm',
-    '9-12': 'buổi sáng',
-    '12-15': 'đầu giờ chiều',
-    '15-18': 'xế chiều',
-    '18-21': 'tối',
-    '21-23': 'khuya',
+    '6-9': i18n.t('slot.early_morning'),
+    '9-12': i18n.t('slot.morning'),
+    '12-15': i18n.t('slot.early_afternoon'),
+    '15-18': i18n.t('slot.late_afternoon'),
+    '18-21': i18n.t('slot.evening'),
+    '21-23': i18n.t('slot.late_night'),
   };
-  const label = slotLabels[slot] || `khung ${slot}`;
-  return `Sắp đến khung giờ ${label} — bạn thường quên uống vào lúc này. Uống một ly ngay nhé!`;
+  const label = slotLabels[slot] || i18n.t('slot.generic', { slot });
+  return i18n.t('reminder.blind_spot_msg', { label });
 }
 
 function getWeatherAlertMessage(temp: number): string {
   if (temp >= 37) {
-    return `Trời nóng ${temp}°C! Cơ thể cần thêm nước. Uống 50ml bù nhiệt ngay.`;
+    return i18n.t('reminder.weather_hot_msg', { temp });
   }
   if (temp >= 35) {
-    return `Trời nóng ${temp}°C. Nhắc bạn uống thêm nước để bù nhiệt.`;
+    return i18n.t('reminder.weather_warm_msg', { temp });
   }
   return '';
 }
 
 function getPostEventMessage(eventTitle: string, bonus: number): string {
-  return `Vừa xong "${eventTitle}". Uống ${bonus}ml bù nước ngay nhé!`;
+  return i18n.t('reminder.post_event_msg', { eventTitle, bonus });
 }
 
 function getCatchUpMessage(gap: number): string {
-  if (gap > 1000) return `Hôm nay còn thiếu ${gap}ml. Chia đều các lần uống còn lại.`;
-  return `Còn thiếu ${gap}ml để đạt mục tiêu hôm nay.`;
+  if (gap > 1000) return i18n.t('reminder.catch_up_large_msg', { gap });
+  return i18n.t('reminder.catch_up_small_msg', { gap });
 }
 
 function getIntervalMessage(): string {
   const messages = [
-    'Nhắc bạn uống nước! Cơ thể luôn cần được cấp ẩm.',
-    'Đã đến giờ uống nước. Một ngụm nhỏ thôi cũng tốt!',
-    'Đừng quên uống nước! Duy trì thói quen nhé.',
-    'Uống nước ngay! Cơ thể bạn đang cần đấy.',
+    i18n.t('common.reminder_message_1'),
+    i18n.t('common.reminder_message_2'),
+    i18n.t('common.reminder_message_3'),
+    i18n.t('common.reminder_message_4'),
   ];
   return messages[Math.floor(Math.random() * messages.length)];
 }

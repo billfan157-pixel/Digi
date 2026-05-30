@@ -21,15 +21,15 @@ type QuestFilter = 'daily' | 'weekly' | 'level';
 
 const tabConfig = {
   daily: {
-    label: 'Hàng ngày',
+    label: 'Daily',
     icon: Calendar,
   },
   weekly: {
-    label: 'Hàng tuần',
+    label: 'Weekly',
     icon: Target,
   },
   level: {
-    label: 'Thành tựu',
+    label: 'Achievements',
     icon: Trophy,
   },
 };
@@ -111,7 +111,7 @@ export default function QuestModal() {
       const result = await claimQuest(userQuestId);
 
       if (!result) {
-        throw new Error('Không thể nhận thưởng');
+        throw new Error(t('common.cannot_claim_reward'));
       }
 
       playSuccessSound();
@@ -179,7 +179,7 @@ export default function QuestModal() {
             {/* progress */}
             <div className="mt-4">
               <div className="flex justify-between text-xs text-slate-400 mb-2">
-                <span>{completedCount}/{totalCount} hoàn thành</span>
+                <span>{t('quest.completed_count', { completed: completedCount, total: totalCount })}</span>
                 <span>{Math.round(progressPercent)}%</span>
               </div>
 
@@ -275,10 +275,10 @@ export default function QuestModal() {
                     className="mx-auto text-slate-600 mb-4"
                   />
                   <h3 className="text-white font-bold">
-                    Không còn nhiệm vụ
+                    No more quests
                   </h3>
                   <p className="text-sm text-slate-500 mt-2">
-                    Bạn đã hoàn thành mục này rồi.
+                    You've completed this item already.
                   </p>
                 </motion.div>
               )}

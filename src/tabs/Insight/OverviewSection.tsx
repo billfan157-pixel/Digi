@@ -1,5 +1,8 @@
 import React from 'react';
 import CoachHero from './CoachHero';
+import { confirmDialog } from '@/store/useConfirmDialog';
+import { useFeature } from '@/hooks/useFeature';
+import { useTranslation } from 'react-i18next';
 
 interface OverviewSectionProps {
   greeting: string;
@@ -30,13 +33,21 @@ export default function OverviewSection({
   aiAdvice,
   isAiLoading,
   fetchAiAdvice,
-  isPremium,
   setShowPremiumModal,
 }: OverviewSectionProps) {
-  const handleHeroClick = () => {
-    if (nextBestAction.ml > 0 && actions?.handleAddWater) {
-      actions.handleAddWater(nextBestAction.ml, 0, 'Gợi ý AI');
-    }
+  const { t } = useTranslation();
+  const canUseCoach = useFeature('aiHydrationCoach');
+  const handleHeroClick = async () => {
+
+      if (nextBestAction.ml > 0) {
+        const ok = await confirmDialog({
+          title: t('home.drink_confirm_title', { amount: nextBestAction.ml }),
+          message: t('home.drink_confirm_message'),
+          confirmLabel: t('home.drink_now'),
+          cancelLabel: t('home.skip'),
+        });
+        if (ok) actions?.handleAddWater?.(nextBestAction.ml, 0, t('ai_suggestion'));
+      }
   };
 
   return (
@@ -48,7 +59,7 @@ export default function OverviewSection({
       aiAdvice={aiAdvice}
       isAiLoading={isAiLoading}
       fetchAiAdvice={fetchAiAdvice}
-      isPremium={isPremium}
+      isPremium={canUseCoach}
       setShowPremiumModal={setShowPremiumModal}
     />
   );

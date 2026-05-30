@@ -2,7 +2,7 @@ import { useModalStore } from '../../store/useModalStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SmartHubModalProps {
-  weatherData: { temp?: number } | null;
+  weatherData: { temp?: number; location?: string } | null;
   watchData: { heartRate?: number } | null;
   isWeatherSynced: boolean;
   isWatchConnected: boolean;
@@ -36,7 +36,9 @@ export default function SmartHubModal({ weatherData, watchData, isWeatherSynced,
               <div className={`p-4 rounded-2xl border ${isWeatherSynced ? 'bg-orange-500/10 border-orange-500/30' : 'bg-slate-800 border-slate-700'}`}>
                 <div className="flex justify-between items-center">
                   <span className="text-white font-bold">Trạm Thời Tiết</span>
-                  <span className={isWeatherSynced ? 'text-orange-400' : 'text-slate-500'}>{isWeatherSynced ? `${weatherData?.temp}°C - Online` : 'Offline'}</span>
+                  <span className={isWeatherSynced ? 'text-orange-400' : 'text-slate-500'}>
+                    {isWeatherSynced ? `${weatherData?.temp}°C - ${weatherData?.location || 'Online'}` : 'Offline'}
+                  </span>
                 </div>
               </div>
               <div className={`p-4 rounded-2xl border ${isWatchConnected ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-slate-800 border-slate-700'}`}>

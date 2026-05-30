@@ -183,8 +183,8 @@ export function useHydrationNotifications({
         await LocalNotifications.schedule({
           notifications: [{
             id: Date.now() % 100000,
-            title: '💧 DigiWell - Nhắc nhở lại!',
-            body: notificationAction.notification.body || 'Bạn vẫn chưa uống nước đấy nhé!',
+            title: i18n.t('common.reminder_title'),
+            body: notificationAction.notification.body || i18n.t('common.reminder_body'),
             schedule: { at: new Date(Date.now() + 10 * 60 * 1000), allowWhileIdle: true },
             sound: notificationAction.notification.sound,
             actionTypeId: 'SCHEDULE_REMINDER_ACTIONS',
@@ -198,26 +198,26 @@ export function useHydrationNotifications({
       const amountToAdd = actionId === 'add_100' ? 100 : 250;
       if (!profile?.id || profile.id === 'undefined') {
         queuePendingHydrationAction(
-          { amount: amountToAdd, name: extra?.name || 'Nước lọc', timestamp: Date.now() },
+          { amount: amountToAdd, name: extra?.name || i18n.t('common.default_drink_water'), timestamp: Date.now() },
           queuedUserId,
         );
         return;
       }
 
-      await handleAddWater(amountToAdd, 1, extra?.name || 'Nước lọc');
+      await handleAddWater(amountToAdd, 1, extra?.name || i18n.t('common.default_drink_water'));
       return;
     }
 
     if (actionId === 'tap' && extra && extra.amount) {
       if (!profile?.id || profile.id === 'undefined') {
         queuePendingHydrationAction(
-          { amount: extra.amount, name: extra.name || 'Nước lọc', timestamp: Date.now() },
+          { amount: extra.amount, name: extra.name || i18n.t('common.default_drink_water'), timestamp: Date.now() },
           queuedUserId,
         );
         return;
       }
 
-      await handleAddWater(extra.amount, 1, extra.name || 'Nước lọc');
+      await handleAddWater(extra.amount, 1, extra.name || i18n.t('common.default_drink_water'));
       return;
     }
 

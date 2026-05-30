@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { History, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { WaterEntry } from '@/models';
@@ -13,7 +14,7 @@ interface HistoryModalProps {
 }
 
 export default function HistoryModal({ showHistory, setShowHistory, waterEntries, handleDeleteEntry }: HistoryModalProps) {
-  
+  const { t } = useTranslation();
 
   return (
     <AnimatePresence>
@@ -38,7 +39,7 @@ export default function HistoryModal({ showHistory, setShowHistory, waterEntries
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400"><History size={20} /></div>
-              <h3 className="text-xl font-black text-white uppercase tracking-wider">Nhật ký Hydration</h3>
+              <h3 className="text-xl font-black text-white uppercase tracking-wider">{t('history.title')}</h3>
             </div>
             <button onClick={() => setShowHistory(false)} className="p-2 hover:bg-white/5 rounded-full text-slate-400"><X /></button>
           </div>
@@ -51,7 +52,7 @@ export default function HistoryModal({ showHistory, setShowHistory, waterEntries
                   <button onClick={() => handleDeleteEntry(entry.id, entry.amount ?? entry.amount_ml ?? 0)} className="text-rose-500/50 hover:text-rose-500"><X size={18} /></button>
                 </div>
               </div>
-            )) : (<div className="text-center py-12 text-slate-500 italic">Chưa có dữ liệu hôm nay đệ ơi!</div>)}
+            )) : (<div className="text-center py-12 text-slate-500 italic">{t('history.no_data')}</div>)}
           </div>
         </div>
           </motion.div>

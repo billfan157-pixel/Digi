@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { levelFromExp } from '@/config/questConfig';
 import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/models';
@@ -106,6 +107,7 @@ function toAppProfile(profileRow: ProfileRow): AppProfile {
     sync_wellness_data: normalizedProfile.sync_wellness_data,
     energy_tracking: normalizedProfile.energy_tracking,
     grace_period_end: normalizedProfile.grace_period_end,
+    subscription_tier: normalizedProfile.subscription_tier as AppProfile['subscription_tier'] ?? 'free',
     calendar_privacy_level: (normalizedProfile.calendar_privacy_level as AppProfile['calendar_privacy_level']) || 'standard',
     leaderboard_opt_in: normalizedProfile.leaderboard_opt_in !== false,
   };
@@ -172,7 +174,7 @@ export async function ensureProfileExists(userId: string, defaultName: string) {
     weight: 60,
     activity: 'high',
     climate: 'tropical',
-    goal: 'Sức khỏe tổng quát',
+    goal: i18n.t('common.default_goal_health'),
   }], { onConflict: 'id' });
 
   return fetchProfileById(userId);

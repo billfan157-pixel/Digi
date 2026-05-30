@@ -169,7 +169,7 @@ export default function ClubsView({ userId }: { userId: string }) {
         .maybeSingle();
 
       if (existingClub) {
-        throw new Error("Tên bang hội này đã tồn tại. Vui lòng chọn tên khác.");
+        throw new Error(t("club.club_name_exists"));
       }
 
       // BƯỚC 2: TẠO BANG MỚI
@@ -185,7 +185,7 @@ export default function ClubsView({ userId }: { userId: string }) {
         .maybeSingle();
 
       if (insertError) throw insertError; // Lỗi từ DB
-      if (!newClubData) throw new Error("Không thể lấy thông tin bang vừa tạo. Có thể do chính sách RLS."); // Lỗi không đọc lại được
+      if (!newClubData) throw new Error("Cannot get info of newly created guild. This may be due to RLS policy."); // Lỗi không đọc lại được
 
       // BƯỚC 2.5: TỰ ĐỘNG THÊM CHỦ BANG LÀM THÀNH VIÊN (FIX LỖI CHAT & QUẢN LÝ)
       const { error: memberError } = await supabase
@@ -242,7 +242,7 @@ export default function ClubsView({ userId }: { userId: string }) {
 
     // XÁC NHẬN CHI TRẢ WP
     const { confirmDialog } = await import('@/store/useConfirmDialog');
-    const ok = await confirmDialog({ title: 'Khai sinh Bang hội', message: `Sếp chuẩn bị hiến tế ${CREATION_FEE_WP.toLocaleString()} WP để khai sinh bang hội. Sẵn sàng chứ?`, confirmLabel: 'Xác nhận' });
+    const ok = await confirmDialog({ title: 'Create Guild', message: `Leader will sacrifice ${CREATION_FEE_WP.toLocaleString()} WP to create the guild. Ready?`, confirmLabel: 'Confirm' });
     if (ok) {
       setShowCreateModal(true);
     }
@@ -256,7 +256,7 @@ export default function ClubsView({ userId }: { userId: string }) {
     return (
       <div className="py-20 flex flex-col items-center gap-3">
         <Loader2 className="animate-spin text-cyan-400" size={32} />
-        <p className="text-slate-500 text-sm animate-pulse">Đang triệu tập các bang phái...</p>
+        <p className="text-slate-500 text-sm animate-pulse">Summoning guilds...</p>
       </div>
     );
   }
@@ -273,16 +273,16 @@ export default function ClubsView({ userId }: { userId: string }) {
             <div>
               <h3 className="text-white font-black text-2xl flex items-center gap-2">
                 <Shield className="text-cyan-400" fill="currentColor" fillOpacity={0.2} />
-                Cộng đồng
+                Community
               </h3>
-              <p className="text-slate-500 text-xs mt-1">Gia nhập bang, cùng nhau nạp nước</p>
+              <p className="text-slate-500 text-xs mt-1">Join guilds, hydrate together</p>
             </div>
 
             <button
               onClick={handleOpenCreateModal}
               className="bg-gradient-to-r from-cyan-400 to-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform"
             >
-              + Tạo Bang
+              + Create Guild
             </button>
           </div>
 
@@ -291,7 +291,7 @@ export default function ClubsView({ userId }: { userId: string }) {
             <input 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm kiếm bang hội..."
+              placeholder={t('common.find_clubs')}
               className="w-full bg-slate-900/50 border border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-white text-sm outline-none focus:border-cyan-500/50 transition-all"
             />
           </div>
@@ -299,8 +299,8 @@ export default function ClubsView({ userId }: { userId: string }) {
           <div className="grid gap-4">
             {filteredClubs.length === 0 ? (
               <div className="rounded-3xl border border-white/[0.06] bg-gradient-to-br from-slate-900/80 to-slate-900/40 p-8 text-center backdrop-blur-xl">
-                <p className="text-lg font-black text-white">Chưa có bang hội nào</p>
-                <p className="mt-2 text-sm text-slate-400 max-w-xs mx-auto">Hiện tại chưa có bang hội. Hãy tạo bang hội mới để bắt đầu!</p>
+                <p className="text-lg font-black text-white">{t('club.no_guilds')}</p>
+                <p className="mt-2 text-sm text-slate-400 max-w-xs mx-auto">{t('club.no_guilds_desc')}</p>
               </div>
             ) : filteredClubs.map((club) => {
               const myRole = myRoles[club.id]; 
@@ -329,7 +329,7 @@ export default function ClubsView({ userId }: { userId: string }) {
                         {club.total_wp > 50000 && <Flame size={14} className="text-orange-500" fill="currentColor" />}
                       </div>
                       <p className="text-slate-400 text-sm line-clamp-1 pr-10">
-                        {club.description || "Thành viên tích cực, nạp nước mỗi ngày"}
+                        {club.description || "Active members, hydrate daily"}
                       </p>
                     </div>
 
@@ -344,22 +344,22 @@ export default function ClubsView({ userId }: { userId: string }) {
                   <div className="mt-5 pt-4 border-t border-white/5 flex justify-between items-center relative z-10">
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1.5 text-cyan-400 text-xs font-bold bg-cyan-400/10 px-3 py-1.5 rounded-lg border border-cyan-400/20">
-                        <Shield size={14} /> Cấp {club.club_level || 1}
+                        <Shield size={14} /> Lvl {club.club_level || 1}
                       </div>
                       {(club.min_level_required || 1) > 1 && (
                         <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold">
-                          <ShieldCheck size={14} /> Y/C: Lv.{club.min_level_required}+
+                          <ShieldCheck size={14} /> Req: Lv.{club.min_level_required}+
                         </div>
                       )}
                     </div>
 
                     {isOwner ? (
                       <div className="flex items-center gap-1.5 text-yellow-400 text-xs font-bold bg-yellow-400/10 px-3 py-1.5 rounded-lg border border-yellow-400/20">
-                        <Crown size={14} /> Bang của sếp
+                        <Crown size={14} /> Boss Guild
                       </div>
                     ) : isMember ? (
                       <div className="flex items-center gap-1 text-cyan-400 text-xs font-bold hover:text-cyan-300 transition-colors">
-                        Vào bang <ChevronRight size={14} />
+                        Enter Guild <ChevronRight size={14} />
                       </div>
                     ) : (
                       <button
@@ -378,7 +378,7 @@ export default function ClubsView({ userId }: { userId: string }) {
                             : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                         }`}
                       >
-                        {isJoining ? <Loader2 size={14} className="animate-spin" /> : canJoin ? "Gia nhập" : <LockIcon size={12} />}
+                        {isJoining ? <Loader2 size={14} className="animate-spin" /> : canJoin ? "Join" : <LockIcon size={12} />}
                       </button>
                     )}
                   </div>
@@ -427,7 +427,7 @@ export default function ClubsView({ userId }: { userId: string }) {
               className="relative w-full max-w-sm bg-slate-900 border border-white/10 p-7 rounded-[2.5rem] shadow-2xl space-y-5"
             >
               <div className="flex justify-between items-center">
-                <h2 className="text-white font-black text-xl">Lập Bang Mới</h2>
+                <h2 className="text-white font-black text-xl">Create New Guild</h2>
                 <button type="button" onClick={() => setShowCreateModal(false)} className="text-slate-500 hover:text-white">
                   <X size={20} />
                 </button>
@@ -436,13 +436,13 @@ export default function ClubsView({ userId }: { userId: string }) {
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Tên Bang Hội</label>
+                    <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Guild Name</label>
                     <span className={`text-[10px] font-mono ${newClubName.length > 50 ? 'text-red-400' : 'text-slate-500'}`}>{newClubName.length}/50</span>
                   </div>
                   <input
                     value={newClubName}
                     onChange={(e) => setNewClubName(e.target.value)}
-                    placeholder="Vd: Biệt Đội Nước Cam"
+                    placeholder={t('common.club_name_placeholder')}
                     maxLength={50}
                     className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white outline-none focus:border-cyan-500/50 transition-all"
                   />
@@ -450,20 +450,20 @@ export default function ClubsView({ userId }: { userId: string }) {
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Khẩu Hiệu / Mô tả</label>
+                    <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Slogan / Description</label>
                     <span className={`text-[10px] font-mono ${newClubDesc.length > 200 ? 'text-red-400' : 'text-slate-500'}`}>{newClubDesc.length}/200</span>
                   </div>
                   <textarea
                     value={newClubDesc}
                     onChange={(e) => setNewClubDesc(e.target.value)}
-                    placeholder="Vd: Không uống nước, không về nhà..."
+                    placeholder={t('common.club_desc_placeholder')}
                     maxLength={200}
                     className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white h-28 resize-none outline-none focus:border-cyan-500/50 transition-all"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Cấp độ yêu cầu tối thiểu</label>
+                    <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Minimum Level Required</label>
                     <span className="font-bold text-cyan-400">Lv.{newClubMinLevel}</span>
                   </div>
                   <input
@@ -480,7 +480,7 @@ export default function ClubsView({ userId }: { userId: string }) {
                 disabled={isCreating}
                 className="w-full py-4 rounded-xl bg-cyan-500 text-black font-black text-sm shadow-lg shadow-cyan-500/20 active:scale-95 transition-transform disabled:opacity-50"
               >
-                {isCreating ? "ĐANG TRIỆU TẬP..." : "XÁC NHẬN LẬP BANG"}
+                {isCreating ? "SUMMONING..." : "CONFIRM CREATE GUILD"}
               </button>
             </motion.form>
           </div>

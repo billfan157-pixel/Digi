@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Droplets, CalendarDays, TrendingUp, Activity } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -38,7 +39,7 @@ export default function CalendarView({
   onSelectCell,
   onDayClick,
 }: CalendarViewProps) {
-
+  const { t } = useTranslation();
   const completedDays = useMemo(() => {
     return calendarCells.filter(
       (c) =>
@@ -145,7 +146,7 @@ export default function CalendarView({
             </div>
 
             <p className="text-base font-black text-white">
-              {consistency >= 80 ? 'Xuất sắc' : consistency >= 50 ? 'Khá' : 'Thấp'}
+              {consistency >= 80 ? 'Excellent' : consistency >= 50 ? 'Good' : 'Low'}
             </p>
 
             <p className="text-[10px] text-slate-500">
@@ -162,7 +163,7 @@ export default function CalendarView({
             </div>
 
             <p className="text-base font-black text-white">
-              {completedDays >= 15 ? 'Tối ưu' : completedDays >= 8 ? 'Ổn định' : 'Cần chú ý'}
+              {completedDays >= 15 ? t('insight.optimal_status') : completedDays >= 8 ? t('insight.stable_status') : t('insight.needs_attention')}
             </p>
 
             <p className="text-[10px] text-slate-500">

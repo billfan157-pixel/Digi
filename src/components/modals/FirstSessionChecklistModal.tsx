@@ -66,7 +66,7 @@ export default function FirstSessionChecklistModal() {
               type="button"
               onClick={() => setShow(false)}
               className="p-2 rounded-full bg-slate-200/70 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/15 active:scale-95 transition-all"
-              aria-label="Đóng"
+              aria-label={t('common.close')}
             >
               <X size={18} aria-hidden />
             </button>

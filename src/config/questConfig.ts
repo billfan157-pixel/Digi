@@ -1,3 +1,5 @@
+import i18n from '@/i18n';
+
 // ============================================================
 // DigiWell — Quest & Rank Config
 // Nguồn sự thật duy nhất cho rank, EXP curve, và type definitions
@@ -223,22 +225,22 @@ export interface UserChallenge {
 export function conditionLabel(quest: Quest): string {
   const v = quest.condition_value;
   switch (quest.condition_type) {
-    case 'level':             return `Đạt level ${v}`;
-    case 'drink_today':       return `Uống ${v.toLocaleString('vi-VN')}ml hôm nay`;
-    case 'goal_percent':      return `Đạt ${v}% mục tiêu`;
-    case 'log_count':         return `Ghi nhận ${v} lần`;
-    case 'drink_streak':      return `Streak ${v} ngày`;
-    case 'drink_total':       return `Tổng ${(v / 1000).toFixed(0)}L tích lũy`;
-    case 'drink_weekly_days': return `${v}/7 ngày trong tuần`;
+    case 'level':             return i18n.t('quest_config.condition_level', { value: v });
+    case 'drink_today':       return i18n.t('quest_config.condition_drink_today', { amount: v.toLocaleString('vi-VN') });
+    case 'goal_percent':      return i18n.t('quest_config.condition_goal_percent', { value: v });
+    case 'log_count':         return i18n.t('quest_config.condition_log_count', { value: v });
+    case 'drink_streak':      return i18n.t('quest_config.condition_drink_streak', { value: v });
+    case 'drink_total':       return i18n.t('quest_config.condition_drink_total', { value: (v / 1000).toFixed(0) });
+    case 'drink_weekly_days': return i18n.t('quest_config.condition_drink_weekly_days', { value: v });
     default:                  return '';
   }
 }
 
 // EXP reward display helpers
 export const QUEST_TYPE_LABEL: Record<QuestType, string> = {
-  daily:  'Hằng ngày',
-  weekly: 'Hằng tuần',
-  level:  'Theo cấp độ',
+  daily:  i18n.t('quest_config.type_daily'),
+  weekly: i18n.t('quest_config.type_weekly'),
+  level:  i18n.t('quest_config.type_level'),
 };
 
 /**

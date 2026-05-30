@@ -102,9 +102,9 @@ export default function GachaMachine({ profile }: GachaProps) {
       
       <div className="text-center relative z-10 mb-6">
         <h3 className="text-white font-black text-xl flex items-center justify-center gap-2 uppercase tracking-widest">
-          <Star className="text-amber-400 fill-amber-400" size={20} /> Vòng Quay May Mắn
+          <Star className="text-amber-400 fill-amber-400" size={20} /> Lucky Wheel
         </h3>
-        <p className="text-slate-400 text-xs mt-1">Đăng nhập mỗi ngày để nhận 1 lượt quay!</p>
+        <p className="text-slate-400 text-xs mt-1">Login daily to get 1 free spin!</p>
       </div>
 
       {/* BẢN ĐỒ VÒNG QUAY (ROULETTE WHEEL) */}
@@ -161,12 +161,12 @@ export default function GachaMachine({ profile }: GachaProps) {
               <reward.icon size={48} className="text-white" />
             </motion.div>
             <h4 className="text-3xl font-black text-white mb-2">{reward.label}</h4>
-            <p className="text-amber-400 text-sm font-bold uppercase tracking-widest mb-8">Phần thưởng đã nhận</p>
+            <p className="text-amber-400 text-sm font-bold uppercase tracking-widest mb-8">Reward Received</p>
             <button
               onClick={() => setReward(null)}
               className="w-full py-4 rounded-xl bg-white text-slate-900 font-black text-sm active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
             >
-              Tuyệt vời!
+              Awesome!
             </button>
           </motion.div>
         )}
@@ -183,11 +183,11 @@ export default function GachaMachine({ profile }: GachaProps) {
           }`}
         >
           {isSpinning ? (
-            <><RefreshCw size={18} className="animate-spin" /> ĐANG QUAY...</>
+            <><RefreshCw size={18} className="animate-spin" /> SPINNING...</>
           ) : canSpin ? (
-            'QUAY MIỄN PHÍ'
+            'SPIN FREE'
           ) : (
-            'HÔM NAY ĐÃ QUAY'
+            'ALREADY SPUN TODAY'
           )}
         </button>
       </div>

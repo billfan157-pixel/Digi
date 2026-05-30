@@ -244,21 +244,21 @@ const exportReportPdf = useCallback(async ({
         notifications: [
           {
             id: ids.coaching,
-            title: '🔥 Giữ vững trạng thái Fasting!',
-            body: 'Hãy uống một ly trà xanh hoặc cà phê đen (không đường) để tăng cường đốt mỡ nhé!',
+            title: i18n.t('common.fasting_keep_up_title'),
+            body: i18n.t('common.fasting_keep_up_body'),
             schedule: { at: new Date(startedAt + 4 * 60 * 60 * 1000), allowWhileIdle: true },
             sound: 'water_drop.wav',
             actionTypeId: 'SCHEDULE_REMINDER_ACTIONS',
-            extra: { amount: 250, name: 'Trà/Cà phê đen', userId },
+            extra: { amount: 250, name: i18n.t('common.default_black_tea_coffee'), userId },
           },
           {
             id: ids.hydration,
-            title: '💧 Bù nước khi Nhịn ăn',
-            body: 'Nhịn ăn dễ gây mất điện giải, hãy nạp thêm 250ml nước khoáng nào!',
+            title: i18n.t('common.fasting_replenish_title'),
+            body: i18n.t('common.fasting_replenish_body'),
             schedule: { at: new Date(startedAt + 8 * 60 * 60 * 1000), allowWhileIdle: true },
             sound: 'water_drop.wav',
             actionTypeId: 'SCHEDULE_REMINDER_ACTIONS',
-            extra: { amount: 250, name: 'Nước khoáng', userId },
+            extra: { amount: 250, name: i18n.t('common.default_mineral_water'), userId },
           },
         ],
       });

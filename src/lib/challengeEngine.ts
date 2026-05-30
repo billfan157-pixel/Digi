@@ -127,9 +127,9 @@ async function updateMilestoneChallenge(
   if (isCompleted) {
     toast.success(i18n.t('quest.challenge_completed', { title: ch.title }), {
       duration: 5000,
-      action: { label: '🎁 Nhận thưởng', onClick: () => claimChallengeReward(ctx.userId, uc.id) },
+      action: { label: i18n.t('quest.claim_reward_btn'), onClick: () => claimChallengeReward(ctx.userId, uc.id) },
     });
-    await triggerRewardNotification('🎉 Hoàn thành thử thách!', ch.title, uc.id, 'challenge', ctx.userId, ctx.equippedSound);
+    await triggerRewardNotification(i18n.t('quest.challenge_complete'), ch.title, uc.id, 'challenge', ctx.userId, ctx.equippedSound);
   }
 }
 
@@ -211,9 +211,9 @@ async function updateTimeLimitedChallenge(
   if (isCompleted) {
     toast.success(i18n.t('quest.challenge_completed', { title: ch.title }), {
       duration: 5000,
-      action: { label: '🎁 Nhận thưởng', onClick: () => claimChallengeReward(ctx.userId, uc.id) },
+      action: { label: i18n.t('quest.claim_reward_btn'), onClick: () => claimChallengeReward(ctx.userId, uc.id) },
     });
-    await triggerRewardNotification('🎉 Hoàn thành thử thách!', ch.title, uc.id, 'challenge', ctx.userId, ctx.equippedSound);
+    await triggerRewardNotification(i18n.t('quest.challenge_complete'), ch.title, uc.id, 'challenge', ctx.userId, ctx.equippedSound);
   }
 }
 

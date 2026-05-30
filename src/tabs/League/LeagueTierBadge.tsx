@@ -1,5 +1,6 @@
 import { Sparkles, Shield, Crown, Medal } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { getTierByWP } from './types';
 
 interface LeagueTierBadgeProps {
@@ -9,7 +10,18 @@ interface LeagueTierBadgeProps {
 }
 
 export const LeagueTierBadge = ({ wp, showName = true, size = 'md' }: LeagueTierBadgeProps) => {
+  const { t } = useTranslation();
   const tier = getTierByWP(wp);
+  
+  const getTierTranslationKey = () => {
+    if (wp >= 12000) return 'league.tier_grandmaster';
+    if (wp >= 8000) return 'league.tier_master';
+    if (wp >= 5000) return 'league.tier_diamond';
+    if (wp >= 3000) return 'league.tier_platinum';
+    if (wp >= 1500) return 'league.tier_gold';
+    if (wp >= 500) return 'league.tier_silver';
+    return 'league.tier_bronze';
+  };
   
   const getTierIcon = () => {
     if (wp >= 12000) return <Crown size={size === 'sm' ? 10 : size === 'md' ? 14 : 18} />;
@@ -22,7 +34,7 @@ export const LeagueTierBadge = ({ wp, showName = true, size = 'md' }: LeagueTier
     <div className="inline-flex items-center gap-1.5">
       <motion.div
         whileHover={{ scale: 1.05 }}
-        className={`relative flex items-center justify-center rounded-lg border ${tier.border} ${tier.bg} ${tier.glow} ${
+        className={`relative flex items-center justify-center rounded-[var(--theme-border-radius-inner,8px)] border ${tier.border} ${tier.bg} ${tier.glow} ${
           size === 'sm' ? 'w-5 h-5' : size === 'md' ? 'w-7 h-7' : 'w-9 h-9'
         }`}
       >
@@ -35,7 +47,7 @@ export const LeagueTierBadge = ({ wp, showName = true, size = 'md' }: LeagueTier
       
       {showName && (
         <span className={`text-[10px] font-black uppercase tracking-widest ${tier.color}`}>
-          {tier.name}
+          {t(getTierTranslationKey())}
         </span>
       )}
     </div>

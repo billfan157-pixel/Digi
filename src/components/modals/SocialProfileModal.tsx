@@ -95,8 +95,8 @@ export default function SocialProfileModal({
               <div className="grid grid-cols-3 gap-3 mt-4">
                 {[
                   { label: 'Follower', value: socialProfileStats.followers, color: 'text-cyan-300' },
-                  { label: 'Đang follow', value: socialProfileStats.following, color: 'text-emerald-300' },
-                  { label: 'Bài viết', value: socialProfileStats.posts, color: 'text-amber-300' },
+                  { label: 'Following', value: socialProfileStats.following, color: 'text-emerald-300' },
+                  { label: 'Posts', value: socialProfileStats.posts, color: 'text-amber-300' },
               ].map((item, index) => (
                 <div key={`social-stat-${index}`} className={`${card} p-4`}>
                     <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold">{item.label}</p>

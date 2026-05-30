@@ -6,6 +6,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Bell, Droplets, Clock, Zap, Thermometer, AlertTriangle, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { SmartReminder } from '../../lib/smartReminderEngine';
 import { glassCard } from '../../styles/glass';
 
@@ -58,6 +59,7 @@ const SmartReminderBanner = React.memo(function SmartReminderBanner({
   onSnooze,
   onDrink,
 }: SmartReminderBannerProps) {
+  const { t } = useTranslation();
   if (!reminder) return null;
 
   const colors = REASON_COLORS[reminder.reason] || {
@@ -86,21 +88,21 @@ const SmartReminderBanner = React.memo(function SmartReminderBanner({
                 {REASON_ICONS[reminder.reason] || <Bell size={12} />}
               </span>
               <span className={`text-[9px] font-black uppercase tracking-widest ${colors.accent}`}>
-                {reminder.reason === 'blind_spot' && 'Tránh giờ quên'}
-                {reminder.reason === 'weather_alert' && 'Cảnh báo thời tiết'}
-                {reminder.reason === 'post_event' && 'Hồi phục hoạt động'}
-                {reminder.reason === 'interval' && 'Nhắc nhở định kỳ'}
-                {reminder.reason === 'catch_up' && 'Bắt kịp mục tiêu'}
+                {reminder.reason === 'blind_spot' && 'Avoid Blind Spots'}
+                {reminder.reason === 'weather_alert' && 'Weather Alert'}
+                {reminder.reason === 'post_event' && 'Post-Activity Recovery'}
+                {reminder.reason === 'interval' && 'Regular Reminder'}
+                {reminder.reason === 'catch_up' && 'Catch Up Goal'}
               </span>
               {reminder.priority === 'high' && (
                 <span className="text-[7px] font-black bg-rose-500/10 border border-rose-500/25 text-rose-400 px-1.5 py-0.5 rounded-md uppercase tracking-wider animate-pulse">
-                  Gấp
+                  Urgent
                 </span>
               )}
             </div>
             <button
               onClick={onDismiss}
-              title="Bỏ qua"
+              title={t('common.dismiss')}
               className="w-5 h-5 rounded-md text-slate-500 hover:text-slate-300 hover:bg-white/5 flex items-center justify-center transition-all active:scale-90"
             >
               <X size={12} />
@@ -120,7 +122,7 @@ const SmartReminderBanner = React.memo(function SmartReminderBanner({
               className="flex items-center gap-1 px-2 py-1 rounded-md text-[9.5px] font-bold text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] transition-all active:scale-95"
             >
               <Clock size={11} className="text-slate-500" />
-              <span>Nhắc lại sau 15p</span>
+              <span>Snooze 15m</span>
             </button>
 
             {/* Drink Button */}
@@ -129,7 +131,7 @@ const SmartReminderBanner = React.memo(function SmartReminderBanner({
               className={`h-7 px-3 rounded-lg bg-gradient-to-r ${colors.glow} text-slate-950 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 hover:brightness-110 active:scale-95 transition-all shadow-[0_0_12px_rgba(6,182,212,0.15)]`}
             >
               <Droplets size={11} className="text-slate-950" />
-              <span>Uống {reminder.suggestedAmount}ml</span>
+              <span>Drink {reminder.suggestedAmount}ml</span>
             </button>
           </div>
         </motion.div>

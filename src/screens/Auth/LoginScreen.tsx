@@ -136,7 +136,7 @@ export default function LoginScreen({ onBack, initialEmail = '', onBiometricUnlo
     <div className="flex flex-col min-h-screen max-w-md mx-auto font-sans bg-slate-950">
       <Toaster position="top-center" theme="dark" richColors />
       <div className="p-6 pt-14">
-        <button onClick={onBack} aria-label="Quay lại" className="mb-10 p-2 rounded-xl bg-slate-900/60 backdrop-blur-xl border border-white/5 text-slate-400 inline-flex active:scale-95 transition-all duration-200 ease-out hover:text-white">
+        <button onClick={onBack} aria-label={t('common.back')} className="mb-10 p-2 rounded-xl bg-slate-900/60 backdrop-blur-xl border border-white/5 text-slate-400 inline-flex active:scale-95 transition-all duration-200 ease-out hover:text-white">
           <ChevronLeft size={20} />
         </button>
 

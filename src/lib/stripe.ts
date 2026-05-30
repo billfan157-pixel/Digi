@@ -30,7 +30,7 @@ export async function startPremiumCheckout(plan: BillingPlan, tier: 'plus' | 'pr
   }
   if (!data?.url) {
     Sentry.captureMessage('Stripe checkout missing URL', { extra: { plan, tier, data } });
-    throw new Error('Không thể tạo phiên thanh toán.');
+    throw new Error(i18n.t('common.cannot_create_payment'));
   }
 
   return { sessionId: data.id as string, url: data.url as string };

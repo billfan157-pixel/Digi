@@ -133,6 +133,7 @@ BEGIN
     );
     
     EXECUTE create_stmt;
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', partition_name);
 END;
 $$;
 

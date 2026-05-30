@@ -5,6 +5,8 @@
  * Self-contained, no external state dependency.
  */
 
+import i18n from '@/i18n';
+
 export interface Nudge {
   emoji: string;
   title: string;
@@ -29,16 +31,16 @@ export function getTimeBasedNudge(params: {
     if (pct === 0) {
       return {
         emoji: '🌅',
-        title: 'Chào buổi sáng!',
-        message: `Một ngày mới bắt đầu. Hãy uống 250ml nước ngay sau khi thức dậy để đánh thức cơ thể!`,
-        actionLabel: 'Uống ngay 250ml',
+        title: i18n.t('home.nudge.morning_title'),
+        message: i18n.t('home.nudge.morning_msg'),
+        actionLabel: i18n.t('home.nudge.drink_now', { amount: 250 }),
         tint: 'morning',
       };
     }
     return {
       emoji: '☀️',
-      title: 'Ngày mới năng lượng!',
-      message: `Bạn đã uống ${waterIntake}ml sáng nay. Tiếp tục duy trì nhé! Chuỗi ${streak} ngày rồi 🔥`,
+      title: i18n.t('home.nudge.energy_title'),
+      message: i18n.t('home.nudge.energy_msg', { waterIntake, streak }),
       tint: 'morning',
     };
   }
@@ -47,9 +49,9 @@ export function getTimeBasedNudge(params: {
   if (hour >= 10 && hour < 12 && pct < 30) {
     return {
       emoji: '⏰',
-      title: 'Sắp hết buổi sáng!',
-      message: `Bạn mới uống ${Math.round(pct)}% mục tiêu. Buổi sáng là khung giờ vàng để nạp nước.`,
-      actionLabel: `Uống 250ml`,
+      title: i18n.t('home.nudge.mid_morning_title'),
+      message: i18n.t('home.nudge.mid_morning_msg', { pct: Math.round(pct) }),
+      actionLabel: i18n.t('home.nudge.drink', { amount: 250 }),
       tint: 'noon',
     };
   }
@@ -58,9 +60,9 @@ export function getTimeBasedNudge(params: {
   if (hour >= 11 && hour < 14 && pct < 50) {
     return {
       emoji: '☀️',
-      title: 'Giữa trưa rồi!',
-      message: `Trưa nay bạn uống được ${waterIntake}ml. Hãy uống thêm nước khi ăn trưa nhé!`,
-      actionLabel: pct < 25 ? `Uống 300ml` : undefined,
+      title: i18n.t('home.nudge.noon_title'),
+      message: i18n.t('home.nudge.noon_msg', { waterIntake }),
+      actionLabel: pct < 25 ? i18n.t('home.nudge.drink', { amount: 300 }) : undefined,
       tint: 'noon',
     };
   }
@@ -69,25 +71,25 @@ export function getTimeBasedNudge(params: {
   if (hour >= 14 && hour < 17) {
     if (pct < 50) {
       return {
-        emoji: '📉',
-        title: 'Chiều rồi!',
-        message: `Bạn mới đạt ${Math.round(pct)}% mục tiêu. Còn ${remaining}ml nữa — cố lên!`,
-        actionLabel: `Uống 250ml`,
+      emoji: '📉',
+      title: i18n.t('home.nudge.afternoon_title'),
+      message: i18n.t('home.nudge.afternoon_msg', { pct: Math.round(pct), remaining }),
+      actionLabel: i18n.t('home.nudge.drink', { amount: 250 }),
         tint: 'afternoon',
       };
     }
     if (pct < 80) {
       return {
-        emoji: '💪',
-        title: 'Đang đi đúng hướng!',
-        message: `Đạt ${Math.round(pct)}% rồi. Chỉ còn ${remaining}ml nữa là hoàn thành mục tiêu hôm nay.`,
-        tint: 'afternoon',
+      emoji: '💪',
+      title: i18n.t('home.nudge.on_track_title'),
+      message: i18n.t('home.nudge.on_track_msg', { pct: Math.round(pct), remaining }),
+      tint: 'afternoon',
       };
     }
     return {
       emoji: '🌟',
-      title: 'Gần xong rồi!',
-      message: `Bạn chỉ còn ${remaining}ml nữa! Buổi chiều này thật tuyệt vời.`,
+      title: i18n.t('home.nudge.near_done_title'),
+      message: i18n.t('home.nudge.near_done_msg', { remaining }),
       tint: 'afternoon',
     };
   }
@@ -96,26 +98,26 @@ export function getTimeBasedNudge(params: {
   if (hour >= 17 && hour < 21) {
     if (pct < 80) {
       return {
-        emoji: '🌆',
-        title: 'Buổi tối sắp đến',
-        message: `Ngày sắp kết thúc. Còn ${remaining}ml nữa để chạm mốc ${waterGoal}ml. Cố thêm chút nữa!`,
-        actionLabel: `Uống 200ml`,
+      emoji: '🌆',
+      title: i18n.t('home.nudge.evening_title'),
+      message: i18n.t('home.nudge.evening_msg', { remaining, waterGoal }),
+      actionLabel: i18n.t('home.nudge.drink', { amount: 200 }),
         tint: 'evening',
       };
     }
     if (pct >= 100) {
       return {
-        emoji: '🎉',
-        title: 'Hoàn thành xuất sắc!',
-        message: `Bạn đã đạt ${Math.round(pct)}% mục tiêu. Chuỗi ${streak} ngày — thật đáng tự hào!`,
-        tint: 'evening',
+      emoji: '🎉',
+      title: i18n.t('home.nudge.excellent_title'),
+      message: i18n.t('home.nudge.excellent_msg', { pct: Math.round(pct), streak }),
+      tint: 'evening',
       };
     }
     return {
       emoji: '🔥',
-      title: 'Về đích!',
-      message: `${Math.round(pct)}% — chỉ ${remaining}ml nữa thôi!`,
-      actionLabel: `Uống ${Math.min(remaining, 250)}ml`,
+      title: i18n.t('home.nudge.finish_title'),
+      message: i18n.t('home.nudge.finish_msg', { pct: Math.round(pct), remaining }),
+      actionLabel: i18n.t('home.nudge.drink', { amount: Math.min(remaining, 250) }),
       tint: 'evening',
     };
   }
@@ -124,16 +126,16 @@ export function getTimeBasedNudge(params: {
   if (hour >= 21 || hour < 5) {
     if (pct >= 100) {
       return {
-        emoji: '🌙',
-        title: 'Chúc ngủ ngon!',
-        message: `Ngày hôm nay thật tuyệt! ${waterIntake}ml, ${streak} ngày liên tiếp. Nghỉ ngơi tốt nhé.`,
-        tint: 'night',
+      emoji: '🌙',
+      title: i18n.t('home.nudge.good_night_title'),
+      message: i18n.t('home.nudge.good_night_msg', { waterIntake, streak }),
+      tint: 'night',
       };
     }
     return {
       emoji: '🌙',
-      title: 'Khuya rồi!',
-      message: `Đã ${hour}h, hãy ngủ sớm. Ngày mai hãy bắt đầu sớm hơn nhé!`,
+      title: i18n.t('home.nudge.late_title'),
+      message: i18n.t('home.nudge.late_msg', { hour }),
       tint: 'night',
     };
   }
@@ -141,8 +143,8 @@ export function getTimeBasedNudge(params: {
   // ── Default fallback ──
   return {
     emoji: '💧',
-    title: 'Nhớ uống nước!',
-    message: `Hôm nay bạn uống ${waterIntake}ml / ${waterGoal}ml.`,
+    title: i18n.t('home.nudge.remember_title'),
+    message: i18n.t('home.nudge.remember_msg', { waterIntake, waterGoal }),
     tint: 'noon',
   };
 }
@@ -178,7 +180,7 @@ export function getNextRecommendedDrink(params: {
   else if (remaining > hourlyTarget * 3) urgency = 'medium';
 
   return {
-    label: `Uống ${perSitting}ml`,
+    label: i18n.t('home.nudge.drink', { amount: perSitting }),
     amount: perSitting,
     urgency,
   };

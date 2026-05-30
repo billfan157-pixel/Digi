@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -8,6 +9,7 @@ interface NewPostsBannerProps {
 }
 
 export const NewPostsBanner = ({ count, onShowNewPosts }: NewPostsBannerProps) => {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export const NewPostsBanner = ({ count, onShowNewPosts }: NewPostsBannerProps) =
           onClick={() => { onShowNewPosts(); setVisible(false); }}
           className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-6 py-2.5 rounded-full font-bold shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center gap-2 active:scale-95 transition-transform"
         >
-          <RefreshCw size={16} className="animate-spin-slow" /> Có {count} diễn biến mới
+          <RefreshCw size={16} className="animate-spin-slow" /> {t('common.new_posts_banner', { count })}
         </motion.button>
       )}
     </AnimatePresence>

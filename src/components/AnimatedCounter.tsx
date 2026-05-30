@@ -7,12 +7,12 @@ interface AnimatedCounterProps {
 }
 
 export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, className }) => {
-  // Sử dụng hiệu ứng lò xo để con số tăng giảm tự nhiên và mượt mà
+  // Use spring effect for smooth natural number transitions
   const spring = useSpring(value, { mass: 0.8, stiffness: 75, damping: 15 });
   const display = useTransform(spring, (current) => Math.round(current).toLocaleString());
 
   useEffect(() => {
-    // Kích hoạt animation chạy đến giá trị mới mỗi khi value prop thay đổi
+    // Trigger animation to new value when value prop changes
     spring.set(value);
   }, [value, spring]);
 

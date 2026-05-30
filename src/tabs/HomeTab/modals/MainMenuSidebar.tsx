@@ -36,7 +36,7 @@ export default function MainMenuSidebar({
 }: MainMenuSidebarProps) {
   const { t } = useTranslation();
   const profile = useAppStore((state: { profile: unknown }) => state.profile) as Record<string, unknown> | null;
-  const { setShowShopModal, setShowBattleArena, setShowQuestModal, setShowChallengeModal } =
+  const { setShowShopModal, setActiveTab, setLeagueCompeteView, setShowQuestModal, setShowChallengeModal } =
     useUIStore();
 
   return (
@@ -110,7 +110,7 @@ export default function MainMenuSidebar({
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <Sparkles size={11} className="text-cyan-400 shrink-0" />
                         <p className="text-cyan-400 text-[10px] font-bold uppercase tracking-wider">
-                          Cấp {Number(profile?.level) || 1}
+                          {t('home.level_prefix', { level: Number(profile?.level) || 1 })}
                         </p>
                       </div>
                     </div>
@@ -135,7 +135,7 @@ export default function MainMenuSidebar({
                     <CountUp value={Number(profile?.wp) || 0} />
                   </span>
                   <span className="text-[9px] text-emerald-400/60 font-bold uppercase tracking-widest mt-1 block">
-                    Điểm SK
+                    {t('home.sk_points')}
                   </span>
                 </div>
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/15 p-3.5">
@@ -145,7 +145,7 @@ export default function MainMenuSidebar({
                     <CountUp value={Number(profile?.coins) || 0} />
                   </span>
                   <span className="text-[9px] text-amber-400/60 font-bold uppercase tracking-widest mt-1 block">
-                    Điểm thưởng
+                    {t('home.reward_points')}
                   </span>
                 </div>
               </motion.div>
@@ -161,22 +161,23 @@ export default function MainMenuSidebar({
                 className="space-y-1"
               >
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2.5 px-1">
-                  Hành trình & Thi đua
+                  {t('home.journey_competition')}
                 </p>
 
                 <SidebarButton
                   icon={<Swords size={16} className="text-rose-400" />}
-                  label="Thử thách đối kháng"
-                  highlight="Thi đấu"
+                  label={t('home.competitive_challenges')}
+                  highlight={t('home.fight')}
                   onClick={() => {
                     onClose();
-                    setShowBattleArena(true);
+                    setActiveTab('league');
+                    setLeagueCompeteView('arena');
                   }}
                 />
                 <SidebarButton
                   icon={<ScrollText size={16} className="text-purple-400" />}
-                  label="Lộ trình nhiệm vụ"
-                  highlight="Quest"
+                  label={t('home.quest_roadmap')}
+                  highlight={t('home.quest')}
                   onClick={() => {
                     onClose();
                     setShowQuestModal(true);
@@ -184,8 +185,8 @@ export default function MainMenuSidebar({
                 />
                 <SidebarButton
                   icon={<Target size={16} className="text-cyan-400" />}
-                  label="Đấu trường Thử thách"
-                  highlight="Cược WP"
+                  label={t('home.challenge_arena')}
+                  highlight={t('home.bet_wp')}
                   onClick={() => {
                     onClose();
                     setShowChallengeModal(true);
@@ -193,8 +194,8 @@ export default function MainMenuSidebar({
                 />
                 <SidebarButton
                   icon={<Store size={16} className="text-amber-400" />}
-                  label="Cửa hàng sức khỏe"
-                  highlight="Shop"
+                  label={t('home.health_store')}
+                  highlight={t('home.shop')}
                   onClick={() => {
                     onClose();
                     setShowShopModal(true);
@@ -210,13 +211,13 @@ export default function MainMenuSidebar({
                 className="space-y-1"
               >
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2.5 px-1">
-                  Hệ thống
+                  {t('home.system')}
                 </p>
 
                 <SidebarButton
                   icon={<Activity size={16} className="text-sky-400" />}
                   label={t('home.settings')}
-                  highlight="Cài đặt"
+                  highlight={t('home.settings')}
                   onClick={() => {
                     onClose();
                     onSettings();

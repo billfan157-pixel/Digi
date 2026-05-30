@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, RefreshCw, Users, UserMinus, UserPlus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { SocialDiscoverProfile } from '../../lib/social';
 
 interface SocialDiscoverModalProps {
@@ -23,6 +24,7 @@ export default function SocialDiscoverModal({
   handleUnfollowUser,
   handleFollowUser
 }: SocialDiscoverModalProps) {
+  const { t } = useTranslation();
   if (!showDiscoverPeople) return null;
   const card = "bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl";
 
@@ -31,11 +33,11 @@ export default function SocialDiscoverModal({
       <div className="w-full max-w-md min-h-screen overflow-y-auto scrollbar-hide">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 pt-6 pb-4 border-b border-slate-800 bg-slate-950/85 backdrop-blur-md">
           <div>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Bạn bè</p>
-            <h3 className="text-2xl font-black text-white mt-1">Kết nối</h3>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Friends</p>
+            <h3 className="text-2xl font-black text-white mt-1">Connect</h3>
           </div>
           <button onClick={() => setShowDiscoverPeople(false)} className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold hover:text-white transition-all active:scale-95">
-            Đóng
+            Close
           </button>
         </div>
 
@@ -45,7 +47,7 @@ export default function SocialDiscoverModal({
               type="text"
               value={socialSearchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => void handleSearchSocialUsers(e.target.value)}
-              placeholder="Tìm theo nickname..."
+              placeholder={t('common.enter_nickname')}
               className="w-full h-12 pl-11 pr-4 rounded-2xl bg-slate-900 border border-slate-700 text-white text-sm outline-none focus:border-emerald-500"
             />
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -54,7 +56,7 @@ export default function SocialDiscoverModal({
           {isSocialSearching ? (
             <div className={`${card} p-8 text-center`}>
               <RefreshCw size={26} className="text-emerald-400 mx-auto mb-4 animate-spin" />
-              <p className="text-white font-semibold">Đang tìm profile...</p>
+              <p className="text-white font-semibold">Finding profile...</p>
             </div>
           ) : socialSearchResults.length > 0 ? (
             <div className="space-y-3">
@@ -68,18 +70,18 @@ export default function SocialDiscoverModal({
                       <div className="min-w-0">
                         <p className="text-white text-sm font-bold truncate">{user.nickname}</p>
                         <p className="text-slate-500 text-[11px] mt-1">
-                          {user.isInCircle ? 'Đã là bạn bè' : 'Có thể xem Drop và nhận Duel'}
+                          {user.isInCircle ? t('profile_settings.friend_status_friend') : t('profile_settings.friend_status_can_view')}
                         </p>
                       </div>
                     </div>
 
                     {user.isInCircle ? (
                       <button onClick={() => void handleUnfollowUser(user.id, user.nickname)} className="px-4 py-2.5 rounded-2xl bg-slate-900 border border-slate-600 text-slate-200 text-[11px] font-bold flex items-center gap-2 active:scale-95 transition-all">
-                        <UserMinus size={14} /> Gỡ
+                        <UserMinus size={14} /> {t('social_discover.remove_btn')}
                       </button>
                     ) : (
                       <button onClick={() => void handleFollowUser(user.id, user.nickname)} className="px-4 py-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-2 active:scale-95 transition-all">
-                        <UserPlus size={14} /> Thêm
+                        <UserPlus size={14} /> {t('social_discover.add_btn')}
                       </button>
                     )}
                   </div>
@@ -89,11 +91,11 @@ export default function SocialDiscoverModal({
           ) : (
             <div className={`${card} p-8 text-center`}>
               <Users size={34} className="text-slate-600 mx-auto mb-3" />
-              <p className="text-white text-sm font-semibold mb-1">Chưa có kết quả phù hợp</p>
+              <p className="text-white text-sm font-semibold mb-1">No matching results</p>
               <p className="text-slate-400 text-xs">
                 {socialSearchQuery.trim().length >= 2
-                  ? 'Thử nickname ngắn hơn hoặc gần giống hơn.'
-                  : 'Nhập nickname để thêm bạn bè.'}
+                  ? t('social_discover.search_hint_long')
+                  : t('social_discover.search_hint')}
               </p>
             </div>
           )}

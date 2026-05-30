@@ -9,8 +9,10 @@ interface Challenge {
   title: string;
   description: string;
   category: string;
-  stake_wp: number;
-  reward_wp: number;
+  stake_wp?: number;
+  reward_wp?: number;
+  reward_exp?: number;
+  reward_coins?: number;
   duration_days: number;
 }
 
@@ -41,7 +43,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
     setLoading(true);
     try {
       const [challengesRes, userChallengesRes] = await Promise.all([
-        supabase.from('challenges').select('*').order('stake_wp', { ascending: true }),
+        supabase.from('challenges').select('*').order('created_at', { ascending: false }),
         supabase.from('user_challenges').select('*').eq('user_id', userId).eq('status', 'active')
       ]);
       
@@ -63,7 +65,8 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
   }, [fetchData]);
 
   const handleJoin = async (challenge: Challenge) => {
-    if (userPoints < challenge.stake_wp) {
+    const stake = challenge.stake_wp ?? 0;
+    if (userPoints < stake) {
       toast.error(t('challenge.not_enough_wp'));
       return;
     }
@@ -75,7 +78,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
       const { error } = await supabase.rpc('join_challenge', {
         p_user_id: userId,
         p_challenge_id: challenge.id,
-        p_stake_wp: challenge.stake_wp
+        p_stake_wp: stake
       });
 
       if (error) throw error;
@@ -83,7 +86,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
       toast.success(t('challenge.joined', { title: challenge.title }), { id: toastId });
 
       // Notify the parent component that the challenge was joined and pass the staked amount.
-      onChallengeJoined(challenge.stake_wp);
+      onChallengeJoined(stake);
       
       // Improvement: Only refetch user challenges instead of all data.
       const { data: updatedUserChallenges, error: refetchError } = await supabase
@@ -130,9 +133,9 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
       <div className="flex items-center justify-between px-2">
         <h2 className="text-xl font-bold text-slate-50 flex items-center gap-2">
           <Target size={20} className="text-cyan-400" />
-          Thử thách
+          Challenges
         </h2>
-        <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-1 rounded-lg uppercase tracking-wider">Cược WP để nhận thưởng</span>
+        <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-1 rounded-lg uppercase tracking-wider">Bet WP for rewards</span>
       </div>
 
       {categories.length > 2 && (
@@ -143,7 +146,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
               onClick={() => setActiveCategory(category)}
               className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors capitalize ${activeCategory === category ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-400 hover:bg-white/5'}`}
             >
-              {category === 'all' ? 'Tất cả' : category}
+              {category === 'all' ? 'All' : category}
             </button>
           ))}
         </div>
@@ -153,7 +156,9 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
         {filteredChallenges.map(challenge => {
           const activeEntry = userChallenges.find(uc => uc.challenge_id === challenge.id);
           const isActive = !!activeEntry;
-          const canAfford = userPoints >= challenge.stake_wp;
+          const stake = challenge.stake_wp ?? 0;
+          const reward = challenge.reward_wp ?? challenge.reward_coins ?? challenge.reward_exp ?? 0;
+          const canAfford = userPoints >= stake;
           const isJoining = joiningId === challenge.id;
 
           return (
@@ -172,13 +177,13 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
                 </div>
                 {isActive ? (
                   <div className="flex items-center gap-1 bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-emerald-500/30 whitespace-nowrap shadow-inner flex-shrink-0">
-                    <CheckCircle2 size={12} /> Đang chạy
+                    <CheckCircle2 size={12} /> Active
                   </div>
                 ) : (
                   <div className="text-right whitespace-nowrap flex-shrink-0 bg-slate-800/50 p-2 rounded-xl border border-slate-700/50">
-                    <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Phần thưởng</div>
+                    <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Reward</div>
                     <div className="text-yellow-400 font-black text-sm flex items-center gap-1">
-                      <Trophy size={14} className="drop-shadow-md" /> +{challenge.reward_wp}
+                      <Trophy size={14} className="drop-shadow-md" /> +{reward}
                     </div>
                   </div>
                 )}
@@ -188,11 +193,11 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1 text-[11px] font-bold text-slate-300 bg-slate-800/80 px-2.5 py-1.5 rounded-lg border border-slate-700">
                     <Flame size={12} className="text-orange-400" />
-                    {challenge.duration_days} ngày
+                    {challenge.duration_days} days
                   </div>
                   {!isActive && (
                     <div className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border ${canAfford ? 'text-slate-300 bg-slate-800/80 border-slate-700' : 'text-red-400 bg-red-500/10 border-red-500/20'}`}>
-                      Cược: {challenge.stake_wp} WP
+                      Stake: {stake} WP
                     </div>
                   )}
                 </div>
@@ -207,13 +212,13 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
                         : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
                     }`}
                   >
-                    {isJoining ? <Loader2 size={14} className="animate-spin" /> : canAfford ? 'Tham gia' : <><Lock size={12} /> Thiếu WP</>}
+                    {isJoining ? <Loader2 size={14} className="animate-spin" /> : canAfford ? 'Join' : <><Lock size={12} /> Low WP</>}
                   </button>
                 )}
                 
                 {isActive && activeEntry && (
                   <div className="text-xs font-bold text-emerald-500 flex items-center gap-1 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
-                    Tiến độ thực hiện: {activeEntry.progress_days} / {challenge.duration_days} ngày
+                    Progress: {activeEntry.progress_days} / {challenge.duration_days} days
                   </div>
                 )}
               </div>
@@ -233,7 +238,7 @@ export default function ChallengesList({ userId, userPoints, onChallengeJoined }
         
         {filteredChallenges.length === 0 && !loading && (
           <div className="text-center p-8 border border-dashed border-slate-700 rounded-[2rem] text-slate-500 text-sm">
-            Đang cập nhật thêm thử thách mới. Bạn quay lại sau nhé!
+            More challenges are coming. Check back later!
           </div>
         )}
       </div>

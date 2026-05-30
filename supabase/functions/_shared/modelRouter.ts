@@ -1,4 +1,4 @@
-export type AiAction = 'advice' | 'chat' | 'report-analysis' | 'agentic';
+export type AiAction = 'advice' | 'chat' | 'report-analysis' | 'agentic' | 'nudge';
 
 export type ModelTier = 'fast' | 'smart';
 
@@ -12,13 +12,15 @@ const ACTION_TIER: Record<AiAction, ModelTier> = {
   chat: 'fast',
   'report-analysis': 'smart',
   agentic: 'smart',
+  nudge: 'fast',
 };
 
 const MAX_TOKENS_MAP: Record<AiAction, number> = {
-  advice: 120,
-  chat: 250,
-  'report-analysis': 500,
-  agentic: 350,
+  advice: 600,
+  chat: 400,
+  'report-analysis': 1000,
+  agentic: 800,
+  nudge: 300,
 };
 
 /**

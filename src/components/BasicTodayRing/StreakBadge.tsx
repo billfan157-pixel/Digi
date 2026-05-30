@@ -18,7 +18,7 @@ export function StreakBadge({ streak }: StreakBadgeProps) {
         <Flame size={16} className="text-orange-400" aria-hidden="true" />
         <div className="text-left">
           <p className="text-[8px] uppercase tracking-widest text-slate-400 font-bold leading-none mb-0.5">
-            Liên tục
+            Streak
           </p>
           <p className="text-lg leading-none font-black text-orange-400">{streak}</p>
         </div>

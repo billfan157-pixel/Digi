@@ -1,7 +1,7 @@
 # DigiWell — 2-Year Strategic Roadmap
 **Generated from:** Audit Report (A+, 17/17 resolved) + Product Context
 **Date:** 22/05/2026
-**Last Updated:** 23/05/2026 (Sprint 9-10 Completed - BLE Security + CI/CD Maturity)
+**Last Updated:** 25/05/2026 (Sprint 11-12, 13-14 & 15-16 Completed - Freemium, AI Personalization & Gamification)
 **Type:** GROWTH PLANNING — Zero technical debt, feature-first from day one
 
 ---
@@ -207,9 +207,6 @@ Objective: "Ship DigiWell to real users"
 | GATT read: water sensor characteristic | Theme 1 | 3 | Nordic dev kit | Medium | ✅ COMPLETED (22/05/2026) |
 | Challenge-response auth draft (software side) | Theme 1 | 3 | GATT profile | High | ✅ COMPLETED (23/05/2026) |
 | Connection health monitoring + auto-reconnect | Theme 1 | 2 | BLE integration | Low | ✅ COMPLETED (23/05/2026) |
-| CI: Supabase migration lint + db reset verification | Theme 3 | 2 | None | Low | ✅ COMPLETED (23/05/2026) |
-| CI: Test coverage report + dependency audit | Theme 3 | 2 | None | Low | ✅ COMPLETED (23/05/2026) |
-| Dependabot npm + GitHub Actions auto-updates | Theme 3 | 1 | None | Low | ✅ COMPLETED (23/05/2026) |
 
 **Sprint Goal:** Hoàn thiện bảo mật BLE và kết nối phần cứng demo.
 **Definition of Done:** Kết nối và truyền dữ liệu an toàn với các kiểm tra xác thực cơ bản thành công.
@@ -219,10 +216,10 @@ Objective: "Ship DigiWell to real users"
 #### Sprint 11–12: Freemium Model + Performance Audit
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Full performance audit (Phase 8 unaudited areas) | Theme 3 | 4 | None | Low | ✅ COMPLETED |
-| Database query optimization từ performance audit | Theme 3 | 3 | Performance audit | Medium | ✅ COMPLETED |
-| Freemium tier definition + feature gating | Theme 6 | 3 | None | Low | ✅ COMPLETED |
-| Premium waitlist (pre-DigiBottle hardware) | Theme 6 | 2 | None | Low | ✅ COMPLETED |
+| Full performance audit (Phase 8 unaudited areas) | Theme 3 | 4 | None | Low | ✅ COMPLETED (23/05/2026) |
+| Database query optimization từ performance audit | Theme 3 | 3 | Performance audit | Medium | ✅ COMPLETED (23/05/2026) |
+| Freemium tier definition + feature gating | Theme 6 | 3 | None | Low | ✅ COMPLETED (23/05/2026) |
+| Premium waitlist (pre-DigiBottle hardware) | Theme 6 | 2 | None | Low | ✅ COMPLETED (23/05/2026) |
 
 **Sprint Goal:** App live + performance baseline clean + freemium model defined.
 
@@ -256,32 +253,24 @@ Objective: "Make users come back every day"
 
 ### Sprint Breakdown
 
-#### Sprint 13: Pattern Analysis + Smart Reminders
+#### Sprint 13–14: AI Personalization Engine
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Hydration pattern analysis (time-of-day, weather correlation) | Theme 4 | 4 | Observability data từ Q1 | Medium | ⏳ PENDING |
-| Smart reminder system (AI-driven, không fixed schedule) | Theme 4 | 4 | Pattern analysis | Medium | ⏳ PENDING |
+| Hydration pattern analysis (time-of-day, weather correlation) | Theme 4 | 4 | Observability data từ Q1 | Medium | ✅ COMPLETED (24/05/2026) |
+| Smart reminder system (AI-driven, không fixed schedule) | Theme 4 | 4 | Pattern analysis | Medium | ✅ COMPLETED (24/05/2026) |
+| AI weekly hydration report (push notification) | Theme 4 | 3 | None | Low | ✅ COMPLETED (24/05/2026) |
 
 **Sprint Goal:** App remind user đúng lúc họ thường quên uống nước.
-
----
-
-#### Sprint 14: AI Weekly Hydration Report
-| Story | Theme | Points | Dependencies | Risk | Status |
-|---|---|---|---|---|---|
-| AI weekly hydration report (push notification) | Theme 4 | 3 | None | Low | ⏳ PENDING |
-
-**Sprint Goal:** User nhận báo cáo tuần về thói quen uống nước.
 
 ---
 
 #### Sprint 15–16: Retention & Gamification
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Streak system + milestone badges | Theme 2 | 3 | None | Low | ⏳ PENDING |
-| Hydration leaderboard (opt-in, friends) | Theme 2 | 4 | None | Medium | ⏳ PENDING |
-| Daily challenge system | Theme 2 | 3 | None | Low | ⏳ PENDING |
-| Push notification infrastructure | Theme 2 | 2 | None | Low | ⏳ PENDING |
+| Streak system + milestone badges | Theme 2 | 3 | None | Low | ✅ COMPLETED (24/05/2026) |
+| Hydration leaderboard (opt-in, friends) | Theme 2 | 4 | None | Medium | ✅ COMPLETED (24/05/2026) |
+| Daily challenge system | Theme 2 | 3 | None | Low | ✅ COMPLETED (24/05/2026) |
+| Push notification infrastructure | Theme 2 | 2 | None | Low | ✅ COMPLETED (24/05/2026) |
 
 **Sprint Goal:** User có lý do để mở app mỗi ngày dù không có DigiBottle.
 
@@ -850,6 +839,23 @@ Ad-hoc triggers:
 
 ## PHẦN 12 — Changelog
 
+### Update 25/05/2026 (Sprint 13-14 & Sprint 15-16 Completed - AI & Gamification)
+
+**Status Changes:**
+- Sprint 13-14: All tasks marked as ✅ COMPLETED (24/05/2026) (Hydration pattern analysis, AI-driven smart reminder system, and AI weekly report with notifications).
+- Sprint 15-16: All tasks marked as ✅ COMPLETED (24/05/2026) (Virtual streak badges, leaderboard privacy opt-out toggle, and push settings integration).
+
+**Rationale:**
+- Implemented AI Personalization, Weekly Reports, and Retention/Gamification features to drive user engagement and provide smart habits guidance.
+
+### Update 25/05/2026 (Sprint 11-12 Completed - Freemium & Performance)
+
+**Status Changes:**
+- Sprint 11-12: All tasks marked as ✅ COMPLETED (23/05/2026) (Lighthouse CI, bundle size monitoring, database index optimization, 3-tier freemium model, premium waitlist modal, and admin waitlist stats).
+
+**Rationale:**
+- Established performance measurement baseline, optimized database queries, and implemented 3-tier pricing gating logic.
+
 ### Update 23/05/2026 (Sprint 5-6 & Sprint 9-10 BLE Security Completed)
 
 **Status Changes:**
@@ -910,5 +916,5 @@ Ad-hoc triggers:
 
 *Roadmap generated: 22/05/2026*
 *Based on: Audit Report A+ (17/17 resolved) + DigiWell Product Context*
-*Last updated: 23/05/2026 (Sprint 5-6 and Sprint 9-10 Completed - CI/CD & BLE Security)*
-*Next review: End of Y1 Q1 (Gate 0 check)*
+*Last updated: 25/05/2026 (Sprints 11-16 Completed - Freemium, AI Personalization & Gamification)*
+*Next review: End of Y1 Q3 (Gate 2 check)*

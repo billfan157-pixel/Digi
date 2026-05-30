@@ -13,7 +13,7 @@ function DeltaBadge({ value, suffix = '' }: { value: number; suffix?: string }) 
   if (value === 0) return <span className="text-slate-500 text-xs font-bold">—</span>;
   const isPositive = value > 0;
   return (
-    <span className={`text-xs font-black ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+    <span className={`text-xs font-black ${isPositive ? 'text-emerald-400' : 'text-orange-400'}`}>
       {isPositive ? '+' : ''}{value}{suffix}
     </span>
   );
@@ -47,8 +47,8 @@ export const WeekOverWeekCard = memo(function WeekOverWeekCard({
   if (previousWeek.length === 0) return null;
 
   const TrendIcon = comparison.trend === 'up' ? TrendingUp : comparison.trend === 'down' ? TrendingDown : Minus;
-  const trendColor = comparison.trend === 'up' ? 'text-emerald-400' : comparison.trend === 'down' ? 'text-rose-400' : 'text-slate-400';
-  const trendBg = comparison.trend === 'up' ? 'bg-emerald-500/10 border-emerald-500/20' : comparison.trend === 'down' ? 'bg-rose-500/10 border-rose-500/20' : 'bg-slate-500/10 border-slate-500/20';
+  const trendColor = comparison.trend === 'up' ? 'text-emerald-400' : comparison.trend === 'down' ? 'text-orange-400' : 'text-slate-400';
+  const trendBg = comparison.trend === 'up' ? 'bg-emerald-500/10 border-emerald-500/20' : comparison.trend === 'down' ? 'bg-orange-500/10 border-orange-500/20' : 'bg-slate-500/10 border-slate-500/20';
 
   return (
     <motion.div
@@ -71,13 +71,13 @@ export const WeekOverWeekCard = memo(function WeekOverWeekCard({
 
       <div className="grid grid-cols-3 gap-3">
         <div className={`${glassInner} p-3 text-center`}>
-          <Droplets size={14} className="text-cyan-400 mx-auto mb-1.5" />
+          <Droplets size={14} className="text-[var(--neon-cyan,#22d3ee)] mx-auto mb-1.5" />
           <p className="text-white font-black text-sm">{comparison.curAvg.toLocaleString('vi-VN')}</p>
           <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">TB/ngày</p>
           <DeltaBadge value={comparison.avgDelta} suffix="%" />
         </div>
         <div className={`${glassInner} p-3 text-center`}>
-          <Target size={14} className="text-violet-400 mx-auto mb-1.5" />
+          <Target size={14} className="text-[var(--neon-cyan,#22d3ee)] mx-auto mb-1.5" />
           <p className="text-white font-black text-sm">{comparison.curCompleted}/{currentWeek.length}</p>
           <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Đạt mục tiêu</p>
           <DeltaBadge value={comparison.completedDelta} suffix=" ngày" />
@@ -85,7 +85,7 @@ export const WeekOverWeekCard = memo(function WeekOverWeekCard({
         <div className={`${glassInner} p-3 text-center`}>
           <Flame size={14} className="text-amber-400 mx-auto mb-1.5" />
           <p className="text-white font-black text-sm">{comparison.curBestDay.toLocaleString('vi-VN')}</p>
-          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Ngày cao nhất</p>
+          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Highest day</p>
           <DeltaBadge value={comparison.bestDayDelta} suffix="%" />
         </div>
       </div>

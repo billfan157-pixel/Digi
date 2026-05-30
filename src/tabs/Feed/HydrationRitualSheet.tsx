@@ -36,8 +36,8 @@ const RITUALS: RitualOption[] = [
   {
     kind: 'baptism',
     label: 'Baptism',
-    subtitle: 'Chụp ảnh hydration',
-    description: 'Ghi lại khoảnh khắc uống nước cùng tiến độ hôm nay.',
+    subtitle: 'Capture hydration photo',
+    description: 'Record your water drinking moment with today\'s progress.',
     gradient: 'from-cyan-500/20 via-cyan-500/5 to-transparent',
     icon: Camera,
   },
@@ -45,27 +45,57 @@ const RITUALS: RitualOption[] = [
     kind: 'ignition',
     label: 'Ignition',
     subtitle: 'Peak streak',
-    description: 'Đánh dấu hành trình với một cảm xúc nổi bật.',
+    description: 'Mark your journey with an outstanding emotion.',
     gradient: 'from-orange-500/20 via-orange-500/5 to-transparent',
     icon: Flame,
   },
   {
     kind: 'wave',
     label: 'Hydration Wave',
-    subtitle: 'Lan tỏa nước',
-    description: 'Báo hiệu hoàn thành mục tiêu cho bạn bè.',
+    subtitle: 'Spread the water',
+    description: 'Signal goal completion to friends.',
     gradient: 'from-emerald-500/20 via-emerald-500/5 to-transparent',
     icon: Droplets,
   },
   {
     kind: 'duel',
     label: 'Duel',
-    subtitle: 'Duel bạn bè',
-    description: 'Tạo chiến thư hydration trực tiếp trên feed.',
+    subtitle: 'Duel friends',
+    description: 'Create a hydration challenge directly on the feed.',
     gradient: 'from-purple-500/20 via-purple-500/5 to-transparent',
     icon: Swords,
   },
 ];
+
+function getRitualLabel(t: (k: string) => string, kind: RitualKind): string {
+  const map: Record<RitualKind, string> = {
+    baptism: t('feed.ritual_baptism'),
+    ignition: t('feed.ritual_ignition'),
+    wave: t('feed.ritual_wave'),
+    duel: t('feed.ritual_duel'),
+  };
+  return map[kind];
+}
+
+function getRitualSubtitle(t: (k: string) => string, kind: RitualKind): string {
+  const map: Record<RitualKind, string> = {
+    baptism: t('feed.ritual_baptism_sub'),
+    ignition: t('feed.ritual_ignition_sub'),
+    wave: t('feed.ritual_wave_sub'),
+    duel: t('feed.ritual_duel_sub'),
+  };
+  return map[kind];
+}
+
+function getRitualDescription(t: (k: string) => string, kind: RitualKind): string {
+  const map: Record<RitualKind, string> = {
+    baptism: t('feed.ritual_baptism_desc'),
+    ignition: t('feed.ritual_ignition_desc'),
+    wave: t('feed.ritual_wave_desc'),
+    duel: t('feed.ritual_duel_desc'),
+  };
+  return map[kind];
+}
 
 const MOOD_EMOJIS = ['💪', '🔥', '🎯', '✨', '🙌', '💧', '🌟', '⚡'];
 
@@ -116,16 +146,16 @@ export const HydrationRitualSheet = ({
       case 'baptism':
         return (
           customText.trim() ||
-          (imagePreview ? '📸 Đã chụp ảnh hydration' : 'Khoảnh khắc hydration...')
+          (imagePreview ? t('feed.took_hydration_photo') : t('feed.hydration_moment'))
         );
       case 'ignition':
-        return `${selectedMood || '💪'} ${customText.trim() || `Chuỗi ${streak} ngày`}`;
+        return `${selectedMood || '💪'} ${customText.trim() || t('feed.streak_days', { days: streak })}`;
       case 'wave':
-        return customText.trim() || `🌊 Đã hoàn thành ${progressPct}% mục tiêu!`;
+        return customText.trim() || t('feed.completed_goal_pct', { pct: progressPct });
       case 'duel':
         return (
           customText.trim() ||
-          'Duel — ai uống đủ nước trước sẽ thắng!'
+          t('feed.duel_preview_default')
         );
       default:
         return '';
@@ -262,12 +292,12 @@ export const HydrationRitualSheet = ({
 
               <div className="min-w-0">
                 <h2 className="truncate text-base font-bold tracking-tight text-white">
-                  {selectedRitual?.label || 'Nghi thức Hydration'}
+                  {selectedRitual ? getRitualLabel(t, selectedRitual.kind) : t('feed.hydration_ritual_title')}
                 </h2>
                 <p className="mt-0.5 text-[11px] text-slate-500">
                   {selectedKind
-                    ? 'Xác nhận để lan tỏa lên feed'
-                    : 'Chọn một nghi thức để chia sẻ'}
+                    ? t('feed.confirm_to_spread')
+                    : t('feed.choose_ritual')}
                 </p>
               </div>
             </div>
@@ -309,13 +339,13 @@ export const HydrationRitualSheet = ({
 
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-white">
-                          {ritual.label}
+                          {getRitualLabel(t, ritual.kind)}
                         </p>
                         <p className="mt-0.5 text-xs text-slate-400">
-                          {ritual.subtitle}
+                          {getRitualSubtitle(t, ritual.kind)}
                         </p>
                         <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
-                          {ritual.description}
+                          {getRitualDescription(t, ritual.kind)}
                         </p>
                       </div>
                     </div>
@@ -365,7 +395,7 @@ export const HydrationRitualSheet = ({
                     <>
                       <img
                         src={imagePreview}
-                        alt="Xem trước ảnh"
+                        alt="Preview photo"
                         loading="lazy"
                         decoding="async"
                         className="h-full w-full object-cover"
@@ -390,7 +420,7 @@ export const HydrationRitualSheet = ({
                         />
                       </div>
                       <p className="text-xs font-medium text-slate-500">
-                        Chụp ảnh chai nước của bạn
+                        {t('feed.take_water_bottle_photo')}
                       </p>
                     </div>
                   )}
@@ -408,7 +438,7 @@ export const HydrationRitualSheet = ({
                 <textarea
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
-                  placeholder="Cảm nhận về ly nước này (không bắt buộc)..."
+                  placeholder={t('common.ritual_note_placeholder')}
                   className="h-20 w-full resize-none rounded-xl border border-white/5 bg-slate-800/40 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-cyan-500/30"
                 />
               </motion.div>
@@ -427,10 +457,10 @@ export const HydrationRitualSheet = ({
                     {streak}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-orange-400/80">
-                    ngày liên tiếp
+                    {t('feed.consecutive_days')}
                   </p>
                   <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                    Chọn cảm xúc
+                    {t('feed.choose_mood')}
                   </p>
                 </div>
 
@@ -454,7 +484,7 @@ export const HydrationRitualSheet = ({
                 <textarea
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
-                  placeholder="Ghi chú thêm (không bắt buộc)..."
+                  placeholder={t('common.extra_note_placeholder')}
                   className="h-20 w-full resize-none rounded-xl border border-white/5 bg-slate-800/40 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-orange-500/30"
                 />
               </motion.div>
@@ -474,17 +504,17 @@ export const HydrationRitualSheet = ({
                   </div>
                   <p className="text-3xl font-black text-white">{waterIntake} ml</p>
                   <p className="mt-1 text-xs text-emerald-400/80">
-                    Mục tiêu: {waterGoal} ml
+                    {t('feed.goal_with_value', { goal: waterGoal })}
                   </p>
                   <p className="mx-auto mt-3 max-w-[200px] text-[10px] leading-relaxed text-slate-500">
-                    Gửi tín hiệu hydration — bạn bè nhận được +25ml khi bấm vào.
+                    {t('feed.hydration_signal_desc')}
                   </p>
                 </div>
 
                 <textarea
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
-                  placeholder="Lời nhắn (không bắt buộc)..."
+                  placeholder={t('common.message_placeholder_optional')}
                   className="h-20 w-full resize-none rounded-xl border border-white/5 bg-slate-800/40 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-emerald-500/30"
                 />
               </motion.div>
@@ -503,22 +533,22 @@ export const HydrationRitualSheet = ({
                     <Swords size={28} className="text-purple-400" />
                   </div>
                   <p className="text-base font-bold text-white">
-                    Duel bạn bè
+                    {t('feed.ritual_duel_friends')}
                   </p>
                   <p className="mt-1 text-xs text-purple-400/80">
-                    Ai uống đủ nước trước sẽ thắng!
+                    {t('feed.ritual_duel_challenge_desc')}
                   </p>
                 </div>
 
                 <textarea
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
-                  placeholder="Viết lời Duel..."
+                  placeholder={t('common.duel_message_placeholder')}
                   className="h-20 w-full resize-none rounded-xl border border-white/5 bg-slate-800/40 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-purple-500/30"
                 />
 
                 <p className="text-center text-[10px] leading-relaxed text-slate-600">
-                  Chiến thư sẽ hiện trên feed — bạn bè có thể bấm “Nhận lời” để tham gia.
+                  {t('feed.challenge_letter_desc')}
                 </p>
               </motion.div>
             )}
@@ -529,7 +559,7 @@ export const HydrationRitualSheet = ({
           <div className="shrink-0 border-t border-white/5 bg-slate-950/90 px-5 py-4 backdrop-blur">
             <div className="mb-3 flex items-center justify-between gap-3 px-1">
               <span className="text-xs font-medium text-slate-500">
-                Bài viết của bạn
+                {t('feed.your_post')}
               </span>
               <span className="max-w-[210px] truncate text-xs text-slate-400">
                 {previewText}
@@ -554,7 +584,7 @@ export const HydrationRitualSheet = ({
               ) : (
                 <>
                   <Send size={15} />
-                  Lan tỏa
+                  {t('feed.spread')}
                 </>
               )}
             </button>

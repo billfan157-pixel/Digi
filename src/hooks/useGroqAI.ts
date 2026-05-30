@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import i18n from '@/i18n';
 import { toast } from 'sonner';
 import { useUIStore } from '@/store/useUIStore';
+import { confirmDialog } from '@/store/useConfirmDialog';
 import { 
   generateHydrationAdvice, 
   sendAiChatMessage, 
@@ -13,6 +14,7 @@ import {
   type AiAdviceResponse,
   type AgenticAction,
 } from '../lib/ai';
+import { sanitizeAndCapContext } from '@shared/aiValidation';
 import { getOfflineAdvice, type ExpertContext } from '../lib/offlineExpertSystem';
 import { useBehaviorAnalysis } from './useBehaviorAnalysis';
 import { supabase } from '../lib/supabase';
@@ -41,24 +43,11 @@ export interface UseGroqAIProps {
   setShowHistory?: (show: boolean) => void;
 }
 
-/** Anonymize calendar titles → generic categories before sending to AI */
-function categorizeCalendarTitle(title: string): string {
-  const t = title.toLowerCase();
-  if (/\b(họp|meeting|standup|sync|review|sprint|retro|planning)\b/.test(t)) return 'Lịch họp/Công việc';
-  if (/\b(bác sĩ|doctor|khám|y tế|hospital|clinic|thuốc|health|therapy)\b/.test(t)) return 'Hẹn y tế/Sức khỏe';
-  if (/\b(gym|tập|workout|run|chạy|yoga|swim|bơi|sport|thể thao|exercise)\b/.test(t)) return 'Tập luyện/Thể thao';
-  if (/\b(ăn|lunch|dinner|breakfast|café|coffee|nhậu|tiệc|party)\b/.test(t)) return 'Bữa ăn/Gặp gỡ';
-  if (/\b(học|class|course|lecture|study|exam|thi|trường)\b/.test(t)) return 'Học tập';
-  if (/\b(đi|travel|bay|flight|trip|du lịch)\b/.test(t)) return 'Di chuyển/Du lịch';
-  if (/\b(ngủ|sleep|nghỉ|break|rest)\b/.test(t)) return 'Nghỉ ngơi';
-  return 'Sự kiện cá nhân';
-}
-
 function buildContextHash(p: UseGroqAIProps): string {
   // Include event titles (first 30 chars each) để invalidate khi calendar thay đổi
   const calHash = (p.calendarEvents ?? [])
     .slice(0, 10)
-    .map(ev => `${categorizeCalendarTitle(ev.title ?? '')}|${ev.startRaw}`)
+    .map(ev => `${ev.title ?? ''}|${ev.startRaw}`)
     .join('::');
   return [
     p.waterIntake.toFixed(0),
@@ -74,7 +63,7 @@ function buildContextHash(p: UseGroqAIProps): string {
 
 const defaultWelcomeMessage: AiChatMessage = {
   role: 'model',
-  content: 'Chào đệ! Hôm nay DigiCoach đã sẵn sàng đồng hành cùng đệ. Hãy bắt đầu bằng cách uống một ly nước nhé!'
+  content: i18n.t('ai.greeting')
 };
 
 export type ChatWaterAction = {
@@ -93,7 +82,14 @@ export function useGroqAI(props: UseGroqAIProps) {
   const hasLoadedHistoryRef = useRef(false);
 
   // --- [1] STATES ---
-  const [aiResponse, setAiResponse] = useState<AiAdviceResponse | null>(null);
+  const [aiResponse, setAiResponse] = useState<AiAdviceResponse & {
+    nextBestAction?: {
+      title: string;
+      action: string;
+      ml: number;
+      icon: string;
+    };
+  } | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState<AiChatMessage[]>([defaultWelcomeMessage]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -105,13 +101,66 @@ export function useGroqAI(props: UseGroqAIProps) {
 
   // --- [1.5] AI DAILY LIMIT CHECK ---
   const checkAILimit = useCallback(async (action: 'chat' | 'advice'): Promise<boolean> => {
+    const userId = profile?.id;
+    if (!userId) {
+      return true; // Fail-open
+    }
+
     try {
-      const { data, error } = await supabase.rpc('consume_ai_usage', { p_action: action });
-      if (error) {
-        console.error('[AI Limit] RPC error:', error);
-        return true; // fail-open on RPC error
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // Fetch subscription details and usage in parallel to avoid RPC dependency
+      const [profileRes, usageRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('subscription_tier, subscription_end, grace_period_end')
+          .eq('id', userId)
+          .maybeSingle(),
+        supabase
+          .from('ai_usage')
+          .select('message_count, advice_count')
+          .eq('user_id', userId)
+          .eq('date', todayStr)
+          .maybeSingle()
+      ]);
+
+      if (profileRes.error) {
+        console.error('[AI Limit] Failed to fetch profile details:', profileRes.error);
+        return true; // Fail-open
       }
-      if (data && !data.allowed) {
+      if (usageRes.error) {
+        console.error('[AI Limit] Failed to fetch AI usage:', usageRes.error);
+        return true; // Fail-open
+      }
+
+      const dbProfile = profileRes.data;
+      const usage = usageRes.data;
+
+      // Determine active subscription tier
+      let tier = dbProfile?.subscription_tier || 'free';
+      const now = new Date();
+      const subEnd = dbProfile?.subscription_end ? new Date(dbProfile.subscription_end) : null;
+      const graceEnd = dbProfile?.grace_period_end ? new Date(dbProfile.grace_period_end) : null;
+
+      const isSubActive = !subEnd || subEnd > now || (graceEnd && graceEnd > now);
+      if (!isSubActive) {
+        tier = 'free';
+      }
+
+      const isPro = tier === 'pro';
+      let limit = 0;
+      let current = 0;
+
+      if (action === 'chat') {
+        limit = isPro ? 1000000 : (tier === 'plus' ? 15 : 5);
+        current = usage?.message_count ?? 0;
+      } else {
+        // advice
+        limit = isPro ? 1000000 : (tier === 'plus' ? 5 : 3);
+        current = usage?.advice_count ?? 0;
+      }
+
+      if (current >= limit) {
         toast.warning(
           action === 'chat'
             ? i18n.t('ai.limit_chat')
@@ -123,10 +172,10 @@ export function useGroqAI(props: UseGroqAIProps) {
       }
       return true;
     } catch (e) {
-      console.error('[AI Limit] Unexpected error:', e);
-      return true; // fail-open
+      console.error('[AI Limit] Unexpected error checking limit:', e);
+      return true; // Fail-open
     }
-  }, []);
+  }, [profile?.id]);
   const cacheHashRef = useRef('');
 
   // Behavior patterns from weekly data (for personalised AI context)
@@ -160,7 +209,7 @@ export function useGroqAI(props: UseGroqAIProps) {
   const buildContext = useCallback((): DigiwellAiContext => {
     const p = propsRef.current;
     const currentPatterns = patternsRef.current;
-    return {
+    return sanitizeAndCapContext({
       nowIso: new Date().toISOString(),
       waterIntake: p.waterIntake,
       waterGoal: p.waterGoal,
@@ -178,7 +227,7 @@ export function useGroqAI(props: UseGroqAIProps) {
         steps: p.watchData.steps ?? 0
       } : undefined,
       profile: p.profile ? {
-        nickname: 'Thành viên',
+        nickname: i18n.t('ai.member'),
         goal: p.profile.goal,
         activity: p.profile.activity,
         climate: p.profile.climate
@@ -192,12 +241,12 @@ export function useGroqAI(props: UseGroqAIProps) {
         : undefined,
       calendarEvents: p.calendarEvents?.length
         ? p.calendarEvents.slice(0, 10).map(ev => ({
-            title: categorizeCalendarTitle(ev.title),
+            title: ev.title,
             startRaw: ev.startRaw,
             endRaw: ev.endRaw,
           }))
         : undefined,
-    };
+    });
   }, []);
 
   // --- [3] ACTIONS ---
@@ -207,14 +256,14 @@ export function useGroqAI(props: UseGroqAIProps) {
       .slice(-8)
       .filter((msg) => msg.content.trim().length > 0)
       .map((msg) => ({
-        role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
+        role: msg.role === 'user' ? 'user' as const : 'model' as const,
         content: msg.content.slice(0, 600),
       }));
 
-    return {
+    return sanitizeAndCapContext({
       ...buildContext(),
       chatHistory: recentHistory,
-    };
+    });
   }, [buildContext, chatMessages]);
 
   const updateLastModelMessage = useCallback((updater: (content: string) => string) => {
@@ -248,10 +297,13 @@ export function useGroqAI(props: UseGroqAIProps) {
       return;
     }
 
-    // Require user confirmation before executing AI water action
-    const confirmed = window.confirm(
-      `AI đề xuất ghi nhận ${amount}ml ${name}. Bạn có muốn xác nhận không?`
-    );
+    // Require user confirmation before executing AI water action using consolidated in-app confirmDialog
+    const confirmed = await confirmDialog({
+      title: i18n.t('ai.confirm_hydration_title'),
+      message: i18n.t('ai.confirm_hydration_message', { amount, name }),
+      confirmLabel: i18n.t('common.confirm'),
+      cancelLabel: i18n.t('common.cancel'),
+    });
 
     if (!confirmed) {
       toast.info(i18n.t('ai.cancelled'));
@@ -434,14 +486,14 @@ export function useGroqAI(props: UseGroqAIProps) {
 
       const finalReply = streamedReply.trim();
       if (!finalReply) {
-        updateLastModelMessage(() => 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.');
+        updateLastModelMessage(() => i18n.t('ai.dont_understand'));
       }
 
       await handleWaterAction(streamedWaterAction);
       handleReplyActions(finalReply);
     } catch (error: unknown) {
       toast.error(i18n.t('ai.busy'));
-      updateLastModelMessage(() => 'AI đang bận một chút, bạn thử lại sau nhé.');
+      updateLastModelMessage(() => i18n.t('ai.busy_fallback'));
       const errorMsg = String(error instanceof Error ? error.message : error || '');
       if (errorMsg.includes('429') || errorMsg.toLowerCase().includes('limit') || errorMsg.toLowerCase().includes('rate limit')) {
         useUIStore.getState().setShowPremiumModal(true);
@@ -474,6 +526,7 @@ export function useGroqAI(props: UseGroqAIProps) {
 
   return {
     aiAdvice: aiResponse?.text || '',
+    aiAdviceObj: aiResponse,
     isAiLoading, 
     chatMessages, 
     setChatMessages,

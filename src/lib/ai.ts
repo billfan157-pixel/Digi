@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { invokeAiGateway, invokeAiGatewayStream, type AiGatewayStreamEvent } from './aiGateway';
 import { isSupabaseConfigured, supabase } from './supabase';
 
@@ -6,33 +7,8 @@ export type AiChatMessage = {
   content: string;
 };
 
-export type DigiwellAiContext = {
-  nowIso: string;
-  waterIntake: number;
-  waterGoal: number;
-  hydrationHistory?: Array<{ date: string; ml: number }>;
-  weather?: { temp: number; status: string; location: string };
-  watch?: { heartRate: number; steps: number };
-  calendar?: { synced: boolean; nextEventTitle?: string };
-  profile?: { nickname?: string; goal?: string; activity?: string; climate?: string };
-  chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
-  behaviorPatterns?: Array<{
-    pattern: string;
-    confidence: number;
-    recommendation: string;
-  }>;
-  calendarEvents?: Array<{
-    title: string;
-    startRaw: string;
-    endRaw: string;
-  }>;
-};
-
-type WaterAction = {
-  amount: number;
-  factor: number;
-  name: string;
-};
+import type { DigiwellAiContext, WaterAction } from '@shared/aiValidation';
+export type { DigiwellAiContext, WaterAction };
 
 export type AiAdviceResponse = {
   text: string;
@@ -40,7 +16,7 @@ export type AiAdviceResponse = {
 };
 
 const FRIENDLY_FALLBACK_ADVICE: AiAdviceResponse = {
-  text: 'Hệ thống AI đang bận một chút. Tạm thời hãy uống thêm vài ngụm nước nhỏ và nghỉ 1-2 phút nhé!',
+  text: i18n.t('ai.busy_message'),
   suggestedAmount: 200,
 };
 
@@ -48,13 +24,13 @@ function getAiErrorMessage(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error);
 
   if (raw.toLowerCase().includes('rate limit')) {
-    return 'AI đang bị giới hạn tốc độ. Thử lại sau ít giây.';
+    return i18n.t('ai.rate_limited');
   }
   if (raw.toLowerCase().includes('unauthorized')) {
-    return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+    return i18n.t('ai.session_expired');
   }
   if (raw.includes('AI server chưa được cấu hình')) {
-    return 'AI server chưa được cấu hình.';
+    return i18n.t('ai.not_configured');
   }
 
   return raw;
@@ -87,6 +63,68 @@ export function isAiConfigured(): boolean {
   return isSupabaseConfigured;
 }
 
+export type AiNudgeResponse = {
+  message: string;
+  suggestedAmount: number;
+};
+
+const nudgeCache = new Map<string, { result: AiNudgeResponse; expiry: number }>();
+
+export async function generateAiNudge(
+  context: Pick<DigiwellAiContext, 'waterIntake' | 'waterGoal' | 'profile' | 'weather'> & {
+    hour: number;
+    streak: number;
+    isFirstOpen: boolean;
+    weeklyHistory?: Array<{ d: string; ml: number }>;
+    calendarEvents?: Array<{ title: string; startRaw: string; endRaw: string }>;
+  },
+): Promise<AiNudgeResponse> {
+  const cacheKey = `nudge-${context.waterIntake}-${context.waterGoal}-${context.hour}-${Math.floor(Date.now() / (30 * 60 * 1000))}`;
+
+  const cached = nudgeCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) return cached.result;
+
+  try {
+    const fullContext: DigiwellAiContext = {
+      nowIso: new Date().toISOString(),
+      waterIntake: context.waterIntake,
+      waterGoal: context.waterGoal,
+      weather: context.weather,
+      profile: context.profile,
+      hydrationHistory: context.weeklyHistory?.slice(-7).map(day => ({
+        date: day.d,
+        ml: day.ml,
+      })),
+      calendarEvents: context.calendarEvents?.length ? context.calendarEvents : undefined,
+      behaviorPatterns: [
+        {
+          pattern: `Giờ hiện tại: ${context.hour}h. Streak: ${context.streak} ngày.`,
+          confidence: 0.8,
+          recommendation: context.isFirstOpen ? i18n.t('ai.first_open_today') : '',
+        },
+      ],
+    };
+
+    const nudge = await invokeAiGateway<{ text: string; suggestedAmount?: number }>('nudge', { context: fullContext });
+
+    const result: AiNudgeResponse = {
+      message: nudge.text,
+      suggestedAmount: nudge.suggestedAmount ?? 250,
+    };
+
+    nudgeCache.set(cacheKey, { result, expiry: Date.now() + 30 * 60 * 1000 });
+    return result;
+  } catch {
+    const remaining = Math.max(0, context.waterGoal - context.waterIntake);
+    return {
+      message: remaining > 0
+        ? i18n.t('ai.drink_more_nudge', { remaining })
+        : i18n.t('ai.goal_reached_congrats'),
+      suggestedAmount: Math.min(250, remaining > 0 ? remaining : 0),
+    };
+  }
+}
+
 export async function generateHydrationAdvice(context: DigiwellAiContext): Promise<AiAdviceResponse> {
   try {
     const response = await invokeAiGateway<AiAdviceResponse>('advice', { context });
@@ -99,7 +137,7 @@ export async function generateHydrationAdvice(context: DigiwellAiContext): Promi
     const message = getAiErrorMessage(error);
     if (message.toLowerCase().includes('rate limit')) {
       return {
-        text: 'AI đang bận, tạm thời hãy uống thêm nước đều trong ngày nhé!',
+        text: i18n.t('ai.drink_more_fallback'),
       };
     }
     return FRIENDLY_FALLBACK_ADVICE;
@@ -145,12 +183,12 @@ export async function sendAiChatMessage(
     });
 
     return {
-      reply: response.reply?.trim() || 'Mình chưa hiểu ý bạn, bạn thử hỏi lại nhé.',
+      reply: response.reply?.trim() || i18n.t('ai.dont_understand'),
       waterAction: response.waterAction,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : '';
-    return { reply: msg || 'Hệ thống AI đang bận một chút, bạn thử lại sau nhé.' };
+    return { reply: msg || i18n.t('ai.busy_fallback') };
   }
 }
 

@@ -1,36 +1,38 @@
 /**
  * Shared glassmorphism design tokens
  * Dùng chung cho toàn bộ app, tránh duplicate class strings
+ * Uses CSS variables for dynamic theme support
  */
 
 export const glassCard = `
-  relative overflow-hidden rounded-[28px]
-  bg-white/[0.02] backdrop-blur-[40px] backdrop-saturate-[1.5]
-  border border-white/[0.08]
+  relative overflow-hidden rounded-[var(--theme-border-radius,28px)]
+  bg-[var(--theme-surface-glass,rgba(34,211,238,0.04))] backdrop-blur-[var(--theme-blur,40px)] backdrop-saturate-[1.5]
+  border-[var(--theme-border-width,1px)] border-[var(--theme-border-glass,rgba(34,211,238,0.1))]
   shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)]
 `;
 
 export const glassMetric = `
-  group relative overflow-hidden rounded-[20px]
-  bg-white/[0.03] border border-white/[0.06]
+  group relative overflow-hidden rounded-[var(--theme-border-radius,20px)]
+  bg-[var(--theme-surface-glass,rgba(34,211,238,0.03))] border border-[var(--theme-border-glass,rgba(34,211,238,0.06))]
   transition-all duration-300 ease-out
-  hover:bg-white/[0.06] hover:border-white/[0.1]
+  hover:bg-[var(--theme-surface-glass,rgba(34,211,238,0.06))] hover:border-[var(--theme-border-glass,rgba(34,211,238,0.1))]
   shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_4px_12px_rgba(0,0,0,0.2)]
 `;
 
 export const glassControl = `
-  relative flex p-1 shadow-sm border border-white/5 bg-slate-900/40 rounded-xl
+  relative flex p-1 shadow-sm border-[var(--theme-border-width,1px)] border-[var(--theme-border-glass,rgba(34,211,238,0.1))] bg-[var(--theme-surface-glass,rgba(34,211,238,0.04))] rounded-[var(--theme-border-radius,16px)]
 `;
 
 export const activeTabClass = `
-  absolute inset-0 rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10
-  border border-cyan-500/25 shadow-[0_0_15px_rgba(34,211,238,0.2)]
+  absolute inset-0 rounded-[var(--theme-border-radius-inner,8px)]
+  bg-gradient-to-r from-cyan-500/10 to-blue-500/10
+  border border-cyan-500/20 shadow-[0_0_12px_var(--theme-glow-color,rgba(34,211,238,0.15))]
 `;
 
 // Inner metric card — dùng bên trong glassCard cho các stat nhỏ
 export const glassInner = `
-  relative overflow-hidden rounded-[16px]
-  bg-white/[0.03] border border-white/[0.06]
+  relative overflow-hidden rounded-[var(--theme-border-radius,16px)]
+  bg-[var(--theme-surface-glass,rgba(34,211,238,0.03))] border border-[var(--theme-border-glass,rgba(34,211,238,0.06))]
   shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]
 `;
 
@@ -60,6 +62,10 @@ export function getGlassCardVariant(themeId: string | null | undefined): string 
     const colorMatch = colors.borderGlass.match(/rgba?\(([^)]+)\)/);
     const baseColor = colorMatch ? colorMatch[1].split(',').slice(0, 3).join(',') : '255,255,255';
     patternOverlay = `before:content-[''] before:absolute before:inset-0 before:bg-[linear-gradient(45deg,rgba(${baseColor},0.1)_25%,transparent_25%,transparent_50%,rgba(${baseColor},0.1)_50%,rgba(${baseColor},0.1)_75%,transparent_75%)] before:bg-[length_8px_8px] before:pointer-events-none`;
+  } else if (glassPattern === 'satin') {
+    patternOverlay = `before:content-[''] before:absolute before:inset-0 before:bg-[linear-gradient(180deg,transparent_0%,rgba(255,255,255,0.02)_50%,transparent_100%)] before:bg-[length_100%_4px] before:pointer-events-none`;
+  } else if (glassPattern === 'lens') {
+    patternOverlay = `before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.03)_0%,transparent_60%)] before:pointer-events-none`;
   }
 
   // Build glow shadow
@@ -102,6 +108,10 @@ export function getGlassMetricVariant(themeId: string | null | undefined): strin
     patternOverlay = `before:content-[''] before:absolute before:inset-0 before:bg-[${glassGradient}] before:pointer-events-none`;
   } else if (glassPattern === 'grid') {
     patternOverlay = `before:content-[''] before:absolute before:inset-0 before:bg-[linear-gradient(45deg,rgba(${baseColor},0.08)_25%,transparent_25%,transparent_50%,rgba(${baseColor},0.08)_50%,rgba(${baseColor},0.08)_75%,transparent_75%)] before:bg-[length_6px_6px] before:pointer-events-none`;
+  } else if (glassPattern === 'satin') {
+    patternOverlay = `before:content-[''] before:absolute before:inset-0 before:bg-[linear-gradient(180deg,transparent_0%,rgba(255,255,255,0.015)_50%,transparent_100%)] before:bg-[length_100%_3px] before:pointer-events-none`;
+  } else if (glassPattern === 'lens') {
+    patternOverlay = `before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.02)_0%,transparent_60%)] before:pointer-events-none`;
   }
 
   // Build hover effect based on glassHoverEffect

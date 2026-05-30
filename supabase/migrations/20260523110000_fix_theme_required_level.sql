@@ -2,7 +2,7 @@
 -- This restores the required_level field that was lost when meta_value was updated
 
 UPDATE shop_items
-SET meta_value = meta_value || jsonb_build_object('required_level',
+SET meta_value = (meta_value::jsonb || jsonb_build_object('required_level',
   CASE id
     WHEN 'theme_default' THEN 1
     WHEN 'th_cyan' THEN 1
@@ -26,5 +26,5 @@ SET meta_value = meta_value || jsonb_build_object('required_level',
     WHEN 'theme_yellow' THEN 1
     ELSE 1
   END
-)
+))::text
 WHERE category = 'theme' AND meta_value::jsonb ? 'id' AND NOT (meta_value::jsonb ? 'required_level');

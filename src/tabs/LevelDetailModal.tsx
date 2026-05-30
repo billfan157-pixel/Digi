@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShieldCheck, Activity, Trophy, Zap, Shield, Crown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { expRequiredForLevel, totalExpForLevel } from '../config/questConfig';
 
 interface LevelDetailModalProps {
@@ -11,24 +12,25 @@ interface LevelDetailModalProps {
 }
 
 const milestones = [
-  { level: 5, reward: "Huy hiệu Người Mới", icon: <Shield size={16} /> },
-  { level: 10, reward: "Mở khóa Phân tích Chuyên sâu", icon: <Activity size={16} /> },
-  { level: 15, reward: "Huy hiệu Duy Trì", icon: <Trophy size={16} /> },
+  { level: 5, reward: "Newcomer Badge", icon: <Shield size={16} /> },
+  { level: 10, reward: "Unlock Advanced Analytics", icon: <Activity size={16} /> },
+  { level: 15, reward: "Consistency Badge", icon: <Trophy size={16} /> },
   { level: 25, reward: "+1,000 Wellness Points", icon: <Zap size={16} /> },
-  { level: 30, reward: "Huy hiệu Tối Ưu", icon: <Crown size={16} /> },
-  { level: 50, reward: "Tính năng Nhóm hỗ trợ", icon: <ShieldCheck size={16} /> },
+  { level: 30, reward: "Optimizer Badge", icon: <Crown size={16} /> },
+  { level: 50, reward: "Group Support Feature", icon: <ShieldCheck size={16} /> },
 ];
 
 function getRankTitle(level: number): string {
-  if (level >= 100) return "Hoàn Mỹ";
-  if (level >= 70) return "Tinh Hoa";
-  if (level >= 50) return "Xuất Sắc";
-  if (level >= 30) return "Tối Ưu";
-  if (level >= 15) return "Duy Trì";
-  return "Khởi Động";
+  if (level >= 100) return "Perfect";
+  if (level >= 70) return "Elite";
+  if (level >= 50) return "Excellent";
+  if (level >= 30) return "Optimizer";
+  if (level >= 15) return "Consistent";
+  return "Starter";
 }
 
 export default function LevelDetailModal({ isOpen, onClose, level, exp }: LevelDetailModalProps) {
+  const { t } = useTranslation();
   const { progress, remainingExp, nextLevelExp, rankTitle, safeLevel } = useMemo(() => {
     const safeLevel = Math.max(level, 1);
     const progressInLevel = exp - totalExpForLevel(safeLevel);
@@ -79,22 +81,23 @@ export default function LevelDetailModal({ isOpen, onClose, level, exp }: LevelD
                 </div>
                 <div>
                   <h3 className="text-white font-black text-lg">{rankTitle}</h3>
-                  <p className="text-slate-400 text-xs">Cấp độ {safeLevel}</p>
+                  <p className="text-slate-400 text-xs">{t('common.level')} {safeLevel}</p>
                 </div>
               </div>
 
               {/* Progress Bar & EXP */}
               <div className="space-y-2 mb-8">
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-400 font-medium">Tiến độ lên Cấp {safeLevel + 1}</span>
+                  <span className="text-slate-400 font-medium">{t('common.progress')} {t('common.level')} {safeLevel + 1}</span>
                   <span className="text-cyan-400 font-bold">{progress.toFixed(1)}%</span>
                 </div>
                 <div className="relative h-2 w-full bg-slate-800/50 border border-white/5 rounded-full overflow-hidden">
                   <motion.div
-                    initial={{ width: 0 }}
+                    initial={false}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 1, ease: "easeOut" }}
                     className="h-full rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
+                    style={{ width: `${progress}%` }}
                   />
                 </div>
                 <div className="flex justify-between text-xs font-mono">
@@ -102,13 +105,13 @@ export default function LevelDetailModal({ isOpen, onClose, level, exp }: LevelD
                   <span className="text-slate-500">{nextLevelExp.toLocaleString()} PTS</span>
                 </div>
                 <p className="text-center text-cyan-400 text-xs font-semibold pt-2">
-                  Cần thêm {remainingExp.toLocaleString()} PTS để lên hạng!
+                  Need {remainingExp.toLocaleString()} more PTS to rank up!
                 </p>
               </div>
 
               {/* Upcoming Milestones */}
               <div className="space-y-3">
-                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Đặc quyền tiếp theo</h4>
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Next Privilege</h4>
                 {upcomingMilestones.length > 0 ? (
                   upcomingMilestones.map(milestone => (
                     <div key={milestone.level} className="flex items-center gap-3 p-3 bg-slate-800/50 border border-white/5 rounded-xl">

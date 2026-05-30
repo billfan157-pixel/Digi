@@ -80,8 +80,8 @@ export function useLeagueData({
           const intake = dailyIntakeByUser[friend.id] || 0;
           return {
             id: friend.id,
-            name: friend.nickname || 'Người dùng',
-            dept: 'Bạn bè',
+            name: friend.nickname || i18n.t('league.default_user'),
+            dept: i18n.t('common.friend_label'),
             wp: calculateWP(intake, 2000, 1),
             streak: 1,
             isMe: false,
@@ -108,8 +108,8 @@ export function useLeagueData({
       setPublicLeaderboard(
         data.map((entry: { id: string; nickname: string; wp: number }) => ({
           id: entry.id,
-          name: entry.nickname || 'Người dùng',
-          dept: 'Cộng đồng DigiWell',
+          name: entry.nickname || i18n.t('league.default_user'),
+          dept: i18n.t('league.digiwell_community'),
           wp: entry.wp || 0,
           streak: 0,
           isMe: entry.id === profile?.id,
@@ -139,7 +139,7 @@ export function useLeagueData({
       setSearchResults(
         data.map((user: { id: string; nickname: string; avatar_url?: string | null; level?: number }) => ({
           id: user.id,
-          nickname: user.nickname || 'Người dùng',
+          nickname: user.nickname || i18n.t('league.default_user'),
           avatar_url: user.avatar_url ?? null,
           level: user.level ?? 1,
         })),

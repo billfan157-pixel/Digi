@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { Capacitor } from '@capacitor/core';
 import {
   LocalNotifications,
@@ -93,16 +94,16 @@ export const supportsNativeHydrationReminders = () => Capacitor.isNativePlatform
 
 export const validateHydrationReminderSettings = (settings: HydrationReminderSettings) => {
   if (!settings.startTime || !settings.endTime) {
-    return 'Vui lòng chọn giờ bắt đầu và giờ kết thúc.';
+    return i18n.t('notification.validation_start_end');
   }
 
   if (settings.intervalMinutes < 30) {
-    return 'Khoảng cách giữa các lần nhắc phải từ 30 phút trở lên.';
+    return i18n.t('notification.validation_interval');
   }
 
   const slots = getReminderTimePoints(settings);
   if (slots.length === 0) {
-    return 'Giờ kết thúc phải sau giờ bắt đầu để lên lịch nhắc.';
+    return i18n.t('notification.validation_end_after_start');
   }
 
   return null;
@@ -110,12 +111,12 @@ export const validateHydrationReminderSettings = (settings: HydrationReminderSet
 
 export const getHydrationReminderPreview = (settings: HydrationReminderSettings) => {
   const slots = getReminderTimePoints(settings);
-  if (slots.length === 0) return 'Chưa có lịch nhắc hợp lệ.';
+  if (slots.length === 0) return i18n.t('notification.preview_no_schedule');
 
   const preview = slots.slice(0, 4).map(formatSlotLabel).join(' • ');
   return slots.length > 4
-    ? `${slots.length} lần/ngày: ${preview}...`
-    : `${slots.length} lần/ngày: ${preview}`;
+    ? i18n.t('notification.preview_count_more', { count: slots.length, preview })
+    : i18n.t('notification.preview_count', { count: slots.length, preview });
 };
 
 const buildReminderSlots = (settings: HydrationReminderSettings): ReminderSlot[] =>
@@ -131,28 +132,28 @@ const getReminderDescriptors = (): LocalNotificationDescriptor[] =>
 const createReminderTitle = (nickname?: string, streak?: number) => {
   if (streak && streak >= 7) {
     return nickname
-      ? `${nickname}, đừng làm mất chuỗi ${streak} ngày nhé!`
-      : `Đừng làm mất chuỗi ${streak} ngày nhé!`;
+      ? i18n.t('notification.title_streak_7_with_name', { name: nickname, streak })
+      : i18n.t('notification.title_streak_7', { streak });
   }
   if (streak && streak >= 3) {
     return nickname
-      ? `${nickname}, giữ vững đà ${streak} ngày nhé!`
-      : `Giữ vững đà ${streak} ngày nhé!`;
+      ? i18n.t('notification.title_streak_3_with_name', { name: nickname, streak })
+      : i18n.t('notification.title_streak_3', { streak });
   }
   return nickname
-    ? `${nickname}, đến giờ uống nước rồi`
-    : 'Đến giờ uống nước rồi';
+    ? i18n.t('notification.title_drink_with_name', { name: nickname })
+    : i18n.t('notification.title_drink');
 };
 
 const REMINDER_BODY_TEMPLATES = [
   (slot: ReminderSlot, sip: number, goal: number) =>
-    `${slot.label} rồi, uống ${sip}ml để bám sát mục tiêu ${goal}ml hôm nay nhé.`,
+    i18n.t('notification.body_template_0', { label: slot.label, sip, goal }),
   (slot: ReminderSlot, sip: number, goal: number) =>
-    `${slot.label} — một chút nước sẽ giúp bạn tỉnh táo hơn. Uống ${sip}ml để đạt ${goal}ml nhé.`,
+    i18n.t('notification.body_template_1', { label: slot.label, sip, goal }),
   (slot: ReminderSlot, sip: number, goal: number) =>
-    `Đã ${slot.label}! Uống khoảng ${sip}ml để duy trì năng lượng và theo kịp mục tiêu ${goal}ml.`,
+    i18n.t('notification.body_template_2', { label: slot.label, sip, goal }),
   (slot: ReminderSlot, sip: number, goal: number) =>
-    `Nhắc nhở ${slot.label}: uống ${sip}ml để giữ cơ thể đủ nước. Mục tiêu hôm nay: ${goal}ml.`,
+    i18n.t('notification.body_template_3', { label: slot.label, sip, goal }),
 ];
 
 const createReminderBody = (slot: ReminderSlot, dailyGoal: number, slotCount: number, slotIndex: number) => {
@@ -168,7 +169,7 @@ const ensureReminderChannel = async () => {
   await LocalNotifications.createChannel({
     id: REMINDER_CHANNEL_ID,
     name: REMINDER_CHANNEL_NAME,
-    description: 'Nhắc nhở uống nước định kỳ của DigiWell',
+    description: i18n.t('notification.channel_desc'),
     importance: 4,
     visibility: 1,
     vibration: true,
@@ -188,7 +189,7 @@ export const registerHydrationReminderActions = async () => {
           { id: HYDRATION_NOTIFICATION_ACTION_IDS.add100, title: '+100ml' },
           { id: HYDRATION_NOTIFICATION_ACTION_IDS.add250, title: '+250ml' },
           { id: HYDRATION_NOTIFICATION_ACTION_IDS.add500, title: '+500ml' },
-          { id: HYDRATION_NOTIFICATION_ACTION_IDS.snooze15, title: 'Nhắc lại 15p' },
+          { id: HYDRATION_NOTIFICATION_ACTION_IDS.snooze15, title: i18n.t('notification.snooze_action') },
         ],
       },
     ],
@@ -243,7 +244,7 @@ export const scheduleHydrationReminders = async (
     },
     channelId: REMINDER_CHANNEL_ID,
     group: REMINDER_CHANNEL_ID,
-    summaryText: 'DigiWell hydration coach',
+    summaryText: i18n.t('notification.summary_text'),
     autoCancel: true,
     actionTypeId: HYDRATION_REMINDER_ACTION_TYPE_ID,
     extra: { source: 'hydration-reminder' },
@@ -263,11 +264,11 @@ export const parseHydrationNotificationAction = (
 
   switch (notificationAction.actionId) {
     case HYDRATION_NOTIFICATION_ACTION_IDS.add100:
-      return { kind: 'add', amount: 100, name: 'Nuoc loc (notification)' };
+      return { kind: 'add', amount: 100, name: i18n.t('notification.add_name') };
     case HYDRATION_NOTIFICATION_ACTION_IDS.add250:
-      return { kind: 'add', amount: 250, name: 'Nuoc loc (notification)' };
+      return { kind: 'add', amount: 250, name: i18n.t('notification.add_name') };
     case HYDRATION_NOTIFICATION_ACTION_IDS.add500:
-      return { kind: 'add', amount: 500, name: 'Nuoc loc (notification)' };
+      return { kind: 'add', amount: 500, name: i18n.t('notification.add_name') };
     case HYDRATION_NOTIFICATION_ACTION_IDS.snooze15:
       return { kind: 'snooze', minutes: 15 };
     default:
@@ -291,7 +292,7 @@ export const scheduleHydrationSnooze = async (options: {
       {
         id: SNOOZE_NOTIFICATION_ID,
         title: createReminderTitle(options.nickname),
-        body: `DigiWell nhac lai sau ${minutes} phut. Uong mot it nuoc de theo kip muc tieu ${options.dailyGoal}ml nhe.`,
+        body: i18n.t('notification.snooze_body', { minutes, goal: options.dailyGoal }),
         schedule: {
           at: new Date(Date.now() + minutes * 60 * 1000),
           allowWhileIdle: true,

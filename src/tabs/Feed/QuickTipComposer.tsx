@@ -13,9 +13,9 @@ interface QuickTipComposerProps {
 }
 
 const CATEGORIES: { key: TipCategory; label: string; icon: typeof Beaker; color: string }[] = [
-  { key: 'science', label: 'Khoa học', icon: Beaker, color: 'text-blue-400 border-blue-500/30 bg-blue-500/10' },
-  { key: 'practical', label: 'Mẹo vặt', icon: Coffee, color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' },
-  { key: 'recipe', label: 'Công thức', icon: ChefHat, color: 'text-amber-400 border-amber-500/30 bg-amber-500/10' },
+  { key: 'science', label: 'Science', icon: Beaker, color: 'text-blue-400 border-blue-500/30 bg-blue-500/10' },
+  { key: 'practical', label: 'Practical Tips', icon: Coffee, color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' },
+  { key: 'recipe', label: 'Recipes', icon: ChefHat, color: 'text-amber-400 border-amber-500/30 bg-amber-500/10' },
 ];
 
 export const QuickTipComposer = ({ onPublish, onClose }: QuickTipComposerProps) => {
@@ -41,7 +41,7 @@ export const QuickTipComposer = ({ onPublish, onClose }: QuickTipComposerProps) 
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-bold text-lg flex items-center gap-2">
             <Lightbulb size={18} className="text-emerald-400" />
-            Mẹo hydration
+            Hydration Tips
           </h3>
           <button onClick={onClose} className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400"><X size={18} /></button>
         </div>
@@ -58,12 +58,12 @@ export const QuickTipComposer = ({ onPublish, onClose }: QuickTipComposerProps) 
           ))}
         </div>
 
-        <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Chia sẻ bí quyết uống nước của bạn..." className="w-full h-28 bg-slate-800/50 border border-white/5 rounded-2xl p-4 text-sm text-white placeholder:text-slate-500 resize-none outline-none focus:border-emerald-500/30" autoFocus />
+        <textarea value={text} onChange={e => setText(e.target.value)} placeholder={t('common.tip_placeholder')} className="w-full h-28 bg-slate-800/50 border border-white/5 rounded-2xl p-4 text-sm text-white placeholder:text-slate-500 resize-none outline-none focus:border-emerald-500/30" autoFocus />
 
         <div className="flex items-center justify-end mt-4">
           <button onClick={handleSubmit} disabled={isPublishing} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold active:scale-95 disabled:opacity-50 transition-all">
             {isPublishing ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <Send size={16} />}
-            {isPublishing ? 'Đang đăng...' : 'Đăng mẹo'}
+            {isPublishing ? 'Posting...' : 'Post Tip'}
           </button>
         </div>
       </motion.div>

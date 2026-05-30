@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import i18n from '@/i18n';
 import type { TabType } from '@/components/layout/BottomNav';
 import { useLeagueData } from '@/features/league/useLeagueData';
 import type { AppProfile } from '@/services/profile.service';
@@ -35,8 +36,8 @@ export function useLeagueController({
   const getLeagueData = useCallback(() => {
     const myData = {
       id: profile?.id,
-      name: profile?.nickname || 'Bạn',
-      dept: 'Người dùng hệ thống',
+      name: profile?.nickname || i18n.t('common.you'),
+      dept: i18n.t('league.system_user'),
       wp,
       streak,
       isMe: true,

@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { useVolumeFormat } from '../../../hooks/useVolumeFormat';
 
 interface QuickAmountsEditorProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function QuickAmountsEditor({
   onSave 
 }: QuickAmountsEditorProps) {
   const { t } = useTranslation();
+  const { getUnitLabel } = useVolumeFormat();
 
   return (
     <AnimatePresence>
@@ -84,10 +86,10 @@ export default function QuickAmountsEditor({
                           }
                         }}
                         className="w-full bg-slate-800/60 border border-slate-700/80 rounded-2xl px-4 py-4 text-center text-white text-xl font-black focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all placeholder:text-slate-500"
-                        placeholder="ml"
+                        placeholder={getUnitLabel()}
                       />
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold">
-                        ml
+                        {getUnitLabel()}
                       </div>
                     </div>
                   </div>

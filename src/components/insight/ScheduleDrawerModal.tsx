@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import ScheduleManager from '../ScheduleManager';
@@ -53,12 +52,12 @@ export default function ScheduleDrawerModal({
             drag="y"
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
-            onDragEnd={(e, info) => {
+            onDragEnd={(_, info) => {
               if (info.offset.y > 120) {
                 onClose();
               }
             }}
-            className="relative w-full max-h-[85vh] bg-slate-900 border-t border-cyan-500/20 rounded-t-3xl p-5 pb-8 z-10 shadow-2xl flex flex-col focus:outline-none"
+            className="relative w-full max-h-[85vh] bg-slate-900 border-t border-cyan-500/20 rounded-t-[var(--theme-border-radius,24px)] p-5 pb-8 z-10 shadow-2xl flex flex-col focus:outline-none"
           >
             {/* Drag Handle Bar */}
             <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mb-4 cursor-grab active:cursor-grabbing" />
@@ -82,26 +81,26 @@ export default function ScheduleDrawerModal({
             </div>
 
             {/* Day Switcher inside Modal */}
-            <div className="flex p-0.5 bg-slate-950/60 rounded-xl mb-4 border border-white/5 mx-1">
+            <div className="flex p-0.5 bg-slate-950/60 rounded-[var(--theme-border-radius-inner,12px)] mb-4 border border-white/5 mx-1">
               <button
                 onClick={() => setSelectedDay('today')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                className={`flex-1 py-1.5 text-xs font-bold rounded-[var(--theme-border-radius-inner,8px)] transition-all ${
                   selectedDay === 'today'
-                    ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/20'
+                    ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-[var(--theme-glow-color,rgba(34,211,238,0.15))]'
                     : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
-                Hôm nay
+                Today
               </button>
               <button
                 onClick={() => setSelectedDay('tomorrow')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                className={`flex-1 py-1.5 text-xs font-bold rounded-[var(--theme-border-radius-inner,8px)] transition-all ${
                   selectedDay === 'tomorrow'
-                    ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/20'
+                    ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-[var(--theme-glow-color,rgba(34,211,238,0.15))]'
                     : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
-                Ngày mai
+                Tomorrow
               </button>
             </div>
 

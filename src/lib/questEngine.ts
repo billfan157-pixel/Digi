@@ -155,13 +155,13 @@ async function runQuestEngineOnce(ctx: QuestEngineContext): Promise<void> {
       toast.success(i18n.t('quest.completed', { title: uq.quest.title, exp: uq.quest.reward_exp }), {
         duration: 4000,
         action: {
-          label: '🎁 Nhận thưởng',
+          label: i18n.t('quest.claim_reward_btn'),
           onClick: () => claimQuestReward(ctx.userId, uq.id),
         },
       });
 
       await triggerRewardNotification(
-        '🎯 Hoàn thành nhiệm vụ!',
+        i18n.t('quest.mission_complete'),
         `${uq.quest.title} · ⚡ +${uq.quest.reward_exp} EXP & 💰 +${uq.quest.reward_coins} xu!`,
         uq.id,
         'quest',
@@ -340,10 +340,10 @@ async function updateMilestoneChallenge(
   if (isCompleted) {
     toast.success(i18n.t('quest.challenge_completed', { title: ch.title }), {
       duration: 5000,
-      action: { label: '🎁 Nhận thưởng', onClick: () => claimChallengeReward(ctx.userId, uc.id) },
+      action: { label: i18n.t('quest.claim_reward_btn'), onClick: () => claimChallengeReward(ctx.userId, uc.id) },
     });
     // Bắn Push Notification
-    await triggerRewardNotification('🎉 Hoàn thành thử thách!', ch.title, uc.id, 'challenge', ctx.userId, ctx.equippedSound);
+    await triggerRewardNotification(i18n.t('quest.challenge_complete'), ch.title, uc.id, 'challenge', ctx.userId, ctx.equippedSound);
   }
 }
 
@@ -425,10 +425,10 @@ async function updateTimeLimitedChallenge(
   if (isCompleted) {
     toast.success(i18n.t('quest.challenge_completed', { title: ch.title }), {
       duration: 5000,
-      action: { label: '🎁 Nhận thưởng', onClick: () => claimChallengeReward(ctx.userId, uc.id) },
+      action: { label: i18n.t('quest.claim_reward_btn'), onClick: () => claimChallengeReward(ctx.userId, uc.id) },
     });
     // Bắn Push Notification
-    await triggerRewardNotification('🎉 Hoàn thành thử thách!', ch.title, uc.id, 'challenge', ctx.userId, ctx.equippedSound);
+    await triggerRewardNotification(i18n.t('quest.challenge_complete'), ch.title, uc.id, 'challenge', ctx.userId, ctx.equippedSound);
   }
 }
 
@@ -630,7 +630,7 @@ export const triggerRewardNotification = async (title: string, body: string, rec
         id: 'QUEST_COMPLETED_ACTIONS',
         actions: [{ 
           id: type === 'quest' ? 'claim_quest' : 'claim_challenge', 
-          title: '🎁 Nhận thưởng ngay' 
+          title: i18n.t('quest.claim_now_btn') 
         }]
       }]
     });

@@ -15,13 +15,16 @@ interface FeedPostListProps {
   onOpenComments: (post: SocialFeedPost) => void;
 }
 
+import { useTranslation } from 'react-i18next';
+
 function PostCardErrorFallback({ error }: { error: unknown }) {
-  const message = error instanceof Error ? error.message : 'Bài viết không hợp lệ';
+  const { t } = useTranslation();
+  const message = error instanceof Error ? error.message : t('feed.invalid_post');
   return (
     <div className="bg-slate-900/50 rounded-3xl p-5 border border-red-500/20 flex items-center gap-3">
       <AlertTriangle size={20} className="text-red-400 shrink-0" />
       <div className="text-sm text-slate-400">
-        <p className="font-bold text-red-300">Lỗi hiển thị bài viết</p>
+        <p className="font-bold text-red-300">{t('feed.error_displaying_post')}</p>
         <p className="text-xs text-slate-500 truncate max-w-[300px]">{message}</p>
       </div>
     </div>
@@ -47,7 +50,7 @@ const FeedPostListComponent = ({
         <div className="flex items-start gap-3">
           <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-300" />
           <div>
-            <p className="text-sm font-bold text-rose-100">Không tải được feed</p>
+            <p className="text-sm font-bold text-rose-100">{t('feed.failed_load_feed')}</p>
             <p className="mt-1 text-xs leading-relaxed text-rose-100/70">{socialError}</p>
           </div>
         </div>

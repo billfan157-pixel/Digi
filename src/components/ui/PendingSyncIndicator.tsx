@@ -38,8 +38,8 @@ export default function PendingSyncIndicator({
 
       <span className="text-sm font-medium whitespace-nowrap">
         {isOnline
-          ? `${pendingCount} thao tác chờ đồng bộ`
-          : 'Đang ngoại tuyến'}
+          ? `${pendingCount} pending actions`
+          : 'Offline'}
       </span>
 
       {isOnline && (

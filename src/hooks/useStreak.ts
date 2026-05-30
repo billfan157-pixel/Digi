@@ -1,5 +1,6 @@
 import { useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import i18n from '@/i18n';
 import { supabase } from '../lib/supabase';
 import { fetchStreakFreezes, applyStreakFreeze } from '../lib/gamification';
 
@@ -99,7 +100,7 @@ export function useStreak(userId: string | undefined, waterGoal: number, todayIn
         
         // Show success toast
         import('sonner').then(({ toast }) => {
-          toast.success(`Chúc mừng! Bạn đã đạt chuỗi ${streak} ngày uống nước liên tiếp và mở khóa huy hiệu mới!`, { icon: '🎉' });
+          toast.success(i18n.t('home.streak_milestone', { streak }), { icon: '🎉' });
         });
 
         // Play success sound
@@ -135,12 +136,12 @@ export function useStreak(userId: string | undefined, waterGoal: number, todayIn
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : '';
       const friendlyMessage = msg.includes('No active streak')
-        ? 'Không có chuỗi streak nào đang hoạt động để bảo vệ.'
+        ? i18n.t('home.no_active_streak')
         : msg.includes('already met')
-        ? 'Ngày hôm qua đã đạt mục tiêu, không cần dùng Streak Freeze.'
+        ? i18n.t('home.already_met_goal')
         : msg.includes('No streak freezes')
-        ? 'Bạn đã hết lượt Streak Freeze trong tháng này.'
-        : 'Không thể sử dụng Streak Freeze lúc này.';
+        ? i18n.t('home.no_streak_freezes')
+        : i18n.t('home.streak_freeze_error');
       const { toast } = await import('sonner');
       toast.error(friendlyMessage);
       return false;

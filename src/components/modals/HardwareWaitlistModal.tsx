@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, ArrowRight, Loader2, Award, ClipboardCheck, Sparkles, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { useUIStore } from '@/store/useUIStore';
 
@@ -15,6 +16,7 @@ interface WaitlistRecord {
 }
 
 export default function HardwareWaitlistModal() {
+  const { t } = useTranslation();
   const showHardwareWaitlist = useUIStore(s => s.showHardwareWaitlist);
   const setShowHardwareWaitlist = useUIStore(s => s.setShowHardwareWaitlist);
 
@@ -79,14 +81,14 @@ export default function HardwareWaitlistModal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error('Không tìm thấy thông tin email của bạn.');
+      toast.error(t('hardware.email_not_found'));
       return;
     }
 
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Unauthorized');
+      if (!user) throw new Error(t('common.unauthorized'));
 
       const payload = {
         user_id: user.id,
@@ -107,7 +109,7 @@ export default function HardwareWaitlistModal() {
           .eq('user_id', user.id);
 
         if (error) throw error;
-        toast.success('Cập nhật đăng ký danh sách chờ thành công!');
+        toast.success(t('hardware.update_success'));
       } else {
         // Insert
         const { error } = await supabase
@@ -115,7 +117,7 @@ export default function HardwareWaitlistModal() {
           .insert(payload);
 
         if (error) throw error;
-        toast.success('Đăng ký danh sách chờ DigiBottle thành công!');
+        toast.success(t('hardware.register_success'));
       }
 
       // Re-fetch waitlist state
@@ -130,7 +132,7 @@ export default function HardwareWaitlistModal() {
       setWaitlistRank(rank);
     } catch (error: unknown) {
       console.error('Waitlist submission failed:', error);
-      const msg = error instanceof Error ? error.message : 'Có lỗi xảy ra khi gửi đăng ký.';
+      const msg = error instanceof Error ? error.message : t('hardware.submit_error');
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -138,14 +140,14 @@ export default function HardwareWaitlistModal() {
   };
 
   const handleCancel = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn hủy đăng ký danh sách chờ DigiBottle?')) {
+    if (!window.confirm(t('hardware.cancel_confirm'))) {
       return;
     }
 
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Unauthorized');
+      if (!user) throw new Error(t('common.unauthorized'));
 
       const { error } = await supabase
         .from('hardware_waitlist')
@@ -154,14 +156,14 @@ export default function HardwareWaitlistModal() {
 
       if (error) throw error;
       
-      toast.success('Đã hủy đăng ký danh sách chờ DigiBottle.');
+      toast.success(t('hardware.cancelled'));
       setExistingRecord(null);
       setWaitlistRank(null);
       setQuantity(1);
       setTierInterest('standard');
     } catch (error: unknown) {
       console.error('Cancel waitlist failed:', error);
-      const msg = error instanceof Error ? error.message : 'Có lỗi xảy ra khi hủy đăng ký.';
+      const msg = error instanceof Error ? error.message : t('hardware.cancel_error');
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -187,7 +189,7 @@ export default function HardwareWaitlistModal() {
             <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
               <Sparkles size={16} />
             </div>
-            <h3 className="text-lg font-black text-white uppercase tracking-wider">Đặt Trước DigiBottle</h3>
+            <h3 className="text-lg font-black text-white uppercase tracking-wider">{t('hardware.title')}</h3>
           </div>
           <button 
             onClick={() => setShowHardwareWaitlist(false)} 
@@ -200,7 +202,7 @@ export default function HardwareWaitlistModal() {
         {fetching ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-3">
             <Loader2 className="animate-spin text-cyan-400" size={32} />
-            <p className="text-xs font-semibold">Đang tải trạng thái danh sách chờ...</p>
+            <p className="text-xs font-semibold">{t('hardware.loading')}</p>
           </div>
         ) : (
           <div className="relative z-10 space-y-6">
@@ -210,11 +212,11 @@ export default function HardwareWaitlistModal() {
                 <div className="w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto mb-2 text-cyan-400">
                   <Award size={24} />
                 </div>
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Thứ hạng của bạn</h4>
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">{t('hardware.your_rank')}</h4>
                 <p className="text-4xl font-black text-white mt-1">#{waitlistRank}</p>
                 <div className="flex items-center justify-center gap-1.5 text-[10px] text-cyan-400 font-bold mt-2 bg-cyan-500/10 px-3 py-1 rounded-full w-fit mx-auto">
                   <ClipboardCheck size={12} />
-                  <span>Đăng ký chờ thành công</span>
+                  <span>{t('hardware.registered')}</span>
                 </div>
               </div>
             )}
@@ -222,7 +224,7 @@ export default function HardwareWaitlistModal() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Pre-filled Email field */}
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Email liên hệ</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">{t('hardware.contact_email')}</label>
                 <input 
                   type="email" 
                   value={email}
@@ -233,7 +235,7 @@ export default function HardwareWaitlistModal() {
 
               {/* Version/Tier Selection */}
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Phiên bản DigiBottle</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">{t('hardware.version')}</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -244,8 +246,8 @@ export default function HardwareWaitlistModal() {
                         : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                   >
-                    <p className="text-xs font-black">Standard Bottle</p>
-                    <p className="text-[10px] text-slate-500 mt-1">Bản cơ bản đầy đủ tính năng kết nối thông minh.</p>
+                    <p className="text-xs font-black">{t('hardware.standard_bottle')}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{t('hardware.standard_desc')}</p>
                   </button>
 
                   <button
@@ -257,15 +259,15 @@ export default function HardwareWaitlistModal() {
                         : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                   >
-                    <p className="text-xs font-black text-amber-400">Pro Kit</p>
-                    <p className="text-[10px] text-slate-500 mt-1">Bao gồm Bình, Đế sạc nhanh & Khung silicone chống sốc.</p>
+                    <p className="text-xs font-black text-amber-400">{t('hardware.pro_kit')}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{t('hardware.pro_kit_desc')}</p>
                   </button>
                 </div>
               </div>
 
               {/* Quantity selector */}
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Số lượng (Tối đa 10)</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">{t('hardware.quantity')}</label>
                 <div className="flex items-center gap-3 bg-slate-950/50 p-1.5 rounded-xl border border-slate-800 w-fit">
                   <button
                     type="button"
@@ -295,7 +297,7 @@ export default function HardwareWaitlistModal() {
                   }`}
                 >
                   {loading && <Loader2 size={14} className="animate-spin" />}
-                  <span>{existingRecord ? 'Cập nhật đăng ký' : 'Tham gia danh sách chờ'}</span>
+                  <span>{existingRecord ? t('hardware.update_register') : t('hardware.join_waitlist')}</span>
                   {!loading && <ArrowRight size={14} />}
                 </button>
 
@@ -306,7 +308,7 @@ export default function HardwareWaitlistModal() {
                     disabled={loading}
                     className="w-full py-3 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 active:scale-[0.98] transition-all"
                   >
-                    Hủy đăng ký chờ
+                    {t('hardware.cancel_register')}
                   </button>
                 )}
               </div>
@@ -315,7 +317,7 @@ export default function HardwareWaitlistModal() {
             <div className="flex items-start gap-2 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
               <AlertCircle className="text-slate-500 shrink-0 mt-0.5" size={14} />
               <p className="text-[10px] text-slate-500 leading-relaxed">
-                Khi đến lượt đặt mua của bạn, chúng tôi sẽ gửi thông báo xác nhận và thông tin thanh toán đến email đã đăng ký. Bạn có thể thay đổi hoặc hủy đăng ký bất cứ lúc nào mà không tốn phí.
+                {t('hardware.disclaimer')}
               </p>
             </div>
           </div>

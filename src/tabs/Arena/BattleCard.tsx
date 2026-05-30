@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Swords, Clock, Coins, Zap } from 'lucide-react';
+import { Swords, Clock, Coins, Target, TrendingUp, Droplets } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Battle, Profile } from '../../models';
 import { glassCard } from '../../styles/glass';
+import RankTierBadge from './RankTierBadge';
 
 interface BattleCardProps {
   battle: Battle;
@@ -12,142 +14,234 @@ interface BattleCardProps {
 }
 
 const BattleCard: React.FC<BattleCardProps> = ({ battle, profile, now, onClick }) => {
+  const { t } = useTranslation();
   const isChallenger = battle.challenger_id === profile?.id;
   const me = isChallenger ? battle.challenger : battle.opponent;
   const opponent = isChallenger ? battle.opponent : battle.challenger;
-  
-  const userNickname = me?.nickname ?? 'Bạn';
-  const oppNickname = opponent?.nickname ?? 'Đối thủ';
 
+  const userNickname = me?.nickname ?? t('common.you');
+  const oppNickname = opponent?.nickname ?? t('common.opponent');
+
+  const targetMl = battle.target_ml || 2000;
   const myProgress = battle.yourProgress ?? me?.water_today ?? 0;
   const oppProgress = battle.opponentProgress ?? opponent?.water_today ?? 0;
-  
+
   const yourLead = myProgress >= oppProgress;
   const delta = Math.abs(myProgress - oppProgress);
-  const totalProgress = myProgress + oppProgress;
-  const yourPct = totalProgress > 0 ? (myProgress / totalProgress) * 100 : 50;
+  const yourPct = Math.min(100, Math.round((myProgress / Math.max(targetMl, 1)) * 100));
+  const opponentPct = Math.min(100, Math.round((oppProgress / Math.max(targetMl, 1)) * 100));
 
-  const endsAt = new Date();
-  endsAt.setHours(23, 59, 59, 999);
-  const timeLeft = Math.max(0, endsAt.getTime() - now);
-  const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
-  const minsLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  function timeLeft(deadline: string | null): string {
+    if (!deadline) return '';
+    const remaining = new Date(deadline).getTime() - now;
+    if (remaining <= 0) return t('common.time_expired');
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
 
   return (
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.98 }}
-      className={`w-full text-left rounded-[2.5rem] ${glassCard} hover:border-white/15 transition-all p-6 group relative overflow-hidden`}
+      className={`w-full text-left rounded-[2rem] ${glassCard} hover:border-white/15 transition-all p-5 group relative overflow-hidden`}
     >
-      {/* Background Aura */}
-      <div className={`absolute -right-20 -top-20 w-60 h-60 blur-[80px] rounded-full pointer-events-none transition-all duration-1000 ${
-        yourLead ? 'bg-cyan-500/10 group-hover:bg-cyan-500/20' : 'bg-rose-500/10 group-hover:bg-rose-500/20'
+      {/* Soft background glow */}
+      <div className={`absolute -right-16 -top-16 w-48 h-48 blur-[60px] rounded-full pointer-events-none transition-all duration-1000 ${
+        yourLead ? 'bg-cyan-500/8 group-hover:bg-cyan-500/15' : 'bg-rose-500/8 group-hover:bg-rose-500/15'
       }`} />
 
-      {/* Mode & Wager Badge */}
-      <div className="flex justify-between items-center mb-6 relative z-10">
+      {/* ── Header: LIVE + Mode + Timer ── */}
+      <div className="flex items-center justify-between mb-3 relative z-10">
         <div className="flex items-center gap-2">
-          <div className="px-3 py-1 rounded-xl bg-slate-800/80 border border-white/5 text-[9px] font-black uppercase tracking-[0.15em] text-slate-300 glass-badge">
-            {battle.mode === 'daily' ? 'Hằng ngày' : battle.mode === 'quick' ? 'Tức thời' : 'Giải đấu'}
-          </div>
-          <div className="flex items-center gap-1.5 text-amber-400 text-[10px] font-black bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20 shadow-lg shadow-amber-500/5 glass-badge">
-            <Coins size={12} className="fill-amber-400/20" /> {battle.stake_coins} WP
-          </div>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/25 text-[9px] font-black uppercase tracking-wider text-rose-400">
+            <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-ping" />
+            LIVE
+          </span>
+          <span className="px-2.5 py-1 rounded-lg bg-slate-800/60 border border-white/5 text-[9px] font-black uppercase tracking-wider text-slate-400">
+            {battle.mode_type === 'daily' ? 'Hằng Ngày' : battle.mode_type === 'quick' ? 'Đấu Nhanh' : battle.mode_type === 'tournament' ? 'Giải Đấu' : battle.mode || 'Ranked'}
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 text-slate-400 text-xs font-black bg-slate-800/40 px-3 py-1 rounded-xl border border-white/5 glass-badge">
-          <Clock size={14} className="text-cyan-400" />
-          <span className="tabular-nums">{hoursLeft}h {minsLeft}m</span>
-        </div>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/60 border border-white/5 text-[10px] font-black text-slate-300 tabular-nums">
+          <Clock size={12} className="text-cyan-400" />
+          {timeLeft(battle.deadline)}
+        </span>
       </div>
 
-      {/* Combat Face-off */}
-      <div className="flex items-center justify-between mb-6 relative z-10">
-        {/* User Stats */}
-        <div className="flex flex-col items-start w-2/5">
-          <div className="flex items-center gap-2 mb-2">
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black border transition-all duration-500 ${
-              yourLead ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'bg-slate-800 border-white/5 text-slate-400'
-            }`}>
+      {/* ── Meta: Target + Stake ── */}
+      <div className="flex items-center gap-3 mb-5 relative z-10">
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+          <Target size={11} className="text-cyan-500/70" />
+          {targetMl}ml
+        </span>
+        <span className="w-px h-3 bg-white/10" />
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400/80">
+          <Coins size={11} className="fill-amber-400/20" />
+          {battle.stake_coins} WP
+        </span>
+        {delta > 0 && (
+          <>
+            <span className="w-px h-3 bg-white/10" />
+            <span className={`inline-flex items-center gap-1 text-[10px] font-black ${yourLead ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <TrendingUp size={10} className={yourLead ? '' : 'rotate-180'} />
+              {delta}ml
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* ── Face-off ── */}
+      <div className="relative z-10 mb-5">
+        <div className="flex items-center justify-between">
+          {/* You */}
+          <div className="flex flex-col items-center w-[35%]">
+            <motion.div
+              whileHover={{ scale: 1.08 }}
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black border-2 mb-2 transition-all duration-500 ${
+                yourLead
+                  ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.3)]'
+                  : 'bg-slate-800 border-white/10 text-slate-400'
+              }`}
+            >
               {userNickname.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-xs font-bold text-slate-300 truncate max-w-[80px]">{userNickname}</span>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span className={`text-3xl font-black tracking-tighter ${yourLead ? 'text-cyan-400 drop-shadow-[0_0_12px_rgba(6,182,212,0.6)]' : 'text-white'}`}>
-              {myProgress}
+            </motion.div>
+            <span className="text-xs font-bold text-slate-200 truncate w-full text-center leading-tight">
+              {userNickname}
             </span>
-            <span className="text-[10px] font-bold text-slate-500 uppercase">ml</span>
+            {battle.elo_challenger != null && (
+              <div className="flex items-center gap-1 mt-1">
+                <RankTierBadge elo={(isChallenger ? battle.elo_challenger : battle.elo_opponent) ?? 1200} showLabel={false} size="sm" />
+                <span className="text-[8px] font-black text-amber-400/70">{(isChallenger ? battle.elo_challenger : battle.elo_opponent) ?? 1200}</span>
+              </div>
+            )}
+            <div className="mt-2 flex items-baseline gap-1">
+              <motion.span
+                key={myProgress}
+                initial={{ scale: 1.2, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className={`text-2xl font-black tracking-tight ${yourLead ? 'text-cyan-400' : 'text-white'}`}
+              >
+                {myProgress}
+              </motion.span>
+              <span className="text-[9px] font-bold text-slate-500 uppercase">ml</span>
+            </div>
+            {yourLead && (
+              <motion.span
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-1 text-[9px] font-black text-emerald-400 uppercase tracking-wider"
+              >
+                {t('battle.leading')}
+              </motion.span>
+            )}
           </div>
-        </div>
 
-        {/* VS Spark */}
-        <div className="flex flex-col items-center justify-center px-4">
-          <div className="relative">
-             <div className="w-10 h-10 rounded-full bg-slate-950 border border-white/10 flex items-center justify-center text-[10px] font-black text-slate-500 italic shadow-2xl relative z-10">
-               VS
-             </div>
-             {/* Dynamic Glow */}
-             <div className={`absolute inset-0 blur-xl rounded-full animate-pulse ${yourLead ? 'bg-cyan-500/30' : 'bg-rose-500/30'}`} />
+          {/* VS */}
+          <div className="flex flex-col items-center px-1">
+            <div className="relative">
+              <motion.div
+                animate={{ scale: [1, 1.06, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className={`w-10 h-10 rounded-full bg-slate-950 border border-white/10 flex items-center justify-center text-[10px] font-black text-slate-400 italic relative z-10 ${
+                  yourLead ? 'shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'shadow-[0_0_15px_rgba(244,63,94,0.3)]'
+                }`}
+              >
+                VS
+              </motion.div>
+              <div className={`absolute inset-0 blur-lg rounded-full ${yourLead ? 'bg-cyan-500/25' : 'bg-rose-500/25'}`} />
+            </div>
           </div>
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className={`text-[10px] font-black mt-2 px-3 py-1 rounded-lg border flex items-center gap-1 ${
-              yourLead ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-            }`}
-          >
-            {yourLead ? <Zap size={10} className="fill-current" /> : null}
-            {yourLead ? `Dẫn +${delta}` : `Kém ${delta}`}
-          </motion.div>
-        </div>
 
-        {/* Opponent Stats */}
-        <div className="flex flex-col items-end w-2/5">
-          <div className="flex items-center gap-2 mb-2 flex-row-reverse">
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black border transition-all duration-500 ${
-              !yourLead ? 'bg-rose-500/20 border-rose-500/40 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 'bg-slate-800 border-white/5 text-slate-400'
-            }`}>
+          {/* Opponent */}
+          <div className="flex flex-col items-center w-[35%]">
+            <motion.div
+              whileHover={{ scale: 1.08 }}
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black border-2 mb-2 transition-all duration-500 ${
+                !yourLead
+                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.3)]'
+                  : 'bg-slate-800 border-white/10 text-slate-400'
+              }`}
+            >
               {oppNickname.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-xs font-bold text-slate-300 truncate max-w-[80px]">{oppNickname}</span>
-          </div>
-          <div className="flex items-baseline gap-1 flex-row-reverse">
-            <span className={`text-3xl font-black tracking-tighter ${!yourLead ? 'text-rose-400 drop-shadow-[0_0_12px_rgba(244,63,94,0.6)]' : 'text-white'}`}>
-              {oppProgress}
+            </motion.div>
+            <span className="text-xs font-bold text-slate-200 truncate w-full text-center leading-tight">
+              {oppNickname}
             </span>
-            <span className="text-[10px] font-bold text-slate-500 uppercase">ml</span>
+            {battle.elo_opponent != null && (
+              <div className="flex items-center gap-1 mt-1 flex-row-reverse">
+                <RankTierBadge elo={(isChallenger ? battle.elo_opponent : battle.elo_challenger) ?? 1200} showLabel={false} size="sm" />
+                <span className="text-[8px] font-black text-amber-400/70">{(isChallenger ? battle.elo_opponent : battle.elo_challenger) ?? 1200}</span>
+              </div>
+            )}
+            <div className="mt-2 flex items-baseline gap-1 flex-row-reverse">
+              <motion.span
+                key={oppProgress}
+                initial={{ scale: 1.2, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className={`text-2xl font-black tracking-tight ${!yourLead ? 'text-rose-400' : 'text-white'}`}
+              >
+                {oppProgress}
+              </motion.span>
+              <span className="text-[9px] font-bold text-slate-500 uppercase">ml</span>
+            </div>
+            {!yourLead && (
+              <motion.span
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-1 text-[9px] font-black text-rose-400 uppercase tracking-wider"
+              >
+                {t('battle.behind')}
+              </motion.span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Tug of War HUD Bar */}
-      <div className="relative h-3 w-full bg-slate-950 rounded-full overflow-hidden flex border border-white/5 shadow-inner">
-        <motion.div 
-          initial={{ width: '50%' }} 
-          animate={{ width: `${yourPct}%` }} 
-          className="bg-gradient-to-r from-cyan-600 to-cyan-400 relative overflow-hidden"
-          transition={{ type: 'spring', stiffness: 50, damping: 20 }}
-        >
-          <div className="absolute inset-0 bg-white/20 animate-shimmer -skew-x-12" />
-          {/* Spark Indicator at the edge */}
-          <div className="absolute right-0 top-0 bottom-0 w-1 bg-white shadow-[0_0_15px_#fff] z-20" />
-        </motion.div>
-        <motion.div 
-          initial={{ width: '50%' }} 
-          animate={{ width: `${100 - yourPct}%` }} 
-          className="bg-gradient-to-l from-rose-600 to-rose-400"
-          transition={{ type: 'spring', stiffness: 50, damping: 20 }}
-        />
-        
-        {/* Center Line */}
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/40 z-10 shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
+      {/* ── Progress Bars ── */}
+      <div className="space-y-2.5 relative z-10">
+        {/* User bar */}
+        <div className="flex items-center gap-3">
+          <Droplets size={12} className="text-cyan-400 shrink-0" />
+          <div className="flex-1 h-3 bg-slate-950/50 rounded-full overflow-hidden border border-white/5 relative">
+            <motion.div
+              initial={false}
+              animate={{ width: `${yourPct}%` }}
+              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-400 relative"
+              transition={{ type: 'spring', stiffness: 60, damping: 20 }}
+              style={{ width: `${yourPct}%` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite]" />
+            </motion.div>
+          </div>
+          <span className="text-[10px] font-black text-cyan-400 w-8 text-right tabular-nums">{yourPct}%</span>
+        </div>
+
+        {/* Opponent bar */}
+        <div className="flex items-center gap-3">
+          <Droplets size={12} className="text-rose-400 shrink-0" />
+          <div className="flex-1 h-3 bg-slate-950/50 rounded-full overflow-hidden border border-white/5 relative">
+            <motion.div
+              initial={false}
+              animate={{ width: `${opponentPct}%` }}
+              className="h-full rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-400 relative"
+              transition={{ type: 'spring', stiffness: 60, damping: 20 }}
+              style={{ width: `${opponentPct}%` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite]" />
+            </motion.div>
+          </div>
+          <span className="text-[10px] font-black text-rose-400 w-8 text-right tabular-nums">{opponentPct}%</span>
+        </div>
       </div>
 
-      {/* Interactive Hint */}
-      <div className="mt-4 flex justify-center">
-         <div className="flex items-center gap-1.5 text-[9px] font-black text-slate-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-           <Swords size={12} className="text-red-500" /> Nhấn để xem chi tiết đấu trường
-         </div>
+      {/* Tap hint */}
+      <div className="mt-4 flex justify-center relative z-10">
+        <div className="flex items-center gap-1.5 text-[9px] font-black text-slate-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <Swords size={12} className="text-rose-500" /> {t('battle.tap_for_details')}
+        </div>
       </div>
     </motion.button>
   );

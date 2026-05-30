@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Loader2, Send, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useComments } from '../../hooks/useComments';
 import { getRelativeTimeLabel } from '../../lib/social';
 import type { SocialFeedPost, SocialComment } from '../../models';
 import { sanitizeInput, sanitizeHtml } from '@/lib/sanitize';
+import { VirtualListMemo } from '../../components/ui/VirtualList';
 
 interface CommentsViewProps {
   post: SocialFeedPost;
@@ -13,6 +15,7 @@ interface CommentsViewProps {
 }
 
 export const CommentsView = ({ post, currentUserId, onClose }: CommentsViewProps) => {
+  const { t } = useTranslation();
   const { comments, isLoading, addComment, deleteComment } = useComments(post.id, currentUserId);
   const [text, setText] = useState('');
   const [replyTo, setReplyTo] = useState<{id: string, name: string} | null>(null);
@@ -53,7 +56,7 @@ export const CommentsView = ({ post, currentUserId, onClose }: CommentsViewProps
 
 const handleDeleteComment = async (commentId: string) => {
     const { confirmDialog } = await import('../../store/useConfirmDialog');
-    const ok = await confirmDialog({ title: 'Xóa bình luận', message: 'Bạn có chắn chắn muốn xóa bình luận này?', confirmLabel: 'Xóa', variant: 'danger' });
+    const ok = await confirmDialog({ title: t('feed.delete_comment_title'), message: t('feed.delete_comment_message'), confirmLabel: t('common.delete'), variant: 'danger' });
     if (!ok) return;
     await deleteComment(commentId);
   };
@@ -63,51 +66,64 @@ const handleDeleteComment = async (commentId: string) => {
       <div className="bg-slate-900 w-full h-[75vh] rounded-t-3xl border-t border-white/10 flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-900 rounded-t-3xl">
-          <h3 className="text-white font-bold text-lg">Bình luận ({comments.length})</h3>
+          <h3 className="text-white font-bold text-lg">{t('common.comments')} ({comments.length})</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-full bg-white/5 hover:bg-white/10 transition-colors"><X size={20}/></button>
         </div>
         
         {/* Danh sách Comments */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {isLoading ? <p className="text-slate-400 text-center text-sm py-8"><Loader2 size={24} className="animate-spin mx-auto mb-2"/> Đang tải bình luận...</p> :
-            comments.length === 0 ? <p className="text-slate-400 text-center text-sm py-8">Chưa có bình luận nào. Hãy là người đầu tiên!</p> :
-            comments.map((c: SocialComment, index: number) => {
-              const isReply = c.content.trim().startsWith('@');
-              const sanitizedContent = sanitizeHtml(c.content);
-              const contentParts = sanitizedContent.split(' ');
-              const mentionedUser = isReply ? contentParts[0].substring(1) : null;
-              const actualContent = isReply ? contentParts.slice(1).join(' ') : sanitizedContent;
-              
-              return (
-                <div key={c.id || `comment-${index}`} className={`flex gap-3 relative group ${isReply ? 'ml-8 mt-1' : 'mt-4'}`}>
-                  {isReply && (
-                    <div className="absolute -left-6 top-4 w-4 h-4 border-l-2 border-b-2 border-slate-600 rounded-bl-lg opacity-50 pointer-events-none" />
-                  )}
-                  <div className={`${isReply ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm'} rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white shrink-0 overflow-hidden`}>
-                    {c.author?.avatar_url ? <img src={c.author.avatar_url} alt={`Avatar của ${c.author?.nickname || 'người dùng'}`} className="w-full h-full object-cover" /> : (c.author?.nickname || 'U')[0].toUpperCase()}
-                  </div>
-                  <div className={`flex-1 bg-slate-800/50 border border-white/5 rounded-2xl rounded-tl-none ${isReply ? 'p-2.5' : 'p-3'} pr-8 relative`}>
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <p className="text-white text-xs font-bold">{c.author?.nickname || 'Người dùng'}</p>
-                      {isReply && <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1">▶ <span className="text-cyan-400">@{mentionedUser}</span></span>}
-                    </div>
-                    <p className={`text-slate-300 leading-relaxed break-words ${isReply ? 'text-xs' : 'text-sm'}`}>{actualContent}</p>
-                    
-                    <div className="flex items-center gap-4 mt-2">
-                      <button onClick={() => setReplyTo({ id: c.id, name: c.author?.nickname || 'Người dùng' })} className="text-[10px] font-bold text-slate-500 hover:text-cyan-400 transition-colors">Phản hồi</button>
-                      <span className="text-[10px] text-slate-600">{getRelativeTimeLabel(c.created_at || new Date().toISOString())}</span>
-                    </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          {isLoading ? (
+            <p className="text-slate-400 text-center text-sm py-8">
+              <Loader2 size={24} className="animate-spin mx-auto mb-2" /> {t('common.loading_comments')}
+            </p>
+          ) : comments.length === 0 ? (
+            <p className="text-slate-400 text-center text-sm py-8">{t('common.no_comments_yet')}</p>
+          ) : (
+            <VirtualListMemo<SocialComment>
+              items={comments}
+              estimateSize={120}
+              overscan={3}
+              getItemKey={(c) => c.id || `comment-${c.id}`}
+              className="absolute left-0 right-0 pb-4"
+              containerClassName="relative"
+              renderItem={(c) => {
+                const isReply = c.content.trim().startsWith('@');
+                const sanitizedContent = sanitizeHtml(c.content);
+                const contentParts = sanitizedContent.split(' ');
+                const mentionedUser = isReply ? contentParts[0].substring(1) : null;
+                const actualContent = isReply ? contentParts.slice(1).join(' ') : sanitizedContent;
 
-                    {(c.author_id === currentUserId || post.author_id === currentUserId) && (
-                      <button onClick={() => handleDeleteComment(c.id)} className="absolute top-2 right-2 p-1.5 bg-slate-800/80 rounded-lg border border-slate-700 text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all active:scale-95">
-                        <Trash2 size={12} />
-                      </button>
+                return (
+                  <div className={`flex gap-3 relative group ${isReply ? 'ml-8 mt-1' : 'mt-4'}`}>
+                    {isReply && (
+                      <div className="absolute -left-6 top-4 w-4 h-4 border-l-2 border-b-2 border-slate-600 rounded-bl-lg opacity-50 pointer-events-none" />
                     )}
+                    <div className={`${isReply ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm'} rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white shrink-0 overflow-hidden`}>
+                      {c.author?.avatar_url ? <img src={c.author.avatar_url} alt={t('feed.avatar_of_user', { name: c.author?.nickname || t('common.user') })} className="w-full h-full object-cover" /> : (c.author?.nickname || 'U')[0].toUpperCase()}
+                    </div>
+                    <div className={`flex-1 bg-slate-800/50 border border-white/5 rounded-2xl rounded-tl-none ${isReply ? 'p-2.5' : 'p-3'} pr-8 relative`}>
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <p className="text-white text-xs font-bold">{c.author?.nickname || t('common.user')}</p>
+                        {isReply && <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1">▶ <span className="text-cyan-400">@{mentionedUser}</span></span>}
+                      </div>
+                      <p className={`text-slate-300 leading-relaxed break-words ${isReply ? 'text-xs' : 'text-sm'}`}>{actualContent}</p>
+
+                      <div className="flex items-center gap-4 mt-2">
+                        <button onClick={() => setReplyTo({ id: c.id, name: c.author?.nickname || t('common.user') })} className="text-[10px] font-bold text-slate-500 hover:text-cyan-400 transition-colors">{t('common.reply')}</button>
+                        <span className="text-[10px] text-slate-600">{getRelativeTimeLabel(c.created_at || new Date().toISOString())}</span>
+                      </div>
+
+                      {(c.author_id === currentUserId || post.author_id === currentUserId) && (
+                        <button onClick={() => handleDeleteComment(c.id)} className="absolute top-2 right-2 p-1.5 bg-slate-800/80 rounded-lg border border-slate-700 text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all active:scale-95">
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          }
+                );
+              }}
+            />
+          )}
           <div ref={commentsEndRef} />
         </div>
         
@@ -132,7 +148,7 @@ const handleDeleteComment = async (commentId: string) => {
             {replyTo && (
               <motion.div key="reply-indicator" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="flex items-center justify-between bg-cyan-500/10 border border-cyan-500/20 px-3 py-1.5 rounded-lg mb-2 overflow-hidden">
                 <span className="text-[10px] font-bold text-cyan-400 flex items-center gap-1">
-                  Đang phản hồi <span className="text-white">@{replyTo.name}</span>
+                  {t('feed.replying_to', { name: replyTo.name })}
                 </span>
                 <button onClick={() => setReplyTo(null)} className="text-slate-400 hover:text-white"><X size={12}/></button>
               </motion.div>
@@ -142,7 +158,7 @@ const handleDeleteComment = async (commentId: string) => {
           <form onSubmit={handleSubmit} className="flex gap-3 items-end">
             <textarea 
               value={text} onChange={e => setText(e.target.value)}
-              placeholder={replyTo ? `Nhập phản hồi...` : "Viết bình luận..."} 
+              placeholder={replyTo ? t('common.reply_placeholder') : t('common.comment_placeholder')} 
               className="flex-1 bg-slate-800/80 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500/50 resize-none h-[44px] min-h-[44px] max-h-[100px]"
               rows={1}
             />

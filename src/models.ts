@@ -29,8 +29,17 @@ export interface Profile {
   mood_tracking?: boolean;
   sync_wellness_data?: boolean;
   energy_tracking?: boolean;
+  // Duel / Arena stats
+  duel_elo?: number;
+  duel_matches_total?: number;
+  duel_last_match_at?: string;
+  duel_win_streak?: number;
+  duel_total_wins?: number;
+  duel_total_losses?: number;
+  duel_total_draws?: number;
+  duel_wp?: number;
   // Subscription / Premium
-  subscription_tier?: 'free' | 'premium';
+  subscription_tier?: 'free' | 'plus' | 'pro';
   subscription_end?: string;
   grace_period_end?: string | null;
   leaderboard_opt_in?: boolean;
@@ -96,10 +105,13 @@ export interface SocialFeedPost {
   event_type: string | null;
   reference_id: string | null;
   is_squad_highlight: boolean;
+  stake_coins: number | null;
   
   // Joined data
   author?: Partial<Profile>;
   cheeredByMe?: boolean;
+  reaction_counts?: Record<string, number>;
+  user_reactions?: string[];
 
   // Client-side computed (not in DB)
   type?: 'status' | 'daily_goal' | 'milestone' | 'challenge' | 'achievement' | 'compare' | 'water_log' | 'tip' | 'poll' | 'photo';
@@ -123,14 +135,25 @@ export interface Battle {
   challenger_id: string;
   opponent_id: string;
   stake_coins: number;
-  status: 'pending' | 'active' | 'completed' | 'expired';
+  status: 'pending' | 'active' | 'completed' | 'expired' | 'declined';
   created_at: string;
+  target_ml: number;
+  deadline: string | null;
+  mode: string;
+  mode_type?: 'daily' | 'quick' | 'tournament';
+  elo_challenger?: number;
+  elo_opponent?: number;
   challenger?: Partial<Profile>;
   opponent?: Partial<Profile>;
   yourProgress?: number;
   opponentProgress?: number;
-  mode?: string;
   winner_id?: string;
+  duel_match_history?: {
+    elo_challenger_before: number | null;
+    elo_challenger_after: number | null;
+    elo_opponent_before: number | null;
+    elo_opponent_after: number | null;
+  }[] | null;
 }
 
 export interface PostComment {

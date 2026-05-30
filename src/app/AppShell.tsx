@@ -5,6 +5,7 @@ import WelcomeScreen from '@/screens/Auth/WelcomeScreen';
 import LoginScreen from '@/screens/Auth/LoginScreen';
 import RegisterScreen from '@/screens/Auth/RegisterScreen';
 import LockedScreen from '@/screens/LockedScreen';
+import SEALandingScreen from '@/screens/SEALandingScreen';
 import OnboardingModal from '@/components/OnboardingModal';
 import BottomNav, { type TabType } from '@/components/layout/BottomNav';
 import ThemeEngine from '@/components/ThemeEngine';
@@ -20,7 +21,7 @@ const ProfileTab = React.lazy(() => import('@/tabs/ProfileTab'));
 const LeagueTab = React.lazy(() => import('@/tabs/LeagueTab'));
 const BottleTab = React.lazy(() => import('@/tabs/BottleTab'));
 
-export type AppView = 'welcome' | 'login' | 'register' | 'app' | 'locked';
+export type AppView = 'welcome' | 'login' | 'register' | 'app' | 'locked' | 'sea-landing';
 
 export interface AppShellProps {
   view: AppView;
@@ -76,8 +77,17 @@ export default function AppShell({
 }: AppShellProps) {
   const tabFallback = <div className="h-40 rounded-3xl bg-slate-900/40 border border-white/5 animate-pulse" />;
 
+  if (view === 'sea-landing') {
+    return (
+      <SEALandingScreen
+        onBack={() => setView('welcome')}
+        onGetStarted={() => setView('register')}
+      />
+    );
+  }
+
   if (view === 'welcome') {
-    return <WelcomeScreen onNavigate={(nextView: 'login' | 'register') => setView(nextView)} />;
+    return <WelcomeScreen onNavigate={(nextView: 'login' | 'register' | 'sea-landing') => setView(nextView)} />;
   }
 
   if (view === 'login') {
@@ -104,7 +114,7 @@ export default function AppShell({
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto relative overflow-hidden font-sans scanline-overlay bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top)] border-0">
+    <div className="flex flex-col h-screen max-w-md mx-auto relative overflow-hidden font-sans scanline-overlay bg-transparent pt-[env(safe-area-inset-top)] border-0">
       <ThemeEngine profile={profile} />
       <div className="absolute top-[-10%] left-[-20%] w-[70%] h-[50%] bg-cyan-500/10 blur-[80px] pointer-events-none rounded-full transition-colors duration-500" />
       <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[40%] bg-indigo-500/10 blur-[60px] pointer-events-none rounded-full transition-colors duration-500" />

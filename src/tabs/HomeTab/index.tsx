@@ -18,18 +18,21 @@ import { useAppStore } from '../../store/useAppStore';
 import DayCompleteCard from '../../components/DayCompleteCard';
 import ProgressSummary from '../../components/home/ProgressSummary';
 import { useShallow } from 'zustand/react/shallow';
+import { glassCard } from '../../styles/glass';
 import { useVolumeFormat } from '../../hooks/useVolumeFormat';
 import { useHydrationPattern } from '../../hooks/useHydrationPattern';
-import { useSmartReminders } from '../../hooks/useSmartReminders';
 import { useWeeklyReport } from '../../hooks/useWeeklyReport';
 import { usePreviousWeekData } from '../../hooks/usePreviousWeekData';
 import { useWaterData } from '../../hooks/useWaterData';
+import { useDuelResultWatcher } from '../../hooks/useDuelResultWatcher';
 import { buildWeatherHistoryFromCurrent } from '../../lib/weatherHistory';
-import SmartReminderBanner from '../../components/home/SmartReminderBanner';
 import WeeklyReportModal from '../../components/modals/WeeklyReportModal';
+import HabitNudgeBar from '../../components/HabitNudgeBar';
+import { useAiNudge } from '../../hooks/useMLNudges';
+import { confirmDialog } from '../../store/useConfirmDialog';
 
-import { HomeHeader, QuickAddSection, TelemetryGrid } from './components';
-import { MainMenuSidebar, QuickAmountsEditor, DrinkMenuModal } from './modals';
+import { HomeHeader, QuickAddSection, TelemetryGrid, ActiveDuelBanner } from './components';
+import { QuickAmountsEditor, DrinkMenuModal } from './modals';
 
 interface SmartBottleProps {
   connectionState?: BottleConnectionState;
@@ -52,18 +55,18 @@ const HomeTab = React.memo((props: HomeTabProps) => {
   const { t } = useTranslation();
   
   const { 
-    setActiveTab, setShowHistory, setShowProfileSettings,
+    setActiveTab, setShowHistory, setShowMainMenu,
   } = useUIStore(useShallow((state) => ({
     setActiveTab: state.setActiveTab,
     setShowHistory: state.setShowHistory,
-    setShowProfileSettings: state.setShowProfileSettings,
+    setShowMainMenu: state.setShowMainMenu,
   })));
 
   const {
     profile, streak, waterIntake, waterGoal,
     weatherData, weatherLastUpdatedAt, watchData, hydrationResult,
     calendarEvents,
-    actions: { handleAddWater: _rawAddWater, handleLogout }
+    actions: { handleAddWater: _rawAddWater }
   } = useAppStore(useShallow((state) => ({
     profile: state.profile,
     streak: state.streak,
@@ -95,32 +98,15 @@ const HomeTab = React.memo((props: HomeTabProps) => {
   const isGoalReached = waterIntake >= waterGoal && waterGoal > 0;
   const [showDayComplete, setShowDayComplete] = useState(false);
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDrinkMenuOpen, setIsDrinkMenuOpen] = useState(false);
   const [quickAmounts, setQuickAmounts] = useState<number[]>([100, 250, 500]);
   const [isEditingQuickAmounts, setIsEditingQuickAmounts] = useState(false);
   const [draftAmounts, setDraftAmounts] = useState<[number, number, number]>([100, 250, 500]);
   const [showLevelDetail, setShowLevelDetail] = useState(false);
   const [showGoalDetail, setShowGoalDetail] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [showWeeklyReport, setShowWeeklyReport] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { formatVolume, getUnitLabel } = useVolumeFormat();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (containerRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-        const progress = scrollHeight > clientHeight ? (scrollTop / (scrollHeight - clientHeight)) * 100 : 0;
-        setScrollProgress(progress);
-      }
-    };
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
-    }
-  }, []);
+  const { formatVolume, getUnitLabel, unit } = useVolumeFormat();
 
   const bottleDemoEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_BOTTLE_DEMO === 'true';
 
@@ -150,16 +136,19 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     weatherHistory,
   });
 
-  // Smart reminders với calendarEvents thực tế
-  const { currentReminder, dismissReminder, snoozeReminder, respondToReminder, canUseSmartReminders } = useSmartReminders({
-    pattern,
-    calendarEvents: calendarEvents || [],
-    weatherTemp: weatherData?.temp || null,
-    currentIntake: waterIntake,
+  const hour = new Date().getHours();
+  const [isFirstOpen] = useState(sessionStorage.getItem('home_first_open') !== 'true');
+  useEffect(() => { sessionStorage.setItem('home_first_open', 'true'); }, []);
+
+  const aiNudge = useAiNudge({
+    hour,
+    waterIntake,
     waterGoal,
-    lastDrinkTime: waterEntries[0]?.created_at || null,
-    userId: profile?.id || null,
-    onQuickDrink: (amount) => handleAddWater(amount, 1, 'Smart Reminder'),
+    streak,
+    isFirstOpen,
+    weather: (weatherData && weatherData.temp !== undefined) ? { temp: weatherData.temp, status: weatherData.status || '' } : undefined,
+    weeklyHistory: previousWeekRaw || [],
+    calendarEvents: calendarEvents || undefined,
   });
 
   // Weekly report
@@ -183,28 +172,14 @@ const HomeTab = React.memo((props: HomeTabProps) => {
     }
   }, [isGoalReached, waterIntake]);
 
-  const handleLogoutClick = async () => {
-    const { confirmDialog } = await import('@/store/useConfirmDialog');
-    const ok = await confirmDialog({ title: t('home.logout'), message: t('home.logout_confirm'), confirmLabel: t('home.logout'), variant: 'danger' });
-    if (ok) {
-      setIsMenuOpen(false);
-      handleLogout();
-    }
-  };
+  useDuelResultWatcher();
 
   return (
-    <div ref={containerRef} className="space-y-6 animate-in fade-in zoom-in duration-300 pb-12 relative">
-      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-slate-800/60 to-transparent dark:via-slate-900/60 z-50">
-        <motion.div 
-          className="h-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent dark:via-cyan-400 transition-all duration-150" 
-          style={{ width: `${scrollProgress}%` }} 
-        />
-      </div>
-      
+    <div ref={containerRef} className="space-y-6 pb-10 pt-2 animate-in fade-in duration-300 relative">
       {/* 1. Header */}
       <HomeHeader 
         profile={profile} 
-        onMenuOpen={() => setIsMenuOpen(true)} 
+        onMenuOpen={() => setShowMainMenu(true)} 
         onWeeklyReportClick={() => setShowWeeklyReport(true)}
         hasNewReport={hasNewReport}
       />
@@ -213,15 +188,30 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       {profile ? (
         <ProgressSummary
           level={profile.level || 1}
+          exp={profile.total_exp || 0}
           streak={streak}
-          waterIntake={waterIntake}
-          waterGoal={waterGoal}
           onLevelClick={() => setShowLevelDetail(true)}
         />
       ) : (
-        <div className="mx-6 h-[120px] bg-gradient-to-br from-slate-900/60 to-slate-800/40 border border-white/10 rounded-[1.75rem] p-5 animate-pulse" />
+        <div className="mx-6 h-[120px] bg-gradient-to-br from-slate-900/60 to-slate-800/40 border border-[var(--theme-border-glass,rgba(255,255,255,0.05))] rounded-[var(--theme-border-radius,28px)] p-5 animate-pulse" />
       )}
 
+      <HabitNudgeBar
+        hour={hour}
+        waterIntake={waterIntake}
+        waterGoal={waterGoal}
+        streak={streak}
+        isFirstOpen={isFirstOpen}
+        pattern={pattern}
+        onQuickDrink={(amount) => aiNudge.nudge.isAi ? (async (a) => { const ok = await confirmDialog({ title: t('home.drink_confirm_title', { amount: a }), message: t('home.drink_confirm_message'), confirmLabel: t('home.drink_now'), cancelLabel: t('home.skip') }); if (ok) handleAddWater(a, 1, 'Nudge'); })(amount) : handleAddWater(amount, 1, 'Nudge')}
+        aiNudge={aiNudge.nudge.isAi ? {
+          title: aiNudge.nudge.title,
+          message: aiNudge.nudge.message,
+          actionLabel: aiNudge.nudge.actionLabel,
+          emoji: aiNudge.nudge.emoji,
+          isLoading: aiNudge.isLoading,
+        } : null}
+      />
       <ConfettiParticles trigger={isGoalReached} />
 
       {/* 3. Hydration Hero */}
@@ -231,10 +221,10 @@ const HomeTab = React.memo((props: HomeTabProps) => {
           <WaterSplashEffect trigger={splashTrigger} amount={splashAmount} />
           <div className="absolute text-center z-10 drop-shadow-xl pointer-events-none flex flex-col items-center">
             <h2 className="text-5xl font-black text-white flex items-baseline justify-center">
-              <AnimatedCounter value={waterIntake} /> 
+              <AnimatedCounter value={unit === 'oz' ? Math.round(waterIntake * 0.033814) : waterIntake} /> 
               <span className="text-2xl ml-2 text-slate-300 font-bold">{getUnitLabel()}</span>
             </h2>
-            <div className="mt-3 px-4 py-2 bg-slate-900/70 backdrop-blur-lg rounded-full border border-white/15 flex items-center gap-2 shadow-lg">
+            <div className="mt-3 px-4 py-2 bg-[var(--theme-surface-glass,rgba(15,23,42,0.7))] backdrop-blur-lg rounded-full border border-[var(--theme-border-glass,rgba(255,255,255,0.15))] flex items-center gap-2 shadow-lg">
               <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">
                 {t('home.goal')}: <span className="text-white font-black">{formatVolume(waterGoal)}</span>
               </span>
@@ -244,9 +234,9 @@ const HomeTab = React.memo((props: HomeTabProps) => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
-                className="mt-3 text-[10px] text-cyan-400/70 font-medium max-w-[200px] text-center leading-tight"
+                className="mt-3 text-[10px] text-cyan-400 opacity-70 font-medium max-w-[200px] text-center leading-tight"
               >
-                Chạm để bắt đầu
+                {t('device.tap_to_start')}
               </motion.p>
             )}
             {progress >= 100 && (
@@ -296,17 +286,8 @@ const HomeTab = React.memo((props: HomeTabProps) => {
         <TelemetryGrid weatherData={weatherData} watchData={watchData} weatherLastUpdatedAt={weatherLastUpdatedAt} />
       </div>
 
-      {/* 6. Smart Reminder Banner */}
-      {canUseSmartReminders && (
-        <div className="px-5">
-          <SmartReminderBanner
-            reminder={currentReminder}
-            onDismiss={dismissReminder}
-            onSnooze={snoozeReminder}
-            onDrink={respondToReminder}
-          />
-        </div>
-      )}
+      {/* 5b. Active Duels */}
+      <ActiveDuelBanner onViewArena={profile ? () => setActiveTab('league') : undefined} />
 
       {/* 7. Day Complete + Bottle Demo */}
       {showDayComplete && isGoalReached && (
@@ -322,16 +303,16 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       )}
 
       {bottleDemoEnabled && (
-        <div className="mx-5 rounded-[1.5rem] bg-slate-900/80 border border-white/10 backdrop-blur-xl p-4 overflow-hidden relative mb-6">
+        <div className={`${glassCard} mx-5 rounded-[var(--theme-border-radius,24px)] p-4 overflow-hidden relative mb-6`}>
           <div className="absolute -right-10 top-0 w-40 h-40 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
 
           <div className="flex items-center justify-between gap-4 relative z-10">
             <div className="flex items-center gap-3">
               <div className={[
                 'w-12 h-12 rounded-full border flex items-center justify-center shrink-0',
-                connectionState === 'connected' ? 'bg-cyan-500/12 border-cyan-400/30 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : '',
-                connectionState === 'connecting' || connectionState === 'reconnecting' ? 'bg-amber-500/10 border-amber-400/30 text-amber-300' : '',
-                connectionState === 'error' ? 'bg-rose-500/10 border-rose-400/30 text-rose-300' : '',
+                connectionState === 'connected' ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400 shadow-[0_0_15px_var(--theme-glow-color,rgba(34,211,238,0.2))]' : '',
+                connectionState === 'connecting' || connectionState === 'reconnecting' ? 'bg-orange-500/10 border-orange-400/30 text-orange-300' : '',
+                connectionState === 'error' ? 'bg-orange-500/10 border-orange-400/30 text-orange-300 shadow-[0_0_15px_rgba(249,115,22,0.2)]' : '',
                 connectionState === 'idle' ? 'bg-slate-800/80 border-slate-700 text-slate-500' : '',
               ].join(' ')}>
                 {connectionState === 'error' ? (
@@ -352,17 +333,17 @@ const HomeTab = React.memo((props: HomeTabProps) => {
                   <div className={[
                     'w-1.5 h-1.5 rounded-full',
                     connectionState === 'connected' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : '',
-                    connectionState === 'connecting' || connectionState === 'reconnecting' ? 'bg-amber-400 animate-pulse' : '',
-                    connectionState === 'error' ? 'bg-rose-400' : '',
+                    connectionState === 'connecting' || connectionState === 'reconnecting' ? 'bg-orange-400 animate-pulse' : '',
+                    connectionState === 'error' ? 'bg-orange-400' : '',
                     connectionState === 'idle' ? 'bg-slate-600' : '',
                   ].join(' ')} />
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5 max-w-[12rem] truncate">
                   {connectionState === 'connected' ? `Pin ${batteryLevel}%` :
-                   connectionState === 'connecting' ? 'Đang kết nối...' :
-                   connectionState === 'reconnecting' ? 'Đang kết nối lại...' :
-                   connectionState === 'error' ? lastError || 'Kết nối thất bại' :
-                   'Sẵn sàng ghép nối'}
+                   connectionState === 'connecting' ? t('device.status_connecting') :
+                   connectionState === 'reconnecting' ? t('device.status_reconnecting') :
+                   connectionState === 'error' ? lastError || t('device.status_failed') :
+                   t('device.status_ready')}
                 </p>
               </div>
             </div>
@@ -373,26 +354,26 @@ const HomeTab = React.memo((props: HomeTabProps) => {
                   <button onClick={syncData} className="h-9 w-9 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center active:scale-95 transition-all">
                     <RefreshCw size={14} className={isConnecting ? 'animate-spin' : ''} />
                   </button>
-                  <button onClick={disconnectBottle} className="h-9 px-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-black active:scale-95 transition-all flex items-center gap-1.5">
-                    Ngắt
+                  <button onClick={disconnectBottle} className="h-9 px-4 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-black active:scale-95 transition-all flex items-center gap-1.5">
+                    {t('device.disconnect_btn')}
                   </button>
                 </>
               ) : connectionState === 'error' ? (
                 <button
                   onClick={retryBottle}
-                  className="h-9 px-4 rounded-full bg-cyan-400 text-slate-950 text-xs font-black shadow-[0_0_20px_rgba(34,211,238,0.3)] active:scale-95 transition-all flex items-center gap-1.5"
+                  className="h-9 px-4 rounded-full bg-cyan-500 text-[var(--theme-accent-contrast,#06121a)] text-xs font-black shadow-[0_0_20px_var(--theme-glow-color,rgba(34,211,238,0.3))] active:scale-95 transition-all flex items-center gap-1.5"
                 >
-                  <RefreshCw size={14} /> Thử lại
+                  <RefreshCw size={14} /> {t('device.retry_btn')}
                 </button>
               ) : (
                 <button
                   onClick={connectBottle}
                   disabled={connectionState === 'connecting' || connectionState === 'reconnecting'}
-                  className="h-9 px-4 rounded-full bg-cyan-400 text-slate-950 text-xs font-black shadow-[0_0_20px_rgba(34,211,238,0.3)] active:scale-95 transition-all disabled:opacity-60 flex items-center gap-1.5"
+                  className="h-9 px-4 rounded-full bg-cyan-500 text-[var(--theme-accent-contrast,#06121a)] text-xs font-black shadow-[0_0_20px_var(--theme-glow-color,rgba(34,211,238,0.3))] active:scale-95 transition-all disabled:opacity-60 flex items-center gap-1.5"
                 >
                   {(connectionState === 'connecting' || connectionState === 'reconnecting') ? (
                     <RefreshCw size={14} className="animate-spin" />
-                  ) : 'Bật'}
+                  ) : t('device.enable_btn')}
                 </button>
               )}
             </div>
@@ -401,14 +382,6 @@ const HomeTab = React.memo((props: HomeTabProps) => {
       )}
 
       {/* Modals */}
-      <MainMenuSidebar
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        onProfile={() => { setIsMenuOpen(false); setActiveTab('profile'); }}
-        onSettings={() => { setIsMenuOpen(false); setShowProfileSettings(true); }}
-        onLogout={handleLogoutClick}
-      />
-
       <QuickAmountsEditor
         isOpen={isEditingQuickAmounts}
         onClose={() => setIsEditingQuickAmounts(false)}

@@ -1,3 +1,5 @@
+import i18n from '@/i18n';
+
 /**
  * Wellness Score System - Core Algorithm
  * Combines: Hydration (30%) + Sleep (30%) + Activity (20%) + Mood (20%)
@@ -130,12 +132,12 @@ export function getWellnessTier(score: number): {
   color: string;
   description: string;
 } {
-  if (score >= 90) return { tier: 'Platinum', emoji: '💎', color: 'text-purple-400', description: 'Xuất sắc! Bạn đang ở đỉnh cao phong độ.' };
-  if (score >= 80) return { tier: 'Gold', emoji: '🏆', color: 'text-yellow-400', description: 'Rất tốt! Hãy duy trì phong độ này.' };
-  if (score >= 70) return { tier: 'Silver', emoji: '🥈', color: 'text-slate-300', description: 'Tốt. Còn room để cải thiện.' };
-  if (score >= 60) return { tier: 'Bronze', emoji: '🥉', color: 'text-amber-600', description: 'Khá. Bắt đầu xây dựng thói quen.' };
-  if (score >= 50) return { tier: 'Starter', emoji: '🌱', color: 'text-emerald-400', description: 'Đầu tiên là bắt đầu!' };
-  return { tier: 'Needs Work', emoji: '💪', color: 'text-red-400', description: 'Cần tập trung cải thiện sức khỏe.' };
+  if (score >= 90) return { tier: i18n.t('common.tier_platinum'), emoji: '💎', color: 'text-purple-400', description: i18n.t('common.wellness_desc_platinum') };
+  if (score >= 80) return { tier: i18n.t('common.tier_gold'), emoji: '🏆', color: 'text-yellow-400', description: i18n.t('common.wellness_desc_gold') };
+  if (score >= 70) return { tier: i18n.t('common.tier_silver'), emoji: '🥈', color: 'text-slate-300', description: i18n.t('common.wellness_desc_silver') };
+  if (score >= 60) return { tier: i18n.t('common.tier_bronze'), emoji: '🥉', color: 'text-amber-600', description: i18n.t('common.wellness_desc_bronze') };
+  if (score >= 50) return { tier: i18n.t('common.tier_starter'), emoji: '🌱', color: 'text-emerald-400', description: i18n.t('common.wellness_desc_starter') };
+  return { tier: i18n.t('common.tier_needs_work'), emoji: '💪', color: 'text-red-400', description: i18n.t('common.wellness_desc_needs_work') };
 }
 
 /**
@@ -173,14 +175,14 @@ export function generateWellnessInsights(
       type: 'hydration_sleep',
       strength: hydrationSleepCorr,
       insight: hydrationSleepCorr > 0
-        ? 'Uống đủ nước giúp cải thiện chất lượng giấc ngủ'
-        : 'Uống thiếu nước ảnh hưởng tiêu cực đến giấc ngủ',
+        ? i18n.t('common.insight_hydration_sleep_positive')
+        : i18n.t('common.insight_hydration_sleep_negative'),
       recommendation: hydrationSleepCorr > 0
-        ? 'Uống ít nhất 250ml trước khi ngủ để cải thiện sleep score'
-        : 'Tránh uống quá nhiều gần đêm để ngủ ngon hơn',
+        ? i18n.t('common.rec_hydration_sleep_positive')
+        : i18n.t('common.rec_hydration_sleep_negative'),
       examples: [
-        { scenario: 'Ngày uống 2000ml+, ngủ 8h (quality 8/10)', impact: '+0.6h deep sleep' },
-        { scenario: 'Ngày uống 1000ml-, ngủ 6h (quality 5/10)', impact: '-2h total sleep' }
+        { scenario: i18n.t('common.example_hydration_sleep_positive'), impact: i18n.t('common.example_hydration_sleep_positive_impact') },
+        { scenario: i18n.t('common.example_hydration_sleep_negative'), impact: i18n.t('common.example_hydration_sleep_negative_impact') }
       ]
     });
   }
@@ -194,12 +196,12 @@ export function generateWellnessInsights(
       type: 'hydration_mood',
       strength: moodCorr,
       insight: moodCorr > 0
-        ? 'Hydration buổi sáng là chìa khóa cho tâm trạng tốt'
-        : 'Thiếu nước buổi sáng ảnh hưởng đến tâm trạng',
-      recommendation: 'Uống 300ml ngay khi thức dậy để khởi ngày với năng lượng tích cực',
+        ? i18n.t('common.insight_hydration_mood_positive')
+        : i18n.t('common.insight_hydration_mood_negative'),
+      recommendation: i18n.t('common.rec_hydration_mood'),
       examples: [
-        { scenario: 'Uống 300ml trong 30 phút đầu khởi động', impact: '+25% mood score' },
-        { scenario: 'Bỏ qua buổi sáng, cảm giác mệt mỏi', impact: '-0.5 avg mood' }
+        { scenario: i18n.t('common.example_hydration_mood_positive'), impact: i18n.t('common.example_hydration_mood_positive_impact') },
+        { scenario: i18n.t('common.example_hydration_mood_negative'), impact: i18n.t('common.example_hydration_mood_negative_impact') }
       ]
     });
   }

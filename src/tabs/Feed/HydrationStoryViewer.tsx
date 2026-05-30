@@ -10,6 +10,7 @@ import type { SocialFeedPost } from '../../models';
 import { useAppStore } from '../../store/useAppStore';
 import { useUIStore } from '../../store/useUIStore';
 import { LazyImage } from '../../components/LazyImage';
+import { StoryReactionsBar } from '../../components/StoryReactionsBar';
 import { glassInner } from '../../styles/glass';
 
 interface HydrationStoryViewerProps {
@@ -27,6 +28,10 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
   const { setActiveCommentPost } = useUIStore();
   const [reactedEmojis, setReactedEmojis] = useState<Set<string>>(new Set());
   const profile = useAppStore((s) => s.profile);
+
+  // Extract reaction counts from story
+  const reactionCounts = story.reaction_counts as Record<string, number> | undefined;
+  const userReactions = story.user_reactions as string[] | undefined || [];
 
   useEffect(() => {
     if (paused) return;
@@ -131,42 +136,33 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
         <div className="absolute bottom-36 left-6 right-6 z-30 flex flex-col gap-4 pointer-events-none">
           {story.content && <p className="text-white text-3xl font-black drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] leading-tight">{story.content}</p>}
           <div className="flex flex-wrap gap-2">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="px-3 py-2 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl"><span className="text-white font-bold text-sm">Đạt {pct}% mục tiêu</span></motion.div>
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="px-3 py-2 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl"><span className="text-white font-bold text-sm">Thời tiết {temp}°C</span></motion.div>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="px-3 py-2 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl"><span className="text-white font-bold text-sm">{t('feed.reached_goal_pct', { pct })}</span></motion.div>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="px-3 py-2 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl"><span className="text-white font-bold text-sm">{t('feed.weather_temp', { temp })}</span></motion.div>
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="px-3 py-2 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl"><span className="text-white font-bold text-sm">{drink}</span></motion.div>
-            {(story.streak_snapshot || 0) > 0 && <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="px-3 py-2 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl"><span className="text-white font-bold text-sm">Chuỗi {story.streak_snapshot} ngày</span></motion.div>}
+            {(story.streak_snapshot || 0) > 0 && <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="px-3 py-2 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl"><span className="text-white font-bold text-sm">{t('feed.streak_days', { days: story.streak_snapshot })}</span></motion.div>}
           </div>
         </div>
 
         {/* Emoji Reactions + Comment */}
         <div className="absolute bottom-6 left-6 right-6 z-30">
-          {/* Emoji row */}
-          <div className="flex items-center justify-center gap-2 mb-3">
-            {QUICK_EMOJIS.map(emoji => {
-              const isReacted = reactedEmojis.has(emoji);
-              return (
-                <button
-                  key={emoji}
-                  onClick={() => handleReact(emoji)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg active:scale-90 transition-all ${
-                    isReacted
-                      ? 'bg-white/30 border border-white/50 scale-110 shadow-lg'
-                      : 'bg-black/30 backdrop-blur-md border border-white/20 hover:bg-white/20'
-                  }`}
-                >
-                  {emoji}
-                </button>
-              );
-            })}
-          </div>
+          {/* New StoryReactionsBar with proper counts */}
+          <StoryReactionsBar
+            storyId={story.id}
+            initialReactions={reactionCounts}
+            initialUserReactions={userReactions}
+            onReactionChange={(counts, total) => {
+              // Optionally handle reaction changes
+              console.log('Reactions updated:', counts, total);
+            }}
+          />
 
           {/* Comment button */}
           <button
             onClick={() => { setPaused(true); setActiveCommentPost(story); }}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/20 text-white/80 hover:text-white hover:bg-white/20 active:scale-[0.98] transition-all"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/20 text-white/80 hover:text-white hover:bg-white/20 active:scale-[0.98] transition-all mt-2"
           >
             <MessageCircle size={16} />
-            <span className="text-xs font-bold">Bình luận</span>
+            <span className="text-xs font-bold">{t('feed.comment_btn')}</span>
           </button>
         </div>
       </motion.div>

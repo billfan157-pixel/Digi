@@ -1,4 +1,5 @@
 // src/hooks/useDeleteAccount.ts
+import i18n from '@/i18n';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -20,7 +21,7 @@ export const useDeleteAccount = () => {
       });
 
       if (authError || !user) {
-        throw new Error('Mật khẩu không chính xác.');
+        throw new Error(i18n.t('auth.password_incorrect'));
       }
 
       // 2. GỌI FUNCTION SQL TƯƠNG ỨNG
@@ -44,7 +45,7 @@ export const useDeleteAccount = () => {
       }
 
       if (rpcError) {
-        throw new Error(rpcError.message || 'Không thể thực hiện xóa.');
+        throw new Error(rpcError.message || i18n.t('auth.delete_failed'));
       }
 
       // 3. ĐĂNG XUẤT (Nếu xóa tài khoản thành công, session cũng sẽ mất, nhưng signOut vẫn an toàn)
@@ -53,7 +54,7 @@ export const useDeleteAccount = () => {
       return { success: true };
 
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Đã xảy ra lỗi.';
+      const message = err instanceof Error ? err.message : i18n.t('validation.error_occurred');
       setError(message);
       return { success: false, message };
     } finally {

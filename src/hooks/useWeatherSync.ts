@@ -92,10 +92,9 @@ export const syncWeatherAndWaterGoal = async (silent = false): Promise<WeatherDa
     } else {
       if (!silent) {
         toast.loading(i18n.t('weather.fallback_location'), { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
-      } else {
-        console.log('[Weather] Geolocation failed/denied, falling back to Hanoi');
       }
-      weather = await getWeatherData({ city: 'Hanoi' });
+      // If GPS fails, call weather-proxy with empty lookup. Server will resolve location by IP.
+      weather = await getWeatherData({});
     }
 
     if (!weather) {

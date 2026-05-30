@@ -44,13 +44,13 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
             onClick={() => onTimeRangeChange('week')} 
             className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${timeRange === 'week' ? 'bg-cyan-500 text-slate-900 shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-white'}`}
           >
-            <BarChart2 size={14} /> 7 Ngày
+            <BarChart2 size={14} /> 7 Days
           </button>
           <button 
             onClick={() => onTimeRangeChange('month')} 
             className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${timeRange === 'month' ? 'bg-cyan-500 text-slate-900 shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-white'}`}
           >
-            <Calendar size={14} /> Tháng này
+            <Calendar size={14} /> This Month
           </button>
         </div>
 
@@ -69,7 +69,7 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
                 {weeklyChartData.length === 0 ? (
                   <div className="w-full h-full flex flex-col items-center justify-center text-slate-500">
                     <BarChart2 size={32} className="mb-2 opacity-50" />
-                    <p className="text-sm font-medium">Chưa có dữ liệu tuần này</p>
+                    <p className="text-sm font-medium">No weekly data yet</p>
                   </div>
                 ) : (
                   weeklyChartData.map((day, i) => {
@@ -134,7 +134,7 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({
                 ) : (
                   <>
                     <div className="grid grid-cols-7 gap-1.5 mb-2">
-                      {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => (
+                      {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
                         <div key={d} className="text-center text-[10px] font-bold text-slate-500">{d}</div>
                       ))}
                     </div>

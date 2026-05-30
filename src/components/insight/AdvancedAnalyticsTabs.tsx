@@ -16,9 +16,9 @@ interface AdvancedAnalyticsTabsProps {
 }
 
 const tabs = [
-  { id: 'trend' as TabType, label: 'Xu hướng', icon: TrendingUp },
-  { id: 'wow' as TabType, label: 'So sánh tuần', icon: BarChart3 },
-  { id: 'streak' as TabType, label: 'Chuỗi ngày', icon: Flame },
+  { id: 'trend' as TabType, label: 'Trend', icon: TrendingUp },
+  { id: 'wow' as TabType, label: 'Week Compare', icon: BarChart3 },
+  { id: 'streak' as TabType, label: 'Streak', icon: Flame },
 ];
 
 export default function AdvancedAnalyticsTabs({
@@ -40,13 +40,13 @@ export default function AdvancedAnalyticsTabs({
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`relative flex-1 flex items-center justify-center gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-widest transition-all duration-300 z-10 ${
-                isActive ? 'text-cyan-200' : 'text-slate-500 hover:text-slate-300'
+                isActive ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               {isActive && (
                 <motion.div
                   layoutId="advancedAnalyticsTabIndicator"
-                    className="absolute inset-0 rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border border-cyan-500/25 -z-10 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
+                    className="absolute inset-0 rounded-[var(--theme-border-radius-inner,8px)] bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 -z-10 shadow-[0_0_12px_var(--theme-glow-color,rgba(34,211,238,0.15))]"
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 />
               )}

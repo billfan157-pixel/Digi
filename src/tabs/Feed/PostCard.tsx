@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useFeedInteractions } from '../../hooks/useFeedInteractions';
 import { usePostActions } from '../../hooks/usePostActions';
 import { PostCardHeader } from './PostCardHeader';
-import { PostCardContent } from './PostCardContent';
+import { PostCardContent, parseDuelContent, parseDuelTargetToMl, parseDuelDeadlineToISO } from './PostCardContent';
 import { PostMenuDropdown } from './PostMenuDropdown';
 import { PostActionBar } from './PostActionBar';
 import type { SocialFeedPost } from '../../models';
@@ -159,7 +159,17 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
           isMilestone={isMilestone}
           isWaterLog={isWaterLog}
           isDrop={isDrop}
-          handleJoinChallenge={() => joinChallenge(post.author_id)}
+          handleJoinChallenge={() => {
+            const duel = parseDuelContent(postContent, post, t);
+            const targetMl = parseDuelTargetToMl(duel.target);
+            const deadlineISO = parseDuelDeadlineToISO(duel.deadline, t);
+            joinChallenge(post.author_id, {
+              stake_coins: post.stake_coins ?? undefined,
+              target_ml: targetMl,
+              deadline: deadlineISO ?? undefined,
+              mode: duel.mode,
+            });
+          }}
         />
       </div>
 
@@ -180,18 +190,18 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
             transition={{ duration: 2, delay: 1, repeat: Infinity, ease: 'easeInOut' }}
             className="px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold"
           >
-            Chuỗi {post.streak_snapshot}
+            {t('feed.streak_days', { days: post.streak_snapshot })}
           </motion.span>
         )}
         {post.tip_category && (
             <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
               <Lightbulb size={10} />
-              {post.tip_category === 'science' ? 'Khoa học' : post.tip_category === 'recipe' ? 'Công thức' : 'Mẹo vặt'}
+              {post.tip_category === 'science' ? t('feed.category_science') : post.tip_category === 'recipe' ? t('feed.category_recipe') : t('feed.category_tips')}
             </span>
           )}
          {isPoll && (
            <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold flex items-center gap-1">
-             <BarChart3 size={10} />Khảo sát
+             <BarChart3 size={10} />{t('feed.poll_label')}
            </span>
          )}
           {post.temperature && (
@@ -201,7 +211,7 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
           )}
           {post.heart_rate && (
             <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold">
-              {post.heart_rate} nhịp/phút
+              {post.heart_rate} {t('common.bpm')}
             </span>
           )}
           {post.drink_type && (
@@ -223,7 +233,7 @@ export const PostCard = memo(({ post, currentUserId, onOpenComments }: PostCardP
              <Droplets size={12} className="text-cyan-400" />
            </div>
            <p className="text-xs text-slate-300 font-medium">
-              <span className="font-black text-cyan-400">{post.pulse_count} người bạn</span> đã nạp nước sau khi xem.
+               {t('feed.pulse_hydrated', { count: post.pulse_count })}
            </p>
          </motion.div>
        )}

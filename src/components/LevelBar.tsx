@@ -84,11 +84,11 @@ const LevelBar = ({
 
       <div className="relative h-2 w-full bg-slate-800/50 rounded-full overflow-hidden border border-white/5 mb-1.5">
         <motion.div
-          initial={{ width: 0 }}
+          initial={false}
           animate={{ width: `${rankProgress}%` }}
           transition={{ duration: 1.2, ease: "easeOut" }}
           className="relative h-full rounded-full shadow-[0_0_8px_rgba(6,182,212,0.3)]"
-          style={{ background: currentRank.color }}
+          style={{ background: currentRank.color, width: `${rankProgress}%` }}
         >
           <div className="absolute top-0 right-0 h-full w-3 bg-white/40 blur-[2px] rounded-full" />
         </motion.div>
@@ -107,10 +107,11 @@ const LevelBar = ({
 
       <div className="relative h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden border border-white/5">
         <motion.div
-          initial={{ width: 0 }}
+          initial={false}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 1.2, ease: "easeOut" }}
           className="relative h-full rounded-full bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]"
+          style={{ width: `${progress}%` }}
         >
           <div className="absolute top-0 right-0 h-full w-3 bg-white/60 blur-[2px] rounded-full" />
         </motion.div>

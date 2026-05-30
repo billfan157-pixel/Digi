@@ -1,5 +1,6 @@
 import { Target, Droplets, TrendingUp, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface Stats {
   avg: number;
@@ -19,11 +20,12 @@ const AdvancedStatsGrid: React.FC<AdvancedStatsGridProps> = ({
   stats,
   weeklyChartData,
 }) => {
+  const { t } = useTranslation();
   const completionRate = weeklyChartData.length === 0 ? 0 : Math.round((stats.completed / weeklyChartData.length) * 100);
 
   const metrics = [
     {
-      label: 'Trung bình',
+      label: t('common.average'),
       value: stats.avg,
       unit: 'ml',
       icon: TrendingUp,
@@ -31,7 +33,7 @@ const AdvancedStatsGrid: React.FC<AdvancedStatsGridProps> = ({
       bg: 'bg-cyan-500/10'
     },
     {
-      label: 'Hoàn thành',
+      label: 'Completed',
       value: completionRate,
       unit: '%',
       icon: Target,
@@ -39,7 +41,7 @@ const AdvancedStatsGrid: React.FC<AdvancedStatsGridProps> = ({
       bg: 'bg-emerald-500/10'
     },
     {
-      label: 'Tuần này',
+      label: 'This Week',
       value: (weeklyTotal / 1000).toFixed(1),
       unit: 'L',
       icon: Droplets,
@@ -47,7 +49,7 @@ const AdvancedStatsGrid: React.FC<AdvancedStatsGridProps> = ({
       bg: 'bg-blue-500/10'
     },
     {
-      label: 'Tháng này',
+      label: 'This Month',
       value: (monthlyTotal / 1000).toFixed(1),
       unit: 'L',
       icon: Calendar,

@@ -40,12 +40,13 @@ export function useAppBootstrapSync({
 }: UseAppBootstrapSyncOptions) {
   const [isPrefsLoaded, setIsPrefsLoaded] = useState(false);
   const lastDayRef = useRef(new Date().toDateString());
-
-
+  const refetchedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!profile?.id || profile.id === 'undefined') return;
+    if (refetchedIdRef.current === profile.id) return;
 
+    refetchedIdRef.current = profile.id as string;
     console.log('[App] Force refetching profile to sync EXP display');
     void refetchProfile();
   }, [profile?.id, refetchProfile]);

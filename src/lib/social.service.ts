@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import type { SocialFeedPost } from '@/models';
 import type { CloseCircleMember, SocialDiscoverProfile, SocialProfileStats } from '@/lib/social';
@@ -87,7 +88,7 @@ export async function fetchSocialFeed(
   if (likesRes.error) throw likesRes.error;
 
   const profileMap = new Map((profilesRes.data || []).map((row: { id: string; nickname: string; avatar_url?: string | null; level?: number | null; water_today?: number | null; water_goal?: number | null }) => [row.id, {
-    id: row.id, nickname: row.nickname || 'Người dùng DigiWell', avatar_url: row.avatar_url ?? null,
+    id: row.id, nickname: row.nickname || i18n.t('common.digiwell_user'), avatar_url: row.avatar_url ?? null,
     level: row.level ?? undefined, water_today: row.water_today ?? undefined, water_goal: row.water_goal ?? undefined,
   }]));
   const likedPostIds = new Set((likesRes.data || []).map((row: { post_id: string }) => row.post_id));
@@ -108,8 +109,9 @@ export async function fetchSocialFeed(
       expires_at: (row.expires_at as string | null) ?? null,
       event_type: (row.event_type as string | null) ?? null,
       reference_id: (row.reference_id as string | null) ?? null,
+      stake_coins: (row.stake_coins as number | null) ?? null,
       is_squad_highlight: Boolean(row.is_squad_highlight),
-      author: profileMap.get(authorId) || { id: authorId, nickname: 'Người dùng DigiWell' },
+      author: profileMap.get(authorId) || { id: authorId, nickname: i18n.t('common.digiwell_user') },
       cheeredByMe: likedPostIds.has(rowId),
     };
   });
@@ -147,7 +149,7 @@ export async function searchSocialProfiles(userId: string, query: string, circle
   const circleSet = new Set(circleIds);
   return (data || []).map((user: { id: string; nickname: string; avatar_url?: string | null; level?: number | null; water_today?: number | null; water_goal?: number | null }, index: number) => ({
     id: user.id || `search-user-fallback-${index}`,
-    nickname: user.nickname || 'Người dùng DigiWell',
+    nickname: user.nickname || i18n.t('common.digiwell_user'),
     isFollowing: followingIds.includes(user.id),
     isInCircle: circleSet.has(user.id),
     avatar_url: user.avatar_url ?? null,
@@ -220,7 +222,7 @@ export async function sendNudge(fromUserId: string, toUserId: string, postId: st
     nudge_type: 'reminder',
     related_entity_id: postId,
     related_entity_type: 'post',
-    message: 'Uống nước đi, giữ nhịp nhé.',
+    message: i18n.t('common.default_nudge_message'),
   });
   if (error) throw error;
 }

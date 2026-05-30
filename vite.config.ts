@@ -13,6 +13,7 @@ const sentryRelease =
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: process.env.VITE_CDN_BASE_URL || '/',
   plugins: [
     react(),
     process.env.SENTRY_AUTH_TOKEN ? sentryVitePlugin({
@@ -75,25 +76,26 @@ export default defineConfig({
             },
           },
           {
-            // Google Fonts stylesheets
+            // Google Fonts stylesheets - refresh in background
             urlPattern: /^https:\/\/fonts\.googleapis\.com/,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'google-fonts-stylesheets',
+              expiration: { maxEntries: 10, maxAgeSeconds: 7 * 24 * 60 * 60 },
             },
           },
           {
-            // Google Fonts webfont files
+            // Google Fonts webfont files - cache long-term
             urlPattern: /^https:\/\/fonts\.gstatic\.com/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'google-fonts-webfonts',
-              expiration: { maxEntries: 10, maxAgeSeconds: 365 * 24 * 60 * 60 },
+              expiration: { maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            // Image assets (PNG, SVG, WebP, AVIF)
+            // Image assets - cache with size limits
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif|ico)$/,
             handler: 'CacheFirst',
             options: {
@@ -102,13 +104,32 @@ export default defineConfig({
             },
           },
           {
+            // User-uploaded images (Supabase Storage) - cache long-term
+            urlPattern: /^https:\/\/.*\.supabase\.co\/storage/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'user-images',
+              expiration: { maxEntries: 200, maxAgeSeconds: 7 * 24 * 60 * 60 },
+            },
+          },
+          {
             // Supabase API calls — always fetch fresh, fallback to cache
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api',
-              expiration: { maxEntries: 50, maxAgeSeconds: 5 * 60 },
+              expiration: { maxEntries: 100, maxAgeSeconds: 5 * 60 },
               networkTimeoutSeconds: 10,
+            },
+          },
+          {
+            // Supabase Edge Functions - network first for real-time data
+            urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/v1/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-functions',
+              expiration: { maxEntries: 50, maxAgeSeconds: 2 * 60 },
+              networkTimeoutSeconds: 15,
             },
           },
         ],
@@ -124,7 +145,9 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@shared': fileURLToPath(new URL('./supabase/functions/_shared', import.meta.url)),
+      '@shared': fileURLToPath(new URL('./supabase/functions/_shared', import.meta.url)),
     },
   },
   build: {

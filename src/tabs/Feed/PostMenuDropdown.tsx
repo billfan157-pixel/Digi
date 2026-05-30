@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Edit2, Trash2, Flag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,7 +18,9 @@ export const PostMenuDropdown = ({
   onEdit,
   onDelete,
   onReport,
-}: PostMenuDropdownProps) => (
+}: PostMenuDropdownProps) => {
+  const { t } = useTranslation();
+  return (
   <AnimatePresence>
     {show && (
       <div key="post-menu-overlay">
@@ -34,13 +37,13 @@ export const PostMenuDropdown = ({
                 onClick={onEdit}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/5 transition-colors"
               >
-                <Edit2 size={16} /> Chỉnh sửa
+                <Edit2 size={16} /> {t('common.edit')}
               </button>
               <button
                 onClick={onDelete}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors"
               >
-                <Trash2 size={16} /> Xóa bài viết
+                <Trash2 size={16} /> {t('common.delete')}
               </button>
             </>
           ) : (
@@ -48,11 +51,12 @@ export const PostMenuDropdown = ({
               onClick={onReport}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm text-amber-400 hover:bg-amber-500/10 transition-colors"
             >
-              <Flag size={16} /> Báo cáo vi phạm
+              <Flag size={16} /> {t('feed.report_post')}
             </button>
           )}
         </motion.div>
       </div>
     )}
   </AnimatePresence>
-);
+  );
+};

@@ -1,7 +1,7 @@
 # DigiWell — 2-Year Strategic Roadmap
 **Generated from:** Audit Report (A+, 17/17 resolved) + Product Context
 **Date:** 22/05/2026
-**Last Updated:** 23/05/2026 (Sprint 5-6 & Sprint 9-10 Completed - CI/CD & BLE Security)
+**Last Updated:** 26/05/2026 (Sprint 19-20 & Sprint 21-22 & Sprint 23-24 & Sprint 26 & Sprint 29-30 Completed)
 **Type:** GROWTH PLANNING — Zero technical debt, feature-first from day one
 
 ---
@@ -216,10 +216,10 @@ Objective: "Ship DigiWell to real users"
 #### Sprint 11–12: Freemium Model + Performance Audit
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Full performance audit (Phase 8 unaudited areas) | Theme 3 | 4 | None | Low | ⏳ PENDING |
-| Database query optimization từ performance audit | Theme 3 | 3 | Performance audit | Medium | ⏳ PENDING |
-| Freemium tier definition + feature gating | Theme 6 | 3 | None | Low | ⏳ PENDING |
-| Premium waitlist (pre-DigiBottle hardware) | Theme 6 | 2 | None | Low | ⏳ PENDING |
+| Full performance audit (Phase 8 unaudited areas) | Theme 3 | 4 | None | Low | ✅ COMPLETED (23/05/2026) |
+| Database query optimization từ performance audit | Theme 3 | 3 | Performance audit | Medium | ✅ COMPLETED (23/05/2026) |
+| Freemium tier definition + feature gating | Theme 6 | 3 | None | Low | ✅ COMPLETED (23/05/2026) |
+| Premium waitlist (pre-DigiBottle hardware) | Theme 6 | 2 | None | Low | ✅ COMPLETED (23/05/2026) |
 
 **Sprint Goal:** App live + performance baseline clean + freemium model defined.
 
@@ -256,9 +256,9 @@ Objective: "Make users come back every day"
 #### Sprint 13–14: AI Personalization Engine
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Hydration pattern analysis (time-of-day, weather correlation) | Theme 4 | 4 | Observability data từ Q1 | Medium | ⏳ PENDING |
-| Smart reminder system (AI-driven, không fixed schedule) | Theme 4 | 4 | Pattern analysis | Medium | ⏳ PENDING |
-| AI weekly hydration report (push notification) | Theme 4 | 3 | None | Low | ⏳ PENDING |
+| Hydration pattern analysis (time-of-day, weather correlation) | Theme 4 | 4 | Observability data từ Q1 | Medium | ✅ COMPLETED (24/05/2026) |
+| Smart reminder system (AI-driven, không fixed schedule) | Theme 4 | 4 | Pattern analysis | Medium | ✅ COMPLETED (24/05/2026) |
+| AI weekly hydration report (push notification) | Theme 4 | 3 | None | Low | ✅ COMPLETED (24/05/2026) |
 
 **Sprint Goal:** App remind user đúng lúc họ thường quên uống nước.
 
@@ -267,10 +267,10 @@ Objective: "Make users come back every day"
 #### Sprint 15–16: Retention & Gamification
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Streak system + milestone badges | Theme 2 | 3 | None | Low | ⏳ PENDING |
-| Hydration leaderboard (opt-in, friends) | Theme 2 | 4 | None | Medium | ⏳ PENDING |
-| Daily challenge system | Theme 2 | 3 | None | Low | ⏳ PENDING |
-| Push notification infrastructure | Theme 2 | 2 | None | Low | ⏳ PENDING |
+| Streak system + milestone badges | Theme 2 | 3 | None | Low | ✅ COMPLETED (24/05/2026) |
+| Hydration leaderboard (opt-in, friends) | Theme 2 | 4 | None | Medium | ✅ COMPLETED (24/05/2026) |
+| Daily challenge system | Theme 2 | 3 | None | Low | ✅ COMPLETED (24/05/2026) |
+| Push notification infrastructure | Theme 2 | 2 | None | Low | ✅ COMPLETED (24/05/2026) |
 
 **Sprint Goal:** User có lý do để mở app mỗi ngày dù không có DigiBottle.
 
@@ -303,7 +303,7 @@ Q3 Hardware:
 **Thời gian:** Tháng 10–12, Year 1
 
 ### Quarter Goal
-**M2 — Hardware Prototype stable.** Ecosystem foundation (webhook platform, developer API) live.
+**M2 — Hardware Prototype stable.** Ecosystem foundation (webhook platform, developer API) live ✅.
 1,000 MAU cuối năm. Chuẩn bị hardware beta cho Q2 Year 2.
 
 ### OKRs
@@ -320,9 +320,9 @@ Objective: "Build the ecosystem around DigiBottle"
 #### Sprint 19–20: Developer Platform Polish
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Public API documentation (webhook platform) | Theme 2 | 3 | None | Low | ⏳ PENDING |
-| Developer portal (webhook management UI) | Theme 2 | 4 | None | Medium | ⏳ PENDING |
-| Webhook event schema v1.0 stabilization | Theme 2 | 2 | None | Low | ⏳ PENDING |
+| Public API documentation (webhook platform) | Theme 2 | 3 | None | Low | ✅ COMPLETED (26/05/2026) |
+| Developer portal (webhook management UI) | Theme 2 | 4 | None | Medium | ✅ COMPLETED (26/05/2026) |
+| Webhook event schema v1.0 stabilization | Theme 2 | 2 | None | Low | ✅ COMPLETED (26/05/2026) |
 
 **Sprint Goal:** External developer có thể integrate với DigiWell data.
 
@@ -331,9 +331,9 @@ Objective: "Build the ecosystem around DigiBottle"
 #### Sprint 21–22: Subscription Tier Implementation
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Subscription pricing model (AI Premium tier) | Theme 6 | 2 | None | Low | ⏳ PENDING |
-| In-app purchase implementation (iOS + Android) | Theme 6 | 5 | None | High | ⏳ PENDING |
-| Feature gating: advanced AI behind subscription | Theme 6 | 3 | IAP implementation | Medium | ⏳ PENDING |
+| Subscription pricing model (AI Premium tier) | Theme 6 | 2 | None | Low | ✅ COMPLETED (26/05/2026) |
+| In-app purchase implementation (iOS + Android) | Theme 6 | 5 | RevenueCat SDK | High | ✅ COMPLETED (26/05/2026) |
+| Feature gating: advanced AI behind subscription | Theme 6 | 3 | IAP implementation | Medium | ✅ COMPLETED (26/05/2026) |
 
 **Sprint Goal:** Đầu tiên có revenue từ app.
 **Risk Flag:** Apple IAP review process có thể kéo dài.
@@ -343,12 +343,12 @@ Objective: "Build the ecosystem around DigiBottle"
 #### Sprint 23–24: Year 2 Preparation
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| SEA market research (Singapore, Thailand, Malaysia) | Theme 7 | 2 | None | Low | ⏳ PENDING |
-| Localization framework setup (i18n) | Theme 7 | 3 | None | Low | ⏳ PENDING |
-| Hardware beta program setup (waitlist → application) | Theme 5 | 2 | None | Low | ⏳ PENDING |
-| Load testing đến 2,000 concurrent users | Theme 3 | 3 | None | Low | ⏳ PENDING |
+| SEA market research (Singapore, Thailand, Malaysia) | Theme 7 | 2 | None | Low | ✅ COMPLETED |
+| Localization framework setup (i18n) | Theme 7 | 3 | None | Low | ✅ COMPLETED |
+| Hardware beta program setup (waitlist → application) | Theme 5 | 2 | None | Low | ✅ COMPLETED |
+| Load testing đến 2,000 concurrent users | Theme 3 | 3 | None | Low | ✅ COMPLETED |
 
-**Sprint Goal:** Sẵn sàng cho hardware beta và SEA expansion trong Year 2.
+**Sprint Goal:** Sẵn sàng cho hardware beta và SEA expansion trong Year 2. ✅
 
 ---
 
@@ -393,6 +393,20 @@ Objective: "Get ready to put real DigiBottles in real hands"
 
 ---
 
+#### Sprint 26: Scale Infrastructure (Parallel Track)
+| Story | Theme | Points | Dependencies | Risk | Status |
+|---|---|---|---|---|---|
+| Read replica query routing (supabaseRead client) | Theme 3 | 3 | VITE_SUPABASE_READ_URL | Low | ✅ COMPLETED (26/05/2026) |
+| CDN setup (Vite base URL + Vercel edge caching + image optimization) | Theme 3 | 3 | Deployment platform | Low | ✅ COMPLETED (26/05/2026) |
+| Database partitioning (webhook_deliveries monthly range) | Theme 3 | 2 | Migration infrastructure | Low | ✅ COMPLETED (26/05/2026) |
+| Redis caching layer (cache-proxy extended for 5 new endpoints) | Theme 3 | 4 | Upstash Redis | Low | ✅ COMPLETED (26/05/2026) |
+| Message queue (pgmq + queue-worker edge function + dead letter) | Theme 3 | 5 | pgmq extension | Medium | ✅ COMPLETED (26/05/2026) |
+
+**Sprint Goal:** Scale infrastructure readiness: read/write split, CDN delivery, table partitioning, Redis caching, async message queue.
+**Note:** Chạy parallel với BLE Security Hardening (Sprint 25-26). Các task implement từ Audit Report's Sprint 26 scope.
+
+---
+
 #### Sprint 27–28: Hardware Beta Program
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
@@ -409,11 +423,11 @@ Objective: "Get ready to put real DigiBottles in real hands"
 #### Sprint 29–30: SEA Expansion
 | Story | Theme | Points | Dependencies | Risk | Status |
 |---|---|---|---|---|---|
-| Singapore App Store listing + localization | Theme 7 | 3 | i18n framework | Low | ⏳ PENDING |
-| English + Traditional Chinese localization | Theme 7 | 4 | i18n framework | Medium | ⏳ PENDING |
-| SEA marketing landing page | Theme 7 | 3 | None | Low | ⏳ PENDING |
+| Singapore App Store listing + localization | Theme 7 | 3 | i18n framework | Low | ✅ COMPLETED |
+| English + Traditional Chinese localization | Theme 7 | 4 | i18n framework | Medium | ⏳ SKIPPED (vi + en only) |
+| SEA marketing landing page | Theme 7 | 3 | None | Low | ✅ COMPLETED |
 
-**Sprint Goal:** DigiWell available trên App Store Singapore.
+**Sprint Goal:** DigiWell available trên App Store Singapore. ✅
 
 ---
 
@@ -839,6 +853,56 @@ Ad-hoc triggers:
 
 ## PHẦN 12 — Changelog
 
+### Update 26/05/2026 (Sprint 19-20 & Sprint 26 Completed - Developer Portal + Scale Infrastructure)
+
+**Status Changes:**
+- Sprint 19-20: All tasks marked as ✅ COMPLETED (26/05/2026) (Webhook event schema v1.0, developer portal UI with 7 tabs, public API documentation with HMAC signature guide).
+- Sprint 26: All tasks marked as ✅ COMPLETED (26/05/2026) (Read replica query routing, CDN setup, webhook_deliveries partitioning, Redis caching extended, pgmq message queue + queue-worker edge function).
+
+**What was implemented (Sprint 19-20 — Developer Portal):**
+- **Event Schema Config**: `src/config/webhooks.ts` — typed event definitions, envelope format, HMAC signature example, rate limits, error codes
+- **DeveloperPortalModal**: Full 7-tab portal (Webhooks, Events, Logs, API Keys, Guide, Performance, AI Costs) extracted from SettingsModal
+- **GlobalModalManager integration**: Registered DeveloperPortalModal with lazy loading
+
+**What was implemented (Sprint 26 — Scale Infrastructure):**
+- **Read Replicas**: `src/lib/readQueries.ts` — 11 read-optimized query functions using `supabaseRead` for leaderboard, feed, clubs, challenges, shop; `VITE_SUPABASE_READ_URL` added to .env
+- **CDN Setup**: Vite `base` config via `VITE_CDN_BASE_URL`; `src/config/cdn.ts` with `getAssetUrl()` and `getOptimizedImageUrl()`; vercel.json edge cache headers for `/images/` and `/api/`
+- **DB Partitioning**: `webhook_deliveries` monthly range partition with auto-create cron, matching `water_logs` pattern; pooler URL added to .env
+- **Caching Layer**: cache-proxy extended with 5 new endpoints (water-week, achievements, quests, weekly leaderboard, notifications); invalidation expanded for achievements/quests/notifications tables; `useStaleWhileRevalidate` hook with in-memory cache
+- **Message Queue**: pgmq extension with 3 queues (webhook_dispatch, push_notification, cron_job); `dead_letter_queue` table; `queue-worker` edge function for batch processing with retry + dead letter; webhook-dispatcher supports `use_queue: true` async path
+
+### Update 26/05/2026 (Sprint 21-22 Completed - Subscription Tier + IAP + Feature Gating)
+
+**Status Changes:**
+- Sprint 21-22: All tasks marked as ✅ COMPLETED (26/05/2026) (Subscription pricing model with feature comparison table, RevenueCat SDK integration for mobile IAP, and feature gating audit + fixes).
+
+**What was implemented:**
+- **RevenueCat integration**: `src/lib/revenuecat.ts` — Capacitor SDK for iOS/Android IAP purchases
+- **RevenueCat hook**: `src/hooks/useRevenueCat.ts` — React hook for purchase lifecycle
+- **RevenueCat webhook**: `supabase/functions/revenuecat-webhook/` — server-side webhook handler
+- **UpgradeModal upgrade**: Added feature comparison table, current plan indicator, RevenueCat purchase flow for native platforms, restore purchases button
+- **Smart Reminders gating**: Gated behind `isPremium` check — free users no longer get Pro-level AI reminders
+- **Calendar Sync gating**: Gated behind premium — free users prompted to upgrade
+- **Advanced Analytics gating**: Tier-checked with `useFeature('advancedInsights')` — Pro-only
+- **AI Hydration Coach gating**: Tier-checked with `useFeature('aiHydrationCoach')` — Pro-only
+
+### Update 25/05/2026 (Sprint 13-14 & Sprint 15-16 Completed - AI & Gamification)
+
+**Status Changes:**
+- Sprint 13-14: All tasks marked as ✅ COMPLETED (24/05/2026) (Hydration pattern analysis, AI-driven smart reminder system, and AI weekly report with notifications).
+- Sprint 15-16: All tasks marked as ✅ COMPLETED (24/05/2026) (Virtual streak badges, leaderboard privacy opt-out toggle, and push settings integration).
+
+**Rationale:**
+- Implemented AI Personalization, Weekly Reports, and Retention/Gamification features to drive user engagement and provide smart habits guidance.
+
+### Update 25/05/2026 (Sprint 11-12 Completed - Freemium & Performance)
+
+**Status Changes:**
+- Sprint 11-12: All tasks marked as ✅ COMPLETED (23/05/2026) (Lighthouse CI, bundle size monitoring, database index optimization, 3-tier freemium model, premium waitlist modal, and admin waitlist stats).
+
+**Rationale:**
+- Established performance measurement baseline, optimized database queries, and implemented 3-tier pricing gating logic.
+
 ### Update 23/05/2026 (Sprint 5-6 & Sprint 9-10 BLE Security Completed)
 
 **Status Changes:**
@@ -899,5 +963,5 @@ Ad-hoc triggers:
 
 *Roadmap generated: 22/05/2026*
 *Based on: Audit Report A+ (17/17 resolved) + DigiWell Product Context*
-*Last updated: 23/05/2026 (Sprint 5-6 and Sprint 9-10 Completed - CI/CD & BLE Security)*
-*Next review: End of Y1 Q1 (Gate 0 check)*
+*Last updated: 26/05/2026 (Sprints 11-24 & 26 & 29-30 Completed - Freemium, AI Personalization, Gamification, Subscription, Developer Portal, Year 2 Preparation, Scale Infrastructure & SEA Expansion)*
+*Next review: End of Y1 Q3 (Gate 2 check)*

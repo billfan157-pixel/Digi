@@ -1,18 +1,21 @@
 import React from 'react';
 import { Activity, Camera, Clock3, Droplets, Flame, Loader2, Send, Swords, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { useModalStore } from '../../store/useModalStore';
 import { useAppStore } from '../../store/useAppStore';
+import { useUIStore } from '../../store/useUIStore';
 import { useAiSocial } from '../../context/AiSocialContext';
 
 const HistoryModal = React.lazy(() => import('./HistoryModal'));
 const SmartHubModal = React.lazy(() => import('./SmartHubModal'));
 const AiChatModal = React.lazy(() => import('./AiChatModal'));
+const MainMenuSidebar = React.lazy(() => import('../../tabs/HomeTab/modals/MainMenuSidebar'));
 
 const UpgradeModal = React.lazy(() => import('./UpgradeModal'));
 const LevelUpModal = React.lazy(() => import('../clubs/LevelUpModal'));
 const ShopModal = React.lazy(() => import('./ShopModal'));
-const BattleArenaModal = React.lazy(() => import('./BattleArenaModal'));
+
 const QuestModal = React.lazy(() => import('./QuestModal'));
 const EditEntryModal = React.lazy(() => import('./EditEntryModal'));
 const FastingModal = React.lazy(() => import('./FastingModal'));
@@ -23,13 +26,19 @@ const SocialDiscoverModal = React.lazy(() => import('./SocialDiscoverModal'));
 const CommentsView = React.lazy(() => import('../../tabs/Feed/CommentsView').then(m => ({ default: m.CommentsView })));
 const HardwareWaitlistModal = React.lazy(() => import('./HardwareWaitlistModal'));
 const ChallengeModal = React.lazy(() => import('./ChallengeModal'));
+const ThemeCreatorModal = React.lazy(() => import('./ThemeCreatorModal'));
+const DuelResultModal = React.lazy(() => import('./DuelResultModal'));
+const DeveloperPortalModal = React.lazy(() => import('./DeveloperPortalModal'));
 
 export default function GlobalModalManager() {
+  const { t } = useTranslation();
   const { 
     showSocialComposer, setShowSocialComposer, 
     showHistory, setShowHistory,
     activeCommentPost, setActiveCommentPost 
   } = useModalStore();
+
+  const { showMainMenu, setShowMainMenu, setShowProfileSettings, setShowEditProfile, showDeveloperPortal, setShowDeveloperPortal } = useUIStore();
 
   const profile = useAppStore(s => s.profile);
   const waterEntries = useAppStore(s => s.waterEntries);
@@ -67,17 +76,17 @@ export default function GlobalModalManager() {
   const isDropComposer = socialComposer.postKind === 'story';
   const isDuelComposer = socialComposer.postKind === 'challenge';
   const progressPercent = Math.min(100, Math.round((waterIntake / Math.max(waterGoal, 1)) * 100));
-  const socialComposerTitle = isDropComposer ? 'Tạo Drop' : isDuelComposer ? 'Tạo Duel' : 'Tạo Pulse';
+  const socialComposerTitle = isDropComposer ? t('social_composer.create_drop') : isDuelComposer ? t('social_composer.create_duel') : t('social_composer.create_pulse');
   const socialComposerPlaceholder = isDropComposer
-    ? 'Caption thật ngắn cho khoảnh khắc này...'
+    ? t('social_composer.drop_placeholder')
     : isDuelComposer
-      ? 'VD: Ai hoàn thành 2 lít trước 17:00?'
-      : 'Viết cập nhật ngắn về tiến độ hôm nay...';
+      ? t('social_composer.duel_placeholder')
+      : t('social_composer.pulse_placeholder');
   const composerPresets = isDropComposer
-    ? ['Vừa bù nước xong.', 'Ly này cứu cả buổi chiều.', 'Drop nhanh trước khi quay lại việc.']
+    ? [t('social_composer.drop_preset_1'), t('social_composer.drop_preset_2'), t('social_composer.drop_preset_3')]
     : isDuelComposer
-      ? ['Đua 2 lít trước 17:00 không?', 'Ai giữ chuỗi 7 ngày cùng mình?', 'Kèo uống đủ nước hôm nay.']
-      : [`Đã đạt ${progressPercent}% mục tiêu hôm nay.`, 'Cần thêm một nhịp nhắc nước.', 'Vừa bù nước sau vận động.'];
+      ? [t('social_composer.duel_preset_1'), t('social_composer.duel_preset_2'), t('social_composer.duel_preset_3')]
+      : [t('social_composer.pulse_preset_1', { percent: progressPercent }), t('social_composer.pulse_preset_2'), t('social_composer.pulse_preset_3')];
 
   // Lớp nền mờ đặc trưng Cyberpunk
   const modalOverlay = "fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300";
@@ -97,6 +106,17 @@ export default function GlobalModalManager() {
         />
         <SmartHubModal weatherData={weatherData} watchData={watchData} isWeatherSynced={isWeatherSynced} isWatchConnected={isWatchConnected} />
         <AiChatModal />
+        <MainMenuSidebar
+          isOpen={showMainMenu}
+          onClose={() => setShowMainMenu(false)}
+          onProfile={() => setShowEditProfile(true)}
+          onSettings={() => setShowProfileSettings(true)}
+          onLogout={async () => {
+            const { supabase } = await import('../../lib/supabase');
+            await supabase.auth.signOut();
+            window.location.reload();
+          }}
+        />
       </React.Suspense>
 
       {/* 4. MODAL SOCIAL COMPOSER (Đăng bài) */}
@@ -119,7 +139,7 @@ export default function GlobalModalManager() {
                       <p className={`text-[10px] font-black uppercase tracking-widest ${
                         isDropComposer ? 'text-emerald-300' : isDuelComposer ? 'text-purple-300' : 'text-cyan-300'
                       }`}>
-                        {isDropComposer ? 'Drop 24 giờ' : isDuelComposer ? 'Duel' : 'Pulse'}
+                        {isDropComposer ? t('social_composer.drop_24h') : isDuelComposer ? 'Duel' : 'Pulse'}
                       </p>
                       <h3 className="truncate text-lg font-black text-white">{socialComposerTitle}</h3>
                     </div>
@@ -137,14 +157,14 @@ export default function GlobalModalManager() {
                       className="relative flex aspect-[9/13] max-h-[420px] w-full items-center justify-center overflow-hidden rounded-[1.5rem] border border-emerald-500/20 bg-slate-900 active:scale-[0.99] transition-all"
                     >
                       {socialImagePreview ? (
-                        <img src={socialImagePreview} alt="Ảnh Drop xem trước" className="h-full w-full object-cover" />
+                        <img src={socialImagePreview} alt={t('common.drop_preview_image')} className="h-full w-full object-cover" />
                       ) : (
                         <div className="flex flex-col items-center px-8 text-center">
                           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-300">
                             <Camera size={26} />
                           </div>
-                          <p className="text-base font-black text-white">Chạm để thêm ảnh Drop</p>
-                          <p className="mt-1 text-xs font-semibold text-slate-500">Dạng story dọc, biến mất sau 24 giờ.</p>
+                          <p className="text-base font-black text-white">{t('social_composer.tap_to_add_drop_image')}</p>
+                          <p className="mt-1 text-xs font-semibold text-slate-500">{t('social_composer.drop_story_hint')}</p>
                         </div>
                       )}
                       <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-xl border border-white/15 bg-black/35 px-3 py-2 text-[10px] font-black text-white backdrop-blur-md">
@@ -168,7 +188,7 @@ export default function GlobalModalManager() {
                     }`}>
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <span className="flex items-center gap-2 text-xs font-bold text-cyan-300"><Droplets size={15} />{waterIntake}/{waterGoal}ml</span>
-                        <span className="flex items-center gap-2 text-xs font-bold text-orange-300"><Flame size={15} />Chuỗi {streak} ngày</span>
+                        <span className="flex items-center gap-2 text-xs font-bold text-orange-300"><Flame size={15} />{t('social_composer.streak_label', { streak })}</span>
                       </div>
                       <div className="h-2 overflow-hidden rounded-full bg-slate-800">
                         <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${progressPercent}%` }} />
@@ -184,7 +204,7 @@ export default function GlobalModalManager() {
                     />
                     {socialImagePreview && (
                       <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950">
-                        <img src={socialImagePreview} alt="Ảnh xem trước" className="max-h-60 w-full object-cover" />
+                        <img src={socialImagePreview} alt={t('common.preview_image')} className="max-h-60 w-full object-cover" />
                       </div>
                     )}
                   </div>
@@ -209,15 +229,15 @@ export default function GlobalModalManager() {
                   <div className="mt-4 flex gap-2">
                     <button type="button" onClick={() => socialImageInputRef.current?.click()} className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-xs font-bold text-cyan-300 active:scale-95 transition-all">
                       <Camera size={16} />
-                      Thêm ảnh
+                      {t('social_composer.add_photo')}
                     </button>
                     <select
                       value={socialComposer.visibility}
                       onChange={(e) => setSocialComposer((prev) => ({ ...prev, visibility: e.target.value as typeof prev.visibility }))}
                       className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-900 px-3 py-3 text-xs font-bold text-white outline-none focus:border-cyan-500/40"
                     >
-                      <option value="followers">Vòng gần</option>
-                      <option value="public">Công khai</option>
+                      <option value="followers">{t('social_composer.nearby_circle')}</option>
+                      <option value="public">{t('social_composer.public')}</option>
                     </select>
                   </div>
                 )}
@@ -232,7 +252,7 @@ export default function GlobalModalManager() {
                     }}
                     className="mt-3 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-xs font-bold text-slate-300 active:scale-95 transition-all"
                   >
-                    Xóa ảnh đã chọn
+                    {t('social_composer.remove_photo')}
                   </button>
                 )}
 
@@ -240,7 +260,7 @@ export default function GlobalModalManager() {
                   isDropComposer ? 'bg-emerald-400 shadow-emerald-500/15' : isDuelComposer ? 'bg-purple-400 shadow-purple-500/15' : 'bg-cyan-400 shadow-cyan-500/15'
                 }`}>
                   <Send size={17} />
-                  {isDropComposer ? 'Đăng Drop 24 giờ' : isDuelComposer ? 'Đăng Duel' : 'Đăng Pulse'}
+                  {isDropComposer ? t('social_composer.post_drop') : isDuelComposer ? t('social_composer.post_duel') : t('social_composer.post_pulse')}
                 </button>
               </form>
            </div>
@@ -252,7 +272,7 @@ export default function GlobalModalManager() {
         <UpgradeModal />
         <LevelUpModal />
         <ShopModal />
-        <BattleArenaModal />
+
         <ClubCoopModal />
         <FastingModal />
         <QuestModal />
@@ -261,6 +281,12 @@ export default function GlobalModalManager() {
         <ConfirmDialog />
         <HardwareWaitlistModal />
         <ChallengeModal />
+        <ThemeCreatorModal />
+        <DuelResultModal />
+        <DeveloperPortalModal
+          open={showDeveloperPortal}
+          onClose={() => setShowDeveloperPortal(false)}
+        />
         <SocialDiscoverModal
           showDiscoverPeople={!!showDiscoverPeople}
           setShowDiscoverPeople={setShowDiscoverPeople}

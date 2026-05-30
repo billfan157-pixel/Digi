@@ -22,6 +22,7 @@ interface UseSmartRemindersProps {
   waterGoal: number;
   lastDrinkTime: string | null;
   userId: string | null;
+  isPremium: boolean;
   onQuickDrink?: (amount: number) => void;
 }
 
@@ -43,6 +44,7 @@ export function useSmartReminders({
   waterGoal,
   lastDrinkTime,
   userId,
+  isPremium,
   onQuickDrink,
 }: UseSmartRemindersProps): UseSmartRemindersResult {
   const [allReminders, setAllReminders] = useState<SmartReminder[]>([]);
@@ -51,6 +53,11 @@ export function useSmartReminders({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastIntakeRef = useRef(currentIntake);
   const currentReminderIdRef = useRef<string | null>(null);
+  const activeReminderRef = useRef<SmartReminder | null>(null);
+
+  useEffect(() => {
+    activeReminderRef.current = activeReminder;
+  }, [activeReminder]);
 
   useEffect(() => {
     lastIntakeRef.current = currentIntake;
@@ -71,8 +78,25 @@ export function useSmartReminders({
     };
 
     const reminders = generateSmartReminders(input);
-    setAllReminders(reminders);
-    cacheReminders(userId, reminders);
+    setAllReminders((prev) => {
+      const reconciled = reminders.map((newRem) => {
+        const existing = prev.find((oldRem) => oldRem.reason === newRem.reason) ||
+                         (activeReminderRef.current?.reason === newRem.reason ? activeReminderRef.current : null);
+        if (existing) {
+          const timeDiff = Math.abs(new Date(existing.scheduledAt).getTime() - new Date(newRem.scheduledAt).getTime());
+          if (timeDiff < 10 * 60 * 1000) {
+            return {
+              ...newRem,
+              id: existing.id,
+              scheduledAt: existing.scheduledAt,
+            };
+          }
+        }
+        return newRem;
+      });
+      cacheReminders(userId, reconciled);
+      return reconciled;
+    });
 
     return reminders;
   }, [pattern, calendarEvents, weatherTemp, waterGoal, lastDrinkTime, userId]);
@@ -96,7 +120,7 @@ export function useSmartReminders({
 
     const upcoming = allReminders.find((r) => {
       const t = new Date(r.scheduledAt).getTime();
-      return t <= now + 2 * 60 * 1000 && t >= now - 60 * 1000;
+      return t <= now + 2 * 60 * 1000 && t >= now - 10 * 60 * 1000;
     });
 
     const upcomingId = upcoming?.id || null;
@@ -169,7 +193,7 @@ export function useSmartReminders({
     [activeReminder, userId, onQuickDrink],
   );
 
-  const canUseSmartReminders = pattern !== null || calendarEvents.length > 0 || weatherTemp !== null;
+  const canUseSmartReminders = isPremium && (pattern !== null || calendarEvents.length > 0 || weatherTemp !== null);
 
   // Filter active reminders on render
   const activeReminders = allReminders.filter(

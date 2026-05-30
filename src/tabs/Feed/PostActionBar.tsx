@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bell, Bookmark, Droplets, GlassWater, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -30,7 +31,9 @@ export const PostActionBar = memo(({
   onDonateFreeze,
   onComment,
   onSave,
-}: PostActionBarProps) => (
+}: PostActionBarProps) => {
+  const { t } = useTranslation();
+  return (
   <div className="border-t border-white/5 pt-3 mt-1 space-y-2 relative z-20">
     {/* Primary row: Cheers + Drop + Freeze + Comment */}
     <div className="flex items-center gap-1 sm:gap-2">
@@ -56,7 +59,7 @@ export const PostActionBar = memo(({
             className="relative z-10 flex items-center gap-1"
           >
             <GlassWater size={15} />
-            <span className="hidden sm:inline font-bold">{hasCheered ? 'Đã cụng ly' : 'Cụng ly'}</span>
+            <span className="hidden sm:inline font-bold">{hasCheered ? t('feed.already_cheers') : t('feed.cheers')}</span>
           </motion.span>
           {cheersCount > 0 && <span className={`relative z-10 text-[10px] ${hasCheered ? 'text-cyan-400' : 'text-slate-400'}`}>{cheersCount}</span>}
         </button>
@@ -68,7 +71,7 @@ export const PostActionBar = memo(({
           className="flex items-center gap-1 text-slate-400 text-xs font-bold py-2 px-2 rounded-xl hover:bg-blue-500/10 hover:text-blue-400 active:scale-95 transition-all"
         >
           <Droplets size={15} />
-          <span className="hidden sm:inline">Châm nước</span>
+          <span className="hidden sm:inline">{t('feed.splash')}</span>
           {dropsCount > 0 && <span className="text-[10px] text-blue-400/70">+{dropsCount}ml</span>}
         </button>
       )}
@@ -79,7 +82,7 @@ export const PostActionBar = memo(({
           className="flex items-center gap-1 text-slate-400 text-xs font-bold py-2 px-2 rounded-xl hover:bg-amber-500/10 hover:text-amber-400 active:scale-95 transition-all"
         >
           <Bell size={15} />
-          <span className="hidden sm:inline">Nudge</span>
+          <span className="hidden sm:inline">{t('feed.nudge_action')}</span>
         </button>
       )}
 
@@ -88,7 +91,7 @@ export const PostActionBar = memo(({
         className="flex items-center gap-1.5 text-slate-400 text-xs font-bold hover:bg-white/5 hover:text-white py-2 px-2 sm:px-3 rounded-xl transition-all active:scale-95 ml-auto"
       >
         <MessageCircle size={16} className="group-hover:text-blue-400 transition-colors" />
-        {commentsCount > 0 ? commentsCount : <span className="hidden sm:inline">Bình luận</span>}
+        {commentsCount > 0 ? commentsCount : <span className="hidden sm:inline">{t('feed.comment_btn')}</span>}
       </button>
 
       <button
@@ -107,4 +110,5 @@ export const PostActionBar = memo(({
       </button>
     </div>
   </div>
-));
+  );
+});

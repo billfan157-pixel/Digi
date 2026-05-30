@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Gauge, Thermometer, Wifi, Cpu, Waves, Heart, Sparkles, Zap, Activity, Play } from 'lucide-react';
 import type { LedPattern, RuleTrigger, RuleAction, AutomationRule } from './types';
@@ -20,6 +21,9 @@ export interface DiagnosticsPanelProps {
   healthScore?: number;
   isOpen: boolean;
   onToggle: () => void;
+  isDemoMode?: boolean;
+  simulateAttackType?: 'none' | 'replay' | 'tampering';
+  setSimulateAttackType?: (type: 'none' | 'replay' | 'tampering') => void;
 }
 
 export interface LedPatternStudioProps {
@@ -123,7 +127,8 @@ export function SensorWaveChart({ series, isConnected }: { series: number[]; isC
 // ============================================================================
 // DIAGNOSTICS PANEL
 // ============================================================================
-export function DiagnosticsPanel({ isConnected, batteryHealth, batteryCycleCount, latencyMs, rawSensorSeries, temperature, signalStrength, healthScore = 100, isOpen, onToggle }: DiagnosticsPanelProps) {
+export function DiagnosticsPanel({ isConnected, batteryHealth, batteryCycleCount, latencyMs, rawSensorSeries, temperature, signalStrength, healthScore = 100, isOpen, onToggle, isDemoMode, simulateAttackType, setSimulateAttackType }: DiagnosticsPanelProps) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-[2.5rem] bg-slate-900/40 border border-white/5 backdrop-blur-3xl overflow-hidden transition-all hover:border-white/10">
       <button onClick={onToggle} className="w-full p-6 flex items-center justify-between gap-4 text-left group">
@@ -145,10 +150,10 @@ export function DiagnosticsPanel({ isConnected, batteryHealth, batteryCycleCount
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="px-6 pb-6 space-y-6">
               <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 snap-x scrollbar-hide">
-                <MetricCard icon={<Activity size={20} />} label="Health" value={`${batteryHealth}%`} hint={`Cycles: ${batteryCycleCount}`} accent="cyan" />
-                <MetricCard icon={<Zap size={20} />} label="Latency" value={latencyMs > 0 ? `${latencyMs}ms` : '--'} hint="BLE Response" accent="violet" />
-                <MetricCard icon={<Thermometer size={20} />} label="Temp" value={`${temperature}°C`} hint="Board Core" accent="amber" />
-                <MetricCard icon={<Wifi size={20} />} label="Tín hiệu" value={`${signalStrength}%`} hint={`Sức khỏe BLE: ${healthScore}%`} accent="emerald" />
+                <MetricCard icon={<Activity size={20} />} label={t('lab.health_label')} value={`${batteryHealth}%`} hint={`Cycles: ${batteryCycleCount}`} accent="cyan" />
+                <MetricCard icon={<Zap size={20} />} label={t('lab.latency_label')} value={latencyMs > 0 ? `${latencyMs}ms` : '--'} hint="BLE Response" accent="violet" />
+                <MetricCard icon={<Thermometer size={20} />} label={t('lab.temp_label')} value={`${temperature}°C`} hint="Board Core" accent="amber" />
+                <MetricCard icon={<Wifi size={20} />} label={t('lab.signal_label')} value={`${signalStrength}%`} hint={`${t('lab.good_signal')}: ${healthScore}%`} accent="emerald" />
               </div>
               <div className="rounded-[2rem] border border-white/5 bg-slate-950/40 p-5">
                 <div className="flex items-center justify-between mb-4">
@@ -157,6 +162,55 @@ export function DiagnosticsPanel({ isConnected, batteryHealth, batteryCycleCount
                 </div>
                 <SensorWaveChart series={rawSensorSeries} isConnected={isConnected} />
               </div>
+
+              {isDemoMode && isConnected && setSimulateAttackType && (
+                <div className="rounded-[2rem] border border-red-500/20 bg-red-950/5 p-5 mt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Cpu size={16} className="text-red-400 animate-pulse" />
+                      <span className="text-xs font-black text-white tracking-widest uppercase">Trình Giả Lập Tấn Công BLE</span>
+                    </div>
+                    <span className="text-[10px] text-red-500 font-bold uppercase tracking-widest">Debug Mode Only</span>
+                  </div>
+
+                  <p className="text-xs text-slate-400 mb-4 font-medium leading-relaxed">
+                    Giả lập các kịch bản tấn công bảo mật để xác thực tính toàn vẹn của cơ chế chống phát lại (Replay protection) và chữ ký (HMAC-SHA256) trên database.
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setSimulateAttackType('replay')}
+                      className={`py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all active:scale-95 ${
+                        simulateAttackType === 'replay'
+                          ? 'bg-rose-500/20 border-rose-500/50 text-rose-300'
+                          : 'bg-slate-950/40 border-white/5 text-slate-500 hover:border-white/10'
+                      }`}
+                    >
+                      Replay Attack
+                    </button>
+                    <button
+                      onClick={() => setSimulateAttackType('tampering')}
+                      className={`py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all active:scale-95 ${
+                        simulateAttackType === 'tampering'
+                          ? 'bg-rose-500/20 border-rose-500/50 text-rose-300'
+                          : 'bg-slate-950/40 border-white/5 text-slate-500 hover:border-white/10'
+                      }`}
+                    >
+                      Tamper Packet
+                    </button>
+                    <button
+                      onClick={() => setSimulateAttackType('none')}
+                      className={`py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all active:scale-95 ${
+                        simulateAttackType === 'none'
+                          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                          : 'bg-slate-950/40 border-white/5 text-slate-500 hover:border-white/10'
+                      }`}
+                    >
+                      Safe Mode
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -261,8 +315,8 @@ export function AutomationCenter({ ruleTrigger, setRuleTrigger, ruleAction, setR
                     </select>
                   </div>
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/5 grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><span className="text-[10px] text-slate-500 font-black uppercase">Tham số</span>{ruleTrigger === 'goal_time' ? (<input value={ruleTime} onChange={(e) => setRuleTime(e.target.value)} type="time" className="w-full bg-transparent border-none text-white font-black outline-none" />) : (<div className="flex items-center gap-1"><input value={ruleThreshold} onChange={(e) => setRuleThreshold(Number(e.target.value))} type="number" className="w-12 bg-transparent border-none text-white font-black outline-none" /><span className="text-slate-500 text-xs">{ruleTrigger === 'weather_temp' ? '°C' : '%'}</span></div>)}</div>
-                    <div className="space-y-2 text-right"><span className="text-[10px] text-slate-500 font-black uppercase">Trạng thái</span><p className="text-emerald-400 font-black text-xs uppercase">Validated</p></div>
+                    <div className="space-y-2"><span className="text-[10px] text-slate-500 font-black uppercase">Parameter</span>{ruleTrigger === 'goal_time' ? (<input value={ruleTime} onChange={(e) => setRuleTime(e.target.value)} type="time" className="w-full bg-transparent border-none text-white font-black outline-none" />) : (<div className="flex items-center gap-1"><input value={ruleThreshold} onChange={(e) => setRuleThreshold(Number(e.target.value))} type="number" className="w-12 bg-transparent border-none text-white font-black outline-none" /><span className="text-slate-500 text-xs">{ruleTrigger === 'weather_temp' ? '°C' : '%'}</span></div>)}</div>
+                    <div className="space-y-2 text-right"><span className="text-[10px] text-slate-500 font-black uppercase">Status</span><p className="text-emerald-400 font-black text-xs uppercase">Validated</p></div>
                   </div>
                   <button onClick={addAutomationRule} className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-sm tracking-tight active:scale-95 transition-all shadow-[0_0_30px_rgba(245,158,11,0.2)]">Deploy Smart Rule</button>
                 </div>
