@@ -1,12 +1,14 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Users, UserPlus, Search, X } from 'lucide-react';
+import { Trophy, Users, UserPlus, Search, X, TrendingUp, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Profile } from '@/models';
 import type { LeagueEntry, LeagueView } from '@/tabs/League/types';
 import { PodiumSection } from '@/tabs/League/PodiumSection';
 import { LeaderboardRow } from '@/tabs/League/LeaderboardRow';
 import { EmptyState } from '@/tabs/League/EmptyState';
+import { LeagueTierBadge } from '@/tabs/League/LeagueTierBadge';
+import { getTierByWP } from '@/tabs/League/types';
 
 interface RankingViewProps {
   leagueMode: 'public' | 'friends';
@@ -71,50 +73,148 @@ const RankingView = React.memo(function RankingView({
     (item) => !top3.some((topItem) => topItem.id === item.id && topItem.name === item.name),
   );
 
+  const myRank = currentUserIndex >= 0 ? currentUserIndex + 1 : null;
+  const myEntry = myRank ? sortedData[currentUserIndex] : null;
+  const myWP = myEntry?.wp ?? 0;
+  const myTier = getTierByWP(myWP);
+  const nextUser = myRank && myRank > 1 ? sortedData[currentUserIndex - 1] : null;
+  const gap = nextUser ? Math.max(nextUser.wp - myWP, 0) : 0;
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-        <div className="flex items-center gap-2">
-          <Trophy size={20} className="text-yellow-400" />
-          <h2 className="text-sm font-black text-white uppercase tracking-wider">
-            {t('compete.ranking', 'Xếp hạng')}
-          </h2>
+      {/* ===== LUXURY HEADER ===== */}
+      <div className="relative overflow-hidden border-b border-white/5">
+        {/* Aurora background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-purple-500/5 to-cyan-500/10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-40 bg-yellow-500/10 blur-[80px] rounded-full pointer-events-none" />
+
+        <div className="relative flex items-center justify-between px-5 py-5">
+          <div className="flex items-center gap-3">
+            <motion.div
+              animate={{ rotate: [0, -10, 10, -5, 5, 0] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+              className="relative"
+            >
+              <Trophy size={24} className="text-yellow-400 relative z-10" />
+              <div className="absolute inset-0 blur-md bg-yellow-400/40 rounded-full" />
+            </motion.div>
+            <div>
+              <h2 className="text-sm font-black text-white uppercase tracking-widest">
+                {t('compete.ranking', 'Xếp hạng')}
+              </h2>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                Top cao thủ toàn server
+              </p>
+            </div>
+          </div>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-all hover:bg-white/10 hover:border-white/20"
+            >
+              <X size={18} className="text-slate-300" />
+            </button>
+          )}
         </div>
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="w-8 h-8 rounded-full bg-slate-800/60 border border-white/10 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-700/60"
-          >
-            <X size={16} className="text-slate-300" />
-          </button>
-        )}
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
-        {/* Mode filter: public / friends */}
-      <div className="relative flex p-1 shadow-sm border border-white/5 bg-slate-950/20 rounded-xl backdrop-blur-sm">
+      <div className="flex-1 overflow-y-auto">
+        {/* ===== MY RANK SPOTLIGHT CARD ===== */}
+        {myRank && myEntry && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-5 mt-5 mb-4 relative overflow-hidden rounded-[2rem] p-5 border backdrop-blur-md"
+            style={{
+              background: `linear-gradient(135deg, ${myTier.color}15 0%, transparent 60%)`,
+              borderColor: `${myTier.color}30`,
+            }}
+          >
+            {/* Glow orb */}
+            <div
+              className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-[60px] pointer-events-none"
+              style={{ background: `${myTier.color}20` }}
+            />
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Crown size={16} className="text-yellow-400" />
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Vị trí của bạn
+                  </span>
+                </div>
+                <span className="text-2xl font-black text-white tabular-nums">
+                  #{myRank}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-black border"
+                    style={{
+                      background: `${myTier.color}20`,
+                      borderColor: `${myTier.color}40`,
+                      color: myTier.color,
+                    }}
+                  >
+                    {myEntry.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-white">{myEntry.name}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <LeagueTierBadge wp={myWP} showName size="sm" />
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-1 justify-end">
+                    <Zap size={14} className="text-amber-400" />
+                    <span className="text-lg font-black text-white tabular-nums">{myWP.toLocaleString()}</span>
+                  </div>
+                  {gap > 0 && (
+                    <div className="flex items-center gap-1 justify-end text-[9px] font-bold text-rose-400">
+                      <TrendingUp size={10} />
+                      Cách top trên +{gap} WP
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        <div className="px-5 py-6 space-y-6">
+          {/* Mode filter: public / friends — Premium Pills */}
+      <div className="relative flex p-1 shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-white/8 bg-white/[0.03] rounded-2xl backdrop-blur-xl">
         {(['public', 'friends'] as const).map((mode) => {
           const meta = MODE_META[mode];
           const Icon = meta.icon;
+          const isActive = leagueMode === mode;
           return (
             <button
               key={mode}
               onClick={() => setLeagueMode(mode)}
-              className={`flex-1 py-2.5 text-xs font-black rounded-lg transition-all relative ${
-                leagueMode === mode ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+              className={`flex-1 py-3 text-xs font-black rounded-xl transition-all relative overflow-hidden ${
+                isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              {leagueMode === mode && (
+              {isActive && (
                 <motion.div
                   layoutId="rankingModePill"
-                  className="absolute inset-0 rounded-lg bg-slate-800/60 border border-white/10"
+                  className="absolute inset-0 rounded-xl border border-white/15"
+                  style={{
+                    background: mode === 'public'
+                      ? 'linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(6,182,212,0.05) 100%)'
+                      : 'linear-gradient(135deg, rgba(52,211,153,0.15) 0%, rgba(16,185,129,0.05) 100%)',
+                  }}
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}
-              <span className="relative z-10 flex items-center justify-center gap-2 uppercase tracking-widest text-[9px]">
-                <Icon size={12} />
+              <span className="relative z-10 flex items-center justify-center gap-2 uppercase tracking-widest text-[10px]">
+                <Icon size={14} className={isActive ? meta.accent : ''} />
                 {t(meta.labelKey)}
               </span>
             </button>
@@ -166,29 +266,29 @@ const RankingView = React.memo(function RankingView({
         </motion.div>
       )}
 
-      {/* Search + Quick Filters */}
+      {/* Search + Quick Filters — Refined */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 group">
-          <div className="flex items-center gap-3 bg-slate-900/30 rounded-xl px-4 py-3 border border-white/5 focus-within:border-cyan-500/50 transition-all">
-            <Search size={16} className="text-slate-500" />
+          <div className="flex items-center gap-3 bg-white/[0.03] rounded-2xl px-4 py-3.5 border border-white/[0.06] focus-within:border-cyan-500/40 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all duration-300 backdrop-blur-sm">
+            <Search size={16} className="text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('league.search_placeholder')}
-              className="bg-transparent text-xs text-white placeholder:text-slate-600 outline-none w-full font-bold"
+              className="bg-transparent text-xs text-white placeholder:italic placeholder:text-slate-600 outline-none w-full font-bold"
             />
           </div>
         </div>
 
-        <div className="relative flex p-1 shadow-sm border border-white/5 bg-slate-950/20 rounded-xl overflow-x-auto scrollbar-hide">
+        <div className="relative flex p-1 shadow-[0_4px_16px_rgba(0,0,0,0.2)] border border-white/[0.06] bg-white/[0.02] rounded-2xl overflow-x-auto scrollbar-hide">
           {(['all', 'top10', 'around'] as LeagueView[]).map((view) => (
             <button
               key={view}
               onClick={() => setLeagueView(view)}
-              className={`rounded-lg px-3 py-2 text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+              className={`rounded-xl px-3.5 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                 leagueView === view
-                  ? 'bg-slate-800/60 text-white border border-white/10'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-white/10 text-white border border-white/15 shadow-[0_0_12px_rgba(255,255,255,0.05)]'
+                  : 'text-slate-500 hover:text-slate-300 border border-transparent'
               }`}
             >
               {view === 'all' ? t('league.view_all') : view === 'top10' ? t('league.view_top10') : t('league.view_nearby')}
@@ -247,7 +347,8 @@ const RankingView = React.memo(function RankingView({
       )}
       </div>
     </div>
-  );
+  </div>
+);
 });
 
 export default RankingView;
