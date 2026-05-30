@@ -200,7 +200,27 @@ export function useWaterData(
 
       // 2. Demo mode
       if (!isRealUser(profile.id)) {
-        toast.success(i18n.t('water.recorded', { amount: actualAmount }));
+        toast.success(i18n.t('water.recorded', { amount: actualAmount }), {
+          action: {
+            label: i18n.t('water.post_drop', '💧 Đăng drop'),
+            onClick: async () => {
+              try {
+                const { data, error } = await supabase.rpc('post_water_drop', {
+                  p_water_log_id: realId || tempId,
+                  p_message: i18n.t('water.drop_default_message', '💧 Vừa uống nước xong!'),
+                });
+                if (error) throw error;
+                if (data?.error) {
+                  toast.error(data.error);
+                } else {
+                  toast.success(i18n.t('water.drop_posted', 'Đã đăng drop! +{points} điểm duel').replace('{points}', String(data?.points || 5)));
+                }
+              } catch {
+                toast.error(i18n.t('water.drop_failed', 'Đăng drop thất bại'));
+              }
+            },
+          },
+        });
         return;
       }
 
