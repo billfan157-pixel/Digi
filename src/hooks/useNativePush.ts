@@ -6,6 +6,19 @@ export function useNativePush(userId: string | undefined) {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
 
+  const saveNativeToken = useCallback(async (uid: string, token: string) => {
+    const { error } = await supabase.from('push_subscriptions').upsert(
+      {
+        endpoint: token,
+        user_id: uid,
+        platform: 'native',
+        device_name: 'Capacitor',
+      },
+      { onConflict: 'endpoint' },
+    );
+    if (error) console.warn('[nativePush] Failed to save token:', error.message);
+  }, []);
+
   useEffect(() => {
     if (!userId || !Capacitor.isNativePlatform()) return;
 
@@ -48,19 +61,6 @@ export function useNativePush(userId: string | undefined) {
 
     return () => { cancelled = true; };
   }, [userId, saveNativeToken]);
-
-  const saveNativeToken = useCallback(async (uid: string, token: string) => {
-    const { error } = await supabase.from('push_subscriptions').upsert(
-      {
-        endpoint: token,
-        user_id: uid,
-        platform: 'native',
-        device_name: 'Capacitor',
-      },
-      { onConflict: 'endpoint' },
-    );
-    if (error) console.warn('[nativePush] Failed to save token:', error.message);
-  }, []);
 
   const unregister = useCallback(async () => {
     if (!Capacitor.isNativePlatform() || !fcmToken) return;
