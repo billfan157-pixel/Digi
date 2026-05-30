@@ -19,7 +19,7 @@ interface RankingViewProps {
   onBack?: () => void;
 }
 
-const MODE_META: Record<'public' | 'friends', { labelKey: string; accent: string; icon: React.ComponentType<{ size?: number }> }> = {
+const MODE_META: Record<'public' | 'friends', { labelKey: string; accent: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = {
   public: { labelKey: 'league.mode_public', accent: 'text-cyan-300', icon: Trophy },
   friends: { labelKey: 'league.mode_friends', accent: 'text-emerald-300', icon: Users },
 };
@@ -81,9 +81,9 @@ const RankingView = React.memo(function RankingView({
   const gap = nextUser ? Math.max(nextUser.wp - myWP, 0) : 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col">
+    <div className="fixed inset-0 z-50 bg-[rgba(2,6,23,0.97)] backdrop-blur-[var(--theme-blur,40px)] flex flex-col">
       {/* ===== LUXURY HEADER ===== */}
-      <div className="relative overflow-hidden border-b border-white/5">
+      <div className="relative overflow-hidden border-b border-[var(--theme-border-glass)]">
         {/* Aurora background */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-purple-500/5 to-cyan-500/10" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-40 bg-yellow-500/10 blur-[80px] rounded-full pointer-events-none" />
@@ -110,7 +110,7 @@ const RankingView = React.memo(function RankingView({
           {onBack && (
             <button
               onClick={onBack}
-              className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-all hover:bg-white/10 hover:border-white/20"
+              className="w-10 h-10 rounded-2xl bg-[var(--theme-surface-glass)] border border-[var(--theme-border-glass)] flex items-center justify-center active:scale-95 transition-all hover:bg-[var(--theme-border-glass)] hover:border-[var(--theme-glow-color)]"
             >
               <X size={18} className="text-slate-300" />
             </button>
@@ -188,7 +188,7 @@ const RankingView = React.memo(function RankingView({
 
         <div className="px-5 py-6 space-y-6">
           {/* Mode filter: public / friends — Premium Pills */}
-      <div className="relative flex p-1 shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-white/8 bg-white/[0.03] rounded-2xl backdrop-blur-xl">
+      <div className="relative flex p-1 shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-[var(--theme-border-glass)] bg-[var(--theme-surface-glass)] rounded-2xl backdrop-blur-xl">
         {(['public', 'friends'] as const).map((mode) => {
           const meta = MODE_META[mode];
           const Icon = meta.icon;
@@ -204,10 +204,10 @@ const RankingView = React.memo(function RankingView({
               {isActive && (
                 <motion.div
                   layoutId="rankingModePill"
-                  className="absolute inset-0 rounded-xl border border-white/15"
+                  className="absolute inset-0 rounded-xl border border-[var(--theme-border-glass)]"
                   style={{
                     background: mode === 'public'
-                      ? 'linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(6,182,212,0.05) 100%)'
+                      ? 'linear-gradient(135deg, var(--neon-cyan, #22d3ee)25 0%, transparent 100%)'
                       : 'linear-gradient(135deg, rgba(52,211,153,0.15) 0%, rgba(16,185,129,0.05) 100%)',
                   }}
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
@@ -269,8 +269,8 @@ const RankingView = React.memo(function RankingView({
       {/* Search + Quick Filters — Refined */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 group">
-          <div className="flex items-center gap-3 bg-white/[0.03] rounded-2xl px-4 py-3.5 border border-white/[0.06] focus-within:border-cyan-500/40 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all duration-300 backdrop-blur-sm">
-            <Search size={16} className="text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+          <div className="flex items-center gap-3 bg-[var(--theme-surface-glass)] rounded-2xl px-4 py-3.5 border border-[var(--theme-border-glass)] focus-within:border-[var(--neon-cyan)]/40 focus-within:shadow-[0_0_20px_var(--theme-glow-color)] transition-all duration-300 backdrop-blur-[var(--theme-blur,40px)]">
+            <Search size={16} className="text-slate-500 group-focus-within:text-[var(--neon-cyan)] transition-colors" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -280,14 +280,14 @@ const RankingView = React.memo(function RankingView({
           </div>
         </div>
 
-        <div className="relative flex p-1 shadow-[0_4px_16px_rgba(0,0,0,0.2)] border border-white/[0.06] bg-white/[0.02] rounded-2xl overflow-x-auto scrollbar-hide">
+        <div className="relative flex p-1 shadow-[0_4px_16px_rgba(0,0,0,0.2)] border border-[var(--theme-border-glass)] bg-[var(--theme-surface-glass)] rounded-2xl overflow-x-auto scrollbar-hide">
           {(['all', 'top10', 'around'] as LeagueView[]).map((view) => (
             <button
               key={view}
               onClick={() => setLeagueView(view)}
               className={`rounded-xl px-3.5 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                 leagueView === view
-                  ? 'bg-white/10 text-white border border-white/15 shadow-[0_0_12px_rgba(255,255,255,0.05)]'
+                  ? 'bg-[var(--theme-border-glass)] text-white border border-[var(--theme-glow-color)]/30 shadow-[0_0_12px_var(--theme-glow-color)]'
                   : 'text-slate-500 hover:text-slate-300 border border-transparent'
               }`}
             >
