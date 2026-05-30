@@ -370,7 +370,8 @@
     "claim_reward": "Nhận thưởng",
     "claimed": "Đã nhận",
     "no_guilds": "Chưa có bang hội nào",
-    "no_guilds_desc": "Chưa có bang hội nào. Hãy tạo một bang mới để bắt đầu!"
+    "no_guilds_desc": "Chưa có bang hội nào. Hãy tạo một bang mới để bắt đầu!",
+    "back_to_arena": "Về Đấu Trường"
   },
   "battle": {
     "won": "🎉 Bạn THẮNG trận hôm qua: +{{reward}} WP!",
@@ -495,7 +496,9 @@
     "current_streak": "Chuỗi hiện tại",
     "wp_points": "Điểm WP",
     "matches_played": "Đã đấu: {{count}}",
-    "best_streak": "Streak cao nhất: {{count}}"
+    "best_streak": "Streak cao nhất: {{count}}",
+    "load_error": "Không thể tải dữ liệu trận đấu.",
+    "resuming_queue": "Đang tiếp tục xếp hạng..."
   },
   "challenge": {
     "load_failed": "Không thể tải danh sách thử thách",
@@ -2565,5 +2568,9 @@
     "comparison_calendar": "Đồng bộ lịch",
     "comparison_smartwatch": "Smartwatch Sync",
     "comparison_ads": "Quảng cáo"
-  }
+  },
+  "rank": {
+    "grandmaster": "Đại Cao Thủ"
+  },
+  "volume": "Thể tích"
 }

@@ -242,7 +242,8 @@
       "good_night_msg": "What a great day! {{waterIntake}}ml, {{streak}} consecutive days. Rest well.",
       "late_msg": "It's {{hour}}h, go to bed early. Start earlier tomorrow!",
       "remember_msg": "Today you drank {{waterIntake}}ml / {{waterGoal}}ml."
-    }
+    },
+    "weekly_report": "Weekly Report"
   },
   "water": {
     "recorded": "+{{amount}}ml recorded.",
@@ -257,7 +258,10 @@
     "offline_synced": "Synced {{count}} offline items.",
     "offline_pending": "{{count}} items pending sync.",
     "invalid_amount": "Invalid water amount.",
-    "not_found": "Error: Entry not found."
+    "not_found": "Error: Entry not found.",
+    "drink_menu_saved": "Saved to drink menu.",
+    "invalid_quick_amounts": "Please enter 3 amounts from 50ml to 2000ml",
+    "quick_amounts_updated": "Quick amounts updated!"
   },
   "bottle": {
     "control_center": "Control Center",
@@ -370,7 +374,8 @@
     "claim_reward": "Claim Reward",
     "claimed": "Claimed",
     "no_guilds": "No guilds yet",
-    "no_guilds_desc": "No guilds exist yet. Create a new one to get started!"
+    "no_guilds_desc": "No guilds exist yet. Create a new one to get started!",
+    "back_to_arena": "Back to Arena"
   },
   "battle": {
     "won": "🎉 You WON yesterday's match: +{{reward}} WP!",
@@ -497,7 +502,9 @@
     "current_streak": "Current Streak",
     "wp_points": "WP Points",
     "matches_played": "Matches: {{count}}",
-    "best_streak": "Best Streak: {{count}}"
+    "best_streak": "Best Streak: {{count}}",
+    "load_error": "Failed to load battle data.",
+    "resuming_queue": "Resuming ranked queue..."
   },
   "challenge": {
     "load_failed": "Cannot load challenge list",
@@ -2038,7 +2045,17 @@
     "win_rate_short": "WR",
     "win_short": "W",
     "matches": "matches",
-    "coin_plural": "WP"
+    "coin_plural": "WP",
+    "current_weather": "Current Weather",
+    "max_zone": "Maximum",
+    "moderate_zone": "Moderate",
+    "pending_sync": "Pending sync",
+    "resting_zone": "Resting",
+    "weather_advice_cold": "Keep warm!",
+    "weather_advice_drink": "Remember to drink water!",
+    "weather_advice_nice": "Nice weather",
+    "weather_advice_uv": "UV high - protect skin",
+    "wellness_points": "Wellness Points"
   },
   "lab": {
     "health_label": "Health",
@@ -2557,6 +2574,10 @@
     "comparison_calendar": "Calendar Sync",
     "comparison_smartwatch": "Smartwatch Sync",
     "comparison_ads": "Ads"
-  }
+  },
+  "rank": {
+    "grandmaster": "Grandmaster"
+  },
+  "volume": "Volume"
 }
 

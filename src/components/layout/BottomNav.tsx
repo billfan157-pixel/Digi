@@ -1,4 +1,4 @@
-import { Home, BarChart2, Trophy, Rss, User } from 'lucide-react';
+import { Home, BarChart2, Swords, Rss, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,11 +14,11 @@ interface BottomNavProps {
 const BottomNav = (props: BottomNavProps) => {
   const { t } = useTranslation();
   const navItems: { id: TabType; icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; label: string }[] = [
-    { id: 'home', icon: Home, label: 'Home' },
-    { id: 'insight', icon: BarChart2, label: 'Coach' },
-    { id: 'league', icon: Trophy, label: 'Rank' },
-    { id: 'feed', icon: Rss, label: 'Feed' },
-    { id: 'profile', icon: User, label: 'Profile' },
+    { id: 'home', icon: Home, label: t('common.home', 'Trang chủ') },
+    { id: 'insight', icon: BarChart2, label: t('common.insight', 'Phân tích') },
+    { id: 'league', icon: Swords, label: t('common.arena', 'Đấu trường') },
+    { id: 'feed', icon: Rss, label: t('common.feed', 'Bảng tin') },
+    { id: 'profile', icon: User, label: t('common.profile', 'Hồ sơ') },
   ];
 
   return (

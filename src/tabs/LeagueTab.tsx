@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState, useEffect } from 'react';
+import React, { memo, useMemo, useState, useEffect, Suspense } from 'react';
 import { Trophy, UserPlus, Zap, Users, Search, Target, Swords } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +13,8 @@ import { EmptyState } from './League/EmptyState';
 import { LeagueTierBadge } from './League/LeagueTierBadge';
 import { getTierByWP } from './League/types';
 import type { LeagueEntry, LeagueMode, LeagueView } from './League/types';
-import ArenaTab from './ArenaTab';
+
+const ArenaTab = React.lazy(() => import('./ArenaTab'));
 
 interface LeagueTabProps {
   leagueMode: LeagueMode;
@@ -133,7 +134,9 @@ const LeagueTab = memo(function LeagueTab({
       </div>
 
       {competeView === 'arena' && (
-        <ArenaTab profile={profile ?? null} />
+        <Suspense fallback={<div className="h-40 rounded-3xl bg-slate-900/40 border border-white/5 animate-pulse" />}>
+          <ArenaTab profile={profile ?? null} />
+        </Suspense>
       )}
 
       {competeView === 'ranking' && (
