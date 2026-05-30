@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Users, UserPlus, Search, X, TrendingUp, Crown } from 'lucide-react';
+import { Trophy, Users, UserPlus, Search, X, TrendingUp, Crown, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Profile } from '@/models';
 import type { LeagueEntry, LeagueView } from '@/tabs/League/types';
