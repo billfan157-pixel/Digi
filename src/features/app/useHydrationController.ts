@@ -164,11 +164,16 @@ export function useHydrationController({
 
     const result = await originalHandleAddWater(amount, factor, name);
     if (profile?.id) {
-      updateWidgetCache(profile.id).catch(() => {});
+      updateWidgetCache({
+        userId: profile.id,
+        waterToday: profile.water_today || 0,
+        waterGoal: profile.water_goal || 2000,
+        equippedThemeId: profile.equipped_theme_id,
+      }).catch(() => {});
     }
     logWaterToHealth(amount).catch(() => {});
     return result;
-  }, [waterEntries, originalHandleAddWater, profile?.id]);
+  }, [waterEntries, originalHandleAddWater, profile?.id, profile?.water_today, profile?.water_goal, profile?.equipped_theme_id]);
 
   const progress = Math.min((waterIntake / (waterGoal || 1)) * 100, 100);
   const { weeklyHistory, weeklyLogCount } = useWeeklyHistory({

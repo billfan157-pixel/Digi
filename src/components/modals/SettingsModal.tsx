@@ -29,7 +29,6 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useNativePush } from '@/hooks/useNativePush';
 import { usePremiumStatus } from '@/hooks/useIsPremium';
 import { supabase } from '@/lib/supabase';
-import { WidgetPlugin } from '@/lib/widgetService';
 
 // ================= BUTTON VARIANTS =================
 const btnIcon = "p-2 rounded-full hover:bg-slate-300 dark:hover:bg-white/10 active:scale-95 transition-all text-slate-700 dark:text-white/80";
@@ -980,17 +979,14 @@ export default function SettingsModal() {
                   themeColor: settings.themeColor
                 }));
                 
-                if (Capacitor.isNativePlatform()) {
-                  try {
-                    await WidgetPlugin?.syncData({
-                      water_today: Number(profile?.water_today) || 0,
-                      water_goal: settings.waterGoal || 2000,
-                      themeColor: settings.themeColor || '#06b6d4'
-                    });
-                  } catch { console.log('Bỏ qua vì không chạy trên iOS Native'); }
-                } else {
-                  const { updateWidgetCache } = await import('@/lib/widgetService');
-                  if (profile?.id) updateWidgetCache(profile.id).catch(() => {});
+                const { updateWidgetCache } = await import('@/lib/widgetService');
+                if (profile?.id) {
+                  await updateWidgetCache({
+                    userId: profile.id,
+                    waterToday: Number(profile?.water_today) || 0,
+                    waterGoal: settings.waterGoal || 2000,
+                    equippedThemeId: profile.equipped_theme_id,
+                  });
                 }
 
                  toast.success(t('settings.widget_synced')); 
