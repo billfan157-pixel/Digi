@@ -3,6 +3,10 @@ import { render, screen } from '@testing-library/react';
 import { FeedPostList } from './FeedPostList';
 import type { SocialFeedPost } from '../../models';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key === 'feed.failed_load_feed' ? 'Không tải được feed' : key }),
+}));
+
 vi.mock('./PostCard', () => ({
   PostCard: vi.fn(({ post }: { post: SocialFeedPost }) => (
     <div data-testid={`post-card-${post.id}`}>{post.content}</div>
