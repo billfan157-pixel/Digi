@@ -49,8 +49,7 @@ import {
   parseChatResponse,
   logStructuredEvent,
   type DigiwellAiContext,
-  type WaterAction,
-  type AiGatewayLog
+  type WaterAction
 } from '../_shared/aiValidation.ts';
 
 const groqApiKey = Deno.env.get('GROQ_API_KEY') ?? '';
@@ -520,8 +519,8 @@ async function streamChatResponse(
     const encoder = new TextEncoder();
     let fullReply = '';
     let waterAction: WaterAction | undefined;
-    let fallbackUsed = false;
-    let fallbackReason: string | undefined = undefined;
+    const fallbackUsed = false;
+    const fallbackReason: string | undefined = undefined;
 
     const toolCalls: Record<number, { name?: string; arguments: string }> = {};
     let buffer = '';

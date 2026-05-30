@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useMemo, useState, useEffect, memo, useCallback, lazy, Suspense } from 'react';
 import {
   Cpu, Droplets, TrendingUp, Settings2, Target, Crown, CloudSun, AlertTriangle, Clock, Loader2,
-  Award, Flame, Sparkles, Zap, MessageSquare
+  Award, Flame, Sparkles, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';

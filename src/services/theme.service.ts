@@ -11,7 +11,7 @@ interface CachedThemes {
   timestamp: number;
 }
 
-function parseDoubleEscaped(str: unknown): any {
+function parseDoubleEscaped(str: unknown): unknown {
   if (typeof str !== 'string') return str;
 
   try {
@@ -28,7 +28,7 @@ function parseDoubleEscaped(str: unknown): any {
     }
     
     return parsed;
-  } catch (e) {
+  } catch {
     // Fallback: If initial JSON.parse failed, the string might not be wrapped in outer quotes but still contain escape sequences and concatenated objects.
     try {
       let unescaped = str;
@@ -42,8 +42,8 @@ function parseDoubleEscaped(str: unknown): any {
       }
       
       return JSON.parse(unescaped);
-    } catch (innerErr: any) {
-      console.error(`Failed to parse double-escaped JSON: ${innerErr.message}`);
+    } catch (innerErr: unknown) {
+      console.error(`Failed to parse double-escaped JSON: ${innerErr instanceof Error ? innerErr.message : String(innerErr)}`);
       return null;
     }
   }

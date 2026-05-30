@@ -3,7 +3,7 @@
  * Real-world prize redemption
  */
 import i18n from '@/i18n';
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
@@ -44,8 +44,6 @@ interface RedemptionRequest {
 
 export function useRewardRedemption(userId: string | undefined) {
   const queryClient = useQueryClient();
-  const [userCoins, setUserCoins] = useState(0);
-
   // Get available rewards
   const { data: rewards = [], isLoading: rewardsLoading } = useQuery({
     queryKey: ['reward-items'],

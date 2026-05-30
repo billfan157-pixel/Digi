@@ -1,5 +1,4 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
-import { redis } from '../_shared/redis.ts';
 import { captureException } from '../_shared/sentry.ts';
 
 /// <reference lib="deno.ns" />

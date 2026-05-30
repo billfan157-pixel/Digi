@@ -13,7 +13,7 @@ const queue: Array<{ method: string; args: unknown[] }> = [];
 function call(method: string, ...args: unknown[]) {
   const fn = target[method as keyof SentryModule];
   if (fn) {
-    (fn as Function)(...args);
+    (fn as (...args: unknown[]) => void)(...args);
   } else {
     queue.push({ method, args });
   }
@@ -23,7 +23,7 @@ function flushQueue() {
   if (Object.keys(target).length === 0) return;
   for (const { method, args } of queue) {
     const fn = target[method as keyof SentryModule];
-    if (fn) (fn as Function)(...args);
+    if (fn) (fn as (...args: unknown[]) => void)(...args);
   }
   queue.length = 0;
 }

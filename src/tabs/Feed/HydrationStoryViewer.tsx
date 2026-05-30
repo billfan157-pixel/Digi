@@ -1,13 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
-import { supabase } from '../../lib/supabase';
 import { getRelativeTimeLabel } from '../../lib/social';
 import { getFallbackStoryDrink, getFallbackStoryPercent, getFallbackStoryTemperature } from '../../lib/feedUtils';
 import type { SocialFeedPost } from '../../models';
-import { useAppStore } from '../../store/useAppStore';
 import { useUIStore } from '../../store/useUIStore';
 import { LazyImage } from '../../components/LazyImage';
 import { StoryReactionsBar } from '../../components/StoryReactionsBar';
@@ -20,14 +17,10 @@ interface HydrationStoryViewerProps {
   onPrev: () => void;
 }
 
-const QUICK_EMOJIS = ['💧', '🔥', '👏', '❤️', '🙌', '✨'];
-
 export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: HydrationStoryViewerProps) => {
   const { t } = useTranslation();
   const [paused, setPaused] = useState(false);
   const { setActiveCommentPost } = useUIStore();
-  const [reactedEmojis, setReactedEmojis] = useState<Set<string>>(new Set());
-  const profile = useAppStore((s) => s.profile);
 
   // Extract reaction counts from story
   const reactionCounts = story.reaction_counts as Record<string, number> | undefined;
@@ -41,39 +34,6 @@ export const HydrationStoryViewer = ({ story, onClose, onNext, onPrev }: Hydrati
 
   const handleStartTouch = () => setPaused(true);
   const handleEndTouch = () => setPaused(false);
-
-  const currentUserId = profile?.id;
-
-  const handleReact = useCallback(async (emoji: string) => {
-    if (!currentUserId) {
-      toast.error(t('feed.login_required_interact'));
-      return;
-    }
-    if (reactedEmojis.has(emoji)) return;
-
-    // Optimistic UI
-    setReactedEmojis(prev => new Set(prev).add(emoji));
-    setPaused(true);
-    if (navigator.vibrate) navigator.vibrate(30);
-
-    try {
-      const { error } = await supabase.from('social_comments').insert({
-        post_id: story.id,
-        author_id: currentUserId,
-        content: emoji,
-      });
-      if (error) throw error;
-      toast.success(t('feed.reaction_sent', { emoji }), { duration: 1200 });
-    } catch {
-      setReactedEmojis(prev => {
-        const next = new Set(prev);
-        next.delete(emoji);
-        return next;
-      });
-    }
-
-    setTimeout(() => setPaused(false), 500);
-  }, [currentUserId, story.id, reactedEmojis, t]);
 
   const pct = story.author?.water_goal
     ? Math.round(Math.min(100, (((typeof story.hydration_ml === 'number' ? story.hydration_ml : 0) || story.author?.water_today || 0) / story.author.water_goal) * 100))

@@ -24,7 +24,7 @@ interface HomeIntent {
 }
 
 export function useSmartHome(userId: string | undefined) {
-  const [devices, setDevices] = useState<SmartHomeDevice[]>([]);
+  const [, setDevices] = useState<SmartHomeDevice[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Get linked devices
@@ -78,7 +78,7 @@ export function useSmartHome(userId: string | undefined) {
           }
           return i18n.t('common.voice_dont_understand_amount');
 
-        case 'get_status':
+        case 'get_status': {
           // Get today's total
           const today = new Date().toISOString().split('T')[0];
           const { data: todayData } = await supabase
@@ -89,6 +89,7 @@ export function useSmartHome(userId: string | undefined) {
 
           const totalToday = (todayData || []).reduce((sum, log) => sum + log.amount, 0);
           return i18n.t('common.voice_status', { amount: totalToday });
+        }
 
         case 'get_reminder':
           return i18n.t('common.voice_drink_reminder');

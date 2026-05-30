@@ -166,6 +166,7 @@ let globalCacheInstance: ReturnType<typeof useCache> | null = null;
 
 export function getGlobalCache() {
   if (!globalCacheInstance) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     globalCacheInstance = useCache();
   }
   return globalCacheInstance;

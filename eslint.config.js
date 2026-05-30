@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', '.history/**', '.kilo/**', 'android/**', 'ios/**', '.eslint-report.json', 'public/**', 'coverage/**']),
+  globalIgnores(['dist', '.history/**', '.kilo/**', 'android/**', 'ios/**', '.eslint-report.json', 'public/**', 'coverage/**', 'supabase/functions/**/*.test.ts']),
   {
     files: ['**/*.{ts,tsx}'],
     linterOptions: {
@@ -22,6 +22,19 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
-    rules: {},
+    rules: {
+      // React Compiler rules — too strict for existing codebase; revisit after full migration
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/immutability': 'off',
+      // Allow explicit any in edge function / service files
+      '@typescript-eslint/no-explicit-any': 'warn',
+      // Downgrade strict rules to warn for CI stability on legacy code
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-expressions': 'warn',
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

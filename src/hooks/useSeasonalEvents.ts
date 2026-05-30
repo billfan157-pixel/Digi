@@ -24,7 +24,7 @@ interface SeasonalEvent {
 }
 
 export function useSeasonalEvents(userId: string | undefined) {
-  const [activeEvent, setActiveEvent] = useState<SeasonalEvent | null>(null);
+  const [activeEvent] = useState<SeasonalEvent | null>(null);
 
   // Get current season
   const currentSeason = useMemo(() => {

@@ -150,7 +150,7 @@ export default function SystemSection({
   const [scheduleUpdateTrigger, setScheduleUpdateTrigger] = useState(0);
 
   const { todayCount, todayTotalMl } = useMemo(() => {
-    scheduleUpdateTrigger;
+    void scheduleUpdateTrigger;
     if (!profile?.id) return { todayCount: 0, todayTotalMl: 0 };
     const saved = AppStorage.getItem(`digiwell_custom_schedule_today_${profile.id}`);
     if (saved) {
@@ -167,7 +167,7 @@ export default function SystemSection({
   }, [profile?.id, scheduleUpdateTrigger]);
 
   const { tomorrowCount, tomorrowTotalMl } = useMemo(() => {
-    scheduleUpdateTrigger;
+    void scheduleUpdateTrigger;
     if (!profile?.id) return { tomorrowCount: 0, tomorrowTotalMl: 0 };
     const saved = AppStorage.getItem(`digiwell_custom_schedule_tomorrow_${profile.id}`);
     if (saved) {
