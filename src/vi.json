@@ -530,6 +530,15 @@
     "all_modes": "Tất cả chế độ",
     "no_filter_matches": "Không tìm thấy trận đấu phù hợp bộ lọc"
   },
+  "compete": {
+    "title": "Đấu Trường",
+    "battles": "Trận đấu",
+    "ranking": "Xếp hạng",
+    "clubs": "CLB",
+    "win_rate": "Tỷ lệ thắng",
+    "streak": "Chuỗi thắng",
+    "total_matches": "Tổng trận"
+  },
   "challenge": {
     "load_failed": "Không thể tải danh sách thử thách",
     "joined": "Đã tham gia: {{title}}",
