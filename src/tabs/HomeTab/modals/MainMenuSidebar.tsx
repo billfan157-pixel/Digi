@@ -36,7 +36,7 @@ export default function MainMenuSidebar({
 }: MainMenuSidebarProps) {
   const { t } = useTranslation();
   const profile = useAppStore((state: { profile: unknown }) => state.profile) as Record<string, unknown> | null;
-  const { setShowShopModal, setActiveTab, setLeagueCompeteView, setShowQuestModal, setShowChallengeModal } =
+  const { setShowShopModal, setActiveTab, setCompeteSubTab, setShowQuestModal, setShowChallengeModal } =
     useUIStore();
 
   return (
@@ -171,7 +171,7 @@ export default function MainMenuSidebar({
                   onClick={() => {
                     onClose();
                     setActiveTab('league');
-                    setLeagueCompeteView('arena');
+                    setCompeteSubTab('battles');
                   }}
                 />
                 <SidebarButton

@@ -18,7 +18,7 @@ const HomeTab = React.lazy(() => import('@/tabs/HomeTab'));
 const InsightTab = React.lazy(() => import('@/tabs/InsightTab'));
 const FeedTab = React.lazy(() => import('@/tabs/FeedTab'));
 const ProfileTab = React.lazy(() => import('@/tabs/ProfileTab'));
-const LeagueTab = React.lazy(() => import('@/tabs/LeagueTab'));
+const CompeteTab = React.lazy(() => import('@/tabs/CompeteTab'));
 const BottleTab = React.lazy(() => import('@/tabs/BottleTab'));
 
 export type AppView = 'welcome' | 'login' | 'register' | 'app' | 'locked' | 'sea-landing';
@@ -40,7 +40,7 @@ export interface AppShellProps {
   homeTabProps: React.ComponentProps<typeof HomeTab>;
   insightTabProps: React.ComponentProps<typeof InsightTab>;
   bottleTabProps: React.ComponentProps<typeof BottleTab>;
-  leagueTabProps: React.ComponentProps<typeof LeagueTab>;
+  competeTabProps: React.ComponentProps<typeof CompeteTab>;
   feedTabProps: React.ComponentProps<typeof FeedTab>;
   profileTabProps: React.ComponentProps<typeof ProfileTab>;
   devSyncProps?: {
@@ -69,7 +69,7 @@ export default function AppShell({
   homeTabProps,
   insightTabProps,
   bottleTabProps,
-  leagueTabProps,
+  competeTabProps,
   feedTabProps,
   profileTabProps,
   devSyncProps,
@@ -141,7 +141,7 @@ export default function AppShell({
           )}
           {activeTab === 'league' && (
             <ErrorBoundary key="league-tab">
-              <LeagueTab {...leagueTabProps} />
+              <CompeteTab {...competeTabProps} />
             </ErrorBoundary>
           )}
           {activeTab === 'feed' && (

@@ -313,7 +313,7 @@ export function useAppShellController(): AppShellProps {
     homeTabProps: tabProps.homeTabProps,
     insightTabProps: tabProps.insightTabProps,
     bottleTabProps: tabProps.bottleTabProps as unknown as AppShellProps['bottleTabProps'],
-    leagueTabProps: tabProps.leagueTabProps,
+    competeTabProps: tabProps.competeTabProps,
     feedTabProps: tabProps.feedTabProps,
     profileTabProps: tabProps.profileTabProps,
     devSyncProps: {

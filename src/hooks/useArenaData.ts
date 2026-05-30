@@ -29,7 +29,7 @@ export interface MatchedData {
   opponent_id: string;
   opponent_elo: number;
   opponent_nickname?: string;
-  opponent_avatar_url?: string | null;
+  opponent_avatar_url?: string;
   opponent_level?: number;
 }
 
@@ -213,7 +213,7 @@ export function useArenaData(profile: Profile | null) {
     battle_id: string;
   }) => {
     let opponentNickname = t('battle.opponent_label');
-    let opponentAvatar: string | null = null;
+    let opponentAvatar: string | undefined = undefined;
     let opponentLevel = 1;
     try {
       const { data: oppProfile } = await supabase
@@ -223,7 +223,7 @@ export function useArenaData(profile: Profile | null) {
         .single();
       if (oppProfile) {
         opponentNickname = oppProfile.nickname;
-        opponentAvatar = oppProfile.avatar_url;
+        opponentAvatar = oppProfile.avatar_url ?? undefined;
         opponentLevel = oppProfile.level || 1;
       }
     } catch (e) {

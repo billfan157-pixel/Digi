@@ -3,7 +3,7 @@ import type HomeTab from '@/tabs/HomeTab';
 import type InsightTab from '@/tabs/InsightTab';
 import type FeedTab from '@/tabs/FeedTab';
 import type ProfileTab from '@/tabs/ProfileTab';
-import type LeagueTab from '@/tabs/LeagueTab';
+import type CompeteTab from '@/tabs/CompeteTab';
 import type { RankInfo } from '@/tabs/League/types';
 import type { Profile, SocialFeedPost } from '@/models';
 import type { CalendarEventItem } from '@/hooks/useCalendarSync';
@@ -119,13 +119,13 @@ export function useAppTabProps({
     setActiveTab,
   ]);
 
-  const leagueTabProps = useMemo(() => ({
+  const competeTabProps = useMemo(() => ({
     leagueMode,
     setLeagueMode,
     setShowAddFriend,
     getLeagueData,
     profile,
-  }) as unknown as React.ComponentProps<typeof LeagueTab>, [
+  }) as unknown as React.ComponentProps<typeof CompeteTab>, [
     getLeagueData,
     leagueMode,
     profile,
@@ -185,7 +185,7 @@ export function useAppTabProps({
     homeTabProps,
     insightTabProps,
     bottleTabProps,
-    leagueTabProps,
+    competeTabProps,
     feedTabProps,
     profileTabProps,
   };

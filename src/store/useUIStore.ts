@@ -35,8 +35,8 @@ interface UIState {
   setOnboardingStep: (step: number) => void;
   showShopModal: boolean;
   setShowShopModal: (show: boolean) => void;
-  leagueCompeteView: 'ranking' | 'arena';
-  setLeagueCompeteView: (view: 'ranking' | 'arena') => void;
+  competeSubTab: 'battles' | 'ranking' | 'clubs';
+  setCompeteSubTab: (tab: 'battles' | 'ranking' | 'clubs') => void;
   showQuestModal: boolean;
   setShowQuestModal: (show: boolean) => void;
   showClubCoopModal: boolean;
@@ -86,7 +86,7 @@ export const useUIStore = create<UIState>()((set) => ({
   showEditProfile: false, setShowEditProfile: (show) => set({ showEditProfile: show }),
   onboardingStep: 1, setOnboardingStep: (step) => set({ onboardingStep: step }),
   showShopModal: false, setShowShopModal: (show) => set({ showShopModal: show }),
-  leagueCompeteView: 'ranking', setLeagueCompeteView: (view) => set({ leagueCompeteView: view }),
+  competeSubTab: 'battles', setCompeteSubTab: (tab) => set({ competeSubTab: tab }),
   showQuestModal: false, setShowQuestModal: (show) => set({ showQuestModal: show }),
   showClubCoopModal: false, setShowClubCoopModal: (show) => set({ showClubCoopModal: show }),
   editingEntry: null, setEditingEntry: (entry) => set({ editingEntry: entry }),
