@@ -222,6 +222,71 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
       });
       if (error) throw error;
       if (data?.error) {
+        // If already in queue, recover queue state and resume polling
+        if (data.error.includes('hàng đợi')) {
+          try {
+            const { data: queueRow } = await supabase
+              .from('duel_matchmaking_queue')
+              .select('id, mode_type, stake_coins, queue_started_at')
+              .eq('user_id', profile.id)
+              .single();
+            if (queueRow) {
+              toast.info(t('battle.resuming_queue'));
+              setQueueStatus({
+                queueId: queueRow.id,
+                mode: queueRow.mode_type,
+                stake: queueRow.stake_coins,
+                joinedAt: Date.now(),
+              });
+              setSelectedMode(null);
+              // Resume polling find_ranked_match every 5s
+              pollRef.current = setInterval(async () => {
+                try {
+                  const { data: matchData, error: matchError } = await supabase.rpc('find_ranked_match', {
+                    p_mode_type: queueRow.mode_type,
+                  });
+                  if (matchError) {
+                    console.error('Matchmaking poll error:', matchError);
+                    return;
+                  }
+                  if (matchData?.matched) {
+                    stopPolling();
+                    let opponentNickname = 'Đối Thủ';
+                    let opponentAvatar = null;
+                    let opponentLevel = 1;
+                    try {
+                      const { data: oppProfile } = await supabase
+                        .from('public_profiles')
+                        .select('nickname, avatar_url, level')
+                        .eq('id', matchData.opponent_id)
+                        .single();
+                      if (oppProfile) {
+                        opponentNickname = oppProfile.nickname;
+                        opponentAvatar = oppProfile.avatar_url;
+                        opponentLevel = oppProfile.level || 1;
+                      }
+                    } catch (e) {
+                      console.error('Error fetching opponent details:', e);
+                    }
+                    setMatchedData({
+                      battle_id: matchData.battle_id,
+                      opponent_id: matchData.opponent_id,
+                      opponent_elo: matchData.opponent_elo,
+                      opponent_nickname: opponentNickname,
+                      opponent_avatar_url: opponentAvatar,
+                      opponent_level: opponentLevel,
+                    });
+                  }
+                } catch (e) {
+                  console.error(e);
+                }
+              }, 5000);
+              return;
+            }
+          } catch (recoverErr) {
+            console.error('Failed to recover queue state:', recoverErr);
+          }
+        }
         toast.error(data.error);
         setIsQueuing(false);
         return;
