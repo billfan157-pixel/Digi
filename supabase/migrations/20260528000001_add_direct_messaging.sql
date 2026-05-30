@@ -2,7 +2,9 @@
 -- ================================================
 
 -- Safe drop of legacy conversations and direct_messages tables/views to ensure correct schema
+-- allow-destructive-change: Recreating DM schema after legacy table redesign
 DROP TABLE IF EXISTS public.direct_messages CASCADE;
+-- allow-destructive-change: Recreating DM schema after legacy table redesign
 DROP TABLE IF EXISTS public.conversations CASCADE;
 DROP VIEW IF EXISTS public.conversations CASCADE;
 
