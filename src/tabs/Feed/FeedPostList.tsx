@@ -39,6 +39,7 @@ const FeedPostListComponent = ({
   handleToggleLikePost,
   onOpenComments,
 }: FeedPostListProps) => {
+  const { t } = useTranslation();
   const { containerRef, measureElement, totalSize, virtualItems } = useVirtualFeedWindow({
     itemCount: posts.length,
   });

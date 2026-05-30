@@ -65,7 +65,7 @@ export async function loadThemesFromServer(): Promise<Record<string, ThemeConfig
     for (const item of shopItems || []) {
       if (item.meta_value) {
         try {
-          const themeConfig = parseDoubleEscaped(item.meta_value);
+          const themeConfig = parseDoubleEscaped(item.meta_value) as Partial<ThemeConfig>;
 
           if (themeConfig && themeConfig.id && themeConfig.colors) {
             // Clean up extra fields that might cause issues

@@ -73,7 +73,7 @@ export const StoryReactionsBar = ({
         queryClient.invalidateQueries({ queryKey: ['social-posts'] });
 
         if (onReactionChange && result.counts) {
-          const total = Object.values(result.counts).reduce((a, b) => a + b, 0);
+          const total = Object.values(result.counts as Record<string, number>).reduce((a, b) => a + b, 0);
           onReactionChange(result.counts, total);
         }
       }

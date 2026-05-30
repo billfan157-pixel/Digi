@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { LeagueTierBadge } from './LeagueTierBadge';
 import { getTierByWP, LEAGUE_TIERS } from './types';
 import type { LeagueEntry } from './types';
+import { glassInner } from '@/styles/glass';
 
 interface LeaderboardRowProps {
   item: LeagueEntry;
@@ -38,10 +39,10 @@ export const LeaderboardRow = ({ item, actualRank, gap }: LeaderboardRowProps) =
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: Math.min(actualRank * 0.02, 0.2) }}
-      className={`group relative flex items-center p-4 rounded-2xl backdrop-blur-[var(--theme-blur,40px)] border transition-all duration-300 overflow-hidden active:scale-[0.98] glass-card ${
+      className={`group relative flex items-center p-4 transition-all duration-300 overflow-hidden active:scale-[0.98] ${
         isMe
-          ? 'bg-gradient-to-r from-[var(--neon-cyan)]/15 to-transparent border-[var(--neon-cyan)]/30 shadow-[0_0_24px_var(--theme-glow-color)]'
-          : `${tierBorder} hover:bg-[var(--theme-border-glass)]`
+          ? 'bg-gradient-to-r from-cyan-500/15 to-transparent border border-cyan-500/30 shadow-[0_0_24px_rgba(34,211,238,0.1)] rounded-2xl'
+          : `${glassInner} ${tierBorder} hover:bg-white/[0.04]`
       }`}
     >
       {/* Subtle tier glow on hover */}

@@ -325,6 +325,7 @@ function ActiveBattleCard({
   onAccept: () => void;
   onContribute: (amount: number) => void;
 }) {
+  const { t } = useTranslation();
   const isChallenger = battle.challenger_club_id === clubId;
   const isPending = battle.status === 'pending';
   const isParticipant = isChallenger || battle.opponent_club_id === clubId;
@@ -371,7 +372,7 @@ function ActiveBattleCard({
             );
           });
       });
-  }, [battle.id, battle.status]);
+  }, [battle.id, battle.status, t]);
 
   return (
     <div className="bg-slate-900/50 border border-purple-500/20 rounded-3xl p-5 shadow-lg overflow-hidden relative">
@@ -523,6 +524,7 @@ function ContributeButton({
 }
 
 function ClubRankings() {
+  const { t } = useTranslation();
   const [rankings, setRankings] = useState<Array<{ id: string; name: string; battle_wins: number; battle_losses: number }>>([]);
   const [loading, setLoading] = useState(true);
 

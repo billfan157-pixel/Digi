@@ -50,7 +50,7 @@ const BLOCKS = [
 
 interface Forecast {
   predicted: number;
-  trend: 'Up' | 'Down' | 'Stable';
+  trend: 'Rising' | 'Declining' | 'Stable';
   confidence: number;
   change: number;
 }
@@ -284,8 +284,8 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
   }
   if (logs.length === 0) return <EmptyState />;
 
-  const TrendIcon = forecast.trend === 'Tăng' ? TrendingUp : 
-                    forecast.trend === 'Down' ? TrendingDown : Minus;
+  const TrendIcon = forecast.trend === 'Rising' ? TrendingUp : 
+                    forecast.trend === 'Declining' ? TrendingDown : Minus;
 
   return (
     <div className={`${glassCard} p-5 relative overflow-hidden group ${className}`}>
@@ -519,8 +519,8 @@ export default function HourlyHeatmapUltimate({ userId, className = '' }: Hourly
           
           <div className="flex items-center gap-1.5">
             <p className={`text-sm font-bold ${
-              forecast.trend === 'Tăng' ? 'text-emerald-400' :
-              forecast.trend === 'Down' ? 'text-orange-400' :
+              forecast.trend === 'Rising' ? 'text-emerald-400' :
+              forecast.trend === 'Declining' ? 'text-orange-400' :
               'text-slate-400'
             }`}>
               {forecast.trend}

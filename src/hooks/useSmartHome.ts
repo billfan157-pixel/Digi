@@ -34,7 +34,7 @@ export function useSmartHome(userId: string | undefined) {
       if (!userId) return [];
       const { data, error } = await supabase
         .from('user_integrations')
-        .select('settings')
+        .select('id, provider, settings')
         .eq('user_id', userId)
         .in('provider', ['alexa', 'google_home', 'homekit']);
       if (error) return [];

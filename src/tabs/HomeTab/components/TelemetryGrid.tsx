@@ -133,7 +133,7 @@ const TelemetryGrid = React.memo(function TelemetryGrid({ weatherData, watchData
   
   // Heart rate analysis
   const hrZone = watchData?.heartRate 
-    ? getHeartRateZone(watchData.heartRate, watchData.restingHR, t)
+    ? getHeartRateZone(watchData.heartRate, watchData.restingHR || 60, t)
     : null;
   
   // Weather recommendation

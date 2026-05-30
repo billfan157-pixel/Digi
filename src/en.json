@@ -1250,7 +1250,9 @@
     "default_user": "User",
     "digiwell_community": "DigiWell Community",
     "system_user": "System User",
-    "streak_days": "{{count}} days"
+    "streak_days": "{{count}} days",
+    "rank": "Rank",
+    "wp": "WP"
   },
   "dev": {
     "seed_cancelled": "Cancelled seeding to avoid duplicates.",
@@ -2086,7 +2088,8 @@
     "weather_advice_drink": "Remember to drink water!",
     "weather_advice_nice": "Nice weather",
     "weather_advice_uv": "UV high - protect skin",
-    "wellness_points": "Wellness Points"
+    "wellness_points": "Wellness Points",
+    "guest": "Guest"
   },
   "lab": {
     "health_label": "Health",
@@ -2609,6 +2612,18 @@
   "rank": {
     "grandmaster": "Grandmaster"
   },
-  "volume": "Volume"
+  "volume": "Volume",
+  "compete": {
+    "title": "Arena",
+    "ranking": "Ranking",
+    "top_players": "Top Players",
+    "your_rank": "Your Rank",
+    "gap_above": "+{{gap}} WP to next",
+    "win_rate": "Win Rate",
+    "streak": "Streak",
+    "total_matches": "Matches",
+    "battles": "Battles",
+    "clubs": "Clubs"
+  }
 }
 

@@ -30,7 +30,7 @@ interface PredictionResult {
 
 export function useHydrationPredictions() {
   const profile = useAppStore((s) => s.profile);
-  const dailyGoal = profile?.daily_goal_ml || 2500;
+  const dailyGoal = profile?.water_goal || 2000;
 
   // Fetch historical water logs
   const { data: waterLogs = [] } = useQuery({

@@ -857,7 +857,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
                     return;
                   }
                 } else {
-                  const isMock = device.id.startsWith('MOCK-');
+                  const isMock = (pairedDeviceId || '').startsWith('MOCK-');
                   const { data: devCheck } = await supabase.from('profiles').select('is_developer').eq('id', userId).single();
                   const isDeveloper = devCheck?.is_developer ?? false;
 
@@ -952,7 +952,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
                     return;
                   }
                 } else {
-                  const isMock = device.id.startsWith('MOCK-');
+                  const isMock = (pairedDeviceId || '').startsWith('MOCK-');
                   const { data: devCheck } = await supabase.from('profiles').select('is_developer').eq('id', userId).single();
                   const isDeveloper = devCheck?.is_developer ?? false;
 

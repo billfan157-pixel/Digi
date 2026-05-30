@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Crown, Flame, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getTierByWP } from './types';
 import type { LeagueEntry } from './types';
+import { glassCard } from '@/styles/glass';
 
 const podiumHeights = [160, 130, 110];
 
@@ -35,6 +37,7 @@ interface PodiumSectionProps {
 }
 
 export const PodiumSection = ({ top3 }: PodiumSectionProps) => {
+  const { t } = useTranslation();
   const layouts = useMemo(() => [1, 0, 2], []);
 
   if (top3.length === 0) return null;
@@ -93,7 +96,7 @@ export const PodiumSection = ({ top3 }: PodiumSectionProps) => {
 
             {/* Pedestal - Premium Glass */}
             <div
-              className={`w-full rounded-t-[var(--theme-border-radius,2.5rem)] border-t-2 border-x-2 ${metal.border} bg-gradient-to-t ${metal.bg} backdrop-blur-[var(--theme-blur,40px)] relative flex flex-col items-center pt-6 px-2 text-center overflow-hidden shadow-2xl`}
+              className={`w-full ${glassCard} rounded-t-[var(--theme-border-radius,2.5rem)] border-t-2 border-x-2 ${metal.border} relative flex flex-col items-center pt-6 px-2 text-center overflow-hidden`}
               style={{ height: `${podiumHeights[podiumIndex]}px` }}
             >
               {/* Internal Shimmer */}

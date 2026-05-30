@@ -6,6 +6,7 @@ import type { Profile, Battle } from '@/models';
 import type { LeagueEntry } from '@/tabs/League/types';
 import { useUIStore } from '@/store/useUIStore';
 import { useArenaData } from '@/hooks/useArenaData';
+import { getTierByWP } from '@/tabs/League/types';
 
 import SeasonBanner from '@/tabs/Arena/SeasonBanner';
 import MatchmakingOverlay from '@/tabs/Arena/MatchmakingOverlay';
@@ -43,17 +44,30 @@ const CompeteTab = memo(function CompeteTab({
   const [showingRanking, setShowingRanking] = useState(false);
 
   const hasActiveBattle = arena.activeBattles.length > 0;
+  const wp = arena.stats.wp;
+  const tier = getTierByWP(wp);
+
+  const TIER_AURA: Record<string, string> = {
+    bronze: 'from-orange-500/10',
+    silver: 'from-slate-300/10',
+    gold: 'from-amber-400/10',
+    platinum: 'from-emerald-400/10',
+    diamond: 'from-cyan-400/10',
+    master: 'from-purple-400/10',
+    grandmaster: 'from-pink-400/10',
+  };
+  const tierAura = TIER_AURA[tier.name.toLowerCase()] || 'from-cyan-500/10';
 
   return (
     <div className="animate-in slide-in-from-right duration-300 pb-12">
       {/* Dynamic tier glow background */}
-      <div className="fixed top-0 left-0 right-0 h-96 bg-gradient-to-b from-cyan-500/10 to-transparent pointer-events-none blur-[100px] z-[-1]" />
+      <div className={`fixed top-0 left-0 right-0 h-96 bg-gradient-to-b ${tierAura} to-transparent pointer-events-none blur-[100px] z-[-1]`} />
 
       {/* Header */}
       <div className="mb-4">
         <TabHeader
           label="Compete"
-          title={t('compete.title', 'Đấu Trường')}
+          title={t('compete.title')}
           profile={profile}
           onAvatarClick={() => useUIStore.getState().setShowMainMenu(true)}
         />

@@ -400,7 +400,7 @@ export function useCalendarSync() {
     };
   }, [profile?.id, clearRetry, scheduleRetry, syncCalendar]);
 
-  const prevPrivacyLevelRef = useRef<string | undefined>();
+  const prevPrivacyLevelRef = useRef<string | undefined>(undefined);
   const syncCalendarRef = useRef(syncCalendar);
   syncCalendarRef.current = syncCalendar;
 

@@ -1266,7 +1266,9 @@
     "default_user": "Người dùng",
     "digiwell_community": "Cộng đồng DigiWell",
     "system_user": "Người dùng hệ thống",
-    "streak_days": "{{count}} ngày"
+    "streak_days": "{{count}} ngày",
+    "rank": "Hạng",
+    "wp": "WP"
   },
   "dev": {
     "seed_cancelled": "Đã hủy seeding để tránh duplicate.",
@@ -2092,7 +2094,8 @@
     "win_rate_short": "WR",
     "win_short": "W",
     "matches": "trận",
-    "coin_plural": "WP"
+    "coin_plural": "WP",
+    "guest": "Khách"
   },
   "lab": {
     "health_label": "Sức khỏe",
@@ -2612,5 +2615,17 @@
   "rank": {
     "grandmaster": "Đại Cao Thủ"
   },
-  "volume": "Thể tích"
+  "volume": "Thể tích",
+  "compete": {
+    "title": "Đấu Trường",
+    "ranking": "Xếp hạng",
+    "top_players": "Top cao thủ",
+    "your_rank": "Vị trí của bạn",
+    "gap_above": "Cách top trên +{{gap}} WP",
+    "win_rate": "Tỷ lệ thắng",
+    "streak": "Chuỗi thắng",
+    "total_matches": "Tổng trận",
+    "battles": "Trận đấu",
+    "clubs": "Câu lạc bộ"
+  }
 }

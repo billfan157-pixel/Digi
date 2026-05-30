@@ -206,7 +206,7 @@ export function useWaterData(
             onClick: async () => {
               try {
                 const { data, error } = await supabase.rpc('post_water_drop', {
-                  p_water_log_id: realId || tempId,
+                  p_water_log_id: tempId,
                   p_message: i18n.t('water.drop_default_message', '💧 Vừa uống nước xong!'),
                 });
                 if (error) throw error;

@@ -15,18 +15,15 @@ interface ChartDay {
   fullDate?: string;
 }
 
-interface WeeklyReport {
-  trend?: string;
+import type { WeeklyReport } from '@/lib/weeklyReportEngine';
+
+type WeeklyReportWithBreakdown = WeeklyReport & {
   dailyBreakdown?: ChartDay[];
-  totalDays?: number;
-  goalHitDays?: number;
-  totalIntake?: number;
-  consistencyScore?: number;
-}
+};
 
 interface WeeklyReportCardProps {
   isPremium: boolean;
-  report: WeeklyReport | null;
+  report: WeeklyReportWithBreakdown | null;
   isLoading: boolean;
   onGenerate: () => void;
   onUpgrade: () => void;

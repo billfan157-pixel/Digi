@@ -2544,7 +2544,7 @@ export default function ShopModal() {
 
 
 
-      toast.error(err?.message || t('shop.gift_redeem_failed'));
+      toast.error((err instanceof Error ? err.message : undefined) || t('shop.gift_redeem_failed'));
 
 
 

@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import type { Profile } from '../models';
 import { readThemePreference } from '@/services/appPreferences.service';
 import { getThemeConfigSync, getThemeConfigAsync } from '@/services/theme.service';
+import type { ThemeConfig } from '@/config/themes';
 
 export default function ThemeEngine({ profile }: { profile: Profile | null }) {
   const [themeColor, setThemeColor] = useState<string>('#06b6d4'); // Mặc định Cyan
-  const [themeConfig, setThemeConfig] = useState<unknown>(null);
+  const [themeConfig, setThemeConfig] = useState<ThemeConfig | null>(null);
 
   useEffect(() => {
     if (!profile?.id) return;

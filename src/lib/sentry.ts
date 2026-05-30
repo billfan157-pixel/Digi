@@ -1,19 +1,20 @@
 type SentryModule = {
   init: (options: Record<string, unknown>) => void;
   setUser: (user: { id: string } | null) => void;
-  captureException: (error: unknown, hint?: unknown) => void;
+  captureException: (error: unknown, hint?: unknown) => string;
   captureMessage: (message: string, level?: unknown) => void;
   setContext: (key: string, context: Record<string, unknown> | null) => void;
   getCurrentScope: () => unknown;
 };
 
-let target: Partial<SentryModule> = {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let target: any = {};
 const queue: Array<{ method: string; args: unknown[] }> = [];
 
-function call(method: string, ...args: unknown[]) {
-  const fn = target[method as keyof SentryModule];
+function call(method: keyof SentryModule, ...args: unknown[]) {
+  const fn = target[method];
   if (fn) {
-    (fn as (...args: unknown[]) => void)(...args);
+    return (fn as (...args: unknown[]) => unknown)(...args);
   } else {
     queue.push({ method, args });
   }
@@ -64,8 +65,8 @@ export function setSentryUser(userId: string | undefined) {
 }
 
 export const Sentry = {
-  captureException(error: unknown, hint?: unknown) {
-    call('captureException', error, hint);
+  captureException(error: unknown, hint?: unknown): string {
+    return call('captureException', error, hint) as string;
   },
   captureMessage(message: string, level?: unknown) {
     call('captureMessage', message, level);

@@ -5,13 +5,13 @@ import { useGroqAI, type UseGroqAIProps } from '../useGroqAI';
 const mockGenerateHydrationAdvice = vi.fn();
 const mockSendAiChatMessage = vi.fn();
 const mockStreamAiChatMessage = vi.fn();
-const mockFetchChatHistory = vi.fn(() => Promise.resolve([]));
-const mockInvokeAgenticWorkflow = vi.fn(() => Promise.resolve([]));
-const mockGetOfflineAdvice = vi.fn(() => ({ text: 'offline', suggestedAmount: 100 }));
+const mockFetchChatHistory = vi.fn((..._args: any[]) => Promise.resolve([]));
+const mockInvokeAgenticWorkflow = vi.fn((..._args: any[]) => Promise.resolve([]));
+const mockGetOfflineAdvice = vi.fn((..._args: any[]) => ({ text: 'offline', suggestedAmount: 100 }));
 const mockSupabaseRpc = vi.fn();
 const mockSupabaseFrom = vi.fn();
 const mockSetShowPremiumModal = vi.fn();
-const mockConfirmDialog = vi.fn(() => Promise.resolve(true));
+const mockConfirmDialog = vi.fn((..._args: any[]) => Promise.resolve(true));
 const mockToastWarning = vi.fn();
 const mockToastInfo = vi.fn();
 const mockToastSuccess = vi.fn();
@@ -19,22 +19,22 @@ const mockToastError = vi.fn();
 const mockHandleAddWater = vi.fn(() => Promise.resolve());
 
 vi.mock('@/lib/ai', () => ({
-  generateHydrationAdvice: (...args: unknown[]) => mockGenerateHydrationAdvice(...args),
-  sendAiChatMessage: (...args: unknown[]) => mockSendAiChatMessage(...args),
-  streamAiChatMessage: (...args: unknown[]) => mockStreamAiChatMessage(...args),
-  fetchChatHistory: (...args: unknown[]) => mockFetchChatHistory(...args),
-  invokeAgenticWorkflow: (...args: unknown[]) => mockInvokeAgenticWorkflow(...args),
+  generateHydrationAdvice: (...args: any[]) => mockGenerateHydrationAdvice(...args),
+  sendAiChatMessage: (...args: any[]) => mockSendAiChatMessage(...args),
+  streamAiChatMessage: (...args: any[]) => mockStreamAiChatMessage(...args),
+  fetchChatHistory: (...args: any[]) => mockFetchChatHistory(...args),
+  invokeAgenticWorkflow: (...args: any[]) => mockInvokeAgenticWorkflow(...args),
 }));
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    rpc: (...args: unknown[]) => mockSupabaseRpc(...args),
-    from: (...args: unknown[]) => mockSupabaseFrom(...args),
+    rpc: (...args: any[]) => mockSupabaseRpc(...args),
+    from: (...args: any[]) => mockSupabaseFrom(...args),
   },
 }));
 
 vi.mock('@/lib/offlineExpertSystem', () => ({
-  getOfflineAdvice: (...args: unknown[]) => mockGetOfflineAdvice(...args),
+  getOfflineAdvice: (...args: any[]) => mockGetOfflineAdvice(...args),
 }));
 
 vi.mock('@/store/useUIStore', () => ({
@@ -47,15 +47,15 @@ vi.mock('@/store/useUIStore', () => ({
 }));
 
 vi.mock('@/store/useConfirmDialog', () => ({
-  confirmDialog: (...args: unknown[]) => mockConfirmDialog(...args),
+  confirmDialog: (...args: any[]) => mockConfirmDialog(...args),
 }));
 
 vi.mock('sonner', () => ({
   toast: {
-    warning: (...args: unknown[]) => mockToastWarning(...args),
-    info: (...args: unknown[]) => mockToastInfo(...args),
-    success: (...args: unknown[]) => mockToastSuccess(...args),
-    error: (...args: unknown[]) => mockToastError(...args),
+    warning: (...args: any[]) => mockToastWarning(...args),
+    info: (...args: any[]) => mockToastInfo(...args),
+    success: (...args: any[]) => mockToastSuccess(...args),
+    error: (...args: any[]) => mockToastError(...args),
   },
 }));
 

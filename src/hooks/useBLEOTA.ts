@@ -34,8 +34,8 @@ export function useBLEOTA(deviceId: string | null) {
     if (!deviceId) return { updateAvailable: false };
 
     // Simulate checking server for updates
-    const currentVersion = '1.0.0';
-    const latestVersion = '1.1.0'; // Would fetch from server
+    const currentVersion = '1.0.0' as string;
+    const latestVersion = '1.1.0' as string; // Would fetch from server
 
     const info: FirmwareInfo = {
       version: currentVersion,

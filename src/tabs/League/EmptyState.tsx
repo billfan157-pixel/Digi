@@ -14,15 +14,24 @@ export const EmptyState = ({ searchQuery, leagueMode, onReset, onAddFriend }: Em
   const { t } = useTranslation();
 
   return (
-  <div className="relative overflow-hidden rounded-[2rem] border border-[var(--theme-border-glass)] bg-[var(--theme-surface-glass)] p-8 text-center backdrop-blur-[var(--theme-blur,40px)]">
+  <div className="relative overflow-hidden rounded-[var(--theme-border-radius,28px)] border border-[var(--theme-border-glass,rgba(34,211,238,0.06))] bg-[var(--theme-surface-glass,rgba(34,211,238,0.02))] p-8 text-center backdrop-blur-[var(--theme-blur,40px)]">
     {/* Aurora glow */}
     <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-32 bg-gradient-to-b from-cyan-500/10 via-purple-500/5 to-transparent blur-[60px] rounded-full pointer-events-none" />
     <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-amber-500/5 blur-[50px] rounded-full pointer-events-none" />
+    {/* Shimmer */}
+    <motion.div
+      className="absolute inset-0 overflow-hidden pointer-events-none"
+      initial={{ x: '-100%' }}
+      animate={{ x: '200%' }}
+      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" />
+    </motion.div>
 
     <motion.div
       animate={{ scale: [1, 1.05, 1], opacity: [0.5, 1, 0.5] }}
       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--theme-border-glass)] bg-[var(--theme-surface-glass)] relative"
+      className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--theme-border-glass,rgba(34,211,238,0.08))] bg-[var(--theme-surface-glass,rgba(34,211,238,0.03))] relative"
     >
       <Radar size={26} className="text-slate-400" />
     </motion.div>
@@ -40,7 +49,7 @@ export const EmptyState = ({ searchQuery, leagueMode, onReset, onAddFriend }: Em
     <div className="mt-6 flex items-center justify-center gap-3">
       <button
         onClick={onReset}
-        className="rounded-2xl border border-[var(--theme-border-glass)] bg-[var(--theme-surface-glass)] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-[var(--theme-border-glass)] hover:border-[var(--theme-glow-color)] active:scale-[0.97]"
+        className="rounded-2xl border border-[var(--theme-border-glass,rgba(34,211,238,0.1))] bg-[var(--theme-surface-glass,rgba(34,211,238,0.04))] backdrop-blur-[var(--theme-blur,40px)] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-[var(--theme-surface-glass,rgba(34,211,238,0.08))] hover:border-[var(--theme-border-glass,rgba(34,211,238,0.15))] active:scale-[0.97]"
       >
         {t('league.reset_filter')}
       </button>
