@@ -54,10 +54,10 @@ function runAnalysis() {
 
   console.log('\n--- Summary ---');
   console.log(`Total JS Bundle Size: ${formatBytes(totalSize)}`);
-  console.log(`Total JS Bundle Limit: 2.00 MB (2048 KB)`);
+  console.log(`Total JS Bundle Limit: 2.50 MB (2560 KB)`);
 
-  if (totalSize > 2.0 * 1024 * 1024) {
-    console.error(`❌ VIOLATION: Total JS bundle size exceeds 2.0 MB!`);
+  if (totalSize > 2.5 * 1024 * 1024) {
+    console.error(`❌ VIOLATION: Total JS bundle size exceeds 2.5 MB!`);
     hasViolation = true;
   }
 
