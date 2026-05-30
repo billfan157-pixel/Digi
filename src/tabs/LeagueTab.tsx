@@ -92,10 +92,10 @@ const LeagueTab = memo(function LeagueTab({
 
       <div className="mb-4">
         <TabHeader
-          label={competeView === 'ranking' ? t('league.ranking') : 'Võ Đài'}
+          label={competeView === 'ranking' ? t('league.ranking') : t('battle.arena')}
           title={
             <span className="flex items-center gap-2">
-              {competeView === 'ranking' ? t('league.ranking') : 'Võ Đài'}
+              {competeView === 'ranking' ? t('league.ranking') : t('battle.arena')}
               {competeView === 'ranking' ? <Trophy size={22} className="text-yellow-400" /> : <Swords size={22} className="text-rose-500" />}
             </span>
           }
@@ -126,7 +126,7 @@ const LeagueTab = memo(function LeagueTab({
               )}
               <span className="relative z-10 flex items-center justify-center gap-2 uppercase tracking-widest text-[9px]">
                 {view === 'ranking' ? <Trophy size={12} /> : <Swords size={12} />}
-                {view === 'ranking' ? 'Xếp hạng' : 'Võ đài'}
+                {view === 'ranking' ? t('league.ranking') : t('battle.arena')}
               </span>
             </button>
           ))}

@@ -20,7 +20,7 @@ const ActiveBattles: React.FC<ActiveBattlesProps> = ({ battles, profile, now, on
           <div className="relative">
             <Swords size={20} className="text-slate-500" />
           </div>
-          {t('common.in_progress') || 'Trận Đấu Đang Diễn Ra'}
+          {t('common.in_progress')}
         </h3>
         <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6 text-center flex flex-col items-center gap-3 relative overflow-hidden backdrop-blur-md">
           {/* Ambient glow */}
@@ -31,9 +31,9 @@ const ActiveBattles: React.FC<ActiveBattlesProps> = ({ battles, profile, now, on
           </div>
           
           <div className="space-y-1">
-            <p className="text-white font-bold text-sm">Không có trận nào đang diễn ra</p>
+            <p className="text-white font-bold text-sm">{t('battle.no_active_battles')}</p>
             <p className="text-slate-400 text-xs leading-relaxed max-w-[250px] mx-auto">
-              Hãy chọn một chế độ chơi ở trên hoặc thách đấu để bắt đầu cuộc chiến giữ nước!
+              {t('battle.no_active_battles_desc')}
             </p>
           </div>
           
@@ -47,7 +47,7 @@ const ActiveBattles: React.FC<ActiveBattlesProps> = ({ battles, profile, now, on
             }}
             className="mt-1 px-4 py-2 bg-white/10 hover:bg-white/15 active:scale-95 text-white text-[11px] font-black uppercase tracking-wider rounded-xl border border-white/10 transition-all flex items-center gap-1.5"
           >
-            Bắt đầu đấu ngay
+            {t('battle.start_now')}
           </button>
         </div>
       </div>

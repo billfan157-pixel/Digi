@@ -107,7 +107,7 @@ const BattleHistory: React.FC<BattleHistoryProps> = ({ battles, profile }) => {
     return (
       <div className="px-5 py-12 text-center text-slate-500">
         <TrendingUp size={24} className="mx-auto mb-2 opacity-20" />
-        <p className="text-xs font-bold">Chưa có lịch sử thi đấu</p>
+        <p className="text-xs font-bold">{t('battle.no_history')}</p>
       </div>
     );
   }
@@ -119,9 +119,9 @@ const BattleHistory: React.FC<BattleHistoryProps> = ({ battles, profile }) => {
         <h3 className="text-white font-black text-lg flex items-center gap-2 tracking-tight">
           <TrendingUp size={20} className="text-emerald-400" /> {t('common.duel_history')}
         </h3>
-        <span className="text-[10px] font-black text-slate-500 bg-slate-800/60 px-2.5 py-1 rounded-lg">
-          Tổng: {completedBattles.length} trận
-        </span>
+          <span className="text-[10px] font-black text-slate-500 bg-slate-800/60 px-2.5 py-1 rounded-lg">
+            {t('battle.total_matches', { count: completedBattles.length })}
+          </span>
       </div>
 
       {/* Sparkline ELO Chart HUD */}
@@ -129,18 +129,18 @@ const BattleHistory: React.FC<BattleHistoryProps> = ({ battles, profile }) => {
         <div className="p-4 rounded-3xl border border-white/5 bg-slate-900/40 relative overflow-hidden">
           <div className="flex justify-between items-center mb-3">
             <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-1.5">
-              <BarChart2 size={12} /> Biểu đồ phong độ ELO
+              <BarChart2 size={12} /> {t('battle.elo_chart')}
             </span>
             <span className="text-[9px] font-bold text-slate-500 uppercase">
-              {eloTrend.length} trận gần nhất
+              {t('battle.recent_matches', { count: eloTrend.length })}
             </span>
           </div>
           <div className="w-full mt-2">
             {sparklineSVG}
           </div>
           <div className="flex justify-between text-[8px] font-mono text-slate-600 mt-2">
-            <span>ELO thấp nhất: {Math.min(...eloTrend)}</span>
-            <span>ELO cao nhất: {Math.max(...eloTrend)}</span>
+            <span>{t('battle.elo_min', { value: Math.min(...eloTrend) })}</span>
+            <span>{t('battle.elo_max', { value: Math.max(...eloTrend) })}</span>
           </div>
         </div>
       )}
@@ -158,7 +158,7 @@ const BattleHistory: React.FC<BattleHistoryProps> = ({ battles, profile }) => {
                   : 'bg-white/5 border-transparent text-slate-500 hover:text-slate-300'
               }`}
             >
-              {f === 'all' ? 'Tất cả kết quả' : f === 'win' ? 'Thắng' : f === 'loss' ? 'Thua' : 'Hòa'}
+              {f === 'all' ? t('battle.all_results') : f === 'win' ? t('battle.win') : f === 'loss' ? t('battle.loss') : t('battle.draw')}
             </button>
           ))}
         </div>
@@ -174,7 +174,7 @@ const BattleHistory: React.FC<BattleHistoryProps> = ({ battles, profile }) => {
                   : 'bg-white/5 border-transparent text-slate-500 hover:text-slate-300'
               }`}
             >
-              {f === 'all' ? 'Tất cả chế độ' : f === 'daily' ? 'Hằng Ngày' : f === 'quick' ? 'Đấu Nhanh' : 'Giải Đấu'}
+              {f === 'all' ? t('battle.all_modes') : f === 'daily' ? t('battle.daily') : f === 'quick' ? t('battle.quick') : t('battle.tournament')}
             </button>
           ))}
         </div>
@@ -185,7 +185,7 @@ const BattleHistory: React.FC<BattleHistoryProps> = ({ battles, profile }) => {
         <AnimatePresence>
           {filteredBattles.length === 0 ? (
             <div className="py-8 text-center text-slate-600 text-xs font-bold">
-              Không tìm thấy trận đấu phù hợp bộ lọc
+              {t('battle.no_filter_matches')}
             </div>
           ) : (
             filteredBattles.map((battle, index) => {

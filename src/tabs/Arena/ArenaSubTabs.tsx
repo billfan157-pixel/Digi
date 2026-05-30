@@ -13,8 +13,8 @@ export default function ArenaSubTabs({ activeTab, onTabChange }: ArenaSubTabsPro
   const { t } = useTranslation();
 
   const tabs = [
-    { id: 'arena' as ArenaTabType, label: t('battle.arena', 'Đấu Trường'), icon: Swords },
-    { id: 'history' as ArenaTabType, label: t('club.battle_history', 'Lịch Sử'), icon: History },
+    { id: 'arena' as ArenaTabType, label: t('battle.arena'), icon: Swords },
+    { id: 'history' as ArenaTabType, label: t('club.battle_history'), icon: History },
   ];
 
   return (

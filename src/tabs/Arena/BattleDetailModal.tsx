@@ -234,7 +234,7 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
                       recipient_id: battle.challenger_id,
                       actor_id: profile.id,
                       type: 'battle',
-                      content: `${profile.nickname || t('feed.someone')} đã nhận lời thách đấu của bạn!`,
+                      content: t('battle.challenge_accepted_notif', { name: profile.nickname || t('feed.someone') }),
                       reference_id: battle.id,
                       reference_type: 'hydration_battle',
                     });

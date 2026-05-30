@@ -73,12 +73,12 @@ export default function SeasonBanner({ userId }: { userId?: string }) {
   );
 
   const rewards = [
-    { tier: 'Đồng (Bronze)', rewards: '50 Vàng · Huy Hiệu Đồng', color: 'text-amber-600' },
-    { tier: 'Bạc (Silver)', rewards: '150 Vàng · Huy Hiệu Bạc', color: 'text-slate-400' },
-    { tier: 'Vàng (Gold)', rewards: '300 Vàng · Huy Hiệu Vàng · Khung Avatar Vàng', color: 'text-yellow-400' },
-    { tier: 'Bạch Kim (Platinum)', rewards: '500 Vàng · Huy Hiệu Bạch Kim · Khung Avatar Bạch Kim', color: 'text-teal-400' },
-    { tier: 'Kim Cương (Diamond)', rewards: '800 Vàng · Huy Hiệu Kim Cương · Khung Avatar Kim Cương', color: 'text-cyan-400' },
-    { tier: 'Thần Thoại (Mythic)', rewards: '1500 Vàng · Huy Hiệu Thần Thoại · Khung Thần Thoại Động', color: 'text-pink-400' },
+    { tier: t('battle.reward_bronze'), rewards: t('battle.reward_bronze_items'), color: 'text-amber-600' },
+    { tier: t('battle.reward_silver'), rewards: t('battle.reward_silver_items'), color: 'text-slate-400' },
+    { tier: t('battle.reward_gold'), rewards: t('battle.reward_gold_items'), color: 'text-yellow-400' },
+    { tier: t('battle.reward_platinum'), rewards: t('battle.reward_platinum_items'), color: 'text-teal-400' },
+    { tier: t('battle.reward_diamond'), rewards: t('battle.reward_diamond_items'), color: 'text-cyan-400' },
+    { tier: t('battle.reward_mythic'), rewards: t('battle.reward_mythic_items'), color: 'text-pink-400' },
   ];
 
   if (loading) return (
@@ -114,7 +114,7 @@ export default function SeasonBanner({ userId }: { userId?: string }) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs font-black text-white truncate">
-                  {season.name || t('battle.current_season', 'Mùa Giải Hiện Tại')}
+                  {season.name || t('battle.current_season')}
                 </span>
                 <span className="text-[7px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-1.5 py-0.25 rounded border border-emerald-500/20">
                   {t('battle.season_time_left', { days: countdown.days, hours: countdown.hours })}

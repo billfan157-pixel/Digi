@@ -112,7 +112,7 @@ export const PodiumSection = ({ top3 }: PodiumSectionProps) => {
                 {item.streak > 0 && (
                    <div className="flex items-center justify-center gap-1 text-[9px] font-bold text-orange-400/80">
                       <Flame size={9} />
-                      {item.streak} ngày
+                      {t('league.streak_days', { count: item.streak })}
                    </div>
                 )}
               </div>

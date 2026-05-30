@@ -150,7 +150,7 @@ const ArenaStatsHero: React.FC<ArenaStatsHeroProps> = ({
           <div className="relative z-10 flex flex-col h-full justify-between">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('common.win_rate', 'Tỷ Lệ Thắng')}</p>
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('common.win_rate')}</p>
                 <Activity size={14} className="text-cyan-400" />
               </div>
               <div className="flex items-baseline gap-0.5">
@@ -177,7 +177,7 @@ const ArenaStatsHero: React.FC<ArenaStatsHeroProps> = ({
                 <div className="mt-2 flex items-center gap-1 text-[8px] text-slate-500 font-bold uppercase tracking-wider">
                   <TrendingUp size={8} className={winRate >= 50 ? 'text-emerald-400' : 'text-rose-400'} />
                   <span className={winRate >= 50 ? 'text-emerald-400' : 'text-rose-400'}>
-                    {winRate >= 50 ? t('battle.positive', 'Tích cực') : t('battle.needs_improvement', 'Cần cải thiện')}
+                    {winRate >= 50 ? t('battle.positive') : t('battle.needs_improvement')}
                   </span>
                 </div>
               )}

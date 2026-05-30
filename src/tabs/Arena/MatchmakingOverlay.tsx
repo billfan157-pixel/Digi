@@ -31,11 +31,11 @@ export default function MatchmakingOverlay({
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
   const tips = useMemo(() => [
-    t('home.nudge.morning_msg', 'Uống một cốc nước ngay sau khi ngủ dậy giúp cơ thể bù nước và kích hoạt các cơ quan nội tạng.'),
-    t('water.hydration_warning', 'Tránh uống quá 800ml nước trong 1 giờ để không gây hạ natri máu.'),
-    t('battle.matchmaking_tip_elo', 'Mỗi 30 giây chờ đợi, phạm vi ELO tìm kiếm sẽ mở rộng thêm 50 điểm để giúp bạn tìm trận nhanh hơn!'),
-    t('battle.matchmaking_tip_wp', 'Wellness Points (WP) là thước đo sức khỏe của bạn. Hãy tích lũy WP qua việc hoàn thành các thử thách nước.'),
-    t('battle.matchmaking_tip_quickadd', 'Nhấp vào bình nước của bạn ở trang chủ để nhanh chóng ghi nhận lượng nước vừa uống!'),
+    t('home.nudge.morning_msg'),
+    t('water.hydration_warning'),
+    t('battle.matchmaking_tip_elo'),
+    t('battle.matchmaking_tip_wp'),
+    t('battle.matchmaking_tip_quickadd'),
   ], [t]);
 
   const elapsed = useSyncExternalStore(
@@ -87,10 +87,10 @@ export default function MatchmakingOverlay({
       <div className="w-full flex justify-between items-center z-10 max-w-md">
         <div>
           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
-            {t('battle.arena', 'VÕ ĐÀI')} · {t('battle.ranked_queue', 'RANKED QUEUE')}
+            {t('battle.arena')} · {t('battle.ranked_queue')}
           </span>
           <h2 className="text-lg font-black text-white tracking-tight mt-0.5">
-            {matchedData ? t('battle.opponent_found_upper', 'ĐÃ TÌM THẤY ĐỐI THỦ!') : t('battle.matchmaking_searching', 'ĐANG TÌM ĐỐI THỦ...')}
+            {matchedData ? t('battle.opponent_found_upper') : t('battle.matchmaking_searching')}
           </h2>
         </div>
         {!matchedData && (

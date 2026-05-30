@@ -37,9 +37,9 @@ const BattleModes: React.FC<BattleModesProps> = ({
   const isTournamentLocked = totalMatches < 10;
 
   const modes = [
-    { id: 'daily' as const, icon: Clock, label: t('battle.daily') || 'Đấu Hàng Ngày', desc: '24 giờ · Mục tiêu 2L', color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-    { id: 'quick' as const, icon: Zap, label: t('battle.quick') || 'Đấu Nhanh', desc: '1 giờ · Phản xạ', color: 'text-rose-400', bg: 'bg-rose-500/10' },
-    { id: 'tournament' as const, icon: Trophy, label: t('battle.tournament') || 'Giải Đấu', desc: '7 ngày · Leo tháp', color: 'text-amber-400', bg: 'bg-amber-500/10' },
+    { id: 'daily' as const, icon: Clock, label: t('battle.daily') || 'Daily', desc: t('battle.daily_desc'), color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
+    { id: 'quick' as const, icon: Zap, label: t('battle.quick') || 'Quick', desc: t('battle.quick_desc'), color: 'text-rose-400', bg: 'bg-rose-500/10' },
+    { id: 'tournament' as const, icon: Trophy, label: t('battle.tournament') || 'Tournament', desc: t('battle.tournament_desc'), color: 'text-amber-400', bg: 'bg-amber-500/10' },
   ];
 
   const activeMode = modes.find(m => m.id === selectedMode);
@@ -49,7 +49,7 @@ const BattleModes: React.FC<BattleModesProps> = ({
     <div className="px-5 mb-8">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-white font-black text-lg flex items-center gap-2 tracking-tight">
-          <Target size={20} className="text-cyan-400" /> {t('common.select_mode') || 'Chọn Chế Độ'}
+          <Target size={20} className="text-cyan-400" /> {t('common.select_mode')}
         </h3>
         {selectedMode && (
           <motion.button
@@ -58,7 +58,7 @@ const BattleModes: React.FC<BattleModesProps> = ({
             onClick={() => { setSelectedMode(null); setStake(0); }}
             className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-slate-300 font-bold uppercase tracking-wider transition-colors"
           >
-            <X size={12} /> Đóng
+            <X size={12} /> {t('common.close')}
           </motion.button>
         )}
       </div>
@@ -87,7 +87,7 @@ const BattleModes: React.FC<BattleModesProps> = ({
             >
               {isRecommended && (
                 <div className="absolute top-2 left-2 z-20 bg-emerald-500/20 text-emerald-300 text-[7px] font-black px-1 py-0.5 rounded-md border border-emerald-500/30 tracking-wider">
-                  {t('battle.recommended') || 'GỢI Ý'}
+                  {t('battle.recommended')}
                 </div>
               )}
 
@@ -159,9 +159,9 @@ const BattleModes: React.FC<BattleModesProps> = ({
               {selectedMode === 'tournament' && isTournamentLocked ? (
                 <div className="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-4 flex flex-col items-center text-center gap-2">
                   <Lock size={28} className="text-rose-400" />
-                  <h4 className="text-white font-bold text-xs uppercase tracking-wider">{t('battle.tournament_locked') || 'Chế độ Giải Đấu Đang Khóa'}</h4>
+                  <h4 className="text-white font-bold text-xs uppercase tracking-wider">{t('battle.tournament_locked')}</h4>
                   <p className="text-slate-400 text-[11px] leading-relaxed">
-                    {t('battle.tournament_lock_requirement') || 'Bạn cần hoàn thành ít nhất 10 trận đấu xếp hạng để mở khóa Giải Đấu.'}
+                    {t('battle.tournament_lock_requirement')}
                   </p>
                   <div className="w-full bg-slate-950/60 rounded-full h-1.5 mt-2 overflow-hidden border border-white/5">
                     <div 
@@ -170,14 +170,14 @@ const BattleModes: React.FC<BattleModesProps> = ({
                     />
                   </div>
                   <p className="text-[10px] text-slate-500 font-bold mt-1">
-                    {t('battle.tournament_lock_progress', { count: totalMatches }) || `Tiến trình: ${totalMatches}/10 trận đấu`}
+                    {t('battle.tournament_lock_progress', { count: totalMatches })}
                   </p>
                 </div>
               ) : (
                 <>
                   <div>
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 flex items-center gap-1.5">
-                      <Coins size={10} /> {t('battle.select_stake') || 'Chọn tiền cược'}
+                      <Coins size={10} /> {t('battle.select_stake')}
                     </p>
                     <div className="flex gap-2 flex-wrap">
                       {presets.map(p => (
@@ -192,7 +192,7 @@ const BattleModes: React.FC<BattleModesProps> = ({
                               : 'bg-white/5 border border-white/5 text-slate-400 hover:bg-white/10 hover:border-white/10'
                           }`}
                         >
-                          {p === 0 ? (t('battle.free') || 'Miễn phí') : `${p} WP`}
+                          {p === 0 ? t('battle.free') : `${p} WP`}
                         </motion.button>
                       ))}
                     </div>
@@ -222,8 +222,8 @@ const BattleModes: React.FC<BattleModesProps> = ({
                       <>
                         <Zap size={18} />
                         {stake > 0 
-                          ? (t('battle.start_ranked_stake', { stake }) || `Bắt đầu xếp hạng — Cược ${stake} WP`) 
-                          : (t('battle.start_ranked') || 'Bắt đầu xếp hạng')}
+                          ? t('battle.start_ranked_stake', { stake })
+                          : t('battle.start_ranked')}
                         <ChevronRight size={16} className="opacity-60" />
                       </>
                     )}

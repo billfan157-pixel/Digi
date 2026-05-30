@@ -87,7 +87,7 @@ export default function PostMatchSummary({
                 <Trophy size={42} className="text-emerald-400" />
               </div>
               <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 uppercase tracking-wider mt-4">
-                {t('battle.win', 'CHIẾN THẮNG!')}
+                {t('battle.win')}
               </h1>
             </div>
           )}
@@ -97,7 +97,7 @@ export default function PostMatchSummary({
                 <Swords size={42} className="text-rose-400" />
               </div>
               <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-400 to-rose-500 uppercase tracking-wider mt-4">
-                {t('battle.loss', 'THẤT BẠI!')}
+                {t('battle.loss')}
               </h1>
             </div>
           )}
@@ -107,7 +107,7 @@ export default function PostMatchSummary({
                 <Swords size={42} className="text-amber-400" />
               </div>
               <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 uppercase tracking-wider mt-4">
-                {t('battle.draw', 'HÒA CUỘC')}
+                {t('battle.draw')}
               </h1>
             </div>
           )}
@@ -206,7 +206,7 @@ export default function PostMatchSummary({
           onClick={onClose}
           className="w-full py-4 rounded-2xl bg-white text-slate-950 font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-center flex items-center justify-center gap-2"
         >
-          {t('club.back_to_arena', 'Về Đấu Trường')}
+          {t('club.back_to_arena')}
         </motion.button>
       </div>
     </div>

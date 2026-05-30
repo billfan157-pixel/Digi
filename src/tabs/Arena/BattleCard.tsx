@@ -61,7 +61,7 @@ const BattleCard: React.FC<BattleCardProps> = ({ battle, profile, now, onClick }
             LIVE
           </span>
           <span className="px-2.5 py-1 rounded-lg bg-slate-800/60 border border-white/5 text-[9px] font-black uppercase tracking-wider text-slate-400">
-            {battle.mode_type === 'daily' ? 'Hằng Ngày' : battle.mode_type === 'quick' ? 'Đấu Nhanh' : battle.mode_type === 'tournament' ? 'Giải Đấu' : battle.mode || 'Ranked'}
+            {battle.mode_type === 'daily' ? t('battle.daily') : battle.mode_type === 'quick' ? t('battle.quick') : battle.mode_type === 'tournament' ? t('battle.tournament') : battle.mode || t('battle.ranked')}
           </span>
         </div>
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/60 border border-white/5 text-[10px] font-black text-slate-300 tabular-nums">

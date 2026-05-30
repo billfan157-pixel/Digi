@@ -223,7 +223,7 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
       if (error) throw error;
       if (data?.error) {
         // If already in queue, recover queue state and resume polling
-        if (data.error.includes('hàng đợi')) {
+        if (data.error.includes(t('battle.queue_term'))) {
           try {
             const { data: queueRow } = await supabase
               .from('duel_matchmaking_queue')
@@ -251,7 +251,7 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
                   }
                   if (matchData?.matched) {
                     stopPolling();
-                    let opponentNickname = 'Đối Thủ';
+                    let opponentNickname = t('battle.opponent_label');
                     let opponentAvatar = null;
                     let opponentLevel = 1;
                     try {
@@ -309,7 +309,7 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
             stopPolling();
             
             // Fetch opponent details for cinematic screen
-            let opponentNickname = 'Đối Thủ';
+            let opponentNickname = t('battle.opponent_label');
             let opponentAvatar = null;
             let opponentLevel = 1;
             try {
