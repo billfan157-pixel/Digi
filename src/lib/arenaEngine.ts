@@ -16,7 +16,7 @@ export function calculateExpectedScore(wpA: number, wpB: number): number {
 }
 
 /**
- * Zero-sum WP delta using ELO mechanics.
+ * Zero-sum WP delta using ELO-style mechanics.
  * Winner gains WP from loser, proportional to expected outcome.
  */
 export function calculateWpDelta(

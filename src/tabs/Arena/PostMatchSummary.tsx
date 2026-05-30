@@ -1,12 +1,10 @@
 import { motion } from 'framer-motion';
 import { Trophy, Coins, Zap, Flame, Swords, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { Battle } from '../../models';
 
 interface PostMatchSummaryProps {
   isOpen: boolean;
   onClose: () => void;
-  battle: Battle;
   result: {
     status: 'won' | 'loss' | 'draw';
     reward: number;
@@ -19,10 +17,8 @@ interface PostMatchSummaryProps {
 export default function PostMatchSummary({
   isOpen,
   onClose,
-  battle,
   result,
 }: PostMatchSummaryProps) {
-  void battle;
   const { t } = useTranslation();
 
   if (!isOpen || !result) return null;

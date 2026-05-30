@@ -200,7 +200,7 @@ const ArenaStatsHero: React.FC<ArenaStatsHeroProps> = ({
                 <div>
                   <p className="text-[8px] text-slate-500 font-bold uppercase">{t('battle.current_streak')}</p>
                   <p className="text-lg font-black text-white flex items-center gap-1 mt-0.5">
-                    🔥 {winStreak}
+                    <Flame size={16} className="text-amber-400" /> {winStreak}
                   </p>
                 </div>
               </div>

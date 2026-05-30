@@ -41,9 +41,8 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
   const myWp = profile?.wp ?? 0;
   const oppWp = opponent?.wp ?? myWp;
   const myMatches = profile?.duel_matches_total ?? 0;
-  const oppMatches = myMatches;
-  const estWinDelta = calculateWpDelta(myWp, oppWp, 'win', myMatches, oppMatches).deltaA;
-  const estLossDelta = calculateWpDelta(myWp, oppWp, 'loss', myMatches, oppMatches).deltaA;
+  const estWinDelta = calculateWpDelta(myWp, oppWp, 'win', myMatches, 0).deltaA;
+  const estLossDelta = calculateWpDelta(myWp, oppWp, 'loss', myMatches, 0).deltaA;
   
   const endsAt = new Date();
   endsAt.setHours(23, 59, 59, 999);

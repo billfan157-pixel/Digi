@@ -64,7 +64,6 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
     win_streak: number;
     wp_delta: number;
   } | null>(null);
-  const [postMatchBattle, setPostMatchBattle] = useState<Battle | null>(null);
 
   // Matchmaking found animation states
   const [matchedData, setMatchedData] = useState<{
@@ -496,8 +495,6 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
             onClose={() => setShowBattleDetail(null)}
             onActionComplete={() => { fetchArenaDataRef.current(); }}
             onBattleResolved={async (resolvedBattle, resultData) => {
-              setPostMatchBattle(resolvedBattle);
-
               const r = resultData as { status: string; reward: number; bonus: number; win_streak: number };
               const myId = profile?.id;
               const myWp = profile?.wp ?? 0;
@@ -542,10 +539,8 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
         isOpen={!!showPostMatchResult}
         onClose={() => {
           setShowPostMatchResult(null);
-          setPostMatchBattle(null);
           fetchArenaDataRef.current();
         }}
-        battle={postMatchBattle!}
         result={showPostMatchResult}
       />
 
