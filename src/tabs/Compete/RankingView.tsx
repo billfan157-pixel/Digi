@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Users, UserPlus, Search, ArrowLeft } from 'lucide-react';
+import { Trophy, Users, UserPlus, Search, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Profile } from '@/models';
 import type { LeagueEntry, LeagueView } from '@/tabs/League/types';
@@ -72,19 +72,28 @@ const RankingView = React.memo(function RankingView({
   );
 
   return (
-    <div className="px-5 space-y-6 pb-6">
-      {/* Back button */}
-      {onBack && (
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft size={16} />
-          {t('common.back', 'Quay lại')}
-        </button>
-      )}
+    <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <Trophy size={20} className="text-yellow-400" />
+          <h2 className="text-sm font-black text-white uppercase tracking-wider">
+            {t('compete.ranking', 'Xếp hạng')}
+          </h2>
+        </div>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="w-8 h-8 rounded-full bg-slate-800/60 border border-white/10 flex items-center justify-center active:scale-95 transition-all hover:bg-slate-700/60"
+          >
+            <X size={16} className="text-slate-300" />
+          </button>
+        )}
+      </div>
 
-      {/* Mode filter: public / friends */}
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
+        {/* Mode filter: public / friends */}
       <div className="relative flex p-1 shadow-sm border border-white/5 bg-slate-950/20 rounded-xl backdrop-blur-sm">
         {(['public', 'friends'] as const).map((mode) => {
           const meta = MODE_META[mode];
@@ -236,6 +245,7 @@ const RankingView = React.memo(function RankingView({
           {t('league.challenge_friends')}
         </button>
       )}
+      </div>
     </div>
   );
 });
