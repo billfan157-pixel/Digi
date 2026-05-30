@@ -2085,7 +2085,11 @@ const ShopItemCard: React.FC<ShopItemCardProps> = ({ item, isOwned, isEquipped, 
 
 
 
-          isOwned ? onEquip(item) : onBuy(item);
+          if (isOwned) {
+            onEquip(item);
+          } else {
+            onBuy(item);
+          }
 
 
 
@@ -2535,7 +2539,7 @@ export default function ShopModal() {
 
 
 
-    } catch (err: any) {
+    } catch (err: unknown) {
 
 
 

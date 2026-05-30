@@ -65,6 +65,7 @@ export function useAiNudge(params: {
     } finally {
       setLoadingAi(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPro, waterIntake, waterGoal, hour, streak, isFirstOpen, profile]);
 
   useEffect(() => {

@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
 import type { Profile, Battle } from '../models';
+import { calculateWpDelta, type MatchResult } from '../lib/arenaEngine';
 import { glassCard } from '../styles/glass';
 
 // Sub-components
@@ -13,7 +14,6 @@ import BattleModes from './Arena/BattleModes';
 import ActiveBattles from './Arena/ActiveBattles';
 import BattleHistory from './Arena/BattleHistory';
 import BattleDetailModal from './Arena/BattleDetailModal';
-import DuelLeaderboard from './Arena/DuelLeaderboard';
 import SeasonBanner from './Arena/SeasonBanner';
 import { GroupChallengesModal } from '@/components/modals/GroupChallengesModal';
 
@@ -34,9 +34,8 @@ interface ArenaStats {
   winStreak: number;
   bestStreak: number;
   rank: number;
-  duelElo: number;
+  wp: number;
   totalCoins: number;
-  duelWp: number;
 }
 
 interface ArenaTabProps {
@@ -49,7 +48,7 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
   const [selectedMode, setSelectedMode] = useState<'daily' | 'quick' | 'tournament' | null>(null);
   const [showBattleDetail, setShowBattleDetail] = useState<Battle | null>(null);
   const [battles, setBattles] = useState<Battle[]>([]);
-  const [stats, setStats] = useState<ArenaStats>({ wins: 0, losses: 0, draws: 0, winStreak: 0, bestStreak: 0, rank: 999, duelElo: 1200, totalCoins: 0, duelWp: 0 });
+  const [stats, setStats] = useState<ArenaStats>({ wins: 0, losses: 0, draws: 0, winStreak: 0, bestStreak: 0, rank: 999, wp: 0, totalCoins: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [isBotMatching, setIsBotMatching] = useState(false);
   const [isQueuing, setIsQueuing] = useState(false);
@@ -58,7 +57,13 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
   const [now, setNow] = useState(Date.now());
 
   // Post match result modal states
-  const [showPostMatchResult, setShowPostMatchResult] = useState<any | null>(null);
+  const [showPostMatchResult, setShowPostMatchResult] = useState<{
+    status: 'won' | 'loss' | 'draw';
+    reward: number;
+    bonus: number;
+    win_streak: number;
+    wp_delta: number;
+  } | null>(null);
   const [postMatchBattle, setPostMatchBattle] = useState<Battle | null>(null);
 
   // Matchmaking found animation states
@@ -99,13 +104,13 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
             }
           });
 
-          // Fetch ELO Rank Position
+          // Fetch WP Rank Position
           let currentRankPosition = 999;
           try {
             const { data: rankList } = await supabase
               .from('public_profiles')
-              .select('id, duel_elo')
-              .order('duel_elo', { ascending: false });
+              .select('id, wp')
+              .order('wp', { ascending: false });
             if (rankList) {
               const myIdx = rankList.findIndex(x => x.id === profile.id);
               if (myIdx >= 0) {
@@ -147,9 +152,8 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
             winStreak: profile?.duel_win_streak ?? 0,
             bestStreak: bestStreak || (profile?.duel_win_streak ?? 0),
             rank: currentRankPosition,
-            duelElo: profile?.duel_elo ?? 1200,
+            wp: profile?.wp ?? 0,
             totalCoins: profile?.coins ?? 0,
-            duelWp: profile?.duel_wp ?? 0,
           });
         }
       } catch (err) {
@@ -158,7 +162,7 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
       } finally {
         setIsLoading(false);
       }
-  }, [profile?.id, profile?.duel_win_streak, profile?.duel_elo, profile?.duel_wp, profile?.coins, t]);
+  }, [profile?.id, profile?.duel_win_streak, profile?.wp, profile?.coins, t]);
   fetchArenaDataRef.current = fetchArenaData;
 
   useEffect(() => {
@@ -272,7 +276,7 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
           console.error(e);
         }
       }, 5000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       const msg = err?.message || '';
       if (msg.includes('PGRST202') || msg.includes('Could not find the function')) {
@@ -354,9 +358,8 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
               losses={stats.losses}
               draws={stats.draws}
               winStreak={stats.winStreak}
-              duelWp={stats.duelWp}
+              wp={stats.wp}
               rank={stats.rank}
-              duelElo={stats.duelElo}
             />
 
             {/* Quick Actions: Bot Duel + Quick Match + Group Challenge */}
@@ -441,7 +444,6 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
               onEnterQueue={handleEnterQueue}
               isQueuing={isQueuing}
               totalMatches={stats.wins + stats.losses + stats.draws}
-              userElo={stats.duelElo}
             />
 
             {/* Active Battles List */}
@@ -451,18 +453,6 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
               now={now}
               onSelectBattle={setShowBattleDetail}
             />
-          </motion.div>
-        )}
-
-        {activeSubTab === 'leaderboard' && (
-          <motion.div
-            key="leaderboard-content"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <DuelLeaderboard />
           </motion.div>
         )}
 
@@ -505,9 +495,43 @@ const ArenaTab = memo(({ profile }: ArenaTabProps) => {
             now={now}
             onClose={() => setShowBattleDetail(null)}
             onActionComplete={() => { fetchArenaDataRef.current(); }}
-            onBattleResolved={(resolvedBattle, resultData) => {
+            onBattleResolved={async (resolvedBattle, resultData) => {
               setPostMatchBattle(resolvedBattle);
-              setShowPostMatchResult(resultData);
+
+              const r = resultData as { status: string; reward: number; bonus: number; win_streak: number };
+              const myId = profile?.id;
+              const myWp = profile?.wp ?? 0;
+              const myMatches = profile?.duel_matches_total ?? 0;
+              const opponentId = resolvedBattle.challenger_id === myId
+                ? resolvedBattle.opponent_id
+                : resolvedBattle.challenger_id;
+              const opponentProfile = resolvedBattle.challenger_id === myId
+                ? resolvedBattle.opponent
+                : resolvedBattle.challenger;
+              const oppWp = opponentProfile?.wp ?? myWp;
+
+              let oppMatches = myMatches;
+              try {
+                const { data: oppData } = await supabase
+                  .from('public_profiles')
+                  .select('wp, duel_matches_total')
+                  .eq('id', opponentId)
+                  .single();
+                if (oppData) {
+                  oppMatches = oppData.duel_matches_total ?? oppMatches;
+                }
+              } catch { /* use defaults */ }
+
+              const result: MatchResult = r.status === 'won' ? 'win' : r.status === 'draw' ? 'draw' : 'loss';
+              const { deltaA } = calculateWpDelta(myWp, oppWp, result, myMatches, oppMatches);
+
+              setShowPostMatchResult({
+                status: r.status as 'won' | 'loss' | 'draw',
+                reward: r.reward,
+                bonus: r.bonus,
+                win_streak: r.win_streak,
+                wp_delta: deltaA,
+              });
             }}
           />
         )}

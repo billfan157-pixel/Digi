@@ -2,7 +2,7 @@
  * useCache Hook
  * Client-side caching layer with localStorage + memory cache
  */
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 interface CacheEntry<T> {
   data: T;
@@ -18,7 +18,7 @@ interface CacheOptions {
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
 
 export function useCache() {
-  const memoryCache = useRef<Map<string, CacheEntry<any>>(new Map());
+  const memoryCache = useRef<Map<string, CacheEntry<unknown>>>(new Map());
 
   // Set item in cache
   const set = useCallback(<T>(key: string, data: T, options: CacheOptions = {}) => {
@@ -40,7 +40,7 @@ export function useCache() {
         // Storage full or unavailable
       }
     }
-  }, []);
+  }, [memoryCache]);
 
   // Get item from cache
   const get = useCallback(<T>(key: string): T | null => {
@@ -72,7 +72,7 @@ export function useCache() {
     }
 
     return null;
-  }, []);
+  }, [memoryCache]);
 
   // Check if key exists and is valid
   const has = useCallback((key: string): boolean => {
@@ -85,7 +85,7 @@ export function useCache() {
     try {
       const stored = localStorage.getItem(`cache:${key}`);
       if (stored) {
-        const entry: CacheEntry<any> = JSON.parse(stored);
+        const entry: CacheEntry<unknown> = JSON.parse(stored);
         const age = Date.now() - entry.timestamp;
         return age < entry.ttl;
       }
@@ -94,7 +94,7 @@ export function useCache() {
     }
 
     return false;
-  }, []);
+  }, [memoryCache]);
 
   // Remove specific key
   const remove = useCallback((key: string) => {
@@ -104,7 +104,7 @@ export function useCache() {
     } catch {
       // Storage unavailable
     }
-  }, []);
+  }, [memoryCache]);
 
   // Clear all cache
   const clear = useCallback(() => {
@@ -115,7 +115,7 @@ export function useCache() {
     } catch {
       // Storage unavailable
     }
-  }, []);
+  }, [memoryCache]);
 
   // Get cache stats
   const getStats = useCallback(() => {
@@ -130,7 +130,7 @@ export function useCache() {
     } catch {
       return { memoryEntries: memSize, localStorageEntries: 0, total: memSize };
     }
-  }, []);
+  }, [memoryCache]);
 
   // Cached fetch wrapper
   const cachedFetch = useCallback(async <T>(

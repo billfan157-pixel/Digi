@@ -13,14 +13,9 @@ interface GarminHydrationData {
   intake_count: number;
 }
 
-interface GarminUser {
-  display_name: string;
-  avatar_url: string | null;
-}
-
 export function useGarmin(userId: string | undefined) {
   const [isConnected, setIsConnected] = useState(false);
-  const [linkedUsers, setLinkedUsers] = useState<string[]>([]);
+  const [linkedUsers] = useState<string[]>([]);
 
   // Check Garmin connection status
   const { data: connectionStatus } = useQuery({
@@ -58,7 +53,6 @@ export function useGarmin(userId: string | undefined) {
   // Connect Garmin account (OAuth flow would go here)
   const connectGarmin = useCallback(async () => {
     // Initiate Garmin OAuth
-    const authUrl = 'https://connect.garmin.com/oauth/authorize'; // Placeholder
     console.log('[Garmin] Initiating OAuth flow');
 
     // For demo, simulate connection

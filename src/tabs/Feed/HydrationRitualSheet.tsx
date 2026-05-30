@@ -160,7 +160,7 @@ export const HydrationRitualSheet = ({
       default:
         return '';
     }
-  }, [customText, imagePreview, progressPct, selectedKind, selectedMood, streak]);
+  }, [customText, imagePreview, progressPct, selectedKind, selectedMood, streak, t]);
 
   const reset = useCallback(() => {
     setSelectedKind(null);

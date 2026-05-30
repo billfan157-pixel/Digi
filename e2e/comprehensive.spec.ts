@@ -83,8 +83,6 @@ test.describe('Hydration Tracking', () => {
     // Find add water button
     const addButton = page.locator('button').filter({ hasText: /\d/ }).first();
     if (await addButton.isVisible({ timeout: 3000 })) {
-      const initialText = await addButton.textContent();
-
       // Click to add water
       await addButton.click();
 
@@ -128,13 +126,10 @@ test.describe('Social Feed', () => {
     // Find like button
     const likeButton = page.locator('button:has-text("❤️"), button:has-text("Like"), [class*="like"]').first();
     if (await likeButton.isVisible({ timeout: 5000 })) {
-      const initialCount = await page.locator('[class*="count"]').first().textContent().catch(() => '0');
-
       await likeButton.click();
       await page.waitForTimeout(500);
 
       // State should change (like count increments or button fills)
-      const newCount = await page.locator('[class*="count"]').first().textContent().catch(() => '0');
       expect(true); // Button responds to click
     }
   });
@@ -273,7 +268,6 @@ test.describe('Accessibility', () => {
     await page.waitForLoadState('domcontentloaded');
 
     const h1 = await page.locator('h1').count();
-    const h2 = await page.locator('h2').count();
 
     // Should have at least one h1 and subsequent headings
     expect(h1).toBeGreaterThanOrEqual(1);

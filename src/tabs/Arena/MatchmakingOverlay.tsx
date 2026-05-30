@@ -75,10 +75,7 @@ export default function MatchmakingOverlay({
   const seconds = elapsed % 60;
   const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-  const myElo = profile?.duel_elo ?? 1200;
-  const expansion = Math.floor(elapsed / 30) * 50;
-  const minElo = Math.max(0, myElo - (200 + expansion));
-  const maxElo = myElo + (200 + expansion);
+  const myWp = profile?.wp ?? 0;
 
   return (
     <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[999] flex flex-col items-center justify-between py-12 px-6 overflow-hidden select-none">
@@ -164,7 +161,7 @@ export default function MatchmakingOverlay({
                     {t('common.mode')}: {queueStatus?.mode} {queueStatus?.stake && queueStatus.stake > 0 ? `· ${t('battle.stake')} ${queueStatus.stake} WP` : ''}
                   </p>
                   <p className="text-[10px] text-cyan-400/80 font-black tracking-wide uppercase">
-                    {t('battle.matchmaking_range', { min: minElo, max: maxElo })}
+                    WP {myWp}
                   </p>
                 </div>
               </div>
@@ -217,7 +214,7 @@ export default function MatchmakingOverlay({
                   </h3>
                   <div className="mt-1 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
                     <span className="text-[8px] font-black text-cyan-400">
-                      {profile?.duel_elo || 1200} ELO
+                      {profile?.wp || 0} WP
                     </span>
                   </div>
                 </motion.div>
@@ -241,7 +238,7 @@ export default function MatchmakingOverlay({
                   </h3>
                   <div className="mt-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
                     <span className="text-[8px] font-black text-rose-400">
-                      {matchedData.opponent_elo || 1200} ELO
+                      {matchedData.opponent_elo || 0} WP
                     </span>
                   </div>
                 </motion.div>

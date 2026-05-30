@@ -247,8 +247,8 @@ export default function BottleTab({
                       isOpen={true}
                       onToggle={() => {}}
                       isDemoMode={smartBottle?.isDemoMode as boolean | undefined}
-                      simulateAttackType={smartBottle?.simulateAttackType as any}
-                      setSimulateAttackType={smartBottle?.setSimulateAttackType as any}
+                      simulateAttackType={smartBottle?.simulateAttackType as 'none' | 'replay' | 'tampering' | undefined}
+                      setSimulateAttackType={smartBottle?.setSimulateAttackType as ((type: 'none' | 'replay' | 'tampering') => void) | undefined}
                     />
                   </motion.div>
                 )}

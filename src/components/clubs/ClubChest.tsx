@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Gift, Loader2, Lock, Unlock } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -25,15 +25,15 @@ export default function ClubChest({ clubId }: ClubChestProps) {
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
 
-  useEffect(() => {
-    loadChest();
-  }, [clubId]);
-
-  const loadChest = async () => {
+  const loadChest = useCallback(async () => {
     const { data, error } = await supabase.rpc('get_or_create_club_chest', { p_club_id: clubId });
     if (!error && data) setChest(data as ClubChestData);
     setLoading(false);
-  };
+  }, [clubId]);
+
+  useEffect(() => {
+    loadChest();
+  }, [loadChest]);
 
   const handleContribute = async () => {
     if (!chest) return;

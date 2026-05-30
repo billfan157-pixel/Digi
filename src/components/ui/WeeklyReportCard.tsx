@@ -7,9 +7,26 @@ import {
   Target, X
 } from 'lucide-react';
 
+interface ChartDay {
+  label: string;
+  intake: number;
+  goal: number;
+  isToday: boolean;
+  fullDate?: string;
+}
+
+interface WeeklyReport {
+  trend?: string;
+  dailyBreakdown?: ChartDay[];
+  totalDays?: number;
+  goalHitDays?: number;
+  totalIntake?: number;
+  consistencyScore?: number;
+}
+
 interface WeeklyReportCardProps {
   isPremium: boolean;
-  report: any;
+  report: WeeklyReport | null;
   isLoading: boolean;
   onGenerate: () => void;
   onUpgrade: () => void;
@@ -128,7 +145,7 @@ export default function WeeklyReportCardUltimate({
 
   const trendDisplay = report ? getTrendDisplay(report.trend) : null;
 
-  const chartData = useMemo(() => {
+  const chartData = useMemo<ChartDay[]>(() => {
     if (report?.dailyBreakdown && report.dailyBreakdown.length > 0) {
       return report.dailyBreakdown;
     }
@@ -148,7 +165,7 @@ export default function WeeklyReportCardUltimate({
     if (chartData.length === 0) return -1;
     let maxVal = -1;
     let maxIdx = -1;
-    chartData.forEach((day: any, idx: number) => {
+    chartData.forEach((day, idx) => {
       if (day.intake > maxVal) {
         maxVal = day.intake;
         maxIdx = idx;
@@ -161,7 +178,7 @@ export default function WeeklyReportCardUltimate({
   const goalHitPercentage = totalDays > 0 ? Math.round(((report?.goalHitDays || 0) / totalDays) * 100) : 0;
   
   const totalGoal = useMemo(() => {
-    return chartData.reduce((sum: number, d: any) => sum + d.goal, 0) || (waterGoal ? waterGoal * 7 : 14000);
+    return chartData.reduce((sum, d) => sum + d.goal, 0) || (waterGoal ? waterGoal * 7 : 14000);
   }, [chartData, waterGoal]);
 
   const totalPercentage = useMemo(() => {
@@ -370,7 +387,7 @@ export default function WeeklyReportCardUltimate({
                     </span>
                   </div>
 
-                  {chartData.map((day: any, i: number) => {
+                  {chartData.map((day, i) => {
                     const maxDisplayPercent = 125;
                     const percentage = (day.intake / day.goal) * 100;
                     const displayPercentage = Math.min(percentage, maxDisplayPercent);
@@ -454,7 +471,7 @@ export default function WeeklyReportCardUltimate({
 
                 {/* Labels Row */}
                 <div className="flex justify-between gap-3 mt-3 w-full px-1">
-                  {chartData.map((day: any, i: number) => {
+                  {chartData.map((day, i) => {
                     const isToday = day.isToday;
                     const isPeak = i === peakDayIndex;
                     return (

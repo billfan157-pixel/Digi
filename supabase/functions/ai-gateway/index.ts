@@ -674,7 +674,7 @@ Deno.serve(async (request) => {
   const startTime = performance.now();
   let action: AiGatewayAction | undefined = undefined;
   let model = 'unknown';
-  let quotaResult: any = undefined;
+  let quotaResult: unknown = undefined;
   const userId = user.id;
 
   try {
@@ -1081,7 +1081,7 @@ Chi tiết các trường:
       });
 
       const rawContent = String(response.choices?.[0]?.message?.content ?? '');
-      let actions: any[] = [];
+      let actions: unknown[] = [];
       let fallbackUsed = false;
       let fallbackReason: string | undefined = undefined;
 

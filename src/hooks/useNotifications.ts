@@ -121,7 +121,7 @@ export function useNotifications(currentUserId: string | undefined, equippedSoun
         channelRef.current = null;
       }
     };
-  }, [currentUserId, queryClient]);
+  }, [currentUserId, queryClient, equippedSound]);
 
   const notifications = query.data?.notifications ?? [];
   const unreadCount = query.data?.unreadCount ?? 0;

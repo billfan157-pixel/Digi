@@ -12,7 +12,7 @@ import {
   WEBHOOK_EVENTS, WEBHOOK_ENVELOPE, WEBHOOK_SIGNATURE_EXAMPLE, WEBHOOK_HEADERS,
 } from '@/config/webhooks';
 import { getSlowQueries } from '@/lib/supabase';
-import { initWebVitals, getWebVitals, getMetricStatus } from '@/lib/webVitals';
+import { initWebVitals, getWebVitals } from '@/lib/webVitals';
 import { getDailyAIUsage, calculateEstimatedCosts, getCostDisclaimer } from '@/lib/aiUsageQueries';
 
 interface DeveloperPortalModalProps {
@@ -73,7 +73,7 @@ export default function DeveloperPortalModal({ open, onClose }: DeveloperPortalM
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const [webVitals, setWebVitals] = useState<ReturnType<typeof getWebVitals>>({
+  const [, setWebVitals] = useState<ReturnType<typeof getWebVitals>>({
     fcp: null, lcp: null, cls: null, fid: null, ttfb: null
   });
   const [slowQueries, setSlowQueries] = useState<ReturnType<typeof getSlowQueries>>([]);

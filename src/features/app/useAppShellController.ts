@@ -185,6 +185,7 @@ export function useAppShellController(): AppShellProps {
         coins: zustandCoins ?? profile.coins,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zustandEquippedThemeId, zustandEquippedFrameId, zustandEquippedBottleId, zustandEquippedSound, zustandCoins]);
 
   useEffect(() => {

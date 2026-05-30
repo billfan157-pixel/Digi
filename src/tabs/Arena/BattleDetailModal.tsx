@@ -5,7 +5,6 @@ import { Swords, Clock, Coins, TrendingUp, X, Check, Loader2 } from 'lucide-reac
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import type { Battle, Profile } from '../../models';
-import { getKFactor } from '../../lib/arenaEngine';
 import { useUIStore } from '@/store/useUIStore';
 
 interface BattleDetailModalProps {
@@ -14,7 +13,7 @@ interface BattleDetailModalProps {
   now: number;
   onClose: () => void;
   onActionComplete: () => void;
-  onBattleResolved?: (battle: Battle, result: { status: string; reward: number; bonus?: number; elo_delta?: number; new_elo?: number; win_streak?: number }) => void;
+  onBattleResolved?: (battle: Battle, result: { status: string; reward: number; bonus?: number; win_streak?: number }) => void;
 }
 
 const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
@@ -37,16 +36,6 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
   const myProgress = battle.yourProgress ?? me?.water_today ?? 0;
   const oppProgress = battle.opponentProgress ?? opponent?.water_today ?? 0;
   const yourLead = myProgress >= oppProgress;
-
-  const myElo = isChallenger ? (battle.elo_challenger ?? 1200) : (battle.elo_opponent ?? 1200);
-  const oppElo = isChallenger ? (battle.elo_opponent ?? 1200) : (battle.elo_challenger ?? 1200);
-
-  // Estimated ELO preview using real K-factor
-  const expectedScore = 1 / (1 + Math.pow(10, (oppElo - myElo) / 400));
-  const myMatches = profile?.duel_matches_total ?? 0;
-  const myK = getKFactor(myMatches);
-  const estWinDelta = Math.round(myK * (1 - expectedScore));
-  const estLossDelta = Math.round(myK * (0 - expectedScore));
   
   const endsAt = new Date();
   endsAt.setHours(23, 59, 59, 999);
@@ -100,7 +89,6 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
                 {userNickname.charAt(0).toUpperCase()}
               </div>
               <p className="text-xs font-black text-slate-300 mb-1 truncate">{userNickname}</p>
-              <p className={`text-[10px] font-black text-amber-400/80 mb-1`}>{myElo} ELO</p>
               <p className={`text-3xl font-black ${yourLead ? 'text-cyan-400' : 'text-white'}`}>{myProgress}</p>
               <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-1.5 opacity-60">{t('battle.water_ml')}</p>
             </div>
@@ -111,7 +99,6 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
                 {oppNickname.charAt(0).toUpperCase()}
               </div>
               <p className="text-xs font-black text-slate-300 mb-1 truncate">{oppNickname}</p>
-              <p className={`text-[10px] font-black text-amber-400/80 mb-1`}>{oppElo} ELO</p>
               <p className={`text-3xl font-black ${!yourLead ? 'text-rose-400' : 'text-white'}`}>{oppProgress}</p>
               <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-1.5 opacity-60">{t('battle.water_ml')}</p>
             </div>
@@ -136,21 +123,6 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
             <p className="text-xl font-black text-white">{t('battle.time_left_hours', { hours: hoursLeft })}</p>
           </div>
         </div>
-
-        {/* ELO Preview */}
-        {battle.status === 'active' && (
-          <div className="mb-6 relative z-10 rounded-2xl border border-white/5 bg-slate-800/30 p-4">
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">{t('battle.current_elo')} {myElo}</p>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-emerald-400">
-                {t('battle.estimated_elo_gain', { delta: estWinDelta })}
-              </span>
-              <span className="text-[10px] font-black text-rose-400">
-                {t('battle.estimated_elo_loss', { delta: Math.abs(estLossDelta) })}
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* Actions */}
         <div className="relative z-10 space-y-3">

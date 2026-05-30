@@ -17,7 +17,7 @@ type TabId = 'overview' | 'history' | 'advanced';
 interface TabConfig {
   id: TabId;
   label: string;
-  icon: any;
+  icon: React.ElementType<{ className?: string }>;
 }
 
 const tabs: TabConfig[] = [

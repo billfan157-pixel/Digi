@@ -47,7 +47,7 @@ export function useNativePush(userId: string | undefined) {
     })();
 
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [userId, saveNativeToken]);
 
   const saveNativeToken = useCallback(async (uid: string, token: string) => {
     const { error } = await supabase.from('push_subscriptions').upsert(

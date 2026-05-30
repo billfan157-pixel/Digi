@@ -98,7 +98,7 @@ const ThemeCreatorModal: React.FC = () => {
     glassGlowIntensity: glowIntensity,
     glassInnerGlow: false,
     glassHoverEffect,
-  }), [accent, blurLevel, borderRadius, borderWidth, glassOpacity, effect, glassPattern, glowIntensity, glassHoverEffect]);
+  }), [accent, blurLevel, borderRadius, borderWidth, glassOpacity, effect, glassPattern, glowIntensity, glassHoverEffect, t]);
 
   const handleApply = () => {
     useAppStore.getState().setAppState({ themePreview: buildConfig() });

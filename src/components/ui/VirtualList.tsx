@@ -83,9 +83,12 @@ export function VirtualList<T>({
   // Cleanup ResizeObservers on unmount
   useEffect(() => {
     return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       observersRef.current.forEach((observer) => observer.disconnect());
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       observersRef.current.clear();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Reset sizes when items count changes significantly

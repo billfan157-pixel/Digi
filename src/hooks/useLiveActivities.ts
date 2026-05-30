@@ -24,10 +24,8 @@ interface LiveActivity {
   timestamp: string;
 }
 
-const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-
 export function useLiveActivities() {
-  const [liveUsers, setLiveUsers] = useState<LiveUser[]>([]);
+  const [liveUsers] = useState<LiveUser[]>([]);
   const [recentActivity, setRecentActivity] = useState<LiveActivity[]>([]);
   const [isActive, setIsActive] = useState(false);
 

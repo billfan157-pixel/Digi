@@ -516,7 +516,7 @@ export const useSmartBottle = (userId: string | undefined, _deviceId: string, ca
         scheduleReconnect();
       }
     }, delay);
-  }, [cancelReconnect, handleBleDisconnect, startTelemetryPolling, bottleAuthKey, startHealthPolling]);
+  }, [cancelReconnect, handleBleDisconnect, startTelemetryPolling, bottleAuthKey, startHealthPolling, userId]);
 
   useEffect(() => {
     scheduleReconnectRef.current = scheduleReconnect;

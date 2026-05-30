@@ -250,7 +250,7 @@ export default function ClubDashboard({
     } finally {
       setLoading(false);
     }
-  }, [clubId]);
+  }, [clubId, t]);
 
   useEffect(() => {
     if (!clubId) return;

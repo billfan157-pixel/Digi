@@ -5,7 +5,7 @@ import { getThemeConfigSync, getThemeConfigAsync } from '@/services/theme.servic
 
 export default function ThemeEngine({ profile }: { profile: Profile | null }) {
   const [themeColor, setThemeColor] = useState<string>('#06b6d4'); // Mặc định Cyan
-  const [themeConfig, setThemeConfig] = useState<any>(null);
+  const [themeConfig, setThemeConfig] = useState<unknown>(null);
 
   useEffect(() => {
     if (!profile?.id) return;

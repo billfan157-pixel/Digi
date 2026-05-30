@@ -1,8 +1,8 @@
-import { Swords, Trophy, History } from 'lucide-react';
+import { Swords, History } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
-export type ArenaTabType = 'arena' | 'leaderboard' | 'history';
+export type ArenaTabType = 'arena' | 'history';
 
 interface ArenaSubTabsProps {
   activeTab: ArenaTabType;
@@ -14,7 +14,6 @@ export default function ArenaSubTabs({ activeTab, onTabChange }: ArenaSubTabsPro
 
   const tabs = [
     { id: 'arena' as ArenaTabType, label: t('battle.arena', 'Đấu Trường'), icon: Swords },
-    { id: 'leaderboard' as ArenaTabType, label: t('league.ranking', 'Xếp Hạng'), icon: Trophy },
     { id: 'history' as ArenaTabType, label: t('club.battle_history', 'Lịch Sử'), icon: History },
   ];
 

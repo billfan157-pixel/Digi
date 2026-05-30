@@ -26,20 +26,9 @@ interface ClubWar {
   }[];
 }
 
-interface WarMatch {
-  id: string;
-  war_id: string;
-  challenger_club_id: string;
-  defender_club_id: string;
-  challenger_score: number;
-  defender_score: number;
-  status: 'pending' | 'in_progress' | 'completed';
-  winner_club_id?: string;
-}
-
 export function useClubWarsV2(clubId: string | undefined) {
   const queryClient = useQueryClient();
-  const [activeWar, setActiveWar] = useState<ClubWar | null>(null);
+  const [activeWar] = useState<ClubWar | null>(null);
 
   // Get club wars
   const { data: wars = [], isLoading } = useQuery({
@@ -100,7 +89,7 @@ export function useClubWarsV2(clubId: string | undefined) {
 
   // Submit war entry
   const submitEntry = useMutation({
-    mutationFn: async ({ warId, entryData }: { warId: string; entryData: any }) => {
+    mutationFn: async ({ warId, entryData }: { warId: string; entryData: unknown }) => {
       const { error } = await supabase.rpc('submit_war_entry', {
         p_war_id: warId,
         p_club_id: clubId,

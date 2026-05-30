@@ -1,8 +1,3 @@
-/**
- * Pure arena / ranked duel math utilities.
- * Mirrors the logic in the resolve_ranked_battle RPC.
- */
-
 export type MatchResult = 'win' | 'loss' | 'draw';
 
 export function getKFactor(matchesPlayed: number): number {
@@ -11,13 +6,22 @@ export function getKFactor(matchesPlayed: number): number {
   return 10;
 }
 
-export function calculateExpectedScore(eloA: number, eloB: number): number {
-  return 1.0 / (1.0 + Math.pow(10, (eloB - eloA) / 400));
+/**
+ * Expected score for player A vs player B.
+ * Uses WP with a divisor of 2000 (WP range is ~5x ELO range).
+ * Equal WP → 0.5. 2000 WP gap → ~0.91 / ~0.09.
+ */
+export function calculateExpectedScore(wpA: number, wpB: number): number {
+  return 1.0 / (1.0 + Math.pow(10, (wpB - wpA) / 2000));
 }
 
-export function calculateEloDelta(
-  eloA: number,
-  eloB: number,
+/**
+ * Zero-sum WP delta using ELO mechanics.
+ * Winner gains WP from loser, proportional to expected outcome.
+ */
+export function calculateWpDelta(
+  wpA: number,
+  wpB: number,
   result: MatchResult,
   matchesA: number,
   matchesB: number
@@ -25,8 +29,8 @@ export function calculateEloDelta(
   const kA = getKFactor(matchesA);
   const kB = getKFactor(matchesB);
 
-  const expectedA = calculateExpectedScore(eloA, eloB);
-  const expectedB = calculateExpectedScore(eloB, eloA);
+  const expectedA = calculateExpectedScore(wpA, wpB);
+  const expectedB = calculateExpectedScore(wpB, wpA);
 
   const scoreA = result === 'win' ? 1 : result === 'draw' ? 0.5 : 0;
   const scoreB = result === 'win' ? 0 : result === 'draw' ? 0.5 : 1;

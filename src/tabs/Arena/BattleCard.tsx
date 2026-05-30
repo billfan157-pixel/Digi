@@ -4,7 +4,6 @@ import { Swords, Clock, Coins, Target, TrendingUp, Droplets } from 'lucide-react
 import { useTranslation } from 'react-i18next';
 import type { Battle, Profile } from '../../models';
 import { glassCard } from '../../styles/glass';
-import RankTierBadge from './RankTierBadge';
 
 interface BattleCardProps {
   battle: Battle;
@@ -111,12 +110,6 @@ const BattleCard: React.FC<BattleCardProps> = ({ battle, profile, now, onClick }
             <span className="text-xs font-bold text-slate-200 truncate w-full text-center leading-tight">
               {userNickname}
             </span>
-            {battle.elo_challenger != null && (
-              <div className="flex items-center gap-1 mt-1">
-                <RankTierBadge elo={(isChallenger ? battle.elo_challenger : battle.elo_opponent) ?? 1200} showLabel={false} size="sm" />
-                <span className="text-[8px] font-black text-amber-400/70">{(isChallenger ? battle.elo_challenger : battle.elo_opponent) ?? 1200}</span>
-              </div>
-            )}
             <div className="mt-2 flex items-baseline gap-1">
               <motion.span
                 key={myProgress}
@@ -170,12 +163,6 @@ const BattleCard: React.FC<BattleCardProps> = ({ battle, profile, now, onClick }
             <span className="text-xs font-bold text-slate-200 truncate w-full text-center leading-tight">
               {oppNickname}
             </span>
-            {battle.elo_opponent != null && (
-              <div className="flex items-center gap-1 mt-1 flex-row-reverse">
-                <RankTierBadge elo={(isChallenger ? battle.elo_opponent : battle.elo_challenger) ?? 1200} showLabel={false} size="sm" />
-                <span className="text-[8px] font-black text-amber-400/70">{(isChallenger ? battle.elo_opponent : battle.elo_challenger) ?? 1200}</span>
-              </div>
-            )}
             <div className="mt-2 flex items-baseline gap-1 flex-row-reverse">
               <motion.span
                 key={oppProgress}

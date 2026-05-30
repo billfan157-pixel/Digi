@@ -100,7 +100,7 @@ export function useAds(userId: string | undefined) {
   });
 
   // Show rewarded ad and grant reward
-  const showRewardedAd = useCallback(async (adId: string): Promise<AdReward | null> => {
+  const showRewardedAd = useCallback(async (): Promise<AdReward | null> => {
     if (!userId) return null;
 
     setIsShowingAd(true);
@@ -162,11 +162,11 @@ export function useAds(userId: string | undefined) {
   }, [getAvailableAd, recordAdView]);
 
   // Track ad click
-  const trackAdClick = useCallback(async (adId: string, format: AdFormat) => {
+  const trackAdClick = useCallback(async (_adId: string, format: AdFormat) => {
     if (!userId) return;
     await supabase.rpc('record_ad_click', {
       p_user_id: userId,
-      p_ad_id: adId,
+      p_ad_id: _adId,
       p_format: format,
     });
   }, [userId]);

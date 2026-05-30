@@ -195,7 +195,7 @@ export default function AnomalyDetectionPanel({
       recommendations,
       insights
     };
-  }, [weeklyChartData, waterGoal, streak]);
+  }, [weeklyChartData, waterGoal, streak, t]);
 
   const habitStrengthConfig: Record<string, { color: string; bgColor: string; label: string }> = {
     excellent: { color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', label: 'Excellent' },

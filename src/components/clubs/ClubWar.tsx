@@ -80,7 +80,7 @@ export default function ClubWar({ clubId, userId, isAdmin }: ClubWarProps) {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [clubId]);
+  }, [clubId, t]);
 
   const handleOpenChallenge = async () => {
     const { data, error } = await supabase

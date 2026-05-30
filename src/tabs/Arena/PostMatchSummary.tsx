@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Coins, Zap, Flame, Swords, ArrowRight } from 'lucide-react';
+import { Trophy, Coins, Zap, Flame, Swords } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Battle } from '../../models';
 
@@ -10,10 +9,8 @@ interface PostMatchSummaryProps {
   battle: Battle;
   result: {
     status: 'won' | 'loss' | 'draw';
-    reward: number; // Coins earned
-    bonus: number;  // Bonus coins from streak
-    elo_delta: number;
-    new_elo: number;
+    reward: number;
+    bonus: number;
     win_streak: number;
   } | null;
 }
@@ -24,33 +21,8 @@ export default function PostMatchSummary({
   battle,
   result,
 }: PostMatchSummaryProps) {
-  // battle prop reserved for future use (displaying opponent details)
   void battle;
   const { t } = useTranslation();
-  const [animatedElo, setAnimatedElo] = useState(0);
-
-  useEffect(() => {
-    if (!isOpen || !result) return;
-    const startElo = result.new_elo - result.elo_delta;
-    setAnimatedElo(startElo);
-    const duration = 1500; // 1.5s
-    const steps = 30;
-    const increment = result.elo_delta / steps;
-    const stepTime = duration / steps;
-    let currentStep = 0;
-
-    const timer = setInterval(() => {
-      currentStep++;
-      if (currentStep >= steps) {
-        setAnimatedElo(result.new_elo);
-        clearInterval(timer);
-      } else {
-        setAnimatedElo(Math.round(startElo + increment * currentStep));
-      }
-    }, stepTime);
-
-    return () => clearInterval(timer);
-  }, [isOpen, result]);
 
   if (!isOpen || !result) return null;
 
@@ -58,15 +30,12 @@ export default function PostMatchSummary({
   const isLoss = result.status === 'loss';
   const isDraw = result.status === 'draw';
 
-  // Determine WP gained based on SQL logic (Win: 10, Draw: 5, Loss: 0)
   const wpGained = isWin ? 10 : isDraw ? 5 : 0;
 
-  // Simple particle system using Framer Motion
   const particles = Array.from({ length: 40 });
 
   return (
     <div className="fixed inset-0 bg-slate-950/98 backdrop-blur-3xl z-[9999] flex flex-col items-center justify-between py-12 px-6 overflow-hidden select-none">
-      {/* Background ambient colors */}
       {isWin && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
       )}
@@ -77,7 +46,6 @@ export default function PostMatchSummary({
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-[100px] pointer-events-none" />
       )}
 
-      {/* Confetti / Particle Particles for Winner */}
       {isWin && (
         <div className="absolute inset-0 pointer-events-none">
           {particles.map((_, idx) => {
@@ -97,7 +65,7 @@ export default function PostMatchSummary({
                 animate={{
                   scale: [0, 1.2, 0],
                   x: Math.cos(angle) * distance,
-                  y: Math.sin(angle) * distance + 100, // fall down a bit
+                  y: Math.sin(angle) * distance + 100,
                   opacity: [1, 1, 0],
                 }}
                 transition={{
@@ -112,7 +80,6 @@ export default function PostMatchSummary({
         </div>
       )}
 
-      {/* Header Results Banner */}
       <div className="text-center z-10 mt-8">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -152,60 +119,38 @@ export default function PostMatchSummary({
         </motion.div>
       </div>
 
-      {/* Main Stats Card */}
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
         className="w-full max-w-sm bg-slate-900/60 border border-white/5 p-6 rounded-3xl backdrop-blur-xl relative z-10 space-y-6 shadow-2xl"
       >
-        {/* ELO Summary */}
+        {/* WP Summary */}
         <div className="text-center">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            {t('battle.current_elo', 'ĐIỂM XẾP HẠNG')}
+            {t('battle.wp_earned', 'Wellness Points')}
           </p>
           <div className="flex items-center justify-center gap-3 mt-1.5">
-            <span className="text-lg text-slate-500 font-bold">
-              {result.new_elo - result.elo_delta}
-            </span>
-            <ArrowRight size={14} className="text-slate-600" />
             <span className="text-3xl font-black text-white tracking-tight tabular-nums">
-              {animatedElo}
+              +{wpGained}
             </span>
+            <span className="text-lg font-bold text-cyan-400">WP</span>
           </div>
-          {result.elo_delta !== 0 && (
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 1 }}
-              className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                result.elo_delta > 0
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-              }`}
-            >
-              {result.elo_delta > 0 ? `+${result.elo_delta}` : result.elo_delta} ELO
-            </motion.div>
-          )}
         </div>
 
-        {/* Divider */}
         <div className="border-t border-white/5" />
 
-        {/* Rewards Section */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Wellness Points (WP) */}
           <div className="bg-slate-950/40 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-2">
               <Zap size={18} />
             </div>
-            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Wellness Points</span>
+            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{t('common.wellness_points', 'Wellness Points')}</span>
             <span className="text-lg font-black text-white mt-1">
               +{wpGained} WP
             </span>
           </div>
 
-          {/* Vàng / Coins */}
           <div className="bg-slate-950/40 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center">
             <div className="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-400 mb-2">
               <Coins size={18} />
@@ -222,7 +167,6 @@ export default function PostMatchSummary({
           </div>
         </div>
 
-        {/* Streak notification */}
         {result.win_streak >= 3 && (
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -243,7 +187,6 @@ export default function PostMatchSummary({
         )}
       </motion.div>
 
-      {/* Action Buttons */}
       <div className="w-full max-w-sm z-10">
         <motion.button
           initial={{ y: 20, opacity: 0 }}

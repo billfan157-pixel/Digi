@@ -10,7 +10,6 @@ interface BattleModesProps {
   onEnterQueue: (mode: 'daily' | 'quick' | 'tournament', stake: number) => Promise<void>;
   isQueuing: boolean;
   totalMatches?: number;
-  userElo?: number;
 }
 
 const STAKE_PRESETS: Record<string, number[]> = {
@@ -31,22 +30,11 @@ const BattleModes: React.FC<BattleModesProps> = ({
   onEnterQueue, 
   isQueuing,
   totalMatches = 0,
-  userElo = 1200
 }) => {
   const { t } = useTranslation();
   const [stake, setStake] = useState(0);
 
   const isTournamentLocked = totalMatches < 10;
-
-  // Determine recommended mode based on user's current ELO
-  let recommendedMode: 'daily' | 'quick' | 'tournament' = 'daily';
-  if (userElo < 1300) {
-    recommendedMode = 'quick';
-  } else if (userElo >= 1500 && !isTournamentLocked) {
-    recommendedMode = 'tournament';
-  } else {
-    recommendedMode = 'daily';
-  }
 
   const modes = [
     { id: 'daily' as const, icon: Clock, label: t('battle.daily') || 'Đấu Hàng Ngày', desc: '24 giờ · Mục tiêu 2L', color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
@@ -80,7 +68,7 @@ const BattleModes: React.FC<BattleModesProps> = ({
           const config = MODE_CONFIG[m.id];
           const isSelected = selectedMode === m.id;
           const isLocked = m.id === 'tournament' && isTournamentLocked;
-          const isRecommended = recommendedMode === m.id;
+          const isRecommended = false;
 
           return (
             <motion.button
@@ -166,20 +154,7 @@ const BattleModes: React.FC<BattleModesProps> = ({
                 </div>
               </div>
 
-              {/* Recommendation explanation */}
-              {recommendedMode === selectedMode && (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0 text-xs font-black">★</div>
-                  <div className="space-y-0.5">
-                    <p className="text-[9px] text-emerald-300 font-black uppercase tracking-wider">{t('battle.recommended_mode') || 'Chế độ khuyên dùng'}</p>
-                    <p className="text-slate-400 text-[10px] leading-relaxed">
-                      {selectedMode === 'quick' && (t('battle.recommended_quick_desc') || 'Phù hợp nhất với ELO hiện tại của bạn để rèn luyện phản xạ & leo rank nhanh.')}
-                      {selectedMode === 'daily' && (t('battle.recommended_daily_desc') || 'Phù hợp nhất với ELO hiện tại của bạn để duy trì thói quen uống nước bền bỉ hằng ngày.')}
-                      {selectedMode === 'tournament' && (t('battle.recommended_tournament_desc') || 'Phù hợp nhất với ELO hiện tại của bạn để tham gia tranh tài đỉnh cao.')}
-                    </p>
-                  </div>
-                </div>
-              )}
+
 
               {selectedMode === 'tournament' && isTournamentLocked ? (
                 <div className="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-4 flex flex-col items-center text-center gap-2">

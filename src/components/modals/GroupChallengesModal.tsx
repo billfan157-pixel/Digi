@@ -3,12 +3,10 @@
  * Multiplayer hydration challenges
  */
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { X, Trophy, Users, Calendar, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { useAppStore } from '@/store/useAppStore';
 import { LazyImage } from '@/components/LazyImage';
 
 interface GroupChallengesModalProps {
@@ -38,10 +36,8 @@ interface LeaderboardEntry {
 }
 
 export const GroupChallengesModal = ({ isOpen, onClose }: GroupChallengesModalProps) => {
-  const { t } = useTranslation();
   const [selectedChallenge, setSelectedChallenge] = useState<GroupChallenge | null>(null);
   const queryClient = useQueryClient();
-  const profile = useAppStore((s) => s.profile);
 
   // Fetch active challenges
   const { data: challenges = [], isLoading } = useQuery({
