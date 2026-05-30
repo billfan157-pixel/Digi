@@ -28,7 +28,5 @@ jobs:
       - name: Audit files using Lighthouse
         uses: treosh/lighthouse-ci-action@v12
         with:
-          staticDistDir: './dist'
-          urls: |
-            http://localhost/
+          configPath: './.lighthouserc.json'
           uploadArtifacts: true
