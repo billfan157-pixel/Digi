@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { LiquidProgress } from '@/components/LiquidProgress';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => (key === 'common.liquid_progress_aria' ? 'Tiến độ nước' : key),
+  }),
+}));
 
 describe('LiquidProgress', () => {
   it('renders with 0%', () => {

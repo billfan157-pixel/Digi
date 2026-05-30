@@ -2,6 +2,23 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import HomeHydrationHero from './HomeHydrationHero';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const map: Record<string, string> = {
+        'home.turn_on_demo': 'Bật DigiBottle Demo',
+        'home.turning_on_demo': 'Đang bật...',
+        'device.connection_failed': 'Kết nối thất bại',
+        'device.cannot_connect': 'Không thể kết nối',
+        'common.retry': 'Thử lại',
+        'device.status_connecting': 'Đang kết nối...',
+        'device.status_reconnecting': 'Đang kết nối lại...',
+      };
+      return map[key] || key;
+    },
+  }),
+}));
+
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { initial?: unknown; animate?: unknown; transition?: unknown; whileHover?: unknown }) => <div {...props}>{children}</div>,

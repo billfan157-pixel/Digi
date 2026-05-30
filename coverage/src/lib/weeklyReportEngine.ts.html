@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/services/profile.service.ts</title>
+    <title>Code coverage report for src/lib/weeklyReportEngine.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/services</a> profile.service.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/lib</a> weeklyReportEngine.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">2.04% </span>
+                <span class="strong">85.14% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/49</span>
+                <span class='fraction'>86/101</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">56% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/70</span>
+                <span class='fraction'>28/50</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>18/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">2.43% </span>
+                <span class="strong">88.76% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/41</span>
+                <span class='fraction'>79/89</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -275,10 +275,263 @@
 <a name='L210'></a><a href='#L210'>210</a>
 <a name='L211'></a><a href='#L211'>211</a>
 <a name='L212'></a><a href='#L212'>212</a>
-<a name='L213'></a><a href='#L213'>213</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">56x</span>
+<span class="cline-any cline-yes">56x</span>
+<span class="cline-any cline-yes">56x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">56x</span>
+<span class="cline-any cline-yes">56x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -300,8 +553,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -311,42 +564,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -356,6 +579,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -368,338 +592,273 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import i18n from '@/i18n';
-import { levelFromExp } from '@/config/questConfig';
-import { supabase } from '@/lib/supabase';
-import type { Profile } from '@/models';
-import { getProfileEnumPatch, normalizeProfileEnums } from '@/lib/profileNormalization';
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * Sprint 13-14: AI Personalization Engine
+ * Weekly Report Engine — tạo báo cáo tổng kết tuần
+ * Template-based fallback + AI-powered insights
+ */
+import i18n from '@/i18n';
+import type { WaterLog } from '../models';
 &nbsp;
-export interface AppProfile extends Profile {
-  bedTime?: string;
-  current_exp?: number;
-  onboarding_completed?: boolean;
-  password?: string;
-  total_water?: number;
-  wakeUp?: string;
-  // Wellness fields
-  sleep_hours?: number;
-  sleep_quality?: number;
-  mood_tracking?: boolean;
-  sync_wellness_data?: boolean;
-  energy_tracking?: boolean;
-  grace_period_end?: string | null;
-  calendar_privacy_level?: 'strict' | 'standard' | 'off';
-  leaderboard_opt_in?: boolean;
+// ─── Types ───────────────────────────────────────────────────────────
+&nbsp;
+export interface WeeklyReport {
+  weekStart: string; // YYYY-MM-DD
+  weekEnd: string;
+  totalIntake: number;
+  avgDaily: number;
+  goalHitDays: number;
+  totalDays: number;
+  bestDay: { date: string; ml: number };
+  worstDay: { date: string; ml: number };
+  trend: 'improving' | 'declining' | 'stable';
+  insight: string;
+  tip: string;
+  comparisonToPreviousWeek: number; // % change (positive = better)
+  consistencyScore: number;
 }
 &nbsp;
-const <span class="fstat-no" title="function not covered" >getTodayKey = () =&gt; {</span>
-  const today = <span class="cstat-no" title="statement not covered" >new Date();</span>
-<span class="cstat-no" title="statement not covered" >  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;</span>
-};
-&nbsp;
-interface ProfileRow {
-  id?: string;
-  nickname?: string;
-  avatar_url?: string | null;
-  gender?: string;
-  age?: number;
-  height?: number;
-  weight?: number;
-  activity?: string;
-  climate?: string;
-  goal?: string;
-  wake_up?: string;
-  bed_time?: string;
-  water_goal?: number;
-  wp?: number;
-  coins?: number;
-  total_exp?: number;
-  current_exp?: number;
-  water_today?: number;
-  total_water?: number;
-  onboarding_completed?: boolean;
-  equipped_bottle_id?: string | null;
-  equipped_frame_id?: string | null;
-  equipped_theme_id?: string | null;
-  equipped_notification_sound?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  sleep_hours?: number;
-  sleep_quality?: number;
-  mood_tracking?: boolean;
-  sync_wellness_data?: boolean;
-  energy_tracking?: boolean;
-  grace_period_end?: string | null;
-  last_water_date?: string;
-  level?: number;
-  calendar_privacy_level?: 'strict' | 'standard' | 'off';
-  leaderboard_opt_in?: boolean;
-  [key: string]: unknown;
+export interface WeeklyReportInput {
+  currentWeekLogs: WaterLog[]; // 7 ngày gần nhất
+  previousWeekLogs: WaterLog[]; // 7 ngày trước đó (để so sánh)
+  waterGoal: number;
+  useAI?: boolean; // nếu false, chỉ dùng template
 }
 &nbsp;
-function <span class="fstat-no" title="function not covered" >toAppProfile(p</span>rofileRow: ProfileRow): AppProfile {
-  const <span class="cstat-no" title="statement not covered" >normalizedProfile = normalizeProfileEnums(profileRow) </span>as ProfileRow;
-  const <span class="cstat-no" title="statement not covered" >calculatedLevel = levelFromExp(normalizedProfile.total_exp || 0);</span>
+// ─── Helpers ─────────────────────────────────────────────────────────
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return {</span>
-    id: normalizedProfile.id || '',
-    nickname: normalizedProfile.nickname || '',
-    password: '',
-    avatar_url: normalizedProfile.avatar_url ?? null,
-    gender: (normalizedProfile.gender as Profile['gender']) || 'Khác',
-    age: normalizedProfile.age || 0,
-    height: normalizedProfile.height || 0,
-    weight: normalizedProfile.weight || 0,
-    activity: (normalizedProfile.activity as Profile['activity']) || 'sedentary',
-    climate: (normalizedProfile.climate as Profile['climate']) || 'temperate',
-    goal: normalizedProfile.goal || '',
-    wakeUp: normalizedProfile.wake_up,
-    bedTime: normalizedProfile.bed_time,
-    water_goal: normalizedProfile.water_goal || 2000,
-    wp: normalizedProfile.wp || 0,
-    coins: normalizedProfile.coins || 0,
-    total_exp: normalizedProfile.total_exp || 0,
-    level: calculatedLevel,
-    current_exp: normalizedProfile.current_exp,
-    water_today: normalizedProfile.water_today || 0,
-    total_water: normalizedProfile.total_water,
-    onboarding_completed: normalizedProfile.onboarding_completed,
-    equipped_bottle_id: normalizedProfile.equipped_bottle_id ?? null,
-    equipped_frame_id: normalizedProfile.equipped_frame_id ?? null,
-    equipped_theme_id: normalizedProfile.equipped_theme_id ?? 'theme_default',
-    equipped_notification_sound: normalizedProfile.equipped_notification_sound ?? null,
-    created_at: normalizedProfile.created_at,
-    updated_at: normalizedProfile.updated_at,
-    // Wellness fields
-    sleep_hours: normalizedProfile.sleep_hours,
-    sleep_quality: normalizedProfile.sleep_quality,
-    mood_tracking: normalizedProfile.mood_tracking,
-    sync_wellness_data: normalizedProfile.sync_wellness_data,
-    energy_tracking: normalizedProfile.energy_tracking,
-    grace_period_end: normalizedProfile.grace_period_end,
-    subscription_tier: normalizedProfile.subscription_tier as AppProfile['subscription_tier'] ?? 'free',
-    calendar_privacy_level: (normalizedProfile.calendar_privacy_level as AppProfile['calendar_privacy_level']) || 'standard',
-    leaderboard_opt_in: normalizedProfile.leaderboard_opt_in !== false,
+function getDateOnly(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    return Number.isNaN(d.getTime()) ? <span class="branch-0 cbranch-no" title="branch not covered" >dateStr.slice(0, 10) </span>: d.toISOString().slice(0, 10);
+  } catch {
+<span class="cstat-no" title="statement not covered" >    return dateStr.slice(0, 10);</span>
+  }
+}
+&nbsp;
+function toLocalISOString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+&nbsp;
+function getWeekStart(): string {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = now.getDate() - day + (day === 0 ? -6 : <span class="branch-1 cbranch-no" title="branch not covered" >1); // Monday</span>
+  const monday = new Date(now.setDate(diff));
+  return toLocalISOString(monday);
+}
+&nbsp;
+function getWeekEnd(weekStart: string): string {
+  const parts = weekStart.split('-');
+  const start = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  return toLocalISOString(end);
+}
+&nbsp;
+// ─── Analysis ───────────────────────────────────────────────────────
+&nbsp;
+function aggregateByDay(logs: WaterLog[]): Map&lt;string, number&gt; {
+  const byDay = new Map&lt;string, number&gt;();
+  for (const log of logs) {
+    const day = getDateOnly(log.day || <span class="branch-1 cbranch-no" title="branch not covered" >log.created_at);</span>
+    byDay.set(day, (byDay.get(day) || 0) + log.amount);
+  }
+  return byDay;
+}
+&nbsp;
+function getBestAndWorstDay(
+  byDay: Map&lt;string, number&gt;,
+): { bestDay: { date: string; ml: number }; worstDay: { date: string; ml: number }; totalDays: number } {
+  let bestDay = { date: '', ml: 0 };
+  let worstDay = { date: '', ml: Infinity };
+&nbsp;
+  for (const [date, ml] of byDay) {
+    if (ml &gt; bestDay.ml) bestDay = { date, ml };
+    if (ml &lt; worstDay.ml) worstDay = { date, ml };
+  }
+&nbsp;
+  return {
+    bestDay,
+    worstDay: worstDay.ml === Infinity ? <span class="branch-0 cbranch-no" title="branch not covered" >{ date: '', ml: 0 } : w</span>orstDay,
+    totalDays: byDay.size,
   };
 }
 &nbsp;
-async function <span class="fstat-no" title="function not covered" >normalizeProfileRow(p</span>rofileRow: ProfileRow) {
-  const profilePatch: Record&lt;string, unknown&gt; = <span class="cstat-no" title="statement not covered" >{</span>
-    ...getProfileEnumPatch(profileRow),
+function detectTrendFromWeeks(
+  currentAvg: number,
+  previousAvg: number,
+): WeeklyReport['trend'] {
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (previousAvg === 0) <span class="cstat-no" title="statement not covered" >return 'stable';</span>
+  const change = (currentAvg - previousAvg) / previousAvg;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (change &gt; 0.1) <span class="cstat-no" title="statement not covered" >return 'improving';</span>
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (change &lt; -0.1) <span class="cstat-no" title="statement not covered" >return 'declining';</span>
+  return 'stable';
+}
+&nbsp;
+function calculateConsistency(byDay: Map&lt;string, number&gt;, totalDays: number): number {
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (totalDays &lt; 2) <span class="cstat-no" title="statement not covered" >return 50;</span>
+  const amounts = Array.from(byDay.values());
+  const mean = amounts.reduce((s, v) =&gt; s + v, 0) / amounts.length;
+  const variance = amounts.reduce((s, v) =&gt; s + (v - mean) ** 2, 0) / amounts.length;
+  const cv = mean &gt; 0 ? Math.sqrt(variance) / mean : <span class="branch-1 cbranch-no" title="branch not covered" >1;</span>
+  return Math.max(0, Math.min(100, Math.round((1 - cv) * 100)));
+}
+&nbsp;
+// ─── Template Insights ─────────────────────────────────────────────
+&nbsp;
+function generateTemplateInsight(
+  goalHitDays: number,
+  totalDays: number,
+  trend: WeeklyReport['trend'],
+  avgDaily: number,
+  comparison: number,
+): { insight: string; tip: string } {
+  let insight: string;
+  let tip: string;
+&nbsp;
+  const ratio = totalDays &gt; 0 ? goalHitDays / totalDays : <span class="branch-1 cbranch-no" title="branch not covered" >0;</span>
+&nbsp;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (ratio &gt;= 0.85) {
+<span class="cstat-no" title="statement not covered" >    insight = i18n.t('common.weekly_insight_great', { goalHitDays, totalDays });</span>
+<span class="cstat-no" title="statement not covered" >    tip = i18n.t('common.weekly_tip_maintain');</span>
+  } else if (ratio &gt;= 0.5) {
+    insight = i18n.t('common.weekly_insight_good', { goalHitDays, totalDays, avgDaily: Math.round(avgDaily) });
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (trend === 'improving') {
+<span class="cstat-no" title="statement not covered" >      tip = i18n.t('common.weekly_tip_improving');</span>
+    } else if (<span class="missing-if-branch" title="if path not taken" >I</span>trend === 'declining') {
+<span class="cstat-no" title="statement not covered" >      tip = i18n.t('common.weekly_tip_slight_drop');</span>
+    } else {
+      tip = i18n.t('common.weekly_tip_keep_momentum');
+    }
+  } else <span class="missing-if-branch" title="else path not taken" >E</span>{
+<span class="cstat-no" title="statement not covered" >    insight = i18n.t('common.weekly_insight_low', { goalHitDays, totalDays, avgDaily: Math.round(avgDaily) });</span>
+<span class="cstat-no" title="statement not covered" >    tip = i18n.t('common.weekly_tip_set_reminders');</span>
+  }
+&nbsp;
+  if (comparison &gt; 0) {
+    insight += ' ' + i18n.t('common.weekly_comparison_up', { percent: Math.round(comparison) });
+  } else if (<span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>comparison &lt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >    insight += ' ' + i18n.t('common.weekly_comparison_down', { percent: Math.round(Math.abs(comparison)) });</span>
+  }
+&nbsp;
+  return { insight, tip };
+}
+&nbsp;
+// ─── Main Function ───────────────────────────────────────────────────
+&nbsp;
+/**
+ * Tạo weekly report từ water_logs
+ * Có thể dùng AI nếu `useAI = true` (caller gọi Groq sau khi có report template)
+ */
+export function generateWeeklyReport(input: WeeklyReportInput): WeeklyReport {
+  const { currentWeekLogs, previousWeekLogs, waterGoal } = input;
+&nbsp;
+  const byDay = aggregateByDay(currentWeekLogs);
+  const prevByDay = aggregateByDay(previousWeekLogs);
+&nbsp;
+  const { bestDay, worstDay, totalDays } = getBestAndWorstDay(byDay);
+&nbsp;
+  // Tính goal hit days với waterGoal
+  let goalHitDays = 0;
+  for (const [, ml] of byDay) {
+    if (ml &gt;= waterGoal) goalHitDays++;
+  }
+&nbsp;
+  const totalIntake = currentWeekLogs.reduce((s, l) =&gt; s + l.amount, 0);
+  const avgDaily = totalDays &gt; 0 ? totalIntake / totalDays : <span class="branch-1 cbranch-no" title="branch not covered" >0;</span>
+&nbsp;
+  const previousAvg = prevByDay.size &gt; 0
+    ? Array.from(prevByDay.values()).reduce((s, v) =&gt; s + v, 0) / prevByDay.size
+    : <span class="branch-1 cbranch-no" title="branch not covered" >0;</span>
+&nbsp;
+  const trend = detectTrendFromWeeks(avgDaily, previousAvg);
+  const consistencyScore = calculateConsistency(byDay, totalDays);
+&nbsp;
+  // So sánh với tuần trước
+  const previousTotal = Array.from(prevByDay.values()).reduce((s, v) =&gt; s + v, 0);
+  const comparisonToPreviousWeek = previousTotal &gt; 0
+    ? Math.round(((totalIntake - previousTotal) / previousTotal) * 100)
+    : <span class="branch-1 cbranch-no" title="branch not covered" >0;</span>
+&nbsp;
+  const { insight, tip } = generateTemplateInsight(
+    goalHitDays,
+    totalDays,
+    trend,
+    avgDaily,
+    comparisonToPreviousWeek,
+  );
+&nbsp;
+  const weekStart = getWeekStart();
+  const weekEnd = getWeekEnd(weekStart);
+&nbsp;
+  return {
+    weekStart,
+    weekEnd,
+    totalIntake,
+    avgDaily: Math.round(avgDaily * 10) / 10,
+    goalHitDays,
+    totalDays,
+    bestDay,
+    worstDay,
+    trend,
+    insight,
+    tip,
+    comparisonToPreviousWeek,
+    consistencyScore,
   };
+}
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  if (profileRow.last_water_date !== getTodayKey()) {</span>
-<span class="cstat-no" title="statement not covered" >    profilePatch.water_today = 0;</span>
-<span class="cstat-no" title="statement not covered" >    profilePatch.last_water_date = getTodayKey();</span>
+/**
+ * Cache report vào localStorage
+ */
+export function cacheReport(report: WeeklyReport): void {
+  try {
+    const key = `digiwell_weekly_report_${report.weekStart}`;
+    localStorage.setItem(key, JSON.stringify({ report, timestamp: Date.now() }));
+  } catch {
+    // ignore
   }
+}
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >calculatedLevel = levelFromExp(profileRow.total_exp || 0);</span>
-<span class="cstat-no" title="statement not covered" >  if (profileRow.level !== calculatedLevel) {</span>
-<span class="cstat-no" title="statement not covered" >    profilePatch.level = calculatedLevel;</span>
+/**
+ * Lấy cached report
+ */
+export function getCachedReport(weekStart?: string): WeeklyReport | null {
+  try {
+    const ws = weekStart || <span class="branch-1 cbranch-no" title="branch not covered" >getWeekStart();</span>
+    const raw = localStorage.getItem(`digiwell_weekly_report_${ws}`);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!raw) <span class="cstat-no" title="statement not covered" >return null;</span>
+    const { report } = JSON.parse(raw);
+    return report as WeeklyReport;
+  } catch {
+<span class="cstat-no" title="statement not covered" >    return null;</span>
   }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >  if (Object.keys(profilePatch).length &gt; 0) {</span>
-    const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase</span>
-      .from('profiles')
-      .update(profilePatch)
-      .eq('id', profileRow.id ?? '')
-      .select('*')
-      .single();
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    if (error) <span class="cstat-no" title="statement not covered" >throw error;</span></span>
-<span class="cstat-no" title="statement not covered" >    return data;</span>
-  }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >  return profileRow;</span>
 }
 &nbsp;
-&nbsp;
-&nbsp;
-export async function <span class="fstat-no" title="function not covered" >fetchProfileById(u</span>serId: string) {
-  const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();</span>
-<span class="cstat-no" title="statement not covered" >  if (error) <span class="cstat-no" title="statement not covered" >throw error;</span></span>
-<span class="cstat-no" title="statement not covered" >  if (!data) <span class="cstat-no" title="statement not covered" >return null;</span></span>
-&nbsp;
-  const normalizedRow = <span class="cstat-no" title="statement not covered" >await normalizeProfileRow(data);</span>
-<span class="cstat-no" title="statement not covered" >  return toAppProfile(normalizedRow);</span>
-}
-&nbsp;
-export async function <span class="fstat-no" title="function not covered" >fetchCurrentProfile() {</span>
-  const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase.auth.getSession();</span>
-<span class="cstat-no" title="statement not covered" >  if (error) <span class="cstat-no" title="statement not covered" >throw error;</span></span>
-&nbsp;
-  const userId = <span class="cstat-no" title="statement not covered" >data.session?.user.id;</span>
-<span class="cstat-no" title="statement not covered" >  if (!userId) <span class="cstat-no" title="statement not covered" >return null;</span></span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >  return fetchProfileById(userId);</span>
-}
-&nbsp;
-export async function <span class="fstat-no" title="function not covered" >ensureProfileExists(u</span>serId: string, defaultName: string) {
-<span class="cstat-no" title="statement not covered" >  await supabase.from('profiles').upsert([{</span>
-    id: userId,
-    nickname: defaultName,
-    gender: 'Nam',
-    age: 20,
-    height: 170,
-    weight: 60,
-    activity: 'high',
-    climate: 'tropical',
-    goal: i18n.t('common.default_goal_health'),
-  }], { onConflict: 'id' });
-&nbsp;
-<span class="cstat-no" title="statement not covered" >  return fetchProfileById(userId);</span>
-}
-&nbsp;
-export async function <span class="fstat-no" title="function not covered" >updateProfileFields(u</span>serId: string, patch: Record&lt;string, unknown&gt;) {
-  const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase</span>
-    .from('profiles')
-    .update(patch)
-    .eq('id', userId)
-    .select('*')
-    .single();
-&nbsp;
-<span class="cstat-no" title="statement not covered" >  if (error) <span class="cstat-no" title="statement not covered" >throw error;</span></span>
-&nbsp;
-  const appProfile = <span class="cstat-no" title="statement not covered" >toAppProfile(data);</span>
-<span class="cstat-no" title="statement not covered" >  return appProfile;</span>
-}
-&nbsp;
-export async function <span class="fstat-no" title="function not covered" >uploadProfileAvatar(u</span>serId: string, image: Blob) {
-  const filePath = <span class="cstat-no" title="statement not covered" >`${userId}/${Date.now()}.jpg`;</span>
-  const { error: uploadError } = <span class="cstat-no" title="statement not covered" >await supabase.storage</span>
-    .from('avatars')
-    .upload(filePath, image, { upsert: true, contentType: 'image/jpeg' });
-&nbsp;
-<span class="cstat-no" title="statement not covered" >  if (uploadError) <span class="cstat-no" title="statement not covered" >throw uploadError;</span></span>
-&nbsp;
-  const { data } = <span class="cstat-no" title="statement not covered" >supabase.storage.from('avatars').getPublicUrl(filePath);</span>
-<span class="cstat-no" title="statement not covered" >  return updateProfileFields(userId, { avatar_url: data.publicUrl });</span>
-}
-&nbsp;
-export async function <span class="fstat-no" title="function not covered" >deleteCurrentUserAccount() {</span>
-  const { error } = <span class="cstat-no" title="statement not covered" >await supabase.rpc('delete_user_account');</span>
-<span class="cstat-no" title="statement not covered" >  if (error) <span class="cstat-no" title="statement not covered" >throw error;</span></span>
-}
-&nbsp;</pre></td></tr></table></pre>
+/**
+ * Tạo text summary để user chia sẻ
+ */
+export function formatReportForSharing(report: WeeklyReport): string {
+  const lines = [
+    i18n.t('common.weekly_share_title'),
+    '',
+    `📅 ${report.weekStart} → ${report.weekEnd}`,
+    i18n.t('weekly.share_total', { total: report.totalIntake, avg: report.avgDaily }),
+    i18n.t('weekly.share_goal_hits', { hits: report.goalHitDays, days: report.totalDays }),
+    '',
+    report.insight,
+    '',
+    `💡 ${report.tip}`,
+    '',
+    '— DigiWell',
+  ];
+  return lines.join('\n');
+}</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->

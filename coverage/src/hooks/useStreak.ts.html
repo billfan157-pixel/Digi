@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.05% </span>
+                <span class="strong">62.02% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>49/72</span>
+                <span class='fraction'>49/79</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">59.7% </span>
+                <span class="strong">60.86% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>40/67</span>
+                <span class='fraction'>42/69</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">73.33% </span>
+                <span class="strong">61.11% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>11/15</span>
+                <span class='fraction'>11/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.35% </span>
+                <span class="strong">62.31% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>43/62</span>
+                <span class='fraction'>43/69</span>
             </div>
         
             
@@ -192,7 +192,31 @@
 <a name='L127'></a><a href='#L127'>127</a>
 <a name='L128'></a><a href='#L128'>128</a>
 <a name='L129'></a><a href='#L129'>129</a>
-<a name='L130'></a><a href='#L130'>130</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -280,6 +304,28 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -323,6 +369,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import i18n from '@/i18n';
 import { supabase } from '../lib/supabase';
 import { fetchStreakFreezes, applyStreakFreeze } from '../lib/gamification';
 &nbsp;
@@ -402,11 +449,33 @@ export function useStreak(userId: string | undefined, waterGoal: number, todayIn
 &nbsp;
   useEffect(() =&gt; {
     if (!waterLogsQuery.isFetched || !userId) return;
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (streak === 3 || streak === 7) {
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (streak === 3 || streak === 7 || streak === 14 || streak === 30) {
       const key = <span class="cstat-no" title="statement not covered" >`streak_milestone_${streak}_${userId}`;</span>
 <span class="cstat-no" title="statement not covered" >      if (!localStorage.getItem(key)) {</span>
 <span class="cstat-no" title="statement not covered" >        localStorage.setItem(key, '1');</span>
 <span class="cstat-no" title="statement not covered" >        import('@/lib/analytics').then(({ <span class="fstat-no" title="function not covered" >track }) =&gt; t</span>rack(<span class="cstat-no" title="statement not covered" >`streak_${streak}`, { streak }));</span></span>
+        
+        // Trigger confetti celebration
+<span class="cstat-no" title="statement not covered" >        import('canvas-confetti').then((confettiModule) =&gt; <span class="fstat-no" title="function not covered" >{</span></span>
+          const confetti = <span class="cstat-no" title="statement not covered" >confettiModule.default;</span>
+<span class="cstat-no" title="statement not covered" >          confetti({</span>
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 },
+            zIndex: 9999,
+            colors: ['#06b6d4', '#f59e0b', '#10b981', '#a855f7']
+          });
+        });
+        
+        // Show success toast
+<span class="cstat-no" title="statement not covered" >        import('sonner').then(({ toast }) =&gt; <span class="fstat-no" title="function not covered" >{</span></span>
+<span class="cstat-no" title="statement not covered" >          toast.success(i18n.t('home.streak_milestone', { streak }), { icon: '🎉' });</span>
+        });
+&nbsp;
+        // Play success sound
+<span class="cstat-no" title="statement not covered" >        import('@/lib/audio').then(({ <span class="fstat-no" title="function not covered" >playSound }) =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >          playSound('streak');</span>
+        });
       }
     }
   }, [streak, userId, waterLogsQuery.isFetched]);
@@ -436,12 +505,12 @@ export function useStreak(userId: string | undefined, waterGoal: number, todayIn
     } catch (error: unknown) {
       const msg = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : '';</span>
       const friendlyMessage = <span class="cstat-no" title="statement not covered" >msg.includes('No active streak')</span>
-        ? 'Không có chuỗi streak nào đang hoạt động để bảo vệ.'
+        ? i18n.t('home.no_active_streak')
         : msg.includes('already met')
-        ? 'Ngày hôm qua đã đạt mục tiêu, không cần dùng Streak Freeze.'
+        ? i18n.t('home.already_met_goal')
         : msg.includes('No streak freezes')
-        ? 'Bạn đã hết lượt Streak Freeze trong tháng này.'
-        : 'Không thể sử dụng Streak Freeze lúc này.';
+        ? i18n.t('home.no_streak_freezes')
+        : i18n.t('home.streak_freeze_error');
       const { toast } = <span class="cstat-no" title="statement not covered" >await import('sonner');</span>
 <span class="cstat-no" title="statement not covered" >      toast.error(friendlyMessage);</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
@@ -457,7 +526,7 @@ export function useStreak(userId: string | undefined, waterGoal: number, todayIn
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-23T04:18:34.071Z
+                at 2026-05-30T19:15:09.749Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

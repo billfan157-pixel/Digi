@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   generateWeeklyReport,
   cacheReport,
@@ -7,6 +7,23 @@ import {
   type WeeklyReportInput,
 } from './weeklyReportEngine';
 import type { WaterLog } from '../models';
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, params?: Record<string, unknown>) => {
+      const map: Record<string, string> = {
+        'common.weekly_share_title': '📊 *Báo cáo uống nước tuần này*',
+      };
+      if (key === 'weekly.share_total') {
+        return `Tổng: ${params?.total ?? ''}ml — Trung bình: ${params?.avg ?? ''}ml/ngày`;
+      }
+      if (key === 'weekly.share_goal_hits') {
+        return `Đạt mục tiêu: ${params?.hits ?? ''}/${params?.days ?? ''} ngày`;
+      }
+      return map[key] || key;
+    },
+  },
+}));
 
 describe('weeklyReportEngine', () => {
   let mockCurrentWeekLogs: WaterLog[];

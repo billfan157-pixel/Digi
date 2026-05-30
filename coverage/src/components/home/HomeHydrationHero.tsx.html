@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -225,7 +225,9 @@
 <a name='L160'></a><a href='#L160'>160</a>
 <a name='L161'></a><a href='#L161'>161</a>
 <a name='L162'></a><a href='#L162'>162</a>
-<a name='L163'></a><a href='#L163'>163</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -275,6 +277,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -388,6 +392,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Bluetooth, AlertTriangle, RefreshCw } from 'lucide-react';
 import type { BottleConnectionState } from '@/hooks/useSmartBottle';
 import CountUp from '../CountUp';
@@ -437,6 +442,7 @@ export default function HomeHydrationHero({
   onOpenGoalDetail,
   onOpenBottleDetail,
 }: Omit&lt;HomeHydrationHeroProps, 'equippedBottleSkin'&gt;) {
+  const { t } = useTranslation();
   const bottleFillPercentage = (metrics?.currentVolume ?? 0) / bottleCapacity * 100;
   const state = connectionState || (isConnected ? 'connected' : 'idle');
 &nbsp;
@@ -446,14 +452,14 @@ export default function HomeHydrationHero({
       &lt;div className="relative flex flex-col items-center justify-center py-6 px-4"&gt;
         &lt;div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-6 text-center w-full max-w-xs"&gt;
           &lt;AlertTriangle size={32} className="mx-auto text-rose-400 mb-3" /&gt;
-          &lt;p className="text-sm font-bold text-rose-300 mb-1"&gt;Kết nối thất bại&lt;/p&gt;
-          &lt;p className="text-xs text-slate-400 mb-4"&gt;{lastError || <span class="branch-1 cbranch-no" title="branch not covered" >'Không thể kết nối DigiBottle.'}&lt;/p&gt;</span>
+          &lt;p className="text-sm font-bold text-rose-300 mb-1"&gt;{t('device.connection_failed')}&lt;/p&gt;
+          &lt;p className="text-xs text-slate-400 mb-4"&gt;{lastError || <span class="branch-1 cbranch-no" title="branch not covered" >t('device.cannot_connect')}&lt;/p&gt;</span>
           {onRetryConnection &amp;&amp; (
             &lt;button
               onClick={onRetryConnection}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-bold active:scale-95 transition-all"
             &gt;
-              &lt;RefreshCw size={14} /&gt; Thử lại
+              &lt;RefreshCw size={14} /&gt; {t('common.retry')}
             &lt;/button&gt;
           )}
         &lt;/div&gt;
@@ -469,7 +475,7 @@ export default function HomeHydrationHero({
           &lt;Bluetooth size={32} className="text-amber-400 animate-pulse" /&gt;
         &lt;/div&gt;
         &lt;p className="text-sm font-bold text-amber-300"&gt;
-          {state === 'connecting' ? 'Đang kết nối...' : 'Đang kết nối lại...'}
+          {state === 'connecting' ? t('device.status_connecting') : t('device.status_reconnecting')}
         &lt;/p&gt;
       &lt;/div&gt;
     );
@@ -542,7 +548,7 @@ export default function HomeHydrationHero({
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800 text-white font-bold text-xs border border-slate-700 hover:bg-slate-700 transition-colors active:scale-95 disabled:opacity-50"
           &gt;
             &lt;Bluetooth size={14} /&gt;
-            {isConnecting ? <span class="branch-0 cbranch-no" title="branch not covered" >'Đang bật demo...' : '</span>Bật DigiBottle Demo'}
+            {isConnecting ? <span class="branch-0 cbranch-no" title="branch not covered" >t('home.turning_on_demo') </span>: t('home.turn_on_demo')}
           &lt;/button&gt;
         &lt;/div&gt;
       )}
@@ -556,7 +562,7 @@ export default function HomeHydrationHero({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-23T04:18:34.071Z
+                at 2026-05-30T19:15:09.749Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

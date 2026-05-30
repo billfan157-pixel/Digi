@@ -286,7 +286,9 @@
 <a name='L221'></a><a href='#L221'>221</a>
 <a name='L222'></a><a href='#L222'>222</a>
 <a name='L223'></a><a href='#L223'>223</a>
-<a name='L224'></a><a href='#L224'>224</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -510,6 +512,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">﻿// src/utils/healthMath.ts
+import i18n from '@/i18n';
 import { getTierByWP } from '../tabs/League/types';
 &nbsp;
 /**
@@ -623,11 +626,11 @@ export interface StreakTier {
 }
 &nbsp;
 export const STREAK_TIERS: StreakTier[] = [
-  { name: 'Giọt', emoji: '💧', minStreak: 0, maxStreak: 6, color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50', xpMultiplier: 1.0, description: 'Khởi đầu' },
-  { name: 'Suối', emoji: '🏞️', minStreak: 7, maxStreak: 13, color: 'text-emerald-400', bg: 'bg-emerald-500/20', border: 'border-emerald-500/50', xpMultiplier: 1.1, description: 'Kiên trì' },
-  { name: 'Sông', emoji: '🌊', minStreak: 14, maxStreak: 29, color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/50', xpMultiplier: 1.25, description: 'Kỷ luật' },
-  { name: 'Biển', emoji: '🌊', minStreak: 30, maxStreak: 59, color: 'text-indigo-400', bg: 'bg-indigo-500/20', border: 'border-indigo-500/50', xpMultiplier: 1.5, description: 'Tinh thần thép' },
-  { name: 'Đại Dương', emoji: '🌎', minStreak: 60, maxStreak: null, color: 'text-rose-400', bg: 'bg-rose-500/20', border: 'border-rose-500/50', xpMultiplier: 2.0, description: 'Bất tử' },
+  { name: i18n.t('common.streak_tier_drop'), emoji: '💧', minStreak: 0, maxStreak: 6, color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50', xpMultiplier: 1.0, description: i18n.t('common.streak_desc_beginner') },
+  { name: i18n.t('common.streak_tier_stream'), emoji: '🏞️', minStreak: 7, maxStreak: 13, color: 'text-emerald-400', bg: 'bg-emerald-500/20', border: 'border-emerald-500/50', xpMultiplier: 1.1, description: i18n.t('common.streak_desc_persistent') },
+  { name: i18n.t('common.streak_tier_river'), emoji: '🌊', minStreak: 14, maxStreak: 29, color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/50', xpMultiplier: 1.25, description: i18n.t('common.streak_desc_disciplined') },
+  { name: i18n.t('common.streak_tier_sea'), emoji: '🌊', minStreak: 30, maxStreak: 59, color: 'text-indigo-400', bg: 'bg-indigo-500/20', border: 'border-indigo-500/50', xpMultiplier: 1.5, description: i18n.t('common.streak_desc_steel') },
+  { name: i18n.t('common.streak_tier_ocean'), emoji: '🌎', minStreak: 60, maxStreak: null, color: 'text-rose-400', bg: 'bg-rose-500/20', border: 'border-rose-500/50', xpMultiplier: 2.0, description: i18n.t('common.streak_desc_immortal') },
 ];
 &nbsp;
 export function getStreakTier(streak: number): StreakTier {
@@ -651,23 +654,23 @@ export function getNextStreakTier(streak: number): StreakTier | null {
  * 7. Variable Rewards — Habit Reinforcement
  */
 const REWARD_MESSAGES_VN = [
-  '💧 Ngon lành! Cơ thể bạn đang cảm ơn bạn đấy.',
-  '⚡ Nạp năng lượng thành công!',
-  '🌊 Một ngụm nữa gần hơn với mục tiêu!',
-  '✨ Uống nước ngon không? Cơ thể bạn cần đó!',
-  '🔥 Lửa hydration đang cháy! Đừng dừng lại!',
-  '🎯 Bạn đang đi đúng hướng!',
-  '🌟 Mỗi giọt nước là một bước đến sức khỏe tốt hơn.',
-  '💪 Mạnh mẽ hơn từng ngày!',
-  '🌈 Giữ nhịp tốt lắm!',
-  '🏆 Bạn xứng đáng với chiến thắng hôm nay!',
+  i18n.t('common.drink_msg_1'),
+  i18n.t('common.drink_msg_2'),
+  i18n.t('common.drink_msg_3'),
+  i18n.t('common.drink_msg_4'),
+  i18n.t('common.drink_msg_5'),
+  i18n.t('common.drink_msg_6'),
+  i18n.t('common.drink_msg_7'),
+  i18n.t('common.drink_msg_8'),
+  i18n.t('common.drink_msg_9'),
+  i18n.t('common.drink_msg_10'),
 ];
 &nbsp;
 const REWARD_MESSAGES_MILESTONE = [
-  '🎉 Bùng nổ! Bạn đang làm rất tốt!',
-  '🚀 Phi thường! Keep it up!',
-  '💎 Đẳng cấp! Cơ thể bạn đang ở trạng thái tối ưu!',
-  '👑 Huyền thoại! Ngày hôm nay thuộc về bạn!',
+  i18n.t('common.drink_msg_11'),
+  i18n.t('common.drink_msg_12'),
+  i18n.t('common.drink_msg_13'),
+  i18n.t('common.drink_msg_14'),
 ];
 &nbsp;
 export function <span class="fstat-no" title="function not covered" >getRandomRewardMessage(s</span>treak: number): string {
@@ -695,42 +698,42 @@ export function generateEveningSummary(params: {
     if (params.streak &gt;= 30) {
       return {
         emoji: '👑',
-        title: 'Ngày hoàn hảo!',
-        message: `Bạn đã đạt mục tiêu ${pct.toFixed(0)}%. Chuỗi ${params.streak} ngày — ĐẲNG CẤP!`,
-        tomorrowTip: 'Duy trì phong độ nhé. Ngày mai lại chinh phục!',
+        title: i18n.t('common.perfect_day_title'),
+        message: i18n.t('common.perfect_day_msg', { pct: pct.toFixed(0), streak: params.streak }),
+        tomorrowTip: i18n.t('common.perfect_day_tip'),
       };
     }
     if (params.streak &gt;= 7) {
       return {
         emoji: '🔥',
-        title: 'Xuất sắc!',
-        message: `Hoàn thành mục tiêu với ${pct.toFixed(0)}%. Chuỗi ${params.streak} ngày rực lửa!`,
-        tomorrowTip: 'Giữ vững đà này, bạn đang xây dựng thói quen bền vững.',
+        title: i18n.t('common.excellent_title'),
+        message: i18n.t('common.excellent_msg', { pct: pct.toFixed(0), streak: params.streak }),
+        tomorrowTip: i18n.t('common.excellent_tip'),
       };
     }
-    return {
-      emoji: '🎯',
-      title: 'Mục tiêu hoàn thành!',
-      message: `Bạn đã uống ${params.waterIntake}ml hôm nay. Cơ thể đang ở trạng thái tốt!`,
-      tomorrowTip: 'Tiếp tục duy trì để thói quen trở thành bản năng.',
-    };
+      return {
+        emoji: '🎯',
+        title: i18n.t('common.goal_complete_title'),
+        message: i18n.t('common.goal_complete_msg', { intake: params.waterIntake }),
+        tomorrowTip: i18n.t('common.goal_complete_tip'),
+      };
   }
 &nbsp;
   if (pct &gt;= 70) {
-    return {
-      emoji: '💪',
-      title: 'Gần lắm rồi!',
-      message: `Bạn đã đạt ${pct.toFixed(0)}% mục tiêu. Chỉ còn thiếu ${Math.max(0, params.waterGoal - params.waterIntake)}ml.`,
-      tomorrowTip: `Hãy uống 250ml ngay bây giờ và hoàn thành ngày hôm nay!`,
-    };
+      return {
+        emoji: '💪',
+        title: i18n.t('common.so_close_title'),
+        message: i18n.t('common.so_close_msg', { pct: pct.toFixed(0), remaining: Math.max(0, params.waterGoal - params.waterIntake) }),
+        tomorrowTip: i18n.t('common.so_close_tip'),
+      };
   }
 &nbsp;
-  return {
-    emoji: '🌱',
-    title: 'Ngày mai sẽ tốt hơn!',
-    message: `Hôm nay bạn uống được ${params.waterIntake}ml. Mỗi ngày là một cơ hội mới.`,
-    tomorrowTip: 'Hãy đặt mục tiêu nhỏ hơn nếu cần. Quan trọng là bắt đầu!',
-  };
+      return {
+        emoji: '🌱',
+        title: i18n.t('common.better_tomorrow_title'),
+        message: i18n.t('common.better_tomorrow_msg', { intake: params.waterIntake }),
+        tomorrowTip: i18n.t('common.better_tomorrow_tip'),
+      };
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -739,7 +742,7 @@ export function generateEveningSummary(params: {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-23T04:18:34.071Z
+                at 2026-05-30T19:15:09.749Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
