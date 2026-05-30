@@ -17,7 +17,7 @@
     "test:e2e": "playwright test",
     "test:e2e:dev": "playwright test --ui",
     "lint:migrations": "node scripts/check-migrations.mjs",
-    "check:dependencies": "depcheck --ignores=\"@types/*,tailwindcss,postcss,autoprefixer,vite*,@capacitor/*,@supabase/ssr,@vercel/analytics,docx,chalk,dotenv,expo-dev-client,lint-staged,rollup,supabase,tsc-files,vconsole,k6\"",
+    "check:dependencies": "depcheck --ignores=\"@types/*,tailwindcss,postcss,autoprefixer,vite*,@capacitor/*,@supabase/ssr,@vercel/analytics,docx,chalk,dotenv,expo-dev-client,lint-staged,rollup,supabase,tsc-files,vconsole,k6,@shared/aiValidation\"",
     "analyze": "npm run build -- --mode analyze && npx open dist/stats.html",
     "prepare": "husky"
   },
