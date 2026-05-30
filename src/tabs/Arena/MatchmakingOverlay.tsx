@@ -32,7 +32,7 @@ export default function MatchmakingOverlay({
 
   const tips = useMemo(() => [
     t('home.nudge.morning_msg', 'Uống một cốc nước ngay sau khi ngủ dậy giúp cơ thể bù nước và kích hoạt các cơ quan nội tạng.'),
-    t('water.hydration_warning', 'Tránh uống quá 1000ml nước trong 1 giờ để không gây hạ natri máu.'),
+    t('water.hydration_warning', 'Tránh uống quá 800ml nước trong 1 giờ để không gây hạ natri máu.'),
     t('battle.matchmaking_tip_elo', 'Mỗi 30 giây chờ đợi, phạm vi ELO tìm kiếm sẽ mở rộng thêm 50 điểm để giúp bạn tìm trận nhanh hơn!'),
     t('battle.matchmaking_tip_wp', 'Wellness Points (WP) là thước đo sức khỏe của bạn. Hãy tích lũy WP qua việc hoàn thành các thử thách nước.'),
     t('battle.matchmaking_tip_quickadd', 'Nhấp vào bình nước của bạn ở trang chủ để nhanh chóng ghi nhận lượng nước vừa uống!'),

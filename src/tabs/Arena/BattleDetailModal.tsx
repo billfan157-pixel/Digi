@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Swords, Clock, Coins, TrendingUp, X, Check, Loader2 } from 'lucide-react';
+import { Swords, Clock, Coins, TrendingUp, TrendingDown, X, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import type { Battle, Profile } from '../../models';
 import { useUIStore } from '@/store/useUIStore';
+import { calculateWpDelta } from '../../lib/arenaEngine';
 
 interface BattleDetailModalProps {
   battle: Battle;
@@ -36,6 +37,13 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
   const myProgress = battle.yourProgress ?? me?.water_today ?? 0;
   const oppProgress = battle.opponentProgress ?? opponent?.water_today ?? 0;
   const yourLead = myProgress >= oppProgress;
+
+  const myWp = profile?.wp ?? 0;
+  const oppWp = opponent?.wp ?? myWp;
+  const myMatches = profile?.duel_matches_total ?? 0;
+  const oppMatches = myMatches;
+  const estWinDelta = calculateWpDelta(myWp, oppWp, 'win', myMatches, oppMatches).deltaA;
+  const estLossDelta = calculateWpDelta(myWp, oppWp, 'loss', myMatches, oppMatches).deltaA;
   
   const endsAt = new Date();
   endsAt.setHours(23, 59, 59, 999);
@@ -123,6 +131,21 @@ const BattleDetailModal: React.FC<BattleDetailModalProps> = ({
             <p className="text-xl font-black text-white">{t('battle.time_left_hours', { hours: hoursLeft })}</p>
           </div>
         </div>
+
+        {/* WP Delta Preview */}
+        {battle.status === 'active' && (
+          <div className="mb-6 relative z-10 rounded-2xl border border-white/5 bg-slate-800/30 p-4">
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">{t('battle.current_elo')} {myWp} WP</p>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1 text-[10px] font-black text-emerald-400">
+                <TrendingUp size={12} /> +{estWinDelta} WP
+              </span>
+              <span className="flex items-center gap-1 text-[10px] font-black text-rose-400">
+                <TrendingDown size={12} /> {estLossDelta} WP
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="relative z-10 space-y-3">

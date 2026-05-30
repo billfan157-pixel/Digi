@@ -157,8 +157,8 @@ export function useHydrationController({
       })
       .reduce((sum: number, entry: { amount?: number }) => sum + (entry.amount || 0), 0);
 
-    if (waterInLastHour + amount > 1000) {
-      toast.error(i18n.t('water.hydration_warning', { amount: waterInLastHour }), { duration: 6000 });
+    if (waterInLastHour + amount > 800) {
+      toast.error(i18n.t('water.hourly_limit_exceeded', { limit: 800, current: waterInLastHour }), { duration: 6000 });
       return;
     }
 

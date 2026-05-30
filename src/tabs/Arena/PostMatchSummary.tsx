@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trophy, Coins, Zap, Flame, Swords } from 'lucide-react';
+import { Trophy, Coins, Zap, Flame, Swords, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Battle } from '../../models';
 
@@ -12,6 +12,7 @@ interface PostMatchSummaryProps {
     reward: number;
     bonus: number;
     win_streak: number;
+    wp_delta: number;
   } | null;
 }
 
@@ -29,8 +30,6 @@ export default function PostMatchSummary({
   const isWin = result.status === 'won';
   const isLoss = result.status === 'loss';
   const isDraw = result.status === 'draw';
-
-  const wpGained = isWin ? 10 : isDraw ? 5 : 0;
 
   const particles = Array.from({ length: 40 });
 
@@ -125,16 +124,32 @@ export default function PostMatchSummary({
         transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
         className="w-full max-w-sm bg-slate-900/60 border border-white/5 p-6 rounded-3xl backdrop-blur-xl relative z-10 space-y-6 shadow-2xl"
       >
-        {/* WP Summary */}
+        {/* WP Delta */}
         <div className="text-center">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            {t('battle.wp_earned', 'Wellness Points')}
+            {t('battle.current_elo', 'Wellness Points')}
           </p>
-          <div className="flex items-center justify-center gap-3 mt-1.5">
-            <span className="text-3xl font-black text-white tracking-tight tabular-nums">
-              +{wpGained}
-            </span>
-            <span className="text-lg font-bold text-cyan-400">WP</span>
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5, type: 'spring' }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-2xl border ${
+                result.wp_delta >= 0
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                  : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+              }`}
+            >
+              {result.wp_delta >= 0 ? (
+                <TrendingUp size={20} />
+              ) : (
+                <TrendingDown size={20} />
+              )}
+              <span className="text-3xl font-black tracking-tight tabular-nums">
+                {result.wp_delta >= 0 ? '+' : ''}{result.wp_delta}
+              </span>
+              <span className="text-sm font-bold opacity-80">WP</span>
+            </motion.div>
           </div>
         </div>
 
@@ -147,7 +162,7 @@ export default function PostMatchSummary({
             </div>
             <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{t('common.wellness_points', 'Wellness Points')}</span>
             <span className="text-lg font-black text-white mt-1">
-              +{wpGained} WP
+              {result.wp_delta >= 0 ? '+' : ''}{result.wp_delta} WP
             </span>
           </div>
 
