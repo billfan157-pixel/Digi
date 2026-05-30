@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Swords, Trophy, Shield } from 'lucide-react';
+import { Swords, Shield } from 'lucide-react';
 
-export type CompeteSubTabType = 'battles' | 'ranking' | 'clubs';
+export type CompeteSubTabType = 'battles' | 'clubs';
 
 interface CompeteSubTabsProps {
   activeTab: CompeteSubTabType;
@@ -12,7 +12,6 @@ interface CompeteSubTabsProps {
 
 const TABS: { id: CompeteSubTabType; labelKey: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
   { id: 'battles', labelKey: 'compete.battles', icon: Swords },
-  { id: 'ranking', labelKey: 'compete.ranking', icon: Trophy },
   { id: 'clubs', labelKey: 'compete.clubs', icon: Shield },
 ];
 

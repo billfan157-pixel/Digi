@@ -35,8 +35,8 @@ interface UIState {
   setOnboardingStep: (step: number) => void;
   showShopModal: boolean;
   setShowShopModal: (show: boolean) => void;
-  competeSubTab: 'battles' | 'ranking' | 'clubs';
-  setCompeteSubTab: (tab: 'battles' | 'ranking' | 'clubs') => void;
+  competeSubTab: 'battles' | 'clubs';
+  setCompeteSubTab: (tab: 'battles' | 'clubs') => void;
   showQuestModal: boolean;
   setShowQuestModal: (show: boolean) => void;
   showClubCoopModal: boolean;

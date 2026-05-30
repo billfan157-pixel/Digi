@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Users, UserPlus, Search } from 'lucide-react';
+import { Trophy, Users, UserPlus, Search, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Profile } from '@/models';
 import type { LeagueEntry, LeagueView } from '@/tabs/League/types';
@@ -14,6 +14,7 @@ interface RankingViewProps {
   setShowAddFriend: (show: boolean) => void;
   getLeagueData: () => LeagueEntry[];
   profile?: Profile | null;
+  onBack?: () => void;
 }
 
 const MODE_META: Record<'public' | 'friends', { labelKey: string; accent: string; icon: React.ComponentType<{ size?: number }> }> = {
@@ -27,6 +28,7 @@ const RankingView = React.memo(function RankingView({
   setShowAddFriend,
   getLeagueData,
   profile,
+  onBack,
 }: RankingViewProps) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,6 +73,17 @@ const RankingView = React.memo(function RankingView({
 
   return (
     <div className="px-5 space-y-6 pb-6">
+      {/* Back button */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft size={16} />
+          {t('common.back', 'Quay lại')}
+        </button>
+      )}
+
       {/* Mode filter: public / friends */}
       <div className="relative flex p-1 shadow-sm border border-white/5 bg-slate-950/20 rounded-xl backdrop-blur-sm">
         {(['public', 'friends'] as const).map((mode) => {

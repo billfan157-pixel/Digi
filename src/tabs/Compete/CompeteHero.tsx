@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Zap, TrendingUp, Swords } from 'lucide-react';
+import { Zap, TrendingUp, Swords, Trophy } from 'lucide-react';
 import { LeagueTierBadge } from '@/tabs/League/LeagueTierBadge';
 import { getTierByWP } from '@/tabs/League/types';
 import type { Profile } from '@/models';
@@ -9,9 +9,10 @@ import type { ArenaStats } from '@/hooks/useArenaData';
 interface CompeteHeroProps {
   profile: Profile | null;
   arenaStats: ArenaStats;
+  onShowRanking?: () => void;
 }
 
-const CompeteHero = React.memo(function CompeteHero({ profile, arenaStats }: CompeteHeroProps) {
+const CompeteHero = React.memo(function CompeteHero({ profile, arenaStats, onShowRanking }: CompeteHeroProps) {
   const { t } = useTranslation();
   const nickname = profile?.nickname ?? '';
   const wp = arenaStats.wp;
@@ -45,6 +46,15 @@ const CompeteHero = React.memo(function CompeteHero({ profile, arenaStats }: Com
               <Zap size={16} className="text-amber-400" />
               <span className="text-xl font-black text-white tabular-nums">{wp.toLocaleString()}</span>
             </div>
+            {onShowRanking && (
+              <button
+                onClick={onShowRanking}
+                className="mt-2 flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded-lg border border-yellow-500/20 active:scale-95 transition-all"
+              >
+                <Trophy size={12} />
+                {t('compete.ranking', 'Xếp hạng')}
+              </button>
+            )}
           </div>
         </div>
 

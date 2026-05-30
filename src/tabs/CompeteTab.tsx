@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import TabHeader from '@/components/layout/TabHeader';
@@ -40,6 +40,7 @@ const CompeteTab = memo(function CompeteTab({
   const setSubTab = useUIStore.getState().setCompeteSubTab;
 
   const arena = useArenaData(profile);
+  const [showingRanking, setShowingRanking] = useState(false);
 
   const hasActiveBattle = arena.activeBattles.length > 0;
 
@@ -62,7 +63,11 @@ const CompeteTab = memo(function CompeteTab({
       <SeasonBanner userId={profile?.id} />
 
       {/* Unified Hero Stats */}
-      <CompeteHero profile={profile} arenaStats={arena.stats} />
+      <CompeteHero
+        profile={profile}
+        arenaStats={arena.stats}
+        onShowRanking={() => setShowingRanking(true)}
+      />
 
       {/* Quick Action Bar — always visible */}
       <QuickActionBar
@@ -79,7 +84,26 @@ const CompeteTab = memo(function CompeteTab({
 
       {/* Tab Content */}
       <AnimatePresence mode="wait">
-        {subTab === 'battles' && (
+        {showingRanking && (
+          <motion.div
+            key="ranking"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.2 }}
+          >
+            <RankingView
+              leagueMode={leagueMode as 'public' | 'friends'}
+              setLeagueMode={(mode) => setLeagueMode(mode as 'public' | 'friends' | 'clubs')}
+              setShowAddFriend={setShowAddFriend}
+              getLeagueData={getLeagueData}
+              profile={profile}
+              onBack={() => setShowingRanking(false)}
+            />
+          </motion.div>
+        )}
+
+        {!showingRanking && subTab === 'battles' && (
           <motion.div
             key="battles"
             initial={{ opacity: 0, y: 10 }}
@@ -102,25 +126,7 @@ const CompeteTab = memo(function CompeteTab({
           </motion.div>
         )}
 
-        {subTab === 'ranking' && (
-          <motion.div
-            key="ranking"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <RankingView
-              leagueMode={leagueMode as 'public' | 'friends'}
-              setLeagueMode={(mode) => setLeagueMode(mode as 'public' | 'friends' | 'clubs')}
-              setShowAddFriend={setShowAddFriend}
-              getLeagueData={getLeagueData}
-              profile={profile}
-            />
-          </motion.div>
-        )}
-
-        {subTab === 'clubs' && (
+        {!showingRanking && subTab === 'clubs' && (
           <motion.div
             key="clubs"
             initial={{ opacity: 0, y: 10 }}
