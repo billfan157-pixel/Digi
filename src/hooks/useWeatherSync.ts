@@ -57,17 +57,25 @@ async function getCurrentPosition(): Promise<{ latitude: number; longitude: numb
 
   try {
     const permStatus = await Geolocation.checkPermissions();
+    console.log('[WeatherSync] Geolocation permission status:', permStatus);
     if (permStatus.location !== 'granted') {
       const request = await Geolocation.requestPermissions();
-      if (request.location !== 'granted') return null;
+      console.log('[WeatherSync] Geolocation permission request result:', request);
+      if (request.location !== 'granted') {
+        console.warn('[WeatherSync] Geolocation permission denied');
+        return null;
+      }
     }
+    console.log('[WeatherSync] Getting native position...');
     const coordinates = await Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
       timeout: 30000,
       maximumAge: 0,
     });
+    console.log('[WeatherSync] Native position result:', coordinates);
     return { latitude: coordinates.coords.latitude, longitude: coordinates.coords.longitude };
-  } catch {
+  } catch (e) {
+    console.error('[WeatherSync] Native geolocation error:', e);
     return null;
   }
 }
@@ -81,21 +89,28 @@ export const syncWeatherAndWaterGoal = async (silent = false): Promise<WeatherDa
       toast.loading(i18n.t('weather.checking_location'), { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
     }
 
+    console.log('[WeatherSync] Getting current position...');
     const coords = await getCurrentPosition();
+    console.log('[WeatherSync] Coords result:', coords);
+
     let weather: WeatherData | null = null;
 
     if (coords) {
       if (!silent) {
         toast.loading(i18n.t('weather.fetching'), { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
       }
+      console.log('[WeatherSync] Fetching weather with GPS coords');
       weather = await getWeatherData({ coords });
     } else {
       if (!silent) {
         toast.loading(i18n.t('weather.fallback_location'), { id: toastId, duration: WEATHER_SYNC_LOADING_DURATION });
       }
+      console.log('[WeatherSync] GPS failed, falling back to IP-based lookup');
       // If GPS fails, call weather-proxy with empty lookup. Server will resolve location by IP.
       weather = await getWeatherData({});
     }
+
+    console.log('[WeatherSync] Weather result:', weather);
 
     if (!weather) {
       showError(i18n.t('weather.update_failed'));
@@ -108,6 +123,7 @@ export const syncWeatherAndWaterGoal = async (silent = false): Promise<WeatherDa
 
     return weather;
   } catch (error: unknown) {
+    console.error('[WeatherSync] Unexpected error:', error);
     showError(i18n.t('weather.update_failed') + ': ' + (error instanceof Error ? error.message : i18n.t('weather.unknown_error')));
     return false;
   }

@@ -1,5 +1,8 @@
+import { Capacitor } from '@capacitor/core';
 import { calculateWeatherBandAdjustment } from './HydrationEngine';
-import { supabase } from './supabase';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export interface WeatherData {
   temp: number;
@@ -42,33 +45,44 @@ function mapWeatherData(data: WeatherApiResponse): WeatherData {
 
 export const getWeatherData = async (lookup: WeatherLookup): Promise<WeatherData | null> => {
   try {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    // navigator.onLine is unreliable in Capacitor WebView — skip on native
+    const isNative = Capacitor.isNativePlatform();
+    if (!isNative && typeof navigator !== 'undefined' && !navigator.onLine) {
       console.warn('[Weather] Offline — skipping fetch');
       return null;
     }
 
-    const { data, error } = await supabase.functions.invoke('weather-proxy', {
-      body: {
-        lat: lookup.coords?.latitude,
-        lon: lookup.coords?.longitude,
-        city: lookup.city,
+    const body = {
+      lat: lookup.coords?.latitude,
+      lon: lookup.coords?.longitude,
+      city: lookup.city,
+    };
+    console.log('[WeatherEngine] Fetching weather-proxy with body:', body, 'native:', isNative);
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/weather-proxy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY,
       },
+      body: JSON.stringify(body),
     });
 
-    if (error) {
-      console.error('Weather proxy error:', error);
+    console.log('[WeatherEngine] Response status:', response.status, response.statusText);
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => response.statusText);
+      console.error('[WeatherEngine] HTTP error:', response.status, errorText);
       return null;
     }
 
-    if (!data) {
-      console.warn('Weather proxy returned no data');
-      return null;
-    }
-
+    const data = await response.json();
+    console.log('[WeatherEngine] Weather proxy response:', data);
     return mapWeatherData(data as WeatherApiResponse);
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') return null;
-    console.error("Error fetching weather data:", error);
+    console.error('[WeatherEngine] Error fetching weather data:', error);
     return null;
   }
 };
