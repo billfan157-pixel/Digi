@@ -22,7 +22,7 @@ const BottomNav = (props: BottomNavProps) => {
   ];
 
   return (
-    <nav aria-label={t('common.main_navigation')} className="absolute bottom-0 left-0 right-0 px-4 pt-10 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none pb-[calc(env(safe-area-inset-bottom,1.5rem)+0.5rem)]">
+    <nav aria-label={t('common.main_navigation')} className="absolute bottom-0 left-0 right-0 px-4 pt-10 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none pb-[calc(env(safe-area-inset-bottom,1.5rem)+1.5rem)]">
       <div role="tablist" className="glass-nav flex items-center justify-between rounded-[2rem] px-2 py-2 mx-auto max-w-md pointer-events-auto relative">
         {navItems.map(({ id, icon: Icon, label }) => {
           const isActive = props.activeTab === id;
