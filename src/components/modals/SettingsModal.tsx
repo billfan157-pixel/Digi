@@ -1166,14 +1166,6 @@ export default function SettingsModal() {
 
       {showAdmin && <AdminDashboardModal onClose={() => setShowAdmin(false)} />}
 
-      {/* Version tap for admin */}
-      <p
-        className="text-center text-[10px] text-slate-600 dark:text-white/10 pb-4 select-none cursor-default"
-        onDoubleClick={() => setShowAdmin(true)}
-      >
-        DigiWell v1.0
-      </p>
-
       {/* ================= MODAL CROP ẢNH (CROPPER) ================= */}
       <AnimatePresence>
         {cropImage && (
