@@ -18,25 +18,45 @@ const DynamicOverlay: React.FC<{
   const [snowflakes, setSnowflakes] = useState<Array<Record<string, string>>>([]);
   const [goldDust, setGoldDust] = useState<Array<Record<string, string>>>([]);
   const [digitalSparks, setDigitalSparks] = useState<Array<Record<string, string>>>([]);
+  const [shootingStars, setShootingStars] = useState<Array<Record<string, string>>>([]);
 
   useEffect(() => {
     setTimeout(() => {
+      const isVoid = themeGroup === 'void';
       const starCount = layer === 'overlay'
-        ? (themeGroup === 'void' ? 80 : 25)
-        : (themeGroup === 'void' ? 150 : 50);
+        ? (isVoid ? 120 : 25)
+        : (isVoid ? 220 : 50);
+      const starColors = isVoid
+        ? ['#ffffff', '#dbeafe', '#bfdbfe', '#fde047', '#fed7aa', '#fecaca', '#e9d5ff']
+        : ['#ffffff'];
       setStars([...Array(starCount)].map(() => {
-        const isVoid = themeGroup === 'void';
-        const size = Math.random() * (isVoid ? 4 : 3) + (isVoid && Math.random() > 0.8 ? 2 : 0);
+        const size = Math.random() * (isVoid ? 4 : 3) + (isVoid && Math.random() > 0.85 ? 2 : 0);
+        const color = starColors[Math.floor(Math.random() * starColors.length)];
         return {
           width: size + 'px',
           height: size + 'px',
           top: Math.random() * 100 + '%',
           left: Math.random() * 100 + '%',
-          delay: Math.random() * 5 + 's',
-          opacity: String(isVoid ? Math.random() * 0.4 + 0.6 : Math.random()),
-          glow: isVoid && Math.random() > 0.7 ? '1' : '0',
+          delay: Math.random() * 8 + 's',
+          duration: (Math.random() * 3 + 2) + 's',
+          opacity: String(isVoid ? Math.random() * 0.3 + 0.5 : Math.random()),
+          glow: isVoid && Math.random() > 0.75 ? '1' : '0',
+          color,
         };
       }) as Record<string, string>[]);
+
+      if (isVoid && layer === 'base') {
+        setShootingStars([...Array(5)].map(() => ({
+          top: Math.random() * 40 + '%',
+          left: Math.random() * 80 + '%',
+          angle: (Math.random() * 30 + 15) + 'deg',
+          duration: (Math.random() * 2 + 2) + 's',
+          delay: (Math.random() * 10 + 2) + 's',
+          length: (Math.random() * 80 + 60) + 'px',
+        })) as Record<string, string>[]);
+      } else {
+        setShootingStars([]);
+      }
 
       setEmbers([...Array(layer === 'overlay' ? 10 : 20)].map(() => ({
         width: Math.random() * 6 + 'px',
@@ -121,15 +141,37 @@ const DynamicOverlay: React.FC<{
           {stars.map((s, i) => (
             <div
               key={i}
-              className="absolute bg-white rounded-full animate-twinkle"
+              className="absolute rounded-full animate-real-star"
               style={{
                 width: s.width,
                 height: s.height,
                 top: s.top,
                 left: s.left,
+                backgroundColor: s.color,
                 animationDelay: s.delay,
+                animationDuration: s.duration,
                 opacity: s.opacity,
-                boxShadow: s.glow === '1' ? `0 0 ${parseFloat(s.width) * 3}px ${s.width} rgba(255,255,255,0.8)` : undefined,
+                boxShadow: s.glow === '1'
+                  ? `0 0 ${parseFloat(s.width) * 4}px ${parseFloat(s.width) * 1.5}px ${s.color}80, 0 0 ${parseFloat(s.width) * 8}px ${s.width}px ${s.color}40`
+                  : undefined,
+              }}
+            />
+          ))}
+          {shootingStars.map((ss, i) => (
+            <div
+              key={`shooting-${i}`}
+              className="absolute animate-shooting-star pointer-events-none"
+              style={{
+                top: ss.top,
+                left: ss.left,
+                width: ss.length,
+                height: '2px',
+                transform: `rotate(${ss.angle})`,
+                background: 'linear-gradient(90deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                borderRadius: '2px',
+                boxShadow: '0 0 6px 2px rgba(255,255,255,0.4), 0 0 12px 4px rgba(100,149,237,0.2)',
+                animationDelay: ss.delay,
+                animationDuration: ss.duration,
               }}
             />
           ))}

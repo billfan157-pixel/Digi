@@ -281,6 +281,27 @@ export default function ThemeEngine({ profile }: { profile: Profile | null }) {
           animation: digital-spark-blink ease-in-out infinite;
         }
 
+        @keyframes real-star {
+          0%, 100% { opacity: 0.4; transform: scale(0.8); }
+          25% { opacity: 0.9; transform: scale(1.1); }
+          50% { opacity: 0.6; transform: scale(1); }
+          75% { opacity: 1; transform: scale(1.15); }
+        }
+        .animate-real-star {
+          animation: real-star ease-in-out infinite;
+        }
+
+        @keyframes shooting-star {
+          0% { transform: translateX(0) translateY(0) rotate(var(--shoot-angle, 20deg)); opacity: 0; }
+          10% { opacity: 1; }
+          20% { opacity: 1; }
+          100% { transform: translateX(300px) translateY(150px) rotate(var(--shoot-angle, 20deg)); opacity: 0; }
+        }
+        .animate-shooting-star {
+          animation: shooting-star linear infinite;
+          opacity: 0;
+        }
+
         @keyframes void-vortex {
           from { transform: translate(-50%, -50%) rotate(0deg); }
           to { transform: translate(-50%, -50%) rotate(360deg); }
