@@ -21,14 +21,22 @@ const DynamicOverlay: React.FC<{
 
   useEffect(() => {
     setTimeout(() => {
-      setStars([...Array(layer === 'overlay' ? 25 : 50)].map(() => ({
-        width: Math.random() * 3 + 'px',
-        height: Math.random() * 3 + 'px',
-        top: Math.random() * 100 + '%',
-        left: Math.random() * 100 + '%',
-        delay: Math.random() * 5 + 's',
-        opacity: String(Math.random())
-      })) as Record<string, string>[]);
+      const starCount = layer === 'overlay'
+        ? (themeGroup === 'void' ? 80 : 25)
+        : (themeGroup === 'void' ? 150 : 50);
+      setStars([...Array(starCount)].map(() => {
+        const isVoid = themeGroup === 'void';
+        const size = Math.random() * (isVoid ? 4 : 3) + (isVoid && Math.random() > 0.8 ? 2 : 0);
+        return {
+          width: size + 'px',
+          height: size + 'px',
+          top: Math.random() * 100 + '%',
+          left: Math.random() * 100 + '%',
+          delay: Math.random() * 5 + 's',
+          opacity: String(isVoid ? Math.random() * 0.4 + 0.6 : Math.random()),
+          glow: isVoid && Math.random() > 0.7 ? '1' : '0',
+        };
+      }) as Record<string, string>[]);
 
       setEmbers([...Array(layer === 'overlay' ? 10 : 20)].map(() => ({
         width: Math.random() * 6 + 'px',
@@ -111,7 +119,7 @@ const DynamicOverlay: React.FC<{
       {effect === 'space-stars' && (
         <div className="absolute inset-0">
           {stars.map((s, i) => (
-            <div 
+            <div
               key={i}
               className="absolute bg-white rounded-full animate-twinkle"
               style={{
@@ -120,7 +128,8 @@ const DynamicOverlay: React.FC<{
                 top: s.top,
                 left: s.left,
                 animationDelay: s.delay,
-                opacity: s.opacity
+                opacity: s.opacity,
+                boxShadow: s.glow === '1' ? `0 0 ${parseFloat(s.width) * 3}px ${s.width} rgba(255,255,255,0.8)` : undefined,
               }}
             />
           ))}
