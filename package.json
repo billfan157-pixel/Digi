@@ -8,7 +8,7 @@
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "npm run build && wrangler dev",
     "size": "node scripts/check-build-size.mjs",
     "smoke": "node scripts/release-smoke.mjs",
     "test": "vitest run",
@@ -19,7 +19,8 @@
     "lint:migrations": "node scripts/check-migrations.mjs",
     "check:dependencies": "depcheck --ignores=\"@types/*,tailwindcss,postcss,autoprefixer,vite*,@capacitor/*,@supabase/ssr,@vercel/analytics,docx,chalk,dotenv,expo-dev-client,lint-staged,rollup,supabase,tsc-files,vconsole,k6,@shared/aiValidation\"",
     "analyze": "npm run build -- --mode analyze && npx open dist/stats.html",
-    "prepare": "husky"
+    "prepare": "husky",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@capacitor-community/bluetooth-le": "^8.1.3",
@@ -64,6 +65,7 @@
     "@ai-sdk/mcp": "^1.0.42",
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.3.0",
+    "@cloudflare/vite-plugin": "^1.39.1",
     "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.60.0",
     "@sentry/vite-plugin": "^5.3.0",
@@ -101,7 +103,8 @@
     "vconsole": "^3.15.1",
     "vite": "^8.0.1",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.6",
+    "wrangler": "^4.96.0"
   },
   "overrides": {
     "vite-plugin-pwa": {

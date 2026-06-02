@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 const sentryRelease =
   process.env.SENTRY_RELEASE ||
   process.env.VERCEL_GIT_COMMIT_SHA ||
@@ -14,135 +16,130 @@ const sentryRelease =
 // https://vite.dev/config/
 export default defineConfig({
   base: process.env.VITE_CDN_BASE_URL || '/',
-  plugins: [
-    react(),
-    process.env.SENTRY_AUTH_TOKEN ? sentryVitePlugin({
-      org: 'digiwell',
-      project: 'digiwell-app',
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-      sourcemaps: {
-        assets: './dist/assets/**',
-        ignore: ['./node_modules/**'],
-        filesToDeleteAfterUpload: ['./dist/**/*.map'],
+  plugins: [react(), process.env.SENTRY_AUTH_TOKEN ? sentryVitePlugin({
+    org: 'digiwell',
+    project: 'digiwell-app',
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    sourcemaps: {
+      assets: './dist/assets/**',
+      ignore: ['./node_modules/**'],
+      filesToDeleteAfterUpload: ['./dist/**/*.map'],
+    },
+    release: {
+      name: sentryRelease,
+      setCommits: {
+        auto: true,
+        ignoreMissing: true,
       },
-      release: {
-        name: sentryRelease,
-        setCommits: {
-          auto: true,
-          ignoreMissing: true,
+      deploy: {
+        env: process.env.VITE_APP_ENV || process.env.NODE_ENV || 'production',
+      },
+    },
+  }) : null, process.env.CAPACITOR_BUILD !== 'true' ? VitePWA({
+    registerType: 'autoUpdate',
+    includeAssets: ['favicon.svg', 'apple-icon.svg', 'icons.svg'],
+    manifest: {
+      name: 'DigiWell - Hydration Tracker',
+      short_name: 'DigiWell',
+      description: 'Track your daily water intake with gamification and AI insights',
+      theme_color: '#06B6D4',
+      background_color: '#020617',
+      display: 'standalone',
+      scope: '/',
+      start_url: '/',
+      icons: [
+        {
+          src: 'pwa-192x192.png',
+          sizes: '192x192',
+          type: 'image/png'
         },
-        deploy: {
-          env: process.env.VITE_APP_ENV || process.env.NODE_ENV || 'production',
+        {
+          src: 'pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png'
+        }
+      ]
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+      globIgnores: ['**/stats.html', '**/push-sw.js'],
+      navigateFallback: '/index.html',
+      runtimeCaching: [
+        {
+          // Static assets (JS, CSS) — hashed filenames, safe to cache long-term
+          urlPattern: /\.(?:js|css)$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'static-assets',
+            expiration: { maxEntries: 60, maxAgeSeconds: 30 * 24 * 60 * 60 },
+          },
         },
-      },
-    }) : null,
-    process.env.CAPACITOR_BUILD !== 'true' ? VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-icon.svg', 'icons.svg'],
-      manifest: {
-        name: 'DigiWell - Hydration Tracker',
-        short_name: 'DigiWell',
-        description: 'Track your daily water intake with gamification and AI insights',
-        theme_color: '#06B6D4',
-        background_color: '#020617',
-        display: 'standalone',
-        scope: '/',
-        start_url: '/',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+        {
+          // Google Fonts stylesheets - refresh in background
+          urlPattern: /^https:\/\/fonts\.googleapis\.com/,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'google-fonts-stylesheets',
+            expiration: { maxEntries: 10, maxAgeSeconds: 7 * 24 * 60 * 60 },
           },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        globIgnores: ['**/stats.html', '**/push-sw.js'],
-        navigateFallback: '/index.html',
-        runtimeCaching: [
-          {
-            // Static assets (JS, CSS) — hashed filenames, safe to cache long-term
-            urlPattern: /\.(?:js|css)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'static-assets',
-              expiration: { maxEntries: 60, maxAgeSeconds: 30 * 24 * 60 * 60 },
-            },
+        },
+        {
+          // Google Fonts webfont files - cache long-term
+          urlPattern: /^https:\/\/fonts\.gstatic\.com/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'google-fonts-webfonts',
+            expiration: { maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 },
+            cacheableResponse: { statuses: [0, 200] },
           },
-          {
-            // Google Fonts stylesheets - refresh in background
-            urlPattern: /^https:\/\/fonts\.googleapis\.com/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'google-fonts-stylesheets',
-              expiration: { maxEntries: 10, maxAgeSeconds: 7 * 24 * 60 * 60 },
-            },
+        },
+        {
+          // Image assets - cache with size limits
+          urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif|ico)$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'image-assets',
+            expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 },
           },
-          {
-            // Google Fonts webfont files - cache long-term
-            urlPattern: /^https:\/\/fonts\.gstatic\.com/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-webfonts',
-              expiration: { maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
+        },
+        {
+          // User-uploaded images (Supabase Storage) - cache long-term
+          urlPattern: /^https:\/\/.*\.supabase\.co\/storage/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'user-images',
+            expiration: { maxEntries: 200, maxAgeSeconds: 7 * 24 * 60 * 60 },
           },
-          {
-            // Image assets - cache with size limits
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif|ico)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'image-assets',
-              expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 },
-            },
+        },
+        {
+          // Supabase API calls — always fetch fresh, fallback to cache
+          urlPattern: /^https:\/\/.*\.supabase\.co\/rest/,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'supabase-api',
+            expiration: { maxEntries: 100, maxAgeSeconds: 5 * 60 },
+            networkTimeoutSeconds: 10,
           },
-          {
-            // User-uploaded images (Supabase Storage) - cache long-term
-            urlPattern: /^https:\/\/.*\.supabase\.co\/storage/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'user-images',
-              expiration: { maxEntries: 200, maxAgeSeconds: 7 * 24 * 60 * 60 },
-            },
+        },
+        {
+          // Supabase Edge Functions - network first for real-time data
+          urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/v1/,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'supabase-functions',
+            expiration: { maxEntries: 50, maxAgeSeconds: 2 * 60 },
+            networkTimeoutSeconds: 15,
           },
-          {
-            // Supabase API calls — always fetch fresh, fallback to cache
-            urlPattern: /^https:\/\/.*\.supabase\.co\/rest/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api',
-              expiration: { maxEntries: 100, maxAgeSeconds: 5 * 60 },
-              networkTimeoutSeconds: 10,
-            },
-          },
-          {
-            // Supabase Edge Functions - network first for real-time data
-            urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/v1/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-functions',
-              expiration: { maxEntries: 50, maxAgeSeconds: 2 * 60 },
-              networkTimeoutSeconds: 15,
-            },
-          },
-        ],
-      }
-    }) : null,
-    visualizer({
-      template: 'treemap',
-      open: false,
-      filename: 'dist/stats.html',
-      gzipSize: true,
-      brotliSize: true,
-    })
-  ],
+        },
+      ],
+    }
+  }) : null, visualizer({
+    template: 'treemap',
+    open: false,
+    filename: 'dist/stats.html',
+    gzipSize: true,
+    brotliSize: true,
+  }), cloudflare()],
   resolve: {
     alias: {
        '@': fileURLToPath(new URL('./src', import.meta.url)),

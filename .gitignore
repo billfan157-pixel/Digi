@@ -35,3 +35,9 @@ opencode.json
 
 # AI history
 .history/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
