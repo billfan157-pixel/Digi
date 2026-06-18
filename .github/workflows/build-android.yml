@@ -60,7 +60,7 @@ jobs:
           ./gradlew bundleRelease
 
       - name: Upload AAB Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: DigiWell-Android-AAB
           path: android/app/build/outputs/bundle/release/*.aab

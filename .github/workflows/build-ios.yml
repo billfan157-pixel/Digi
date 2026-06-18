@@ -137,7 +137,7 @@ jobs:
           echo "✅ IPA created."
 
       - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: DigiWell-iOS-Unsigned
           path: DigiWell-iOS.ipa
